@@ -1,0 +1,15 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · HTMLX Pages</title>
+    @* Pending: the HTMLX Pages brand stylesheets and the HTMX script, once the brand skill's assets are wired in. *@
+</head>
+<body>
+    <main id="main">
+        @RenderBody()
+    </main>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

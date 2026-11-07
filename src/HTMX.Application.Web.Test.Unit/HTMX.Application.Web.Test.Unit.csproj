@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Target framework, language version and analyzers come from src/Directory.Build.props. -->
+
+  <ItemGroup>
+    <PackageReference Include="MSTest" Version="4.5.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HTMX.Application.Web\HTMX.Application.Web.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,11 @@
+﻿@page
+@using System.Diagnostics
+@* A browser must never cache the error page: the next request to the same address may well succeed. *@
+@attribute [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+@{
+    ViewData["Title"] = "Error";
+    string requestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+}
+
+<h1>Something went wrong</h1>
+<p>The request could not be completed. If you report this, quote request <code>@requestId</code>.</p>

@@ -2,6 +2,8 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-07, evening (attended session with Matt): the solution exists.** The layout section names it and its
+  projects; the stack section records the persistence choice. No entity exists yet; the first is the user.
 - **2026-11-07, later (attended session with Matt): the `brand-htmlx-pages` skill was started.** It is a real
   folder under `.claude/skills/`, the one skill whose home is this repository, and it is a draft: read its status
   table before building any UI. The skills section, the edit rule and the `skills` scope below now cover it.
@@ -46,21 +48,20 @@ decline it and say why.
 - HTMX for the interactive CRUDL work: partial page updates from page handlers that return partial views, with the
   page still working as plain Razor Pages when HTMX is absent (progressive enhancement). Pin HTMX to one exact
   version and record it in `README.md`.
-- Persistence is whatever the presentation needs and nothing more; an in-memory or SQLite store is the expected
-  shape. Record the choice in `README.md` when it is made.
+- Persistence is whatever the presentation needs and nothing more. Chosen 2026-11-07: Entity Framework Core over an
+  in-memory SQLite database, created when the application starts and seeded from code; see `README.md`.
 - Tests: MSTest, written as the `code-csharp-mstest` skill describes.
 
-## Layout (intended; created by the first session)
+## Layout (created 2026-11-07)
 
 ```
 src/
-  <Solution>.slnx           one solution file, named in the first session and recorded here
-  <App>/                    the Razor Pages application
-  <App>.Test.Unit/          its unit tests
-  .editorconfig             house copy, see below
+  HTMX Pages Solution.slnx          the one solution file
+  Directory.Build.props             house build settings for every project (code-csharp-standards, section 1)
+  HTMX.Application.Web/             the Razor Pages application
+  HTMX.Application.Web.Test.Unit/   its unit tests
+  .editorconfig                     house copy, see below
 ```
-
-Record the names chosen for `<Solution>` and `<App>` in this section in the same session that creates them.
 
 ## Skills: owned by Matt
 
