@@ -1,0 +1,68 @@
+/*
+  HTMLX Pages: a record's history and rolling it back.
+    .version     a version badge: v5; .version.current is the record as it is now
+    .timeline    the record's versions, newest first. Each entry is a <details>: its <summary> says what
+                 happened, who did it and when; opening it shows the .diff and the entry's actions
+    .diff        a table of only the fields that changed, Before then After, as <del> and <ins>
+  Every save makes a version, and so do archive, restore and roll back. Rolling back never rewrites history:
+  it saves the chosen version's values as a new version, so a roll-back can itself be rolled back.
+*/
+
+/* Version badge */
+.version {
+  display: inline-grid; place-items: center; min-width: 32px; height: 22px; padding: 0 6px;
+  border-radius: var(--radius-sm); background: var(--brand-subtle); color: var(--brand-text);
+  font-family: var(--font-mono); font-size: var(--text-xs); font-weight: var(--weight-strong);
+}
+.version.current { background: var(--brand); color: var(--on-brand); }
+
+/* Timeline: a line down the left with a dot per version; the current version's dot is the brand color. */
+.timeline { margin: 0; padding: 0; list-style: none; }
+.timeline > li { position: relative; padding-left: var(--space-8); }
+.timeline > li::before {
+  content: ""; position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: var(--border);
+}
+.timeline > li:first-child::before { top: 20px; }
+.timeline > li:last-child::before { bottom: auto; height: 20px; }
+.timeline > li::after {
+  content: ""; position: absolute; left: 5px; top: 14px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--border-input);
+}
+.timeline > li.current::after { background: var(--brand); border-color: var(--brand); }
+
+.timeline summary {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm);
+  list-style: none; cursor: pointer;
+}
+.timeline summary::-webkit-details-marker { display: none; }
+.timeline summary:hover { background: var(--surface-hover); }
+.timeline summary .chevron { color: var(--icon); transition: rotate .15s; }
+.timeline details[open] > summary .chevron { rotate: 90deg; }
+.timeline summary .when { margin-left: auto; font-size: var(--text-sm); color: var(--text-muted); }
+.timeline .entry-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-3) var(--space-5); }
+.timeline .entry-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* Diff: Field, Before, After. Only the fields that changed; a missing value reads "Not set". The column headers
+   carry the meaning, so the colors only reinforce it. */
+.diff { width: 100%; min-width: 440px; border-collapse: collapse; table-layout: fixed; font-size: var(--text-sm); }   /* narrower than that, .diff-wrap scrolls sideways, as a grid does */
+.diff thead th:first-child { width: 120px; }   /* Field is fixed; Before and After share the rest equally */
+.diff th, .diff td {
+  padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border);
+  text-align: left; vertical-align: top; overflow-wrap: anywhere;
+}
+.diff thead th { font-weight: var(--weight-strong); color: var(--text-muted); }
+.diff tbody th { font-weight: var(--weight-strong); }
+.diff tbody tr:last-child > * { border-bottom: 0; }
+.diff del {
+  background: var(--danger-subtle); color: var(--text);
+  text-decoration: line-through; text-decoration-color: var(--danger);
+}
+.diff ins { background: var(--success-subtle); color: var(--text); text-decoration: none; }
+.diff-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
+
+/* Roll-back preview: a .dialog whose body says what will happen, warns about any value that cannot come back
+   (a related record since deleted), and shows the diff from now to the chosen version. Rolling back can be
+   undone, so its button is primary, not danger. */
+.rollback { display: grid; gap: var(--space-3); }
+.rollback .alert { margin: 0; }

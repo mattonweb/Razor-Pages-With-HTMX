@@ -1,0 +1,64 @@
+/* Layout for the specimen pages only. Nothing here belongs in the application. */
+
+/* Shown by specimens.js when a page is opened from disk, where the icon sprite cannot load. */
+.file-notice {
+  margin-bottom: var(--space-6); padding: var(--space-3) var(--space-4);
+  background: var(--warning-subtle); border: 1px solid var(--warning-line); border-radius: var(--radius-md);
+  color: var(--text);
+}
+
+.spec { margin-bottom: 56px; }
+.spec > h2 { margin-bottom: var(--space-2); }
+.spec-lead { margin-bottom: var(--space-5); color: var(--text-muted); }
+.spec h3 { margin: var(--space-6) 0 var(--space-3); font-size: var(--text-sm); color: var(--text-muted); }
+.spec .card + .card, .spec .card + h3 { margin-top: var(--space-4); }
+.spec-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+
+/* Color swatches */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: var(--space-3); }
+.swatch { margin: 0; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.swatch .color { height: 56px; border-bottom: 1px solid var(--border); }
+.swatch figcaption { display: grid; gap: 2px; padding: var(--space-2) var(--space-3) var(--space-3); font-size: var(--text-sm); }
+.swatch code { font-weight: var(--weight-strong); }
+.swatch small { color: var(--text-muted); }
+
+/* Status tones: the subtle fill, the line and the text color together, as a chip or alert uses them. */
+.tones { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-3); }
+.tone {
+  display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4);
+  background: var(--s); border: 1px solid var(--l); border-radius: var(--radius-md); color: var(--t);
+}
+.tone strong { display: flex; align-items: center; gap: var(--space-2); }
+.tone p { color: var(--text); font-size: var(--text-sm); }
+.tone small { color: var(--text-muted); }
+
+/* Type scale */
+.type-scale { display: grid; gap: var(--space-3); }
+.type-scale > div { display: grid; grid-template-columns: 170px 1fr; align-items: baseline; gap: var(--space-4); }
+.type-scale code { color: var(--text-muted); font-size: var(--text-xs); }
+
+/* Space and shape */
+.space-scale { display: grid; gap: var(--space-2); }
+.space-scale > div { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: var(--space-3); font-size: var(--text-sm); }
+.space-scale span { height: 12px; background: var(--accent-subtle); border: 1px solid var(--accent); border-radius: 2px; }
+.shapes { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.shapes > div {
+  display: grid; place-items: center; width: 140px; height: 88px; padding: var(--space-2);
+  background: var(--surface); border: 1px solid var(--border); font-size: var(--text-xs); text-align: center;
+}
+
+/* Icon grid */
+.icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--space-2); }
+.icon-grid > div {
+  display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); font-size: var(--text-xs);
+}
+
+/* Toasts held still inside a card, instead of fixed to the window and leaving after 8 seconds */
+.toast-frame .toasts { position: static; translate: none; width: auto; max-width: none; justify-items: start; }
+.toast-frame .toast { animation: none; }
+.toast-frame + p { margin-top: var(--space-4); }
+
+/* A label above each state in the list page */
+.state-label { margin: 0 0 var(--space-2); font-size: var(--text-xs); font-weight: var(--weight-strong); color: var(--text-muted); letter-spacing: .04em; text-transform: uppercase; }
+.states { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: var(--space-4); align-items: start; }

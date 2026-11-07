@@ -1,0 +1,63 @@
+/*
+  HTMLX Pages: telling the user what happened, or what is about to.
+    .alert         a banner on the page about this page's record: archived, an old version, an error
+    .toasts        the fixed region, once per layout, that toasts appear in; .toast is one message, often with Undo
+    .dialog-icon   the toned icon that leads a confirm dialog's message
+  An action that can be undone (archive, restore, roll back) runs at once and says so in a toast with Undo.
+  Only an action that cannot be undone (delete permanently, discard unsaved changes) asks first, in a dialog.
+*/
+
+/* Alert: icon, message, then at most one or two actions. Tones as for chips: info, success, warning, danger;
+   neutral is the default. The text keeps the page's text color; the tone colors the icon, fill and line. */
+.alert {
+  --tone: var(--neutral); --tone-subtle: var(--neutral-subtle); --tone-line: var(--neutral-line);
+  display: flex; align-items: flex-start; gap: var(--space-3); flex-wrap: wrap;
+  margin-bottom: var(--space-4); padding: var(--space-3) var(--space-4);
+  background: var(--tone-subtle); border: 1px solid var(--tone-line); border-radius: var(--radius-md);
+}
+.alert > .icon { margin-top: 1px; color: var(--tone); }
+.alert .content { flex: 1 1 280px; display: grid; gap: 2px; }
+.alert .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.alert.info    { --tone: var(--info);    --tone-subtle: var(--info-subtle);    --tone-line: var(--info-line); }
+.alert.success { --tone: var(--success); --tone-subtle: var(--success-subtle); --tone-line: var(--success-line); }
+.alert.warning { --tone: var(--warning); --tone-subtle: var(--warning-subtle); --tone-line: var(--warning-line); }
+.alert.danger  { --tone: var(--danger);  --tone-subtle: var(--danger-subtle);  --tone-line: var(--danger-line); }
+
+/* Toasts: <div class="toasts" role="status" aria-live="polite"> sits once in the layout, empty; the server adds
+   a .toast to it after an action. A toast leaves by itself after 8 seconds, paused while the pointer or the
+   keyboard is on it, and its Undo stays a real button that posts the undo. */
+.toasts {
+  position: fixed; left: 50%; bottom: var(--space-6); z-index: 50; translate: -50% 0;
+  display: grid; justify-items: center; gap: var(--space-2);
+  width: max-content; max-width: calc(100vw - 2 * var(--space-4));
+  pointer-events: none;
+}
+.toast {
+  display: flex; align-items: center; gap: var(--space-3);
+  min-height: 44px; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  background: var(--inverse); color: var(--on-inverse);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-popup);
+  pointer-events: auto;
+  animation: toast-in .2s ease-out, toast-out .3s ease-in 8s forwards;
+}
+.toast:hover, .toast:focus-within { animation-play-state: running, paused; }
+.toast .message { flex: 1; }
+.toast .btn.ghost { color: var(--accent-on-inverse); }
+.toast .btn.ghost:hover { background: color-mix(in srgb, var(--on-inverse) 12%, transparent); }
+.toast .btn.ghost.icon-only { color: var(--on-inverse); }
+@keyframes toast-in  { from { opacity: 0; translate: 0 8px; } }
+@keyframes toast-out { to { opacity: 0; visibility: hidden; } }
+
+/* Confirm dialog: a .dialog.sm whose body leads with a .dialog-icon in the dialog's tone, then the message.
+   The safe choice comes first in the footer and has focus; the destructive one is .btn.danger, last. */
+.confirm { display: flex; gap: var(--space-3); align-items: flex-start; }
+.confirm .message { display: grid; gap: var(--space-2); }
+.confirm ul { margin: 0; padding-left: var(--space-5); }
+.dialog-icon {
+  --tone: var(--danger); --tone-subtle: var(--danger-subtle);
+  display: grid; place-items: center; flex: none;
+  width: 40px; height: 40px; border-radius: var(--radius-full);
+  background: var(--tone-subtle); color: var(--tone);
+}
+.dialog-icon.warning { --tone: var(--warning); --tone-subtle: var(--warning-subtle); }
+.dialog-icon.info    { --tone: var(--info);    --tone-subtle: var(--info-subtle); }

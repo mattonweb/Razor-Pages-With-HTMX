@@ -1,0 +1,70 @@
+/*
+  HTMLX Pages: reading one record. The details page and the side panel show the same fields.
+    .tabs      links to the record's sections (Details, History); the current one carries aria-current="page"
+    .fields    a <dl> of label-over-value pairs, in as many columns as the width allows
+    .related   a link to another record, led by that record type's icon
+    .panel     the side panel: a native popover that slides in from the right, over the list
+*/
+
+/* Tabs: a <nav> of links, so each section has its own URL and works without HTMX. */
+.tabs {
+  display: flex; flex-wrap: wrap; gap: var(--space-1);
+  margin-bottom: var(--space-4); border-bottom: 1px solid var(--border);
+}
+.tabs a {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3); margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted); font-weight: var(--weight-strong);
+}
+.tabs a:hover { color: var(--text); text-decoration: none; }
+.tabs a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
+.tabs .count {
+  min-width: 20px; padding: 0 6px; border-radius: var(--radius-full);
+  background: var(--neutral-subtle); color: var(--text-muted);
+  font-size: var(--text-xs); font-variant-numeric: tabular-nums; text-align: center;
+}
+
+/* Fields: <dl class="fields"><div><dt>Email</dt><dd>…</dd></div>…</dl>. Each label sits over its value, and the
+   list fills as many 260px columns as fit: two or three in a card, one in the side panel. .wide spans the row.
+   A value that was never set reads "Not set" in .unset, never a blank or a dash. */
+.fields {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: var(--space-4) var(--space-6); margin: 0;
+}
+.fields .wide { grid-column: 1 / -1; }
+.fields dt { font-size: var(--text-sm); color: var(--text-muted); }
+.fields dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+.fields .unset { color: var(--text-muted); }
+
+/* Related-record link: the record type's icon, then the record's name. A link to an archived record stays a
+   link, muted, followed by an Archived chip. */
+.related { display: inline-flex; align-items: center; gap: var(--space-1); }
+.related .icon { width: 16px; height: 16px; }
+.related.archived { color: var(--text-muted); }
+.related + .chip { margin-left: var(--space-2); }
+
+/* Side panel: <aside class="panel" id="record-panel" popover>. It covers the right edge of the page and closes
+   on Escape, on its close button, or on a click outside it. It is not modal: the list beside it stays usable,
+   and the row it shows carries aria-selected="true". */
+.panel {
+  inset: 0 0 0 auto; width: min(420px, 100vw); height: 100dvh; max-height: none; margin: 0; padding: 0;
+  border: 0; border-left: 1px solid var(--border);
+  background: var(--surface); color: var(--text); box-shadow: var(--shadow-popup);
+  flex-direction: column; overflow: hidden;
+  translate: 100% 0;
+  transition: translate .2s ease-out, display .2s allow-discrete, overlay .2s allow-discrete;
+}
+.panel:popover-open { display: flex; translate: 0 0; }
+@starting-style { .panel:popover-open { translate: 100% 0; } }
+
+.panel-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-4); border-bottom: 1px solid var(--border);
+}
+.panel-header .title { display: grid; justify-items: start; gap: var(--space-2); }
+.panel-body { flex: 1; overflow-y: auto; padding: var(--space-4); }
+.panel-footer {
+  display: flex; justify-content: flex-end; gap: var(--space-2);
+  padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border);
+}

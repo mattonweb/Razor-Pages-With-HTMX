@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Foundations · HTMLX Pages</title>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/base.css">
+  <link rel="stylesheet" href="../../assets/css/shell.css">
+  <link rel="stylesheet" href="../../assets/css/list.css">
+  <link rel="stylesheet" href="../../assets/css/read.css">
+  <link rel="stylesheet" href="../../assets/css/forms.css">
+  <link rel="stylesheet" href="../../assets/css/feedback.css">
+  <link rel="stylesheet" href="../../assets/css/history.css">
+  <link rel="stylesheet" href="specimens.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="app">
+  <header class="app-header">
+    <button class="btn ghost icon-only" type="button" data-action="toggle-nav" aria-label="Main menu" aria-controls="app-nav">
+      <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg>
+    </button>
+    <a class="brand" href="foundations.html">
+      <svg class="brand-mark" aria-hidden="true"><use href="../../assets/icons.svg#logo"></use></svg>
+      HTMLX Pages
+    </a>
+    <div class="end">
+      <button class="btn ghost icon-only" type="button" data-action="toggle-theme" aria-label="Switch between light and dark mode">
+        <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#moon"></use></svg>
+      </button>
+      <span class="avatar" role="img" aria-label="Signed in as Demo User">DU</span>
+    </div>
+  </header>
+
+  <nav class="app-nav" id="app-nav" aria-label="Specimens">
+    <p class="nav-label">Specimens</p>
+    <a href="foundations.html" title="Foundations" aria-current="page"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#palette"></use></svg><span>Foundations</span></a>
+    <a href="list.html" title="List"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#list"></use></svg><span>List</span></a>
+    <a href="read.html" title="Read"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg><span>Read</span></a>
+    <a href="forms.html" title="Forms"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg><span>Forms</span></a>
+    <a href="feedback.html" title="Feedback"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#info"></use></svg><span>Feedback</span></a>
+    <a href="history.html" title="History"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#history"></use></svg><span>History</span></a>
+  </nav>
+
+  <main class="app-main" id="main">
+    <header class="page-header">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="foundations.html">Specimens</a></li><li><span aria-current="page">Foundations</span></li></ol>
+      </nav>
+      <div class="title-row"><h1>Foundations</h1></div>
+      <p class="muted">Color, type, space, icons and buttons. Every value is a token in <code>assets/css/tokens.css</code>.</p>
+    </header>
+
+    <section class="spec" aria-labelledby="color">
+      <h2 id="color">Color</h2>
+      <p class="spec-lead">Blue marks anything you can click. Violet is the brand: the logo, the user avatar and version badges, never a
+        button. The values printed are for the current mode; the moon button in the header switches it.</p>
+
+      <h3>Brand and accent</h3>
+      <div class="swatches">
+        <figure class="swatch"><div class="color" style="background: var(--brand)"></div><figcaption><code>--brand</code><span data-hex="brand"></span><small>MudBlazor Primary. Logo, badge faces</small></figcaption></figure>
+        <figure class="swatch"><div class="color" style="background: var(--brand-text)"></div><figcaption><code>--brand-text</code><span data-hex="brand-text"></span><small>Violet text, avatar initials</small></figcaption></figure>
+        <figure class="swatch"><div class="color" style="background: var(--brand-subtle)"></div><figcaption><code>--brand-subtle</code><span data-hex="brand-subtle"></span><small>Avatar and badge fill</small></figcaption></figure>
+        <figure class="swatch"><div class="color" style="background: var(--accent)"></div><figcaption><code>--accent</code><span data-hex="accent"></span><small>Gallery accent. Links, focus, selection</small></figcaption></figure>
+        <figure class="swatch"><div class="color" style="background: var(--accent-fill)"></div><figcaption><code>--accent-fill</code><span data-hex="accent-fill"></span><small>Primary button face</small></figcaption></figure>
+        <figure class="swatch"><div class="color" style="background: var(--accent-subtle)"></div><figcaption><code>--accent-subtle</code><span data-hex="accent-subtle"></span><small>Current nav item, selected row</small></figcaption></figure>
+      </div>
+
+      <h3>Neutrals</h3>
+      <div class="swatches">
+        <figure class="swatch"><div class="color" style="background: var(--text)"></div><figcaption><code>--text</code><span data-hex="text"></span><small>Gallery text</small></figcaption></figure>
+        <figure class="swatch"><div class="color" style="background: var(--text-muted)"></div><figcaption><code>--text-muted</code><span data-hex="text-muted"></span><small>Second lines, headers, hints</small></figcaption></figure>
+        <figure class="swatch"><div class="color" style="background: var(--icon)"></div><figcaption><code>--icon</code><span data-hex="icon"></span><small>MudBlazor TextPrimary. Icons</small></figcaption></figure>
+        <figure class="swatch"><div class="color" style="background: var(--bg)"></div><figcaption><code>--bg</code><span data-hex="bg"></span><small>MudBlazor BackgroundGray. The page</small></figcaption></figure>
+        <figure class="swatch"><div class="color" style="background: var(--surface)"></div><figcaption><code>--surface</code><span data-hex="surface"></span><small>Cards, header, nav</small></figcaption></figure>
+        <figure class="swatch"><div class="color" style="background: var(--surface-hover)"></div><figcaption><code>--surface-hover</code><span data-hex="surface-hover"></span><small>Row and item hover</small></figcaption></figure>
+        <figure class="swatch"><div class="color" style="background: var(--border)"></div><figcaption><code>--border</code><span data-hex="border"></span><small>Both sources. Dividers, table lines</small></figcaption></figure>
+        <figure class="swatch"><div class="color" style="background: var(--border-input)"></div><figcaption><code>--border-input</code><span data-hex="border-input"></span><small>Form controls, 3:1 against the surface</small></figcaption></figure>
+      </div>
+
+      <h3>Status tones</h3>
+      <div class="tones">
+        <div class="tone" style="--t: var(--success); --s: var(--success-subtle); --l: var(--success-line)">
+          <strong><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#check-circle"></use></svg>Success</strong>
+          <p>Saved, restored, active.</p><small><code>--success</code> <span data-hex="success"></span> · Gallery</small>
+        </div>
+        <div class="tone" style="--t: var(--danger); --s: var(--danger-subtle); --l: var(--danger-line)">
+          <strong><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x-circle"></use></svg>Danger</strong>
+          <p>Validation errors, permanent delete.</p><small><code>--danger</code> <span data-hex="danger"></span> · Gallery</small>
+        </div>
+        <div class="tone" style="--t: var(--warning); --s: var(--warning-subtle); --l: var(--warning-line)">
+          <strong><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#alert"></use></svg>Warning</strong>
+          <p>Roll-back previews, unsaved changes.</p><small><code>--warning</code> <span data-hex="warning"></span> · MudBlazor, darkened</small>
+        </div>
+        <div class="tone" style="--t: var(--info); --s: var(--info-subtle); --l: var(--info-line)">
+          <strong><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#info"></use></svg>Info</strong>
+          <p>Neutral notices and tips.</p><small><code>--info</code> <span data-hex="info"></span> · MudBlazor, darkened</small>
+        </div>
+        <div class="tone" style="--t: var(--neutral); --s: var(--neutral-subtle); --l: var(--neutral-line)">
+          <strong><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Neutral</strong>
+          <p>Archived records, inactive states.</p><small><code>--neutral</code> <span data-hex="neutral"></span></small>
+        </div>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="type">
+      <h2 id="type">Type</h2>
+      <p class="spec-lead">Segoe UI on Windows, the system face elsewhere. Two weights only: 400 and 600.</p>
+      <div class="card card-body type-scale">
+        <div><code>--text-2xl 22 / 600</code><span style="font-size: var(--text-2xl); font-weight: 600">Contacts</span></div>
+        <div><code>--text-xl 18 / 600</code><span style="font-size: var(--text-xl); font-weight: 600">Version history</span></div>
+        <div><code>--text-lg 16 / 600</code><span style="font-size: var(--text-lg); font-weight: 600">Contact details</span></div>
+        <div><code>--text-md 14 / 400</code><span>Body text. Pat Example works at Placeholder Logistics.</span></div>
+        <div><code>--text-sm 13 / 400</code><span style="font-size: var(--text-sm)" class="muted">Second lines, table headers, the pager</span></div>
+        <div><code>--text-xs 12 / 600</code><span style="font-size: var(--text-xs); font-weight: 600">Chips, avatar initials, labels</span></div>
+        <div><code>--font-mono 13</code><span class="mono">v7 · 2026-11-05 14:32</span></div>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="space">
+      <h2 id="space">Space and shape</h2>
+      <p class="spec-lead">A 4px grid. Pages pad 32px, cards 16px. Controls round 4px, cards and menus 8px.</p>
+      <div class="card card-body space-scale">
+        <div><code>--space-1 4</code><span style="width: 4px"></span></div>
+        <div><code>--space-2 8</code><span style="width: 8px"></span></div>
+        <div><code>--space-3 12</code><span style="width: 12px"></span></div>
+        <div><code>--space-4 16</code><span style="width: 16px"></span></div>
+        <div><code>--space-6 24</code><span style="width: 24px"></span></div>
+        <div><code>--space-8 32</code><span style="width: 32px"></span></div>
+      </div>
+      <h3>Radius and depth</h3>
+      <div class="shapes">
+        <div style="border-radius: var(--radius-sm)"><code>--radius-sm</code></div>
+        <div style="border-radius: var(--radius-md)"><code>--radius-md</code></div>
+        <div style="border-radius: var(--radius-md); box-shadow: var(--shadow-card)"><code>--shadow-card</code></div>
+        <div style="border-radius: var(--radius-md); box-shadow: var(--shadow-popup)"><code>--shadow-popup</code></div>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="icons">
+      <h2 id="icons">Icons</h2>
+      <p class="spec-lead">Line icons on a 24px grid, drawn for this repository and kept in one sprite, <code>assets/icons.svg</code>.
+        They take the color of the text around them. An icon next to a label is <code>aria-hidden</code>; an icon alone
+        sits in a button that has an <code>aria-label</code>.</p>
+      <div class="icon-grid" data-icon-grid></div>
+    </section>
+
+    <section class="spec" aria-labelledby="buttons">
+      <h2 id="buttons">Buttons</h2>
+      <p class="spec-lead">One primary button per view. Danger is for actions that cannot be undone; archiving can be undone,
+        so it is a secondary button.</p>
+      <div class="card card-body">
+        <h3>Variants</h3>
+        <div class="spec-row">
+          <button class="btn primary" type="button">Save contact</button>
+          <button class="btn" type="button">Cancel</button>
+          <button class="btn ghost" type="button">Clear filters</button>
+          <button class="btn danger" type="button">Delete permanently</button>
+        </div>
+        <h3>With icons</h3>
+        <div class="spec-row">
+          <button class="btn primary" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#plus"></use></svg>New contact</button>
+          <button class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Archive</button>
+          <button class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#restore"></use></svg>Restore</button>
+          <button class="btn ghost" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#history"></use></svg>History</button>
+          <button class="btn ghost icon-only" type="button" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg></button>
+          <button class="btn ghost icon-only" type="button" aria-label="More actions"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#more"></use></svg></button>
+        </div>
+        <h3>States</h3>
+        <div class="spec-row">
+          <button class="btn primary" type="button" disabled>Save contact</button>
+          <button class="btn primary" type="button" aria-busy="true">Saving</button>
+          <button class="btn" type="button" aria-busy="true">Restoring</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="specimens.js"></script>
+</body>
+</html>

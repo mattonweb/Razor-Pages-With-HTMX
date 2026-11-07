@@ -1,0 +1,113 @@
+/*
+  HTMLX Pages: design tokens.
+
+  Every color is written once, as light-dark(light, dark). The page follows the operating system;
+  <html data-theme="light|dark"> pins one mode.
+
+  Where the values come from:
+    Gallery   DevExtreme UI Template Gallery, Fluent Blue theme: accent, text, lines, success, danger,
+              card shadow, header and side-panel sizes.
+    MudBlazor MudBlazor default palette: the brand violet, the role names, the warning and info hues,
+              the gray page background.
+  A value marked "darkened" keeps its source's hue but is darker, so text passes WCAG AA (4.5:1).
+*/
+
+:root {
+  color-scheme: light dark;
+
+  /* Brand: the logo mark, the user avatar and version badges. Never a button. */
+  --brand:          #594ae2;                        /* MudBlazor Primary: fills (logo, badge face) in both modes */
+  --brand-text:     light-dark(#594ae2, #a59bf0);   /* violet text; dark is MudBlazor's dark #776be7, lightened */
+  --brand-subtle:   light-dark(#efedfc, #2b2752);
+  --on-brand:       #ffffff;
+
+  /* Accent: every interactive thing. Links, focus, selection and primary buttons. */
+  --accent:             light-dark(#0f6cbd, #479ef5);   /* Gallery accent: links, focus, selection */
+  --accent-fill:        light-dark(#0f6cbd, #115ea3);   /* primary button face; white text passes in both modes */
+  --accent-fill-hover:  light-dark(#115ea3, #0f6cbd);
+  --accent-fill-active: light-dark(#0f548c, #0f548c);
+  --accent-subtle:      light-dark(#ebf3fc, #0e2a45);   /* selected nav item, selected row */
+  --on-accent:          #ffffff;
+
+  /* Neutrals */
+  --text:           light-dark(#242424, #f5f5f5);   /* Gallery text */
+  --text-muted:     light-dark(#616161, #adadad);
+  --text-disabled:  light-dark(#9e9e9e, #6e6e6e);
+  --icon:           light-dark(#424242, #d6d6d6);   /* MudBlazor TextPrimary */
+  --bg:             light-dark(#f5f5f5, #1f1f1f);   /* MudBlazor BackgroundGray; Gallery dark page */
+  --surface:        light-dark(#ffffff, #292929);   /* cards, header, nav; Gallery dark surface */
+  --surface-hover:  light-dark(#f5f5f5, #333333);
+  --border:         light-dark(#e0e0e0, #3d3d3d);   /* both sources: Gallery border, MudBlazor TableLines */
+  --border-input:   light-dark(#8a8a8a, #757575);   /* MudBlazor LinesInputs, darkened to 3:1 for form controls */
+
+  /* Inverse: a toast, which stands out by reversing the page's colors */
+  --inverse:            light-dark(#242424, #f5f5f5);
+  --on-inverse:         light-dark(#ffffff, #242424);
+  --accent-on-inverse:  light-dark(#479ef5, #0f6cbd);   /* each mode borrows the other mode's accent */
+
+  /* Status tones: text color, subtle fill, and line. Used by chips, alerts and toasts. */
+  --success:        light-dark(#107c10, #54b054);   /* Gallery success */
+  --success-subtle: light-dark(#f1faf1, #102a10);
+  --success-line:   light-dark(#9fd89f, #2a5d2a);
+
+  --danger:         light-dark(#d13438, #e37d80);   /* Gallery danger */
+  --danger-subtle:  light-dark(#fdf3f4, #3b1a1b);
+  --danger-line:    light-dark(#eeacb2, #7a3a3c);
+  --danger-fill:        light-dark(#d13438, #c50f1f);   /* danger button face; white text passes in both modes */
+  --danger-fill-hover:  light-dark(#b8282c, #d13438);
+
+  --warning:        light-dark(#a35200, #ffa800);   /* MudBlazor Warning, darkened in light mode */
+  --warning-subtle: light-dark(#fff4e5, #3a2a0a);
+  --warning-line:   light-dark(#ffc46b, #7a5200);
+
+  --info:           light-dark(#0b6aa2, #3299ff);   /* MudBlazor Info, darkened in light mode */
+  --info-subtle:    light-dark(#e9f4fe, #0e2740);
+  --info-line:      light-dark(#90cbf9, #1d5a96);
+
+  --neutral:        light-dark(#616161, #adadad);
+  --neutral-subtle: light-dark(#f0f0f0, #333333);
+  --neutral-line:   light-dark(#d1d1d1, #4d4d4d);
+
+  /* Type: Gallery (Fluent) sets Segoe UI; MudBlazor sets Roboto. Both are in the stack. */
+  --font:           "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:      "Cascadia Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+  --text-xs:        12px;
+  --text-sm:        13px;
+  --text-md:        14px;    /* body; Gallery default */
+  --text-lg:        16px;
+  --text-xl:        18px;
+  --text-2xl:       22px;    /* page title; Gallery header size */
+  --leading:        1.43;    /* 20px on 14px */
+  --weight-regular: 400;
+  --weight-strong:  600;
+
+  /* Space: a 4px grid. */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;          /* Gallery content padding */
+  --space-8:  32px;          /* Gallery page padding */
+
+  /* Shape and depth */
+  --radius-sm:    4px;       /* controls */
+  --radius-md:    8px;       /* cards, dialogs, menus */
+  --radius-full:  999px;     /* chips, the user avatar */
+  --shadow-card:  0 0 6px 0 light-dark(rgb(0 0 0 / .06), rgb(0 0 0 / .45)),
+                  0 2px 2px 0 light-dark(rgb(0 0 0 / .06), rgb(0 0 0 / .45));   /* Gallery card shadow */
+  --shadow-popup: 0 8px 16px light-dark(rgb(0 0 0 / .14), rgb(0 0 0 / .6)),
+                  0 0 2px light-dark(rgb(0 0 0 / .12), rgb(0 0 0 / .6));
+  --scrim:        light-dark(rgb(0 0 0 / .32), rgb(0 0 0 / .6));   /* behind a modal dialog */
+
+  /* Sizes */
+  --header-height:   56px;
+  --nav-width:       250px;
+  --nav-rail-width:  48px;   /* Gallery side-panel minimum width */
+  --control-height:  32px;
+  --row-height:      44px;
+  --focus-ring:      0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+}
+
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forms · HTMLX Pages</title>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/base.css">
+  <link rel="stylesheet" href="../../assets/css/shell.css">
+  <link rel="stylesheet" href="../../assets/css/list.css">
+  <link rel="stylesheet" href="../../assets/css/read.css">
+  <link rel="stylesheet" href="../../assets/css/forms.css">
+  <link rel="stylesheet" href="../../assets/css/feedback.css">
+  <link rel="stylesheet" href="../../assets/css/history.css">
+  <link rel="stylesheet" href="specimens.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="app">
+  <header class="app-header">
+    <button class="btn ghost icon-only" type="button" data-action="toggle-nav" aria-label="Main menu" aria-controls="app-nav">
+      <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg>
+    </button>
+    <a class="brand" href="foundations.html">
+      <svg class="brand-mark" aria-hidden="true"><use href="../../assets/icons.svg#logo"></use></svg>
+      HTMLX Pages
+    </a>
+    <div class="end">
+      <button class="btn ghost icon-only" type="button" data-action="toggle-theme" aria-label="Switch between light and dark mode">
+        <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#moon"></use></svg>
+      </button>
+      <span class="avatar" role="img" aria-label="Signed in as Demo User">DU</span>
+    </div>
+  </header>
+
+  <nav class="app-nav" id="app-nav" aria-label="Specimens">
+    <p class="nav-label">Specimens</p>
+    <a href="foundations.html" title="Foundations"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#palette"></use></svg><span>Foundations</span></a>
+    <a href="list.html" title="List"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#list"></use></svg><span>List</span></a>
+    <a href="read.html" title="Read"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg><span>Read</span></a>
+    <a href="forms.html" title="Forms" aria-current="page"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg><span>Forms</span></a>
+    <a href="feedback.html" title="Feedback"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#info"></use></svg><span>Feedback</span></a>
+    <a href="history.html" title="History"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#history"></use></svg><span>History</span></a>
+  </nav>
+
+  <main class="app-main" id="main">
+    <header class="page-header">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="#">Home</a></li><li><a href="list.html">Contacts</a></li><li><a href="read.html">Pat Example</a></li><li><span aria-current="page">Edit</span></li></ol>
+      </nav>
+      <div class="title-row"><h1>Edit Pat Example</h1></div>
+    </header>
+
+    <section class="spec" aria-labelledby="edit">
+      <h2 id="edit" class="visually-hidden">The edit form</h2>
+      <p class="spec-lead">The edit form for one record, after a save that failed on one field. The fields keep the places they have on
+        the details page. The markup is what the tag helpers emit, trimmed to the attributes the brand reads; a required
+        field gets its asterisk from that markup, and the invalid email shows the classes ASP.NET Core adds. The action bar
+        stays at the bottom of the window while the form scrolls.</p>
+
+      <form method="post" action="#" novalidate>
+        <div class="cards">
+          <section class="card" aria-labelledby="contact-form">
+            <header class="card-header"><h2 id="contact-form">Contact</h2></header>
+            <div class="card-body fields">
+              <div class="field">
+                <label for="Name">Name</label>
+                <input id="Name" name="Name" type="text" value="Pat Example" autocomplete="name" aria-required="true" data-val-required="Enter a name.">
+                <span class="field-validation-valid"></span>
+              </div>
+              <div class="field">
+                <label for="Email">Email</label>
+                <input id="Email" name="Email" type="email" value="pat@example" class="input-validation-error" aria-invalid="true" aria-describedby="Email-error" aria-required="true" data-val-required="Enter an email address.">
+                <span class="field-validation-error" id="Email-error">Enter an email address like name@example.com.</span>
+              </div>
+              <div class="field">
+                <label for="Phone">Phone</label>
+                <input id="Phone" name="Phone" type="tel" value="+1 555-0142" aria-describedby="Phone-hint">
+                <p class="hint" id="Phone-hint">Include the country code.</p>
+              </div>
+              <fieldset class="field">
+                <legend>Company</legend>
+                <div class="relation">
+                  <input type="hidden" name="CompanyId" value="3">
+                  <a class="related" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#building"></use></svg>Placeholder Logistics</a>
+                  <button class="btn" type="button" commandfor="company-picker" command="show-modal">Change</button>
+                </div>
+              </fieldset>
+              <div class="field">
+                <label for="JobTitle">Job title</label>
+                <input id="JobTitle" name="JobTitle" type="text" value="Head of Examples">
+              </div>
+              <div class="field">
+                <label for="Website">Website</label>
+                <input id="Website" name="Website" type="url" placeholder="https://">
+              </div>
+              <div class="field wide">
+                <label for="Notes">Notes</label>
+                <textarea id="Notes" name="Notes">Prefers email to phone. Met at the Sample Summit; follow up in January about the placeholder order and the invoice address, which changed in October.</textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="preferences-form">
+            <header class="card-header"><h2 id="preferences-form">Preferences</h2></header>
+            <div class="card-body fields">
+              <fieldset class="field choices">
+                <legend>Tags</legend>
+                <div class="options">
+                  <label><input type="checkbox" name="Tags" value="customer" checked> Customer</label>
+                  <label><input type="checkbox" name="Tags" value="supplier"> Supplier</label>
+                  <label><input type="checkbox" name="Tags" value="partner" checked> Partner</label>
+                </div>
+              </fieldset>
+              <div class="field">
+                <label for="Region">Region</label>
+                <select id="Region" name="Region">
+                  <option value="na" selected>North America</option>
+                  <option value="eu">Europe</option>
+                  <option value="ap">Asia Pacific</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="FollowUp">Next follow-up</label>
+                <input id="FollowUp" name="FollowUp" type="date" value="2027-01-11">
+              </div>
+              <div class="field">
+                <label for="Discount">Discount (%)</label>
+                <input id="Discount" name="Discount" type="number" min="0" max="50" value="10" aria-describedby="Discount-hint">
+                <p class="hint" id="Discount-hint">A whole number from 0 to 50.</p>
+              </div>
+              <fieldset class="field">
+                <legend>Newsletter</legend>
+                <label class="switch"><input type="checkbox" role="switch" name="Newsletter" value="true" checked> Receives the newsletter</label>
+              </fieldset>
+            </div>
+          </section>
+        </div>
+
+        <div class="form-actions">
+          <a class="btn ghost" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#copy"></use></svg>Duplicate</a>
+          <button class="btn ghost" type="submit" formaction="#" formnovalidate><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Archive</button>
+          <div class="end">
+            <a class="btn" href="read.html">Cancel</a>
+            <button class="btn primary" type="submit">Save changes</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section class="spec" aria-labelledby="states">
+      <h2 id="states">Field states</h2>
+      <p class="spec-lead">Every state a field can be in. An error that belongs to no single field, such as someone else saving
+        the record first, goes in the summary at the top of the form.</p>
+      <div class="card card-body">
+        <div class="validation-summary-errors">
+          <ul><li>Sam Sample saved this contact while you were editing. Your changes are still here; review them and save again.</li></ul>
+        </div>
+        <div class="fields">
+          <div class="field">
+            <label for="s-hint">With a hint</label>
+            <input id="s-hint" type="text" aria-describedby="s-hint-text">
+            <p class="hint" id="s-hint-text">One short sentence under the control.</p>
+          </div>
+          <div class="field">
+            <label for="s-required">Required</label>
+            <input id="s-required" type="text" aria-required="true">
+          </div>
+          <div class="field">
+            <label for="s-invalid">Invalid</label>
+            <input id="s-invalid" type="text" value="12/31" class="input-validation-error" aria-invalid="true" aria-describedby="s-invalid-error">
+            <span class="field-validation-error" id="s-invalid-error">Enter a date like 2027-01-11.</span>
+          </div>
+          <div class="field">
+            <label for="s-disabled">Disabled</label>
+            <input id="s-disabled" type="text" value="Not editable here" disabled>
+          </div>
+          <div class="field">
+            <label for="s-readonly">Read-only</label>
+            <input id="s-readonly" type="text" value="7" readonly>
+          </div>
+          <fieldset class="field">
+            <legend>No related record yet</legend>
+            <div class="relation">
+              <span class="unset">No company</span>
+              <button class="btn" type="button" commandfor="company-picker" command="show-modal">Choose</button>
+            </div>
+          </fieldset>
+          <div class="field">
+            <label for="s-select-invalid">Invalid select</label>
+            <select id="s-select-invalid" class="input-validation-error" aria-invalid="true" aria-describedby="s-select-error"><option>Choose a region</option></select>
+            <span class="field-validation-error" id="s-select-error">Choose a region.</span>
+          </div>
+          <fieldset class="field">
+            <legend>Switch, off</legend>
+            <label class="switch"><input type="checkbox" role="switch"> Receives the newsletter</label>
+          </fieldset>
+        </div>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="create">
+      <h2 id="create">Create dialog</h2>
+      <p class="spec-lead">A new record starts in a dialog over the list, with only the fields it needs to exist; the rest are on
+        its edit form. The button opens the dialog with <code>commandfor</code> and <code>command="show-modal"</code>, so
+        there is no script. Without HTMX the New contact link opens a create page with the same form instead.</p>
+      <button class="btn primary" type="button" commandfor="new-contact" command="show-modal"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#plus"></use></svg>New contact</button>
+    </section>
+
+    <section class="spec" aria-labelledby="picker">
+      <h2 id="picker">Relation picker</h2>
+      <p class="spec-lead">Change, or Choose, opens a dialog built from the list components: a filter box and a grid with a radio
+        in each row. It lists active records only; an archived company cannot be chosen.</p>
+      <button class="btn" type="button" commandfor="company-picker" command="show-modal">Open the company picker</button>
+    </section>
+
+    <dialog class="dialog" id="new-contact" aria-labelledby="new-contact-title">
+      <form method="dialog"><!-- In the application: method="post" to the create handler. -->
+        <header class="dialog-header">
+          <h2 id="new-contact-title">New contact</h2>
+          <button class="btn ghost icon-only" type="button" commandfor="new-contact" command="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button>
+        </header>
+        <div class="dialog-body fields">
+          <div class="field"><label for="n-name">Name</label><input id="n-name" name="Name" type="text" aria-required="true" autofocus></div>
+          <div class="field"><label for="n-email">Email</label><input id="n-email" name="Email" type="email" aria-required="true"></div>
+          <div class="field"><label for="n-phone">Phone</label><input id="n-phone" name="Phone" type="tel"></div>
+          <div class="field"><label for="n-title">Job title</label><input id="n-title" name="JobTitle" type="text"></div>
+        </div>
+        <footer class="dialog-footer">
+          <button class="btn" type="button" commandfor="new-contact" command="close">Cancel</button>
+          <button class="btn primary" type="submit">Create contact</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="dialog" id="company-picker" aria-labelledby="company-picker-title">
+      <form method="dialog"><!-- In the application: the chosen value goes back to the field; settled with the HTMX wiring. -->
+        <header class="dialog-header">
+          <h2 id="company-picker-title">Choose a company</h2>
+          <button class="btn ghost icon-only" type="button" commandfor="company-picker" command="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button>
+        </header>
+        <div class="dialog-body">
+          <div class="card">
+            <div class="toolbar">
+              <div class="filter-box" role="search">
+                <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#filter"></use></svg>
+                <input type="search" placeholder="Filter companies" aria-label="Filter companies">
+              </div>
+            </div>
+            <table class="grid">
+              <caption class="visually-hidden">Active companies</caption>
+              <thead><tr><th class="select" scope="col"><span class="visually-hidden">Choose</span></th><th scope="col">Company</th><th scope="col" class="num">Contacts</th></tr></thead>
+              <tbody>
+                <tr><td class="select"><input type="radio" name="Pick" id="pick-1" value="1"></td><td class="title"><label for="pick-1">Demo Dairy Co.</label><span class="sub">Food and drink</span></td><td class="num">2</td></tr>
+                <tr><td class="select"><input type="radio" name="Pick" id="pick-2" value="2"></td><td class="title"><label for="pick-2">Fictional Freight</label><span class="sub">Shipping</span></td><td class="num">4</td></tr>
+                <tr><td class="select"><input type="radio" name="Pick" id="pick-3" value="3" checked></td><td class="title"><label for="pick-3">Placeholder Logistics</label><span class="sub">Shipping</span></td><td class="num">6</td></tr>
+                <tr><td class="select"><input type="radio" name="Pick" id="pick-4" value="4"></td><td class="title"><label for="pick-4">Sample &amp; Sons</label><span class="sub">Retail</span></td><td class="num">1</td></tr>
+                <tr><td class="select"><input type="radio" name="Pick" id="pick-5" value="5"></td><td class="title"><label for="pick-5">Testcase Tools</label><span class="sub">Manufacturing</span></td><td class="num">3</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <footer class="dialog-footer">
+          <button class="btn" type="button" commandfor="company-picker" command="close">Cancel</button>
+          <button class="btn primary" type="submit">Choose company</button>
+        </footer>
+      </form>
+    </dialog>
+  </main>
+</div>
+<script src="specimens.js"></script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>History · HTMLX Pages</title>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/base.css">
+  <link rel="stylesheet" href="../../assets/css/shell.css">
+  <link rel="stylesheet" href="../../assets/css/list.css">
+  <link rel="stylesheet" href="../../assets/css/read.css">
+  <link rel="stylesheet" href="../../assets/css/forms.css">
+  <link rel="stylesheet" href="../../assets/css/feedback.css">
+  <link rel="stylesheet" href="../../assets/css/history.css">
+  <link rel="stylesheet" href="specimens.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="app">
+  <header class="app-header">
+    <button class="btn ghost icon-only" type="button" data-action="toggle-nav" aria-label="Main menu" aria-controls="app-nav">
+      <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg>
+    </button>
+    <a class="brand" href="foundations.html">
+      <svg class="brand-mark" aria-hidden="true"><use href="../../assets/icons.svg#logo"></use></svg>
+      HTMLX Pages
+    </a>
+    <div class="end">
+      <button class="btn ghost icon-only" type="button" data-action="toggle-theme" aria-label="Switch between light and dark mode">
+        <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#moon"></use></svg>
+      </button>
+      <span class="avatar" role="img" aria-label="Signed in as Demo User">DU</span>
+    </div>
+  </header>
+
+  <nav class="app-nav" id="app-nav" aria-label="Specimens">
+    <p class="nav-label">Specimens</p>
+    <a href="foundations.html" title="Foundations"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#palette"></use></svg><span>Foundations</span></a>
+    <a href="list.html" title="List"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#list"></use></svg><span>List</span></a>
+    <a href="read.html" title="Read"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg><span>Read</span></a>
+    <a href="forms.html" title="Forms"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg><span>Forms</span></a>
+    <a href="feedback.html" title="Feedback"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#info"></use></svg><span>Feedback</span></a>
+    <a href="history.html" title="History" aria-current="page"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#history"></use></svg><span>History</span></a>
+  </nav>
+
+  <main class="app-main" id="main">
+    <header class="page-header">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="#">Home</a></li><li><a href="list.html">Contacts</a></li><li><a href="read.html">Pat Example</a></li><li><span aria-current="page">History</span></li></ol>
+      </nav>
+      <div class="title-row">
+        <div class="title"><h1>Pat Example</h1><span class="chip success">Active</span><span class="version current">v5</span></div>
+        <div class="btn-group">
+          <button class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Archive</button>
+          <a class="btn primary" href="forms.html"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg>Edit</a>
+        </div>
+      </div>
+      <p class="muted">Head of Examples at Placeholder Logistics · Updated <time datetime="2026-11-07T08:47">today</time> by Demo User</p>
+    </header>
+
+    <section class="spec" aria-labelledby="timeline">
+      <h2 id="timeline" class="visually-hidden">Version history</h2>
+      <p class="spec-lead">The History tab: every version of the record, newest first. Each entry says what happened, who did it and
+        when; open one to see only the fields that changed, before and after. Archive and restore are versions too. Open
+        version 3 and choose Roll back to see the preview.</p>
+
+      <nav class="tabs" aria-label="Contact sections">
+        <a href="read.html">Details</a>
+        <a href="history.html" aria-current="page">History <span class="count">5</span></a>
+      </nav>
+
+      <div class="card card-body">
+        <ol class="timeline" reversed>
+          <li class="current">
+            <details open>
+              <summary>
+                <svg class="icon sm chevron" aria-hidden="true"><use href="../../assets/icons.svg#chevron-right"></use></svg>
+                <span class="version current">v5</span>
+                <span><strong>Edited</strong> Email and Notes</span>
+                <span class="when"><time datetime="2026-11-07T08:47">Today, 08:47</time> by Demo User</span>
+              </summary>
+              <div class="entry-body">
+                <div class="diff-wrap">
+                  <table class="diff">
+                    <caption class="visually-hidden">Changes in version 5</caption>
+                    <thead><tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+                    <tbody>
+                      <tr><th scope="row">Email</th><td><del>pat@placeholder.example</del></td><td><ins>pat@example.com</ins></td></tr>
+                      <tr><th scope="row">Notes</th><td><del>Prefers phone calls in the morning.</del></td><td><ins>Prefers email to phone. Met at the Sample Summit; follow up in January about the placeholder order and the invoice address, which changed in October.</ins></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="muted">This is the current version.</p>
+              </div>
+            </details>
+          </li>
+          <li>
+            <details>
+              <summary>
+                <svg class="icon sm chevron" aria-hidden="true"><use href="../../assets/icons.svg#chevron-right"></use></svg>
+                <span class="version">v4</span>
+                <span><strong>Edited</strong> Phone, Job title and Company</span>
+                <span class="when"><time datetime="2026-11-02T16:05">2 November 2026, 16:05</time> by Sam Sample</span>
+              </summary>
+              <div class="entry-body">
+                <div class="diff-wrap">
+                  <table class="diff">
+                    <caption class="visually-hidden">Changes in version 4</caption>
+                    <thead><tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+                    <tbody>
+                      <tr><th scope="row">Phone</th><td><span class="unset">Not set</span></td><td><ins>+1 555-0142</ins></td></tr>
+                      <tr><th scope="row">Job title</th><td><del>Head of Samples</del></td><td><ins>Head of Examples</ins></td></tr>
+                      <tr><th scope="row">Company</th><td><del>Former Fixtures Inc.</del></td><td><ins>Placeholder Logistics</ins></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="entry-actions">
+                  <a class="btn" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg>View version 4</a>
+                  <a class="btn" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#restore"></use></svg>Roll back to version 4</a>
+                </div>
+              </div>
+            </details>
+          </li>
+          <li>
+            <details>
+              <summary>
+                <svg class="icon sm chevron" aria-hidden="true"><use href="../../assets/icons.svg#chevron-right"></use></svg>
+                <span class="version">v3</span>
+                <span><strong>Restored</strong></span>
+                <span class="when"><time datetime="2026-10-04T10:20">4 October 2026, 10:20</time> by Sam Sample</span>
+              </summary>
+              <div class="entry-body">
+                <div class="diff-wrap">
+                  <table class="diff">
+                    <caption class="visually-hidden">Changes in version 3</caption>
+                    <thead><tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+                    <tbody>
+                      <tr><th scope="row">Status</th><td><del>Archived</del></td><td><ins>Active</ins></td></tr>
+                      <tr><th scope="row">Archived</th><td><del>20 September 2026</del></td><td><span class="unset">Not set</span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="entry-actions">
+                  <a class="btn" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg>View version 3</a>
+                  <button class="btn" type="button" commandfor="rollback-v3" command="show-modal"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#restore"></use></svg>Roll back to version 3</button>
+                </div>
+              </div>
+            </details>
+          </li>
+          <li>
+            <details>
+              <summary>
+                <svg class="icon sm chevron" aria-hidden="true"><use href="../../assets/icons.svg#chevron-right"></use></svg>
+                <span class="version">v2</span>
+                <span><strong>Archived</strong></span>
+                <span class="when"><time datetime="2026-09-20T14:02">20 September 2026, 14:02</time> by Sam Sample</span>
+              </summary>
+              <div class="entry-body">
+                <div class="diff-wrap">
+                  <table class="diff">
+                    <caption class="visually-hidden">Changes in version 2</caption>
+                    <thead><tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+                    <tbody>
+                      <tr><th scope="row">Status</th><td><del>Active</del></td><td><ins>Archived</ins></td></tr>
+                      <tr><th scope="row">Archived</th><td><span class="unset">Not set</span></td><td><ins>20 September 2026</ins></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="entry-actions">
+                  <a class="btn" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg>View version 2</a>
+                </div>
+              </div>
+            </details>
+          </li>
+          <li>
+            <details>
+              <summary>
+                <svg class="icon sm chevron" aria-hidden="true"><use href="../../assets/icons.svg#chevron-right"></use></svg>
+                <span class="version">v1</span>
+                <span><strong>Created</strong></span>
+                <span class="when"><time datetime="2026-03-12T09:14">12 March 2026, 09:14</time> by Demo User</span>
+              </summary>
+              <div class="entry-body">
+                <p class="muted">The first version, with every field as it was entered.</p>
+                <div class="entry-actions">
+                  <a class="btn" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg>View version 1</a>
+                  <a class="btn" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#restore"></use></svg>Roll back to version 1</a>
+                </div>
+              </div>
+            </details>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="badges">
+      <h2 id="badges">Version badges</h2>
+      <p class="spec-lead">A version is its number in the brand violet; the current version is filled. The details page's Record card
+        and the History tab's title show the current one.</p>
+      <div class="card card-body spec-row">
+        <span class="version current">v5</span>
+        <span class="version">v4</span>
+        <span class="version">v3</span>
+        <span class="version">v12</span>
+        <span class="version">v128</span>
+      </div>
+    </section>
+
+    <dialog class="dialog" id="rollback-v3" aria-labelledby="rollback-v3-title">
+      <form method="dialog">
+        <header class="dialog-header">
+          <h2 id="rollback-v3-title">Roll back to version 3?</h2>
+          <button class="btn ghost icon-only" type="button" commandfor="rollback-v3" command="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button>
+        </header>
+        <div class="dialog-body rollback">
+          <p>Pat Example goes back to how it was on 4 October 2026. The roll-back is saved as version 6, so it can be rolled back too.</p>
+          <div class="alert warning">
+            <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#alert"></use></svg>
+            <div class="content"><p><strong>Company stays Placeholder Logistics.</strong> Former Fixtures Inc., the company in version 3, has been deleted.</p></div>
+          </div>
+          <div class="diff-wrap">
+            <table class="diff">
+              <caption class="visually-hidden">What the roll-back changes</caption>
+              <thead><tr><th scope="col">Field</th><th scope="col">Now (v5)</th><th scope="col">After the roll-back</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Email</th><td><del>pat@example.com</del></td><td><ins>pat@placeholder.example</ins></td></tr>
+                <tr><th scope="row">Phone</th><td><del>+1 555-0142</del></td><td><span class="unset">Not set</span></td></tr>
+                <tr><th scope="row">Job title</th><td><del>Head of Examples</del></td><td><ins>Head of Samples</ins></td></tr>
+                <tr><th scope="row">Notes</th><td><del>Prefers email to phone. Met at the Sample Summit; …</del></td><td><ins>Prefers phone calls in the morning.</ins></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <footer class="dialog-footer">
+          <button class="btn" type="button" commandfor="rollback-v3" command="close" autofocus>Cancel</button>
+          <button class="btn primary" type="submit"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#restore"></use></svg>Roll back to version 3</button>
+        </footer>
+      </form>
+    </dialog>
+  </main>
+</div>
+<script src="specimens.js"></script>
+</body>
+</html>
