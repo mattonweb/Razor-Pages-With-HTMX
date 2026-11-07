@@ -1,0 +1,100 @@
+# CLAUDE.md — Razor Pages With HTMX
+
+## Recent changes (attended edits to this file — read, then carry on)
+
+- **2026-11-07 (attended session with Matt): this file was written and the repository set up.** Nothing here has
+  run yet. The solution does not exist until the first session creates it; the layout section below says where.
+
+Orientation for Claude Code sessions in this repository. It is **public** and exists for one purpose: a prototype
+Razor Pages application whose create, read, update, delete and list (CRUDL) operations are made interactive with
+[HTMX](https://htmx.org/), built as the worked example for a presentation on how Razor Pages can be enhanced with
+HTMX. Everything in the tree may be shown on a screen to an audience. Build it so that it reads well that way:
+small, conventional, and explained by its own code and comments rather than by anything outside the repository.
+
+## Working agreement — Matt commits; you never do
+
+All work happens on `main`. There are no feature branches, no pull requests and no pipeline. You change files in the
+working tree, build and test, and stop. **Matt reviews the tree and makes every commit himself, under his own
+identity.** A hook (`.claude/hooks/git-guardrail`, `handback` profile) denies `git commit`, `git push`, `git merge`,
+`git rebase`, `git reset`, forced or destructive forms of the other git commands, and anything that rewrites history.
+If it denies a command you were about to run, that is the agreement working, not a defect: do not look for another
+way to make the same change.
+
+- **End every session with a drafted commit message** in the form the `devops-git-conventions` skill gives
+  (`.claude/skills/devops-git-conventions/references/commit-messages.md`): a Conventional Commits subject of at most
+  72 characters, a body that says why, and a last line that names the verification you ran. Put it in your final
+  message so Matt can paste it. A drafted message with no verification line means the work was not verified, and
+  say so plainly if that is the case.
+- **Leave the tree in a state that builds.** If you must stop midway, say exactly which files are half done.
+- **Never touch files you did not change.** No reformatting passes, no `dotnet format` across the solution unless the
+  session asks for it.
+- **Read-only git is always fine:** `status`, `diff`, `log`, `show`, `branch`.
+
+**This repository is public: nothing private goes into it.** No keys, no credentials, no connection strings, no
+personal data, no reference to any other person's or company's internal systems, and nothing copied from a private
+repository. Sample data is invented and obviously so. If a request would put anything of that kind into the tree,
+decline it and say why.
+
+## Stack
+
+- .NET 10 SDK (10.0.x is installed on this machine) and C# 14, the versions the house C# skill is written for.
+- ASP.NET Core Razor Pages. No Blazor, no MVC controllers, no minimal-API endpoints except where a Razor Page
+  handler genuinely cannot do the job, and then the file says why.
+- HTMX for the interactive CRUDL work: partial page updates from page handlers that return partial views, with the
+  page still working as plain Razor Pages when HTMX is absent (progressive enhancement). Pin HTMX to one exact
+  version and record it in `README.md`.
+- Persistence is whatever the presentation needs and nothing more; an in-memory or SQLite store is the expected
+  shape. Record the choice in `README.md` when it is made.
+- Tests: MSTest, written as the `code-csharp-mstest` skill describes.
+
+## Layout (intended; created by the first session)
+
+```
+src/
+  <Solution>.slnx           one solution file, named in the first session and recorded here
+  <App>/                    the Razor Pages application
+  <App>.Test.Unit/          its unit tests
+  .editorconfig             house copy, see below
+```
+
+Record the names chosen for `<Solution>` and `<App>` in this section in the same session that creates them.
+
+## Skills: reached by junction, owned by Matt
+
+`.claude/skills/` holds 4 Windows junctions, never copies, each gitignored. They point into the public
+[Signalbox](https://github.com/mattonweb/Signalbox) repository, cloned at `C:\Source\Signalbox`; its `REPO-SETUP.md`
+explains the mechanism.
+
+| Skill | What it governs |
+|---|---|
+| `code-software-standards` | The language-neutral half of the house code standards, read before the language skill |
+| `code-csharp-standards` | House C# rules: file layout, type taxonomy, method shape, the 500-line ceiling, allowed language features. Its enforceable half is `src/.editorconfig` plus the analyzers |
+| `code-csharp-mstest` | How tests are written: naming, assertion patterns, structure |
+| `devops-git-conventions` | The commit-message form you draft for Matt. Its branch, pull-request and tag sections do not apply here; this repository has no branches and no pipeline |
+
+⛔ **Matt owns every skill. Never edit a file under `.claude/skills/`**, however wrong it looks; report the defect in
+your final message instead. Each skill there is a Windows junction to another repository, so an edit through it
+lands in that repository's working tree.
+
+**Commit scopes (`devops-git-conventions` section 3): one scope per drafted commit, from this list, or none when the
+change spans the repository.** `web` (the Razor Pages application), `htmx` (the client-side interaction layer and
+its partials), `data` (the store and its models), `tests` (the unit tests), `deps` (package updates), `docs`
+(`README.md` and presentation notes), `skills` (junctions and their gitignore lines), `charter` (this file). A scope
+that is not here is added to this list in its own commit before the commit that uses it; never invented in the
+message.
+
+**The 500-line ceiling (`code-csharp-standards` section 8): the named-exception list for this repository is
+EMPTY**, and the repository starts with no files over it. A file that needs to exceed the ceiling gets its entry
+here, with its line count and a reason, in the same session that creates it.
+
+The house `.editorconfig` (`src/.editorconfig`) and `.gitattributes` are verbatim copies of Signalbox's root files,
+applied 2026-11-07. A copy that differs from Signalbox is drift: it is fixed in Signalbox first, never here.
+
+## Session start
+
+1. `git status` and `git log -1` in this repository, so you know what Matt last committed and whether the tree
+   already holds uncommitted work from an earlier session. **Uncommitted work is Matt's to commit, not yours to
+   discard.** Build on it or ask; never revert it.
+2. Read this file in full. If a tool's behavior disagrees with it, stop that thread and report the surprise in your
+   final message rather than working around it.
+3. If the skills under `.claude/skills/` look stale or missing, say so; Matt pulls Signalbox. Do not pull it yourself.
