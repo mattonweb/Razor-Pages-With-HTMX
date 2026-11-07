@@ -2,6 +2,9 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-07, later (attended session with Matt): the `brand-htmlx-pages` skill was started.** It is a real
+  folder under `.claude/skills/`, the one skill whose home is this repository, and it is a draft: read its status
+  table before building any UI. The skills section, the edit rule and the `skills` scope below now cover it.
 - **2026-11-07 (attended session with Matt): this file was written and the repository set up.** Nothing here has
   run yet. The solution does not exist until the first session creates it; the layout section below says where.
 
@@ -59,27 +62,31 @@ src/
 
 Record the names chosen for `<Solution>` and `<App>` in this section in the same session that creates them.
 
-## Skills: reached by junction, owned by Matt
+## Skills: owned by Matt
 
 `.claude/skills/` holds 4 Windows junctions, never copies, each gitignored. They point into the public
 [Signalbox](https://github.com/mattonweb/Signalbox) repository, cloned at `C:\Source\Signalbox`; its `REPO-SETUP.md`
-explains the mechanism.
+explains the mechanism. It also holds one real folder, `brand-htmlx-pages`, tracked in this repository because the
+brand belongs to this application and to no other.
 
-| Skill | What it governs |
-|---|---|
-| `code-software-standards` | The language-neutral half of the house code standards, read before the language skill |
-| `code-csharp-standards` | House C# rules: file layout, type taxonomy, method shape, the 500-line ceiling, allowed language features. Its enforceable half is `src/.editorconfig` plus the analyzers |
-| `code-csharp-mstest` | How tests are written: naming, assertion patterns, structure |
-| `devops-git-conventions` | The commit-message form you draft for Matt. Its branch, pull-request and tag sections do not apply here; this repository has no branches and no pipeline |
+| Skill | Home | What it governs |
+|---|---|---|
+| `code-software-standards` | Signalbox | The language-neutral half of the house code standards, read before the language skill |
+| `code-csharp-standards` | Signalbox | House C# rules: file layout, type taxonomy, method shape, the 500-line ceiling, allowed language features. Its enforceable half is `src/.editorconfig` plus the analyzers |
+| `code-csharp-mstest` | Signalbox | How tests are written: naming, assertion patterns, structure |
+| `devops-git-conventions` | Signalbox | The commit-message form you draft for Matt. Its branch, pull-request and tag sections do not apply here; this repository has no branches and no pipeline |
+| `brand-htmlx-pages` | this repository | The HTMLX Pages brand: tokens, CSS, icons and the markup of every UI component, with specimen pages. A draft; its status table says which groups are settled |
 
-⛔ **Matt owns every skill. Never edit a file under `.claude/skills/`**, however wrong it looks; report the defect in
-your final message instead. Each skill there is a Windows junction to another repository, so an edit through it
-lands in that repository's working tree.
+⛔ **Matt owns every skill. Never edit a file inside one of the four junctions**, however wrong it looks; report the
+defect in your final message instead. An edit through a junction lands in Signalbox's working tree.
+`brand-htmlx-pages` is Matt's too, and changes only in a session he attends; an unattended session that finds it
+wrong reports the defect and leaves it.
 
 **Commit scopes (`devops-git-conventions` section 3): one scope per drafted commit, from this list, or none when the
 change spans the repository.** `web` (the Razor Pages application), `htmx` (the client-side interaction layer and
 its partials), `data` (the store and its models), `tests` (the unit tests), `deps` (package updates), `docs`
-(`README.md` and presentation notes), `skills` (junctions and their gitignore lines), `charter` (this file). A scope
+(`README.md` and presentation notes), `skills` (the `brand-htmlx-pages` skill, the junctions and their gitignore
+lines), `charter` (this file). A scope
 that is not here is added to this list in its own commit before the commit that uses it; never invented in the
 message.
 
@@ -97,4 +104,5 @@ applied 2026-11-07. A copy that differs from Signalbox is drift: it is fixed in 
    discard.** Build on it or ask; never revert it.
 2. Read this file in full. If a tool's behavior disagrees with it, stop that thread and report the surprise in your
    final message rather than working around it.
-3. If the skills under `.claude/skills/` look stale or missing, say so; Matt pulls Signalbox. Do not pull it yourself.
+3. If the junctioned skills under `.claude/skills/` look stale or missing, say so; Matt pulls Signalbox. Do not pull
+   it yourself.
