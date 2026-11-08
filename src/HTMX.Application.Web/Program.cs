@@ -31,12 +31,17 @@ public static class Program
     }
 
     /// <summary>
-    /// Registers Razor Pages and the customers adapter, which owns the database.
+    /// Registers Razor Pages, with every URL they write in lower case, and the customers adapter, which owns the
+    /// database.
     /// </summary>
     /// <param name="services">The application's service collection.</param>
     private static void AddServices(IServiceCollection services)
     {
         services.AddRazorPages();
+
+        // Links and form actions come out as /organizations, not /Organizations; a request matches either way.
+        // Query string values keep their case (LowercaseQueryStrings stays off), so a filter keeps its capitals.
+        services.AddRouting(static options => options.LowercaseUrls = true);
 
         CustomersOptions customers = new CustomersOptions
         {
@@ -53,7 +58,7 @@ public static class Program
     {
         if (!application.Environment.IsDevelopment())
         {
-            application.UseExceptionHandler("/Error");
+            application.UseExceptionHandler("/error");
             application.UseHsts();
         }
 

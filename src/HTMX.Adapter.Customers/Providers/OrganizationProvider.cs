@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data;
+using HTMX.Adapter.Customers.DTOs;
 using HTMX.Adapter.Customers.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -49,23 +50,55 @@ internal sealed class OrganizationProvider
     }
 
     /// <summary>
-    /// Reads one page of organizations, filtered, narrowed by status and sorted, each with its number of contacts.
+    /// Reads how the list sorts the organization a cursor names: its value in every sortable column.
     /// </summary>
-    /// <param name="request">The filter, status, sort and page to read.</param>
-    /// <param name="cancellationToken">Signals that the caller no longer needs the page.</param>
-    /// <returns>The organizations on the page, in order.</returns>
+    /// <param name="id">The organization's identifier.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the values.</param>
+    /// <returns>The values, or <see langword="null"/> when no organization has the identifier.</returns>
+    public Task<OrganizationSortKey?> FindSortKeyAsync(OrganizationId id, CancellationToken cancellationToken = default)
+    {
+        IQueryable<Contact> contacts = this._context.Set<Contact>();
+        IQueryable<Organization> organizations = this._context.Set<Organization>();
+        return organizations
+            .Where(organization => organization.Id == id)
+            .Select(organization => new OrganizationSortKey
+            {
+                Id = organization.Id,
+                Name = organization.Name,
+                Industry = organization.Industry,
+                Contacts = new RecordCount(contacts.Count(contact => contact.OrganizationId == organization.Id)),
+                LastModifiedOn = organization.LastModifiedOn,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Reads organizations, filtered, narrowed by status and sorted, each with its number of contacts, starting just
+    /// past a cursor's organization. A page before its cursor is read backwards from it, nearest first.
+    /// </summary>
+    /// <param name="request">The filter, status, sort and cursor to read.</param>
+    /// <param name="cursorKey">How the list sorts the cursor's organization, or <see langword="null"/> to start at the
+    /// beginning.</param>
+    /// <param name="limit">How many organizations to read at most.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the organizations.</param>
+    /// <returns>The organizations, in the order they were read.</returns>
     public Task<OrganizationSummary[]> ListAsync(
         OrganizationCollectionRequest request,
+        OrganizationSortKey? cursorKey,
+        RecordCount limit,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         IQueryable<Contact> contacts = this._context.Set<Contact>();
         IQueryable<Organization> matching = this.Match(request.Filter, request.Status);
-        IOrderedQueryable<Organization> sorted = Sort(matching, contacts, request.Sort, request.Direction);
-        int skipped = (request.Page.Value - 1) * request.PageSize.Value;
-        return sorted
-            .Skip(skipped)
-            .Take(request.PageSize.Value)
+        SortDirection direction = ReadDirection(request);
+        if (cursorKey is not null)
+        {
+            matching = matching.Where(Beyond(cursorKey, contacts, request.Sort, direction));
+        }
+
+        return Sort(matching, contacts, request.Sort, direction)
+            .Take(limit.Value)
             .Select(organization => new OrganizationSummary
             {
                 Id = organization.Id,
@@ -80,7 +113,125 @@ internal sealed class OrganizationProvider
     }
 
     /// <summary>
-    /// Sorts organizations by a column, then by identifier so that ties keep one order from page to page.
+    /// Says which way to read: the list's own order, or its reverse for a page before the cursor.
+    /// </summary>
+    /// <param name="request">The request, with the list's order and the cursor's position.</param>
+    /// <returns>The direction to read in.</returns>
+    private static SortDirection ReadDirection(OrganizationCollectionRequest request)
+    {
+        if (request.Cursor?.Position != CursorPosition.Before)
+        {
+            return request.Direction;
+        }
+
+        return request.Direction == SortDirection.Ascending ? SortDirection.Descending : SortDirection.Ascending;
+    }
+
+    /// <summary>
+    /// Keeps the organizations that come after the cursor's in the order the page is read: the seek of key-based
+    /// paging.
+    /// </summary>
+    /// <param name="key">How the list sorts the cursor's organization.</param>
+    /// <param name="contacts">Every contact, which the Contacts column counts.</param>
+    /// <param name="column">What the list is sorted by.</param>
+    /// <param name="direction">Which way the page is read.</param>
+    /// <returns>The condition.</returns>
+    private static Expression<Func<Organization, bool>> Beyond(
+        OrganizationSortKey key,
+        IQueryable<Contact> contacts,
+        OrganizationSortColumn column,
+        SortDirection direction)
+    {
+        return direction == SortDirection.Descending
+            ? Earlier(key, contacts, column)
+            : Later(key, contacts, column);
+    }
+
+    /// <summary>
+    /// Keeps the organizations that come after the key when the list is read smallest first: a greater value in the
+    /// sorted column, or the same value and a greater identifier.
+    /// </summary>
+    /// <remarks>
+    /// Each condition says "at least the key's value, and then past the key", rather than "a greater value, or the same
+    /// value and a greater identifier". The first half alone is a range that the index on the column and the
+    /// identifier can seek to; the second half only settles the ties at its edge. LINQ cannot compare two columns as a
+    /// pair, so the pair is written out. The comparisons are on the wrapped values themselves, which Entity Framework
+    /// turns into SQL on the bare columns; a cast to the stored type would become a SQL CAST, and the database would
+    /// read the index from its start instead of seeking. Contacts is a count worked out for every organization, which
+    /// no index can hold: its condition is right, but the database reads every organization to answer it.
+    /// </remarks>
+    /// <param name="key">How the list sorts the cursor's organization.</param>
+    /// <param name="contacts">Every contact, which the Contacts column counts.</param>
+    /// <param name="column">What the list is sorted by.</param>
+    /// <returns>The condition.</returns>
+    private static Expression<Func<Organization, bool>> Later(
+        OrganizationSortKey key,
+        IQueryable<Contact> contacts,
+        OrganizationSortColumn column)
+    {
+        OrganizationId id = key.Id;
+        OrganizationName name = key.Name;
+        Industry industry = key.Industry;
+        int contactCount = key.Contacts.Value;
+        DateTime changed = key.LastModifiedOn;
+        return column switch
+        {
+            OrganizationSortColumn.Industry =>
+                organization => organization.Industry >= industry
+                    && (organization.Industry > industry || organization.Id > id),
+            OrganizationSortColumn.Contacts =>
+                organization => contacts.Count(contact => contact.OrganizationId == organization.Id) >= contactCount
+                    && (contacts.Count(contact => contact.OrganizationId == organization.Id) > contactCount
+                        || organization.Id > id),
+            OrganizationSortColumn.Updated =>
+                organization => organization.LastModifiedOn >= changed
+                    && (organization.LastModifiedOn > changed || organization.Id > id),
+            _ =>
+                organization => organization.Name >= name
+                    && (organization.Name > name || organization.Id > id),
+        };
+    }
+
+    /// <summary>
+    /// Keeps the organizations that come after the key when the list is read largest first: a smaller value in the
+    /// sorted column, or the same value and a smaller identifier. The conditions are <see cref="Later"/>'s, turned
+    /// round.
+    /// </summary>
+    /// <param name="key">How the list sorts the cursor's organization.</param>
+    /// <param name="contacts">Every contact, which the Contacts column counts.</param>
+    /// <param name="column">What the list is sorted by.</param>
+    /// <returns>The condition.</returns>
+    private static Expression<Func<Organization, bool>> Earlier(
+        OrganizationSortKey key,
+        IQueryable<Contact> contacts,
+        OrganizationSortColumn column)
+    {
+        OrganizationId id = key.Id;
+        OrganizationName name = key.Name;
+        Industry industry = key.Industry;
+        int contactCount = key.Contacts.Value;
+        DateTime changed = key.LastModifiedOn;
+        return column switch
+        {
+            OrganizationSortColumn.Industry =>
+                organization => organization.Industry <= industry
+                    && (organization.Industry < industry || organization.Id < id),
+            OrganizationSortColumn.Contacts =>
+                organization => contacts.Count(contact => contact.OrganizationId == organization.Id) <= contactCount
+                    && (contacts.Count(contact => contact.OrganizationId == organization.Id) < contactCount
+                        || organization.Id < id),
+            OrganizationSortColumn.Updated =>
+                organization => organization.LastModifiedOn <= changed
+                    && (organization.LastModifiedOn < changed || organization.Id < id),
+            _ =>
+                organization => organization.Name <= name
+                    && (organization.Name < name || organization.Id < id),
+        };
+    }
+
+    /// <summary>
+    /// Sorts organizations by a column, then by identifier in the same direction, so that ties keep one order from page
+    /// to page and an index on the column and the identifier can give the whole order.
     /// </summary>
     /// <param name="organizations">The organizations to sort.</param>
     /// <param name="contacts">Every contact, which the Contacts column counts.</param>
@@ -107,7 +258,9 @@ internal sealed class OrganizationProvider
             _ =>
                 OrderBy(organizations, static organization => organization.Name, direction),
         };
-        return sorted.ThenBy(static organization => organization.Id);
+        return direction == SortDirection.Descending
+            ? sorted.ThenByDescending(static organization => organization.Id)
+            : sorted.ThenBy(static organization => organization.Id);
     }
 
     /// <summary>

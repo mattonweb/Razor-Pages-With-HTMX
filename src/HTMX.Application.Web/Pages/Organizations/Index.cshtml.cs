@@ -14,16 +14,47 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 /// <summary>
 /// The list of organizations: filtered, narrowed by status, sorted and paged, all through the query string, so every
-/// view of the list has its own URL and the page works without HTMX.
+/// view of the list has its own URL and the page works without HTMX. Paging is key-based: Next and Previous name the
+/// organization the next page starts after, or the previous page ends before, never a page number.
 /// </summary>
 public sealed class IndexModel : PageModel
 {
-    private const string FilterKey = "filter";
-    private const string StatusKey = "status";
-    private const string SortKey = "sort";
-    private const string DirectionKey = "direction";
-    private const string PageNumberKey = "pageNumber";
-    private const string PageSizeKey = "pageSize";
+    /// <summary>
+    /// The query string name of the text the names must contain. Every name is short and lower case, like the URLs
+    /// the application writes.
+    /// </summary>
+    public const string FilterKey = "filter";
+
+    /// <summary>
+    /// The query string name of which organizations to show: active, archived or all.
+    /// </summary>
+    public const string StatusKey = "status";
+
+    /// <summary>
+    /// The query string name of the column to sort by.
+    /// </summary>
+    public const string SortKey = "sort";
+
+    /// <summary>
+    /// The query string name of which way to sort: ascending or descending.
+    /// </summary>
+    public const string DirectionKey = "dir";
+
+    /// <summary>
+    /// The query string name of the organization the page starts after: where Next goes.
+    /// </summary>
+    public const string AfterKey = "after";
+
+    /// <summary>
+    /// The query string name of the organization the page ends before: where Previous goes.
+    /// </summary>
+    public const string BeforeKey = "before";
+
+    /// <summary>
+    /// The query string name of how many organizations a page holds.
+    /// </summary>
+    public const string PageSizeKey = "size";
+
     private const int DefaultPageSize = 10;
     private const string ListPartial = "_OrganizationList";
 
@@ -122,15 +153,15 @@ public sealed class IndexModel : PageModel
 
     /// <summary>
     /// Builds the query string for a link to another view of the list: this one, with the changes given. A link that
-    /// changes the status starts again at the first page; only the pager passes a page.
+    /// changes the status starts again at the first page; only the pager passes a cursor.
     /// </summary>
     /// <param name="status">The status to show instead, if any.</param>
-    /// <param name="page">The page to show instead, if any.</param>
+    /// <param name="cursor">Where the page to show lies, for the pager's Previous and Next.</param>
     /// <param name="withoutFilter">Whether the link clears the filter.</param>
     /// <returns>The query string values, leaving out every value that is the default.</returns>
     public Dictionary<string, string> RouteValues(
         RecordStatus? status = null,
-        PageNumber? page = null,
+        OrganizationCursor? cursor = null,
         bool withoutFilter = false)
     {
         OrganizationCollectionRequest current = this.Organizations.Request;
@@ -139,7 +170,8 @@ public sealed class IndexModel : PageModel
         AddUnlessDefault(values, StatusKey, Name(status ?? current.Status), Name(RecordStatus.Active));
         AddUnlessDefault(values, SortKey, Name(current.Sort), Name(OrganizationSortColumn.Name));
         AddUnlessDefault(values, DirectionKey, Name(current.Direction), Name(SortDirection.Ascending));
-        AddUnlessDefault(values, PageNumberKey, page?.Value.ToString(CultureInfo.InvariantCulture), "1");
+        AddUnlessDefault(values, AfterKey, CursorId(cursor, CursorPosition.After), null);
+        AddUnlessDefault(values, BeforeKey, CursorId(cursor, CursorPosition.Before), null);
         AddUnlessDefault(values, PageSizeKey, Number(current.PageSize.Value), Number(DefaultPageSize));
         return values;
     }
@@ -203,9 +235,47 @@ public sealed class IndexModel : PageModel
             Status = ParseOrDefault(input.Status, RecordStatus.Active),
             Sort = ParseOrDefault(input.Sort, OrganizationSortColumn.Name),
             Direction = ParseOrDefault(input.Direction, SortDirection.Ascending),
-            Page = new PageNumber(Math.Max(1, input.PageNumber ?? 1)),
+            Cursor = CreateCursor(input),
             PageSize = ChoosePageSize(input.PageSize),
         };
+    }
+
+    /// <summary>
+    /// Reads where the page lies from the query string: after one organization, before one, or, with neither, at the
+    /// start. An identifier that names no organization is the service's to deal with; it shows the first page.
+    /// </summary>
+    /// <param name="input">The query string, as bound.</param>
+    /// <returns>The cursor, or <see langword="null"/> for the first page.</returns>
+    private static OrganizationCursor? CreateCursor(InputModel input)
+    {
+        if (input.After is long after)
+        {
+            return new OrganizationCursor(new OrganizationId(after), CursorPosition.After);
+        }
+
+        if (input.Before is long before)
+        {
+            return new OrganizationCursor(new OrganizationId(before), CursorPosition.Before);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Writes a cursor's organization as it appears in a URL, when the cursor lies on the side given.
+    /// </summary>
+    /// <param name="cursor">The cursor, if any.</param>
+    /// <param name="position">The side the value is for: after or before.</param>
+    /// <returns>The identifier, or <see langword="null"/> when there is no cursor on that side.</returns>
+    private static string? CursorId(OrganizationCursor? cursor, CursorPosition position)
+    {
+        if (cursor is not OrganizationCursor named || named.Position != position)
+        {
+            return null;
+        }
+
+        long id = named.Id.Value;
+        return id.ToString(CultureInfo.InvariantCulture);
     }
 
     /// <summary>
@@ -312,18 +382,25 @@ public sealed class IndexModel : PageModel
         public string? Sort { get; set; }
 
         /// <summary>
-        /// Gets or sets which way to sort: ascending or descending.
+        /// Gets or sets which way to sort: ascending or descending. The query string calls it dir.
         /// </summary>
+        [FromQuery(Name = DirectionKey)]
         public string? Direction { get; set; }
 
         /// <summary>
-        /// Gets or sets which page to show, from 1.
+        /// Gets or sets the identifier of the organization the page starts after, for Next.
         /// </summary>
-        public int? PageNumber { get; set; }
+        public long? After { get; set; }
 
         /// <summary>
-        /// Gets or sets how many organizations a page holds: 10, 25, 50 or 100.
+        /// Gets or sets the identifier of the organization the page ends before, for Previous.
         /// </summary>
+        public long? Before { get; set; }
+
+        /// <summary>
+        /// Gets or sets how many organizations a page holds: 10, 25, 50 or 100. The query string calls it size.
+        /// </summary>
+        [FromQuery(Name = PageSizeKey)]
         public int? PageSize { get; set; }
     }
 }

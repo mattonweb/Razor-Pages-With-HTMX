@@ -64,6 +64,17 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   page handler then returns the card's partial view instead of the whole page. Two HTMX 4 rules shape the markup: an
   attribute reaches an element's descendants only when written with `:inherited` (`hx-boost:inherited="true"`), and the
   scripts load in `<head>`, because the back button swaps in a whole new body.
+- **Paging is key-based** (also called keyset or seek paging), the pattern that stays fast however deep a list goes.
+  Next and Previous name the organization the page starts after or ends before, `?after=10459` or `?before=10001`,
+  never a page number. The database seeks to that organization through an index on the sorted column and the
+  identifier, where an offset would read and throw away every row before the page. A page is read one row longer than
+  it shows, which says whether there is a next page without counting. A cursor doesn't know where in the list its page
+  starts, so the pager shows the rows on the page and the total ("Showing 10 of 949"). A cursor whose organization is
+  gone starts again at the first page. Sorting by Contacts pages the same way but cannot use an index, because the
+  count is worked out for each organization. With 1,000 rows in memory the difference cannot be measured; the demo
+  pages this way because it is the pattern to copy.
+- **Every URL is lower case** (`/organizations`), and the list's query string uses short names: `filter`, `status`,
+  `sort`, `dir`, `size`, `after` and `before`.
 
 ## License
 

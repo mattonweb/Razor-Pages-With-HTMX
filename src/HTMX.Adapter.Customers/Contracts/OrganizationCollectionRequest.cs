@@ -26,9 +26,10 @@ public sealed record OrganizationCollectionRequest
     required public SortDirection Direction { get; init; }
 
     /// <summary>
-    /// Gets which page to show. A page past the last shows the last.
+    /// Gets where the page lies, just after or just before one organization, or <see langword="null"/> for the first
+    /// page.
     /// </summary>
-    required public PageNumber Page { get; init; }
+    public OrganizationCursor? Cursor { get; init; }
 
     /// <summary>
     /// Gets how many organizations a page holds.

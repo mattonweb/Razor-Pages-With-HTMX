@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 internal sealed class OrganizationMapping : IEntityTypeConfiguration<Organization>
 {
     /// <summary>
-    /// Names the table, makes names unique however they are capitalized, makes the version number refuse a save from
-    /// an out-of-date form, and points the three "by" columns at users.
+    /// Names the table, makes names unique however they are capitalized, indexes the columns the list sorts by, makes
+    /// the version number refuse a save from an out-of-date form, and points the three "by" columns at users.
     /// </summary>
     /// <param name="builder">The builder for the organization entity.</param>
     public void Configure(EntityTypeBuilder<Organization> builder)
@@ -27,6 +27,12 @@ internal sealed class OrganizationMapping : IEntityTypeConfiguration<Organizatio
         // NOCASE, as for usernames: Placeholder Logistics and PLACEHOLDER LOGISTICS are the same organization.
         builder.Property(static organization => organization.Name).UseCollation("NOCASE");
         builder.HasIndex(static organization => organization.Name).IsUnique();
+
+        // Key-based paging seeks to a value in the sorted column and then settles ties on the identifier, so each
+        // sortable column has an index on the pair. Name needs no second index: names never tie, so its unique index
+        // already gives the whole order. Contacts is a count, not a column, and no index can hold it.
+        builder.HasIndex(static organization => new { organization.Industry, organization.Id });
+        builder.HasIndex(static organization => new { organization.LastModifiedOn, organization.Id });
 
         builder.Property(static organization => organization.Version).IsConcurrencyToken();
 

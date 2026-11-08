@@ -1,5 +1,6 @@
 namespace HTMX.Test.Unit.Application.Web.Pages.Organizations;
 
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
@@ -119,7 +120,6 @@ public sealed class IndexModelTests
             Status = "deleted",
             Sort = "7",
             Direction = "sideways",
-            PageNumber = -3,
             PageSize = 33,
         };
 
@@ -146,14 +146,82 @@ public sealed class IndexModelTests
             SortDirection.Ascending,
             request.Direction,
             "An unknown direction should fall back to Ascending.");
-        Assert.AreEqual(
-            1,
-            request.Page.Value,
-            "A page below 1 should fall back to 1.");
+        Assert.IsNull(
+            request.Cursor,
+            "With neither after nor before, the page should ask for the first page.");
         Assert.AreEqual(
             10,
             request.PageSize.Value,
             "A page size the select does not offer should fall back to 10.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an organization named in the query string's after value becomes the cursor the page
+    /// asks the service for, as the Next link needs.
+    /// </summary>
+    [TestMethod]
+    public async Task OnGetAsync_AfterValue_AsksForThePageAfterIt()
+    {
+        // Arrange (Given)
+        StubOrganizationService service = new StubOrganizationService();
+        IndexModel page = CreatePage(service, HtmxRequest.Partial);
+        page.Input = new IndexModel.InputModel
+        {
+            After = 10100,
+        };
+        OrganizationCursor expected = new OrganizationCursor(new OrganizationId(10100), CursorPosition.After);
+
+        // Act (When)
+        await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
+        OrganizationCollectionRequest? request = service.LastRequest();
+
+        // Assert (Then)
+        Assert.IsNotNull(
+            request,
+            "The page should ask the service for a list.");
+        Assert.AreEqual(
+            expected,
+            request.Cursor,
+            "The page should ask for the organizations after 10100.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that the links the page writes use the short query string names: dir, after and size.
+    /// </summary>
+    [TestMethod]
+    public async Task RouteValues_CursorAndChoices_UsesShortQueryNames()
+    {
+        // Arrange (Given)
+        StubOrganizationService service = new StubOrganizationService();
+        IndexModel page = CreatePage(service, HtmxRequest.None);
+        page.Input = new IndexModel.InputModel
+        {
+            Direction = "descending",
+            PageSize = 25,
+        };
+        OrganizationCursor next = new OrganizationCursor(new OrganizationId(10100), CursorPosition.After);
+        await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // Act (When)
+        Dictionary<string, string> values = page.RouteValues(cursor: next);
+
+        // Assert (Then)
+        CollectionAssert.AreEquivalent(
+            new[] { "dir", "after", "size" },
+            values.Keys,
+            "Only the values that differ from the defaults should be written, under their short names.");
+        Assert.AreEqual(
+            "descending",
+            values["dir"],
+            "The direction should be written as dir.");
+        Assert.AreEqual(
+            "10100",
+            values["after"],
+            "The cursor should be written as after.");
+        Assert.AreEqual(
+            "25",
+            values["size"],
+            "The page size should be written as size.");
     }
 
     #endregion Public Methods

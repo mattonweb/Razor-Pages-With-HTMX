@@ -4,9 +4,6 @@
 @{
     OrganizationCollectionResponse list = Model.Organizations;
     OrganizationCollectionRequest current = list.Request;
-    int first = ((current.Page.Value - 1) * current.PageSize.Value) + 1;
-    int last = first + list.Items.Length - 1;
-    bool hasNext = last < list.Matching.Value;
 }
 @* Every link and form in the card loads over HTMX: the response replaces the card itself, the URL follows, and
    the card shows the busy bar while a request is in flight. In HTMX 4 an attribute reaches the card's descendants
@@ -20,14 +17,14 @@
         <form class="filter-box" role="search" method="get">
             <svg class="icon" aria-hidden="true"><use href="/icons.svg#filter"></use></svg>
             @* As you type, 300ms after the last key; the id lets HTMX keep the cursor in the box across the swap. *@
-            <input type="search" id="organization-filter" name="filter" value="@current.Filter?.Value"
+            <input type="search" id="organization-filter" name="@IndexModel.FilterKey" value="@current.Filter?.Value"
                    placeholder="Filter organizations" aria-label="Filter organizations"
                    hx-get="@Url.Page("./Index")" hx-trigger="input changed delay:300ms, search" hx-include="closest form"
                    hx-push-url="true">
-            <input type="hidden" name="status" value="@current.Status.ToString().ToLowerInvariant()">
-            <input type="hidden" name="sort" value="@current.Sort.ToString().ToLowerInvariant()">
-            <input type="hidden" name="direction" value="@current.Direction.ToString().ToLowerInvariant()">
-            <input type="hidden" name="pageSize" value="@current.PageSize.Value">
+            <input type="hidden" name="@IndexModel.StatusKey" value="@current.Status.ToString().ToLowerInvariant()">
+            <input type="hidden" name="@IndexModel.SortKey" value="@current.Sort.ToString().ToLowerInvariant()">
+            <input type="hidden" name="@IndexModel.DirectionKey" value="@current.Direction.ToString().ToLowerInvariant()">
+            <input type="hidden" name="@IndexModel.PageSizeKey" value="@current.PageSize.Value">
         </form>
         <nav class="segmented" aria-label="Show">
             <a asp-page="./Index" asp-all-route-data="Model.RouteValues(status: RecordStatus.Active)"
@@ -78,7 +75,7 @@
                         <tr class="@(current.Status == RecordStatus.All && organization.ArchivedOn is not null ? "archived" : null)">
                             <td class="title">
                                 @* A link to the organization leaves the list, so it is a normal link, not a swap. *@
-                                <a href="/Organizations/@organization.Id.Value" hx-boost="false">@organization.Name.Value</a>
+                                <a href="/organizations/@organization.Id.Value" hx-boost="false">@organization.Name.Value</a>
                                 @if (organization.Website is WebAddress website)
                                 {
                                     <span class="sub">@IndexModel.WebsiteHost(website)</span>
@@ -103,20 +100,22 @@
             </table>
         </div>
 
+        @* Key-based paging knows the total and whether there is a page either side, not where in the list this page
+           starts, so the summary gives the count shown and the total. *@
         <footer class="pager">
-            <p class="summary">Showing <strong>@first.ToString("N0", CultureInfo.CurrentCulture)–@last.ToString("N0", CultureInfo.CurrentCulture)</strong> of <strong>@list.Matching.Value.ToString("N0", CultureInfo.CurrentCulture)</strong></p>
+            <p class="summary">Showing <strong>@list.Items.Length.ToString("N0", CultureInfo.CurrentCulture)</strong> of <strong>@list.Matching.Value.ToString("N0", CultureInfo.CurrentCulture)</strong></p>
             <nav class="pages" aria-label="Pages">
-                @if (current.Page.Value > 1)
+                @if (list.Previous is OrganizationCursor previous)
                 {
-                    <a class="btn" rel="prev" asp-page="./Index" asp-all-route-data="Model.RouteValues(page: new PageNumber(current.Page.Value - 1))"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-left"></use></svg>Previous</a>
+                    <a class="btn" rel="prev" asp-page="./Index" asp-all-route-data="Model.RouteValues(cursor: previous)"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-left"></use></svg>Previous</a>
                 }
                 else
                 {
                     <span class="btn" aria-disabled="true"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-left"></use></svg>Previous</span>
                 }
-                @if (hasNext)
+                @if (list.Next is OrganizationCursor next)
                 {
-                    <a class="btn" rel="next" asp-page="./Index" asp-all-route-data="Model.RouteValues(page: new PageNumber(current.Page.Value + 1))">Next<svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-right"></use></svg></a>
+                    <a class="btn" rel="next" asp-page="./Index" asp-all-route-data="Model.RouteValues(cursor: next)">Next<svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-right"></use></svg></a>
                 }
                 else
                 {
@@ -124,13 +123,18 @@
                 }
             </nav>
             @* The brand's Rows per page form has no button: HTMX sends it when the select changes. *@
+            @* A new page size keeps the page where it is: the cursor rides along. *@
             <form class="page-size" method="get" hx-get="@Url.Page("./Index")" hx-trigger="change" hx-push-url="true">
-                <input type="hidden" name="filter" value="@current.Filter?.Value">
-                <input type="hidden" name="status" value="@current.Status.ToString().ToLowerInvariant()">
-                <input type="hidden" name="sort" value="@current.Sort.ToString().ToLowerInvariant()">
-                <input type="hidden" name="direction" value="@current.Direction.ToString().ToLowerInvariant()">
+                <input type="hidden" name="@IndexModel.FilterKey" value="@current.Filter?.Value">
+                <input type="hidden" name="@IndexModel.StatusKey" value="@current.Status.ToString().ToLowerInvariant()">
+                <input type="hidden" name="@IndexModel.SortKey" value="@current.Sort.ToString().ToLowerInvariant()">
+                <input type="hidden" name="@IndexModel.DirectionKey" value="@current.Direction.ToString().ToLowerInvariant()">
+                @if (current.Cursor is OrganizationCursor cursor)
+                {
+                    <input type="hidden" name="@(cursor.Position == CursorPosition.After ? IndexModel.AfterKey : IndexModel.BeforeKey)" value="@cursor.Id.Value">
+                }
                 <label for="page-size">Rows per page</label>
-                <select id="page-size" name="pageSize">
+                <select id="page-size" name="@IndexModel.PageSizeKey">
                     @foreach (int size in Model.PageSizeOptions)
                     {
                         <option value="@size" selected="@(size == current.PageSize.Value)">@size</option>
