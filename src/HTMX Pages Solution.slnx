@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="HTMX.Adapter.Contacts/HTMX.Adapter.Contacts.csproj" />
   <Project Path="HTMX.Application.Web/HTMX.Application.Web.csproj" />
   <Project Path="HTMX.Test.Unit/HTMX.Test.Unit.csproj" />
 </Solution>

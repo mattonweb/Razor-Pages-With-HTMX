@@ -1,7 +1,7 @@
-namespace HTMX.Test.Unit.Application.Web.Entities;
+namespace HTMX.Test.Unit.Adapter.Contacts.Configuration;
 
 using System;
-using HTMX.Application.Web.Entities;
+using HTMX.Adapter.Contacts.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>

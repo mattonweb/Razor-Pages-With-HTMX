@@ -1,23 +1,20 @@
 namespace HTMX.Application.Web;
 
-using System;
-using HTMX.Application.Web.Data;
-using HTMX.Application.Web.Entities;
+using HTMX.Adapter.Contacts;
+using HTMX.Adapter.Contacts.Configuration;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 /// <summary>
-/// The application's entry point and composition root: it registers the services, creates the database and builds
-/// the request pipeline.
+/// The application's entry point and composition root: it registers the services and builds the request pipeline.
 /// </summary>
 public static class Program
 {
     /// <summary>
-    /// The name of the application's in-memory database, which is created empty each time the application starts.
+    /// The name of the contacts adapter's in-memory database, which is created each time the application starts.
     /// </summary>
-    private static readonly DatabaseName ApplicationDatabaseName = new DatabaseName("HtmxPages");
+    private static readonly DatabaseName ContactsDatabaseName = new DatabaseName("Contacts");
 
     /// <summary>
     /// Starts the application and runs it until it is stopped.
@@ -29,46 +26,23 @@ public static class Program
         AddServices(builder.Services);
 
         WebApplication application = builder.Build();
-        CreateDatabase(application.Services);
         UsePipeline(application);
         application.Run();
     }
 
     /// <summary>
-    /// Registers Razor Pages, the in-memory database and the context that reads and writes it.
+    /// Registers Razor Pages and the contacts adapter, which owns the database.
     /// </summary>
     /// <param name="services">The application's service collection.</param>
     private static void AddServices(IServiceCollection services)
     {
         services.AddRazorPages();
 
-        // A singleton made by a factory, so the container disposes it, and so the database, when the application stops.
-        services.AddSingleton(_ => new InMemoryDatabase(ApplicationDatabaseName));
-        services.AddDbContext<ApplicationDatabaseContext>(ConfigureContext);
-    }
-
-    /// <summary>
-    /// Points a new context at the application's in-memory database.
-    /// </summary>
-    /// <param name="serviceProvider">The provider the context is being created from.</param>
-    /// <param name="options">The options of the context being configured.</param>
-    private static void ConfigureContext(IServiceProvider serviceProvider, DbContextOptionsBuilder options)
-    {
-        InMemoryDatabase database = serviceProvider.GetRequiredService<InMemoryDatabase>();
-        database.Configure(options);
-    }
-
-    /// <summary>
-    /// Creates the database's tables from the entity model, before the first request arrives.
-    /// </summary>
-    /// <param name="services">The application's root service provider.</param>
-    private static void CreateDatabase(IServiceProvider services)
-    {
-        using (IServiceScope scope = services.CreateScope())
+        ContactsOptions contacts = new ContactsOptions
         {
-            ApplicationDatabaseContext context = scope.ServiceProvider.GetRequiredService<ApplicationDatabaseContext>();
-            context.Database.EnsureCreated();
-        }
+            DatabaseName = ContactsDatabaseName,
+        };
+        services.AddContactsAdapter(contacts);
     }
 
     /// <summary>

@@ -3,7 +3,7 @@
   <!-- Target framework, language version and analyzers come from src/Directory.Build.props. -->
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
+    <ProjectReference Include="..\HTMX.Adapter.Contacts\HTMX.Adapter.Contacts.csproj" />
   </ItemGroup>
 
 </Project>

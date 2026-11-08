@@ -1,9 +1,9 @@
-namespace HTMX.Test.Unit.Application.Web.Data;
+namespace HTMX.Test.Unit.Adapter.Contacts.Data;
 
 using System;
 using System.Linq;
-using HTMX.Application.Web.Data;
-using HTMX.Application.Web.Entities;
+using HTMX.Adapter.Contacts.Configuration;
+using HTMX.Adapter.Contacts.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

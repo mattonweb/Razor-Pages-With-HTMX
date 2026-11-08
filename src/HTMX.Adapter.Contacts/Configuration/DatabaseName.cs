@@ -1,4 +1,4 @@
-namespace HTMX.Application.Web.Entities;
+namespace HTMX.Adapter.Contacts.Configuration;
 
 using System;
 

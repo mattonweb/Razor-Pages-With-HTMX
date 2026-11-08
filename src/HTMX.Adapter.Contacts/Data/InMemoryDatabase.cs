@@ -1,7 +1,7 @@
-namespace HTMX.Application.Web.Data;
+namespace HTMX.Adapter.Contacts.Data;
 
 using System;
-using HTMX.Application.Web.Entities;
+using HTMX.Adapter.Contacts.Configuration;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,12 +11,12 @@ using Microsoft.EntityFrameworkCore;
 /// </summary>
 /// <remarks>
 /// SQLite deletes an in-memory database when its last connection closes, so this class holds one connection open
-/// from construction until disposal. The application registers one instance as a singleton, which makes the database
+/// from construction until disposal. The adapter registers one instance as a singleton, which makes the database
 /// last exactly as long as the application runs. Every context configured here opens its own connection to the same
 /// database: a change one request saves is read by the next request, and two requests in flight never share a
 /// connection.
 /// </remarks>
-public sealed class InMemoryDatabase : IDisposable
+internal sealed class InMemoryDatabase : IDisposable
 {
     private readonly SqliteConnection _keepAlive;
     private bool _disposed;

@@ -7,7 +7,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HTMX.Application.Web\HTMX.Application.Web.csproj" />
+    <ProjectReference Include="..\HTMX.Adapter.Contacts\HTMX.Adapter.Contacts.csproj" />
   </ItemGroup>
 
 </Project>
