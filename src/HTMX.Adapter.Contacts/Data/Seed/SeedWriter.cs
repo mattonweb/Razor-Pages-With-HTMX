@@ -46,7 +46,11 @@ internal sealed class SeedWriter
         context.Set<User>().AddRange(users);
         context.Set<UserVersion>().AddRange(userVersions);
 
-        OrganizationVersion[] organizationVersions = OrganizationSeed.CreateVersions(startedOn);
+        OrganizationVersion[] organizationVersions =
+        [
+            .. OrganizationSeed.CreateVersions(startedOn),
+            .. GeneratedOrganizationSeed.CreateVersions(startedOn),
+        ];
         Organization[] organizations =
         [
             .. organizationVersions.GroupBy(static version => version.OrganizationId).Select(BuildOrganization),

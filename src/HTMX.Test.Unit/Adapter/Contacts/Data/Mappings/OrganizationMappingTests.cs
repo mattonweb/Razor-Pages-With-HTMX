@@ -65,9 +65,9 @@ public sealed class OrganizationMappingTests
 
         // Assert (Then)
         Assert.AreEqual(
-            10016L,
+            11001L,
             saved.Id.Value,
-            "The first organization created after the seed should be 10016.");
+            "The first organization created after the seed should be 11001.");
     }
 
     /// <summary>

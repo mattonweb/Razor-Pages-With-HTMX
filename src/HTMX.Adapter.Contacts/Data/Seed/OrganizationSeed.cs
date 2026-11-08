@@ -5,8 +5,8 @@ using HTMX.Adapter.Contacts.Contracts;
 using HTMX.Adapter.Contacts.Entities;
 
 /// <summary>
-/// The organizations every run of the demo starts with, written as their histories: 15 in all, 13 active and 2
-/// archived, under the names the brand's specimens use.
+/// The 15 organizations with a part to play, written as their histories: 13 active and 2 archived.
+/// <see cref="GeneratedOrganizationSeed"/> adds 985 more, for 1,000 in all.
 /// </summary>
 /// <remarks>
 /// As with <see cref="UserSeed"/>, every date is written as a time before the application started, no current row is
@@ -15,7 +15,7 @@ using HTMX.Adapter.Contacts.Entities;
 internal static class OrganizationSeed
 {
     /// <summary>
-    /// Gets Placeholder Logistics, the organization in the brand's specimens.
+    /// Gets Placeholder Logistics, the organization whose history has two versions.
     /// </summary>
     internal static OrganizationId PlaceholderLogistics { get; } = new OrganizationId(10003);
 
@@ -36,9 +36,6 @@ internal static class OrganizationSeed
     /// <returns>New instances on every call.</returns>
     internal static OrganizationVersion[] CreateVersions(DateTime startedOn) =>
     [
-
-        // Demo Dairy, Fictional Freight, Placeholder Logistics, Sample & Sons and Testcase Tools: the brand's
-        // organization picker, in its order.
         new OrganizationVersion
         {
             OrganizationId = new OrganizationId(10001),
@@ -62,8 +59,7 @@ internal static class OrganizationSeed
             Website = new WebAddress("https://fictional-freight.example"),
         },
 
-        // Placeholder Logistics: the organization in the brand's specimens. Its website changed, so its
-        // history has two versions.
+        // Placeholder Logistics: its website changed, so its history has two versions.
         new OrganizationVersion
         {
             OrganizationId = PlaceholderLogistics,
@@ -111,7 +107,7 @@ internal static class OrganizationSeed
             Website = new WebAddress("https://testcase-tools.example"),
         },
 
-        // The rest fill out the list, so it runs to two pages of ten.
+        // From here on, an organization with no comment was created once and never changed.
         new OrganizationVersion
         {
             OrganizationId = new OrganizationId(10006),
@@ -147,7 +143,7 @@ internal static class OrganizationSeed
             Website = new WebAddress("https://lorem-ipsum-labs.example"),
         },
 
-        // Mockup Media: archived. Once contacts belong to it, it is the brand's "cannot be deleted" dialog.
+        // Mockup Media: archived. Once contacts belong to it, it cannot be deleted while they do.
         new OrganizationVersion
         {
             OrganizationId = MockupMedia,

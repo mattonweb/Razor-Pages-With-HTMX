@@ -21,8 +21,8 @@ public sealed class SeedWriterTests
     #region Public Methods
 
     /// <summary>
-    /// Unit test to verify that the seed holds the 49 users the brand's list specimen counts, so the list runs to five
-    /// pages of ten with a last page of nine.
+    /// Unit test to verify that the seed holds 49 users, so the list runs to five pages of ten with a last page of
+    /// nine.
     /// </summary>
     [TestMethod]
     public async Task WriteAsync_NewDatabase_WritesFortyNineUsers()
@@ -41,7 +41,7 @@ public sealed class SeedWriterTests
     }
 
     /// <summary>
-    /// Unit test to verify that seven of the users are archived, the count the brand's Archived filter shows.
+    /// Unit test to verify that seven of the users are archived, so the Archived filter has rows to show.
     /// </summary>
     [TestMethod]
     public async Task WriteAsync_NewDatabase_LeavesSevenUsersArchived()
@@ -61,11 +61,11 @@ public sealed class SeedWriterTests
     }
 
     /// <summary>
-    /// Unit test to verify that Pat Example has the identifier and version the brand's history specimen shows, so the
-    /// specimen and the application can be compared page for page.
+    /// Unit test to verify that Pat Example, the user with the longest history, is user 10007 at version 5, which
+    /// the history tests rely on.
     /// </summary>
     [TestMethod]
-    public async Task WriteAsync_NewDatabase_GivesPatExampleTheSpecimenVersion()
+    public async Task WriteAsync_NewDatabase_GivesPatExampleFiveVersions()
     {
         // Arrange (Given)
         FakeTimeProvider clock = TestDatabase.CreateClock();
@@ -212,10 +212,10 @@ public sealed class SeedWriterTests
     }
 
     /// <summary>
-    /// Unit test to verify that the seed holds 15 organizations, so their list runs to two pages of ten.
+    /// Unit test to verify that the seed holds 1,000 organizations, enough to page through properly at any page size.
     /// </summary>
     [TestMethod]
-    public async Task WriteAsync_NewDatabase_WritesFifteenOrganizations()
+    public async Task WriteAsync_NewDatabase_WritesOneThousandOrganizations()
     {
         // Arrange (Given)
         FakeTimeProvider clock = TestDatabase.CreateClock();
@@ -225,21 +225,21 @@ public sealed class SeedWriterTests
 
         // Assert (Then)
         Assert.HasCount(
-            15,
+            1000,
             organizations,
-            "The seed should write 15 organizations.");
+            "The seed should write 1,000 organizations.");
     }
 
     /// <summary>
-    /// Unit test to verify that two organizations are archived: Mockup Media, which contacts will belong to, and Draft
-    /// Distribution, which nothing will.
+    /// Unit test to verify that 51 organizations are archived, so the Archived filter pages too: Mockup Media and Draft
+    /// Distribution among them, and every 20th generated organization.
     /// </summary>
     [TestMethod]
-    public async Task WriteAsync_NewDatabase_LeavesTwoOrganizationsArchived()
+    public async Task WriteAsync_NewDatabase_LeavesFiftyOneOrganizationsArchived()
     {
         // Arrange (Given)
         FakeTimeProvider clock = TestDatabase.CreateClock();
-        OrganizationId[] expected = [OrganizationSeed.MockupMedia, OrganizationSeed.DraftDistribution];
+        OrganizationId[] named = [OrganizationSeed.MockupMedia, OrganizationSeed.DraftDistribution];
 
         // Act (When)
         (Organization[] organizations, _, _) = await SeedAndReadOrganizationsAsync(clock).ConfigureAwait(false);
@@ -251,10 +251,14 @@ public sealed class SeedWriterTests
         ];
 
         // Assert (Then)
-        CollectionAssert.AreEquivalent(
-            expected,
+        Assert.HasCount(
+            51,
             archived,
-            "Mockup Media and Draft Distribution should be the archived organizations.");
+            "51 organizations should be archived.");
+        CollectionAssert.IsSubsetOf(
+            named,
+            archived,
+            "Mockup Media and Draft Distribution should be among the archived organizations.");
     }
 
     /// <summary>
@@ -375,7 +379,7 @@ public sealed class SeedWriterTests
     }
 
     /// <summary>
-    /// Finds Pat Example, the user whose history is the brand's history specimen.
+    /// Finds Pat Example, the user with the longest history.
     /// </summary>
     /// <param name="users">Every seed user.</param>
     /// <returns>Pat Example.</returns>

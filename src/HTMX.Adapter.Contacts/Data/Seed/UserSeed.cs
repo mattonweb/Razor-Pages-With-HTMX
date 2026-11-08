@@ -5,9 +5,9 @@ using HTMX.Adapter.Contacts.Contracts;
 using HTMX.Adapter.Contacts.Entities;
 
 /// <summary>
-/// The users every run of the demo starts with, written as their histories: the 20 with a part to play in the brand's
-/// specimens or in a test case. <see cref="FillerUserSeed"/> holds the 29 who fill out the list, for 49 in all: 42
-/// active and 7 archived, the counts the brand's list specimen shows.
+/// The users every run of the demo starts with, written as their histories: the 20 with a part to play in a test
+/// case. <see cref="FillerUserSeed"/> holds the 29 who fill out the list, for 49 in all: 42 active and 7 archived, so
+/// the list runs to five pages of ten with a last page of nine.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -31,7 +31,7 @@ internal static class UserSeed
     internal static UserId DemoUser { get; } = new UserId(10001);
 
     /// <summary>
-    /// Gets Pat Example, the user whose history is the brand's history specimen.
+    /// Gets Pat Example, the user with the longest history.
     /// </summary>
     internal static UserId PatExample { get; } = new UserId(10007);
 
@@ -93,8 +93,8 @@ internal static class UserSeed
             ArchivedBy = DemoUser,
         },
 
-        // Alex, Drew, Jordan, Lee, Morgan and Robin: the rows of the brand's list specimen, as old as it shows them.
-        // Filtering on "alex" finds Alex and Alexandria.
+        // Alex, Drew, Jordan, Lee, Morgan and Robin: created between two days and two weeks ago, so the relative
+        // dates on a list read "2 days ago" through "2 weeks ago". Filtering on "alex" finds Alex and Alexandria.
         new UserVersion
         {
             UserId = new UserId(10003),
@@ -140,8 +140,8 @@ internal static class UserSeed
             DisplayName = new DisplayName("Lee Fixture"),
         },
 
-        // Pat Example: the brand's history specimen. Archived by Sam, restored by Taylor, display name corrected,
-        // then email changed today by Demo User: five versions.
+        // Pat Example: the longest history. Archived by Sam, restored by Taylor, display name corrected, then email
+        // changed today by Demo User: five versions, enough for the timeline, the diff and a roll-back.
         new UserVersion
         {
             UserId = PatExample,
@@ -325,8 +325,8 @@ internal static class UserSeed
             DisplayName = new DisplayName("Kit Sandbox"),
         },
 
-        // Hollis, Logan, Kim, Val and Ari: the rest of the seven archived users. Kim and Ari are the brand's
-        // Archived specimen, as long ago as it shows them.
+        // Hollis, Logan, Kim, Val and Ari: the rest of the seven archived users, archived by three different users
+        // between three months and ten days ago.
         new UserVersion
         {
             UserId = new UserId(10016),
