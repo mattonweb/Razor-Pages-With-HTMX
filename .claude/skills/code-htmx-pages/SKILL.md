@@ -160,11 +160,14 @@ private static bool IsHtmxSwap(HttpRequest request)
 
 ## 4. A list in the query string (proven)
 
-- **The list's whole state is in the query string**: filter, status, sort, page and page size. Every view of the list
-  has its own URL; the GET handler reads it through one bound `InputModel` with `[BindProperty(SupportsGet = true)]`,
-  and a value it does not recognize falls back to its default. A URL that HTMX pushes into history must load the
-  whole page on its own ([Browser history](https://four.htmx.org/docs#browser-history-support)), and this is what
-  makes that true.
+- **The list's whole state is in the query string**: filter, status, sort, page size, and where the page lies. Every
+  view of the list has its own URL; the GET handler reads it through one bound `InputModel` with
+  `[BindProperty(SupportsGet = true)]`, and a value it does not recognize falls back to its default. A URL that HTMX
+  pushes into history must load the whole page on its own
+  ([Browser history](https://four.htmx.org/docs#browser-history-support)), and this is what makes that true. Where
+  the page lies is a cursor, `after=<id>` or `before=<id>`, not a page number: key-based paging, which seeks to the
+  page through an index instead of skipping the rows before it. Paging this way is not HTMX's concern, but it is the
+  pattern to copy, and every link and form in the list carries the cursor the same way it carries the rest.
 - **The list's container declares the swap once, inherited:**
 
   ```html
