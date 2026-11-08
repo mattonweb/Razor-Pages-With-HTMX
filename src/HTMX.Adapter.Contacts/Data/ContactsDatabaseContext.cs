@@ -27,7 +27,7 @@ internal sealed class ContactsDatabaseContext : DbContext
     }
 
     /// <summary>
-    /// Says, once for every entity, how each wrapped value and every date is stored.
+    /// Says, once for every entity, how each wrapped value, each choice from a list and every date is stored.
     /// </summary>
     /// <param name="configurationBuilder">The builder for the model's conventions.</param>
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -37,8 +37,15 @@ internal sealed class ContactsDatabaseContext : DbContext
         configurationBuilder.Properties<Username>().HaveConversion<UsernameConverter>();
         configurationBuilder.Properties<EmailAddress>().HaveConversion<EmailAddressConverter>();
         configurationBuilder.Properties<DisplayName>().HaveConversion<DisplayNameConverter>();
+        configurationBuilder.Properties<OrganizationId>().HaveConversion<OrganizationIdConverter>();
+        configurationBuilder.Properties<OrganizationName>().HaveConversion<OrganizationNameConverter>();
+        configurationBuilder.Properties<WebAddress>().HaveConversion<WebAddressConverter>();
         configurationBuilder.Properties<VersionNumber>().HaveConversion<VersionNumberConverter>();
         configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+
+        // Choices from a list are stored by name, so the SQL log reads Edited and Shipping rather than 1 and 4.
+        configurationBuilder.Properties<ChangeKind>().HaveConversion<string>();
+        configurationBuilder.Properties<Industry>().HaveConversion<string>();
     }
 
     /// <summary>
@@ -50,5 +57,7 @@ internal sealed class ContactsDatabaseContext : DbContext
         ArgumentNullException.ThrowIfNull(modelBuilder);
         modelBuilder.ApplyConfiguration(new UserMapping());
         modelBuilder.ApplyConfiguration(new UserVersionMapping());
+        modelBuilder.ApplyConfiguration(new OrganizationMapping());
+        modelBuilder.ApplyConfiguration(new OrganizationVersionMapping());
     }
 }

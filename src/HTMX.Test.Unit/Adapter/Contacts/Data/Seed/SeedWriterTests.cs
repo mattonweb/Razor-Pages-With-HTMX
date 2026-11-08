@@ -178,7 +178,7 @@ public sealed class SeedWriterTests
 
         // Act (When)
         (User[] users, UserVersion[] versions) = await SeedAndReadAsync(clock).ConfigureAwait(false);
-        User[] disagreeing = [.. users.Where(user => !MatchesLatestVersion(user, versions))];
+        User[] disagreeing = [.. users.Where(user => !UserMatchesLatestVersion(user, versions))];
 
         // Assert (Then)
         Assert.HasCount(
@@ -211,6 +211,101 @@ public sealed class SeedWriterTests
             "No change should be made by a user who did not exist yet or was archived.");
     }
 
+    /// <summary>
+    /// Unit test to verify that the seed holds 15 organizations, so their list runs to two pages of ten.
+    /// </summary>
+    [TestMethod]
+    public async Task WriteAsync_NewDatabase_WritesFifteenOrganizations()
+    {
+        // Arrange (Given)
+        FakeTimeProvider clock = TestDatabase.CreateClock();
+
+        // Act (When)
+        (Organization[] organizations, _, _) = await SeedAndReadOrganizationsAsync(clock).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.HasCount(
+            15,
+            organizations,
+            "The seed should write 15 organizations.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that two organizations are archived: Mockup Media, which contacts will belong to, and Draft
+    /// Distribution, which nothing will.
+    /// </summary>
+    [TestMethod]
+    public async Task WriteAsync_NewDatabase_LeavesTwoOrganizationsArchived()
+    {
+        // Arrange (Given)
+        FakeTimeProvider clock = TestDatabase.CreateClock();
+        OrganizationId[] expected = [OrganizationSeed.MockupMedia, OrganizationSeed.DraftDistribution];
+
+        // Act (When)
+        (Organization[] organizations, _, _) = await SeedAndReadOrganizationsAsync(clock).ConfigureAwait(false);
+        OrganizationId[] archived =
+        [
+            .. organizations
+                .Where(static organization => organization.ArchivedOn is not null)
+                .Select(static organization => organization.Id),
+        ];
+
+        // Assert (Then)
+        CollectionAssert.AreEquivalent(
+            expected,
+            archived,
+            "Mockup Media and Draft Distribution should be the archived organizations.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that every organization's row agrees with its latest version.
+    /// </summary>
+    [TestMethod]
+    public async Task WriteAsync_NewDatabase_BuildsEachOrganizationFromItsLatestVersion()
+    {
+        // Arrange (Given)
+        FakeTimeProvider clock = TestDatabase.CreateClock();
+
+        // Act (When)
+        (Organization[] organizations, OrganizationVersion[] versions, _) =
+            await SeedAndReadOrganizationsAsync(clock).ConfigureAwait(false);
+        Organization[] disagreeing =
+        [
+            .. organizations.Where(organization => !OrganizationMatchesLatestVersion(organization, versions)),
+        ];
+
+        // Assert (Then)
+        Assert.HasCount(
+            0,
+            disagreeing,
+            "No organization's row should differ from its latest version.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that every change to an organization was made by a user who existed and was not archived at
+    /// the time.
+    /// </summary>
+    [TestMethod]
+    public async Task WriteAsync_NewDatabase_RecordsOrganizationChangesOnlyByActiveUsers()
+    {
+        // Arrange (Given)
+        FakeTimeProvider clock = TestDatabase.CreateClock();
+
+        // Act (When)
+        (_, OrganizationVersion[] versions, UserVersion[] userVersions) =
+            await SeedAndReadOrganizationsAsync(clock).ConfigureAwait(false);
+        OrganizationVersion[] byInactiveUsers =
+        [
+            .. versions.Where(version => !WasActive(userVersions, version.ChangedBy, version.ChangedOn)),
+        ];
+
+        // Assert (Then)
+        Assert.HasCount(
+            0,
+            byInactiveUsers,
+            "No organization should be changed by a user who did not exist yet or was archived.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -234,6 +329,52 @@ public sealed class SeedWriterTests
     }
 
     /// <summary>
+    /// Seeds a new database and reads back every organization, every organization version, and every user version,
+    /// which says when each user was active.
+    /// </summary>
+    /// <param name="clock">The clock the seed writer reads.</param>
+    /// <returns>The organizations, their versions and the users' versions.</returns>
+    private static async Task<(Organization[] Organizations, OrganizationVersion[] Versions, UserVersion[] UserVersions)>
+        SeedAndReadOrganizationsAsync(TimeProvider clock)
+    {
+        using (InMemoryDatabase database = await TestDatabase.CreateSeededAsync(clock).ConfigureAwait(false))
+        {
+            using (ContactsDatabaseContext context = TestDatabase.CreateContext(database))
+            {
+                Organization[] organizations =
+                    await context.Set<Organization>().AsNoTracking().ToArrayAsync().ConfigureAwait(false);
+                OrganizationVersion[] versions =
+                    await context.Set<OrganizationVersion>().AsNoTracking().ToArrayAsync().ConfigureAwait(false);
+                UserVersion[] userVersions =
+                    await context.Set<UserVersion>().AsNoTracking().ToArrayAsync().ConfigureAwait(false);
+                return (organizations, versions, userVersions);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Says whether an organization's row holds the values, state and number of its latest version.
+    /// </summary>
+    /// <param name="organization">The organization's row.</param>
+    /// <param name="versions">Every version of every organization.</param>
+    /// <returns><see langword="true"/> when the row and the latest version agree.</returns>
+    private static bool OrganizationMatchesLatestVersion(Organization organization, OrganizationVersion[] versions)
+    {
+        OrganizationVersion latest = versions
+            .Where(version => version.OrganizationId == organization.Id)
+            .OrderBy(static version => version.Version.Value)
+            .Last();
+        return latest.Name == organization.Name
+            && latest.Industry == organization.Industry
+            && latest.Website == organization.Website
+            && latest.ArchivedOn == organization.ArchivedOn
+            && latest.ArchivedBy == organization.ArchivedBy
+            && latest.ChangedOn == organization.LastModifiedOn
+            && latest.ChangedBy == organization.LastModifiedBy
+            && latest.Version == organization.Version;
+    }
+
+    /// <summary>
     /// Finds Pat Example, the user whose history is the brand's history specimen.
     /// </summary>
     /// <param name="users">Every seed user.</param>
@@ -249,7 +390,7 @@ public sealed class SeedWriterTests
     /// <param name="user">The user's row.</param>
     /// <param name="versions">Every version of every user.</param>
     /// <returns><see langword="true"/> when the row and the latest version agree.</returns>
-    private static bool MatchesLatestVersion(User user, UserVersion[] versions)
+    private static bool UserMatchesLatestVersion(User user, UserVersion[] versions)
     {
         UserVersion latest = versions
             .Where(version => version.UserId == user.Id)

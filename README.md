@@ -21,16 +21,20 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
 ## Sample data
 
 The database starts with 49 invented users, 42 active and 7 archived, the counts the brand's list specimen shows, so
-the list runs to five pages of ten. They are written out in `src/HTMX.Adapter.Contacts/Data/Seed/` as histories, one
-version per change, and each user's current row is built from their latest version.
+the list runs to five pages of ten, and 15 organizations under the brand's names, 13 active and 2 archived. They are
+written out in `src/HTMX.Adapter.Contacts/Data/Seed/` as histories, one version per change, and each current row is
+built from its latest version.
 
-- **Identifiers run from 10001.** Every identifier is five digits wide, a comfortable target when it is a link. A user
-  created in the application carries on from 10050, and a deleted user's identifier is never given out again.
+- **Identifiers run from 10001** for every kind of record. Every identifier is five digits wide, a comfortable target
+  when it is a link. New records carry on from the seed's highest (users from 10050, organizations from 10016), and a
+  deleted record's identifier is never given out again.
 - **Dates are always recent.** Every date is written as a time before the application starts, such as
   `startedOn.AddDays(-236)`, so the demo looks the same whenever it runs: Pat Example was edited 13 minutes ago, and
   the oldest user was created about eight months ago.
 - **Some users have a part to play.** Pat Example (10007) carries the five versions of the brand's history specimen;
   Sam Sample (10009) archived Pat and was archived, so cannot be deleted; Casey Mockup (10002) is archived and can.
+  Among the organizations, Placeholder Logistics (10003) is the brand's, Mockup Media (10009) is archived, and Draft
+  Distribution (10013) is archived with nothing belonging to it, so it can be deleted.
 
 ## Versions and choices
 

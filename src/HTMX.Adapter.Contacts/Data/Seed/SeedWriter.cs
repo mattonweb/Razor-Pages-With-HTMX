@@ -8,8 +8,8 @@ using HTMX.Adapter.Contacts.Contracts;
 using HTMX.Adapter.Contacts.Entities;
 
 /// <summary>
-/// Writes the seed into a new database: every version, dated back from now, and each user's current row built from
-/// their latest version.
+/// Writes the seed into a new database: every version, dated back from now, and each user's and organization's
+/// current row built from its latest version.
 /// </summary>
 internal sealed class SeedWriter
 {
@@ -26,7 +26,7 @@ internal sealed class SeedWriter
     }
 
     /// <summary>
-    /// Writes every seed user and version, in one save.
+    /// Writes every seed user and organization, with their versions, in one save.
     /// </summary>
     /// <param name="context">A context on the new, empty database.</param>
     /// <param name="cancellationToken">Signals that the application is stopping before it has started.</param>
@@ -37,15 +37,23 @@ internal sealed class SeedWriter
         DateTimeOffset now = this._timeProvider.GetUtcNow();
         DateTime startedOn = now.UtcDateTime;
 
-        UserVersion[] versions =
+        UserVersion[] userVersions =
         [
             .. UserSeed.CreateVersions(startedOn),
             .. FillerUserSeed.CreateVersions(startedOn),
         ];
-        User[] users = [.. versions.GroupBy(static version => version.UserId).Select(BuildUser)];
-
+        User[] users = [.. userVersions.GroupBy(static version => version.UserId).Select(BuildUser)];
         context.Set<User>().AddRange(users);
-        context.Set<UserVersion>().AddRange(versions);
+        context.Set<UserVersion>().AddRange(userVersions);
+
+        OrganizationVersion[] organizationVersions = OrganizationSeed.CreateVersions(startedOn);
+        Organization[] organizations =
+        [
+            .. organizationVersions.GroupBy(static version => version.OrganizationId).Select(BuildOrganization),
+        ];
+        context.Set<Organization>().AddRange(organizations);
+        context.Set<OrganizationVersion>().AddRange(organizationVersions);
+
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -66,6 +74,32 @@ internal sealed class SeedWriter
             Username = latest.Username,
             Email = latest.Email,
             DisplayName = latest.DisplayName,
+            CreatedOn = first.ChangedOn,
+            CreatedBy = first.ChangedBy,
+            LastModifiedOn = latest.ChangedOn,
+            LastModifiedBy = latest.ChangedBy,
+            ArchivedOn = latest.ArchivedOn,
+            ArchivedBy = latest.ArchivedBy,
+            Version = latest.Version,
+        };
+    }
+
+    /// <summary>
+    /// Builds an organization's current row from its versions, as <see cref="BuildUser"/> does for a user.
+    /// </summary>
+    /// <param name="history">Every version of one organization.</param>
+    /// <returns>The organization's row.</returns>
+    private static Organization BuildOrganization(IGrouping<OrganizationId, OrganizationVersion> history)
+    {
+        OrganizationVersion[] versions = [.. history.OrderBy(static version => version.Version.Value)];
+        OrganizationVersion first = versions[0];
+        OrganizationVersion latest = versions[versions.Length - 1];
+        return new Organization
+        {
+            Id = latest.OrganizationId,
+            Name = latest.Name,
+            Industry = latest.Industry,
+            Website = latest.Website,
             CreatedOn = first.ChangedOn,
             CreatedBy = first.ChangedBy,
             LastModifiedOn = latest.ChangedOn,

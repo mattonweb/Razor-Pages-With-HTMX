@@ -1,7 +1,6 @@
 namespace HTMX.Adapter.Contacts.Data.Mappings;
 
 using System;
-using System.Linq.Expressions;
 using HTMX.Adapter.Contacts.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -36,20 +35,9 @@ internal sealed class UserMapping : IEntityTypeConfiguration<User>
         // Every update says which version it started from, and saves nothing if another save got there first.
         builder.Property(static user => user.Version).IsConcurrencyToken();
 
-        ReferToUser(builder, static user => user.CreatedBy);
-        ReferToUser(builder, static user => user.LastModifiedBy);
-        ReferToUser(builder, static user => user.ArchivedBy);
-    }
-
-    /// <summary>
-    /// Makes a column a foreign key to another user, which cannot be deleted while this user points at them.
-    /// </summary>
-    /// <param name="builder">The builder for the user entity.</param>
-    /// <param name="foreignKey">The column that holds the other user's identifier.</param>
-    private static void ReferToUser(EntityTypeBuilder<User> builder, Expression<Func<User, object?>> foreignKey)
-    {
-        ReferenceCollectionBuilder<User, User> reference = builder.HasOne<User>().WithMany();
-        reference.HasForeignKey(foreignKey);
-        reference.OnDelete(DeleteBehavior.Restrict);
+        // A user who created, changed or archived another user cannot be deleted.
+        UserReferences.Add(builder, static user => user.CreatedBy, DeleteBehavior.Restrict);
+        UserReferences.Add(builder, static user => user.LastModifiedBy, DeleteBehavior.Restrict);
+        UserReferences.Add(builder, static user => user.ArchivedBy, DeleteBehavior.Restrict);
     }
 }
