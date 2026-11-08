@@ -24,9 +24,11 @@ The database starts with invented data, built in `src/HTMX.Adapter.Customers/Dat
 per change, with each current row built from its latest version:
 
 - **49 users**, 42 active and 7 archived, so the list runs to five pages of ten with a last page of nine.
-- **1,000 organizations**, 949 active and 51 archived, so paging is tested properly at every page size, the Archived
+- **1,000 organizations**, 946 active and 54 archived, so paging is tested properly at every page size, the Archived
   filter included. Fifteen are written out because each has a part to play; the other 985 are generated from two word
-  lists (Example Freight, Stand-In Software), the same ones on every run.
+  lists (Example Freight, Stand-In Software), the same ones on every run. Every 19th generated organization is
+  archived: 19 shares no factor with the 40 first words or the other cycles in the generator, so the archived ones
+  take every name, size and industry instead of repeating one pattern.
 - **1,500 contacts**, 1,440 active and 60 archived, every one belonging to exactly one organization. Eight are written
   out because each has a part to play; the other 1,492 are generated, none to three for each generated organization
   and 18 in all at Placeholder Logistics, so its own list of contacts pages. Each joined their organization while it
@@ -69,7 +71,7 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   never a page number. The database seeks to that organization through an index on the sorted column and the
   identifier, where an offset would read and throw away every row before the page. A page is read one row longer than
   it shows, which says whether there is a next page without counting. A cursor doesn't know where in the list its page
-  starts, so the pager shows the rows on the page and the total ("Showing 10 of 949"). A cursor whose organization is
+  starts, so the pager shows the rows on the page and the total ("Showing 10 of 946"). A cursor whose organization is
   gone starts again at the first page. Sorting by Contacts pages the same way but cannot use an index, because the
   count is worked out for each organization. With 1,000 rows in memory the difference cannot be measured; the demo
   pages this way because it is the pattern to copy.

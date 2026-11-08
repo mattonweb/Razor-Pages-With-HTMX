@@ -92,6 +92,42 @@ public sealed class ContactSeedTests
     }
 
     /// <summary>
+    /// Unit test to verify that the archived generated organizations have every number of contacts from none to three,
+    /// so the Archived filter shows organizations archived with people and without, not all with three.
+    /// </summary>
+    [TestMethod]
+    public async Task WriteAsync_NewDatabase_ArchivesOrganizationsWithEveryNumberOfContacts()
+    {
+        // Arrange (Given)
+        FakeTimeProvider clock = TestDatabase.CreateClock();
+        int[] everyNumber = [0, 1, 2, 3];
+
+        // Act (When)
+        SeededContacts seeded = await SeedAndReadAsync(clock).ConfigureAwait(false);
+        OrganizationId[] archived =
+        [
+            .. seeded.OrganizationVersions
+                .Where(static version => version.ArchivedOn is not null)
+                .Where(static version => version.OrganizationId.Value >= GeneratedOrganizationSeed.FirstIdentifier)
+                .Select(static version => version.OrganizationId)
+                .Distinct(),
+        ];
+        int[] numbers =
+        [
+            .. archived
+                .Select(organization => seeded.Contacts.Count(contact => contact.OrganizationId == organization))
+                .Distinct()
+                .Order(),
+        ];
+
+        // Assert (Then)
+        CollectionAssert.AreEqual(
+            everyNumber,
+            numbers,
+            "The archived generated organizations should have none, one, two and three contacts between them.");
+    }
+
+    /// <summary>
     /// Unit test to verify that every contact's row agrees with their latest version.
     /// </summary>
     [TestMethod]

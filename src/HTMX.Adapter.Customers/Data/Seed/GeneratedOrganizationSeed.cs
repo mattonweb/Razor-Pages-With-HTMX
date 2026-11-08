@@ -12,7 +12,7 @@ using HTMX.Adapter.Customers.Entities;
 /// <remarks>
 /// Each name pairs a word from <see cref="FirstWords"/> with one from <see cref="LastWords"/>, such as Example Freight,
 /// so every name is invented and obviously so, and none starts with a word the 15 use. The last word decides the
-/// industry. Every 7th organization has no website, and every 20th is archived, 49 in all, so the Archived filter
+/// industry. Every 7th organization has no website, and every 19th is archived, 52 in all, so the Archived filter
 /// pages too. Each was created between an hour and 230 days before the application started, no two at the same
 /// minute, so the list sorted by Updated never ties.
 /// </remarks>
@@ -26,7 +26,12 @@ internal static class GeneratedOrganizationSeed
     private const int Count = 985;
     private const int LastWordsPerIndustry = 5;
     private const int NoWebsiteEvery = 7;
-    private const int ArchiveEvery = 20;
+
+    // 19 shares no factor with the 40 first words, the 4 contact counts, the 7 of NoWebsiteEvery or the 3 of
+    // ChooseCreator, so the archived organizations take every first word, every number of contacts, websites and
+    // creators alike. A period that shares one picks the same value every time: every 20th used only two first words,
+    // and every one of them had three contacts.
+    private const int ArchiveEvery = 19;
     private const int ArchiveOffset = 7;
 
     // Ages step through 230 days 337 minutes at a time. 337 shares no factor with the minutes in 230 days, so no two
@@ -79,7 +84,7 @@ internal static class GeneratedOrganizationSeed
     }
 
     /// <summary>
-    /// Creates one organization's versions: created, and for every 20th organization, archived halfway between its
+    /// Creates one organization's versions: created, and for every 19th organization, archived halfway between its
     /// creation and the application's start.
     /// </summary>
     /// <param name="index">The organization's position, from 0.</param>

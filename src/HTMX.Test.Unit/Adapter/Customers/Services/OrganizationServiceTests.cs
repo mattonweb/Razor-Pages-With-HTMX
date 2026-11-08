@@ -48,13 +48,13 @@ public sealed class OrganizationServiceTests
             names,
             "The page should be in name order, ignoring capitals.");
         Assert.AreEqual(
-            949,
+            946,
             response.Matching.Value,
-            "949 active organizations should match.");
+            "946 active organizations should match.");
         Assert.AreEqual(
-            51,
+            54,
             response.Archived.Value,
-            "51 archived organizations should be counted for the status filter.");
+            "54 archived organizations should be counted for the status filter.");
         Assert.AreEqual(
             1000,
             response.All.Value,

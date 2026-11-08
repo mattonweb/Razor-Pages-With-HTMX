@@ -231,11 +231,11 @@ public sealed class SeedWriterTests
     }
 
     /// <summary>
-    /// Unit test to verify that 51 organizations are archived, so the Archived filter pages too: Mockup Media and Draft
-    /// Distribution among them, and every 20th generated organization.
+    /// Unit test to verify that 54 organizations are archived, so the Archived filter pages too: Mockup Media and Draft
+    /// Distribution among them, and every 19th generated organization.
     /// </summary>
     [TestMethod]
-    public async Task WriteAsync_NewDatabase_LeavesFiftyOneOrganizationsArchived()
+    public async Task WriteAsync_NewDatabase_LeavesFiftyFourOrganizationsArchived()
     {
         // Arrange (Given)
         FakeTimeProvider clock = TestDatabase.CreateClock();
@@ -252,13 +252,41 @@ public sealed class SeedWriterTests
 
         // Assert (Then)
         Assert.HasCount(
-            51,
+            54,
             archived,
-            "51 organizations should be archived.");
+            "54 organizations should be archived.");
         CollectionAssert.IsSubsetOf(
             named,
             archived,
             "Mockup Media and Draft Distribution should be among the archived organizations.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that the archived generated organizations use all 40 first words, so the Archived filter
+    /// shows a varied list rather than the same two names over and over.
+    /// </summary>
+    [TestMethod]
+    public async Task WriteAsync_NewDatabase_ArchivesGeneratedOrganizationsOfEveryFirstWord()
+    {
+        // Arrange (Given)
+        FakeTimeProvider clock = TestDatabase.CreateClock();
+
+        // Act (When)
+        (Organization[] organizations, _, _) = await SeedAndReadOrganizationsAsync(clock).ConfigureAwait(false);
+        string[] firstWords =
+        [
+            .. organizations
+                .Where(static organization => organization.ArchivedOn is not null)
+                .Where(static organization => organization.Id.Value >= GeneratedOrganizationSeed.FirstIdentifier)
+                .Select(static organization => FirstWord(organization.Name))
+                .Distinct(),
+        ];
+
+        // Assert (Then)
+        Assert.HasCount(
+            40,
+            firstWords,
+            "The archived generated organizations should use all 40 first words.");
     }
 
     /// <summary>
@@ -354,6 +382,17 @@ public sealed class SeedWriterTests
                 return (organizations, versions, userVersions);
             }
         }
+    }
+
+    /// <summary>
+    /// Gives the first word of an organization's name, such as Example in Example Freight.
+    /// </summary>
+    /// <param name="name">The name.</param>
+    /// <returns>The first word.</returns>
+    private static string FirstWord(OrganizationName name)
+    {
+        string text = name.Value;
+        return text.Split(' ')[0];
     }
 
     /// <summary>
