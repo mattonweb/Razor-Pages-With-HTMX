@@ -1,4 +1,4 @@
-namespace HTMX.Application.Web.Test.Unit.Entities;
+namespace HTMX.Test.Unit.Application.Web.Entities;
 
 using System;
 using HTMX.Application.Web.Entities;

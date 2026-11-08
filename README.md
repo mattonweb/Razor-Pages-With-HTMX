@@ -5,7 +5,7 @@ interactive with [HTMX](https://htmx.org/). Built as the worked example for a pr
 with HTMX, and kept small enough to read on a screen.
 
 - `src/HTMX Pages Solution.slnx` — the solution: the application in `src/HTMX.Application.Web/`, its unit tests in
-  `src/HTMX.Application.Web.Test.Unit/`.
+  `src/HTMX.Test.Unit/`.
 - `CLAUDE.md` — the working agreement for AI coding sessions in this repository.
 - `src/.editorconfig` — the house C# style, a verbatim copy of the one in [Signalbox](https://github.com/mattonweb/Signalbox).
 

@@ -1,4 +1,4 @@
-namespace HTMX.Application.Web.Test.Unit.Data;
+namespace HTMX.Test.Unit.Application.Web.Data;
 
 using System;
 using System.Linq;

@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="HTMX.Application.Web.Test.Unit/HTMX.Application.Web.Test.Unit.csproj" />
   <Project Path="HTMX.Application.Web/HTMX.Application.Web.csproj" />
+  <Project Path="HTMX.Test.Unit/HTMX.Test.Unit.csproj" />
 </Solution>

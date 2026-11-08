@@ -59,7 +59,7 @@ src/
   HTMX Pages Solution.slnx          the one solution file
   Directory.Build.props             house build settings for every project (code-csharp-standards, section 1)
   HTMX.Application.Web/             the Razor Pages application
-  HTMX.Application.Web.Test.Unit/   its unit tests
+  HTMX.Test.Unit/                   its unit tests
   .editorconfig                     house copy, see below
 ```
 
