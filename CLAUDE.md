@@ -2,6 +2,9 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-07, night (attended session with Matt): the `dotnet-solution-architecture` skill was adopted**, this
+  repository being its first adopter. A fifth junction, a row in the skills table, and an adoption state of
+  `conforming` below. The two existing projects already fit its naming; anything new follows it.
 - **2026-11-07, evening (attended session with Matt): the solution exists.** The layout section names it and its
   projects; the stack section records the persistence choice. No entity exists yet; the first is the user.
 - **2026-11-07, later (attended session with Matt): the `brand-htmlx-pages` skill was started.** It is a real
@@ -65,7 +68,7 @@ src/
 
 ## Skills: owned by Matt
 
-`.claude/skills/` holds 4 Windows junctions, never copies, each gitignored. They point into the public
+`.claude/skills/` holds 5 Windows junctions, never copies, each gitignored. They point into the public
 [Signalbox](https://github.com/mattonweb/Signalbox) repository, cloned at `C:\Source\Signalbox`; its `REPO-SETUP.md`
 explains the mechanism. It also holds one real folder, `brand-htmlx-pages`, tracked in this repository because the
 brand belongs to this application and to no other.
@@ -75,10 +78,11 @@ brand belongs to this application and to no other.
 | `code-software-standards` | Signalbox | The language-neutral half of the house code standards, read before the language skill |
 | `code-csharp-standards` | Signalbox | House C# rules: file layout, type taxonomy, method shape, the 500-line ceiling, allowed language features. Its enforceable half is `src/.editorconfig` plus the analyzers |
 | `code-csharp-mstest` | Signalbox | How tests are written: naming, assertion patterns, structure |
+| `dotnet-solution-architecture` | Signalbox | Which projects exist and what each may reference: `{{solution}}.{{kind}}.{{name}}` naming, the four project kinds, the dependency rules, and the public surface of a class library. Read it before creating a project or adding a project reference |
 | `devops-git-conventions` | Signalbox | The commit-message form you draft for Matt. Its branch, pull-request and tag sections do not apply here; this repository has no branches and no pipeline |
 | `brand-htmlx-pages` | this repository | The HTMLX Pages brand: tokens, CSS, icons and the markup of every UI component, with specimen pages. A draft; its status table says which groups are settled |
 
-⛔ **Matt owns every skill. Never edit a file inside one of the four junctions**, however wrong it looks; report the
+⛔ **Matt owns every skill. Never edit a file inside one of the five junctions**, however wrong it looks; report the
 defect in your final message instead. An edit through a junction lands in Signalbox's working tree.
 `brand-htmlx-pages` is Matt's too, and changes only in a session he attends; an unattended session that finds it
 wrong reports the defect and leaves it.
@@ -94,6 +98,13 @@ message.
 **The 500-line ceiling (`code-csharp-standards` section 8): the named-exception list for this repository is
 EMPTY**, and the repository starts with no files over it. A file that needs to exceed the ceiling gets its entry
 here, with its line count and a reason, in the same session that creates it.
+
+**Solution architecture (`dotnet-solution-architecture` section 7): adoption state `conforming`.** The solution holds
+one Application (`HTMX.Application.Web`) and one optional test project (`HTMX.Test.Unit`), and nothing else is
+required. A data source or an external system that earns its own project is an `HTMX.Adapter.<Name>` exposing only
+`Configuration/`, `Contracts/` and `ServiceCollectionExtensions`; a workflow across capabilities is an
+`HTMX.Orchestrator.<Name>`; page models stay presentation. A change that would break a dependency rule or make an
+internal type public is declined with the reason. No architecture test exists yet.
 
 The house `.editorconfig` (`src/.editorconfig`) and `.gitattributes` are verbatim copies of Signalbox's root files,
 applied 2026-11-07. A copy that differs from Signalbox is drift: it is fixed in Signalbox first, never here.
