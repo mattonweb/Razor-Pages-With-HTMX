@@ -18,6 +18,19 @@ dotnet run --project src/HTMX.Application.Web --launch-profile http
 
 Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pages Solution.slnx"`.
 
+## Sample data
+
+The database starts with 49 invented users, 42 active and 7 archived, the counts the brand's list specimen shows, so
+the list runs to five pages of ten. They are written out in `src/HTMX.Adapter.Contacts/Data/Seed/` as histories, one
+version per change, and each user's current row is built from their latest version.
+
+- **Identifiers run from 10001.** Every identifier is five digits wide, a comfortable target when it is a link. A user
+  created in the application carries on from 10050, and a deleted user's identifier is never given out again.
+- **Dates move with the demo.** The seed is written as of 7 November 2026; when the application starts, every date moves
+  forward by the time since then, so a change written as "today" is today whenever the demo runs.
+- **Some users have a part to play.** Pat Example (10007) carries the five versions of the brand's history specimen;
+  Sam Sample (10009) archived Pat and was archived, so cannot be deleted; Casey Mockup (10002) is archived and can.
+
 ## Versions and choices
 
 - **.NET 10** (SDK 10.0.402) and **C# 14**.

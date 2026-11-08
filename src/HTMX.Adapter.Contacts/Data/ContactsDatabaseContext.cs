@@ -1,6 +1,9 @@
 namespace HTMX.Adapter.Contacts.Data;
 
 using System;
+using HTMX.Adapter.Contacts.Contracts;
+using HTMX.Adapter.Contacts.Data.Conversions;
+using HTMX.Adapter.Contacts.Data.Mappings;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -8,7 +11,8 @@ using Microsoft.EntityFrameworkCore;
 /// it has read outlives the request that read it.
 /// </summary>
 /// <remarks>
-/// Pending: the entities, starting with the user, are mapped here as each arrives.
+/// Tables are reached with <c>Set&lt;User&gt;()</c> rather than a property per table, so the context has no public
+/// state; each mapping names its table instead.
 /// </remarks>
 internal sealed class ContactsDatabaseContext : DbContext
 {
@@ -20,5 +24,31 @@ internal sealed class ContactsDatabaseContext : DbContext
         : base(options)
     {
         ArgumentNullException.ThrowIfNull(options);
+    }
+
+    /// <summary>
+    /// Says, once for every entity, how each wrapped value and every date is stored.
+    /// </summary>
+    /// <param name="configurationBuilder">The builder for the model's conventions.</param>
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        ArgumentNullException.ThrowIfNull(configurationBuilder);
+        configurationBuilder.Properties<UserId>().HaveConversion<UserIdConverter>();
+        configurationBuilder.Properties<Username>().HaveConversion<UsernameConverter>();
+        configurationBuilder.Properties<EmailAddress>().HaveConversion<EmailAddressConverter>();
+        configurationBuilder.Properties<DisplayName>().HaveConversion<DisplayNameConverter>();
+        configurationBuilder.Properties<VersionNumber>().HaveConversion<VersionNumberConverter>();
+        configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+    }
+
+    /// <summary>
+    /// Maps each entity to its table.
+    /// </summary>
+    /// <param name="modelBuilder">The builder for the model.</param>
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        ArgumentNullException.ThrowIfNull(modelBuilder);
+        modelBuilder.ApplyConfiguration(new UserMapping());
+        modelBuilder.ApplyConfiguration(new UserVersionMapping());
     }
 }
