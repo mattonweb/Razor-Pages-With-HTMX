@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -24,6 +25,12 @@ public sealed class IndexModel : PageModel
     private const string PageNumberKey = "pageNumber";
     private const string PageSizeKey = "pageSize";
     private const int DefaultPageSize = 10;
+    private const string ListPartial = "_OrganizationList";
+
+    // HTMX sends HX-Request on every request it makes, and HX-History-Restore-Request when the back button needs a
+    // page it no longer holds, which must be the whole page.
+    private const string HtmxRequestHeader = "HX-Request";
+    private const string HtmxHistoryRestoreHeader = "HX-History-Restore-Request";
 
     private static readonly int[] PageSizes = [DefaultPageSize, 25, 50, PageSize.Largest];
 
@@ -95,11 +102,22 @@ public sealed class IndexModel : PageModel
     /// its default, so a mistyped URL still shows a list.
     /// </summary>
     /// <param name="cancellationToken">Signals that the browser has gone away.</param>
-    /// <returns>A task that completes when the page is read.</returns>
-    public async Task OnGetAsync(CancellationToken cancellationToken)
+    /// <returns>Only the list's card when HTMX asked for it, to swap into the page it already shows; the whole page
+    /// otherwise.</returns>
+    public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
         OrganizationCollectionRequest request = CreateRequest(this.Input);
         this.Organizations = await this._organizations.ListAsync(request, cancellationToken).ConfigureAwait(false);
+
+        // One URL answers with two different bodies, so a cache must keep them apart by the header that chooses.
+        IHeaderDictionary responseHeaders = this.Response.Headers;
+        responseHeaders.Vary = HtmxRequestHeader;
+        if (IsHtmxSwap(this.Request))
+        {
+            return this.Partial(ListPartial, this);
+        }
+
+        return this.Page();
     }
 
     /// <summary>
@@ -159,6 +177,17 @@ public sealed class IndexModel : PageModel
     {
         OrganizationCollectionRequest current = this.Organizations.Request;
         return column == current.Sort ? Name(current.Direction) : null;
+    }
+
+    /// <summary>
+    /// Says whether a request came from HTMX to swap part of a page, rather than to load a whole one.
+    /// </summary>
+    /// <param name="request">The request.</param>
+    /// <returns><see langword="true"/> when HTMX sent it and is not restoring a page from its history.</returns>
+    private static bool IsHtmxSwap(HttpRequest request)
+    {
+        IHeaderDictionary headers = request.Headers;
+        return headers[HtmxRequestHeader] == "true" && headers[HtmxHistoryRestoreHeader] != "true";
     }
 
     /// <summary>

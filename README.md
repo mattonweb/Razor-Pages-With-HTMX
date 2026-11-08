@@ -58,8 +58,10 @@ The seed is written without logging its SQL, so the console shows only the SQL e
 - **Tests:** MSTest 4.5.2.
 - **Look:** the HTMLX Pages brand. Its stylesheets and icon sprite were copied from
   `.claude/skills/brand-htmlx-pages/assets/` into `wwwroot`, and the pages use its components' markup.
-- **HTMX:** not added yet; its exact version is pinned and recorded here when it is. Until then every page works as
-  plain Razor Pages: links, and forms that GET.
+- **HTMX 2.0.11**, pinned: `wwwroot/js/htmx.min.js`, downloaded from <https://unpkg.com/htmx.org@2.0.11/dist/htmx.min.js>.
+  Every page still works without it, as plain Razor Pages of links and forms that GET. With it, a list's links and
+  forms swap only the list's card: the page handler sees HTMX's `HX-Request` header and returns the card's partial view
+  instead of the whole page.
 
 ## License
 
