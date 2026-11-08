@@ -28,7 +28,7 @@ public sealed class IndexModelTests
     public async Task OnGetAsync_PlainRequest_ReturnsThePage()
     {
         // Arrange (Given)
-        IndexModel page = CreatePage(new StubOrganizationService(), htmx: false, restoringHistory: false);
+        IndexModel page = CreatePage(new StubOrganizationService(), HtmxRequest.None);
 
         // Act (When)
         IActionResult result = await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
@@ -40,13 +40,13 @@ public sealed class IndexModelTests
     }
 
     /// <summary>
-    /// Unit test to verify that a request from HTMX gets only the list's card, to swap into the page it already shows.
+    /// Unit test to verify that a request from HTMX to swap part of the page gets only the list's card.
     /// </summary>
     [TestMethod]
-    public async Task OnGetAsync_HtmxRequest_ReturnsTheListPartial()
+    public async Task OnGetAsync_PartialRequest_ReturnsTheListPartial()
     {
         // Arrange (Given)
-        IndexModel page = CreatePage(new StubOrganizationService(), htmx: true, restoringHistory: false);
+        IndexModel page = CreatePage(new StubOrganizationService(), HtmxRequest.Partial);
 
         // Act (When)
         IActionResult result = await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
@@ -55,7 +55,7 @@ public sealed class IndexModelTests
         // Assert (Then)
         Assert.IsNotNull(
             partial,
-            "An HTMX request should get a partial view.");
+            "A partial HTMX request should get a partial view.");
         Assert.AreEqual(
             "_OrganizationList",
             partial.ViewName,
@@ -63,14 +63,14 @@ public sealed class IndexModelTests
     }
 
     /// <summary>
-    /// Unit test to verify that HTMX restoring a page for the back button, which it no longer holds, gets the whole
+    /// Unit test to verify that HTMX restoring a page for the back button, which swaps the whole body, gets the whole
     /// page rather than a card with nothing around it.
     /// </summary>
     [TestMethod]
     public async Task OnGetAsync_HistoryRestore_ReturnsThePage()
     {
         // Arrange (Given)
-        IndexModel page = CreatePage(new StubOrganizationService(), htmx: true, restoringHistory: true);
+        IndexModel page = CreatePage(new StubOrganizationService(), HtmxRequest.HistoryRestore);
 
         // Act (When)
         IActionResult result = await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
@@ -82,14 +82,14 @@ public sealed class IndexModelTests
     }
 
     /// <summary>
-    /// Unit test to verify that the response says it varies by the HX-Request header, so a cache never serves the card
-    /// alone to a browser that asked for the page.
+    /// Unit test to verify that the response says it varies by the HX-Request-Type header, so a cache never serves the
+    /// card alone to a browser that asked for the page.
     /// </summary>
     [TestMethod]
-    public async Task OnGetAsync_AnyRequest_VariesByHtmxRequestHeader()
+    public async Task OnGetAsync_AnyRequest_VariesByRequestTypeHeader()
     {
         // Arrange (Given)
-        IndexModel page = CreatePage(new StubOrganizationService(), htmx: true, restoringHistory: false);
+        IndexModel page = CreatePage(new StubOrganizationService(), HtmxRequest.Partial);
 
         // Act (When)
         await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
@@ -98,9 +98,9 @@ public sealed class IndexModelTests
 
         // Assert (Then)
         Assert.AreEqual(
-            "HX-Request",
+            "HX-Request-Type",
             vary,
-            "The response should vary by HX-Request.");
+            "The response should vary by HX-Request-Type.");
     }
 
     /// <summary>
@@ -112,7 +112,7 @@ public sealed class IndexModelTests
     {
         // Arrange (Given)
         StubOrganizationService service = new StubOrganizationService();
-        IndexModel page = CreatePage(service, htmx: false, restoringHistory: false);
+        IndexModel page = CreatePage(service, HtmxRequest.None);
         page.Input = new IndexModel.InputModel
         {
             Filter = "   ",
@@ -161,22 +161,22 @@ public sealed class IndexModelTests
     #region Private Methods
 
     /// <summary>
-    /// Creates the page as the framework would for one request, with or without HTMX's headers.
+    /// Creates the page as the framework would for one request, with the headers HTMX 4 sends for that kind of request.
     /// </summary>
     /// <param name="service">The organization service the page reads through.</param>
-    /// <param name="htmx">Whether HTMX sent the request.</param>
-    /// <param name="restoringHistory">Whether HTMX is restoring a page for the back button.</param>
+    /// <param name="kind">What sent the request.</param>
     /// <returns>The page, ready for its handler to run.</returns>
-    private static IndexModel CreatePage(StubOrganizationService service, bool htmx, bool restoringHistory)
+    private static IndexModel CreatePage(StubOrganizationService service, HtmxRequest kind)
     {
         DefaultHttpContext http = new DefaultHttpContext();
         IHeaderDictionary headers = http.Request.Headers;
-        if (htmx)
+        if (kind != HtmxRequest.None)
         {
             headers["HX-Request"] = "true";
+            headers["HX-Request-Type"] = kind == HtmxRequest.Partial ? "partial" : "full";
         }
 
-        if (restoringHistory)
+        if (kind == HtmxRequest.HistoryRestore)
         {
             headers["HX-History-Restore-Request"] = "true";
         }

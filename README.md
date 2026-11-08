@@ -58,10 +58,12 @@ The seed is written without logging its SQL, so the console shows only the SQL e
 - **Tests:** MSTest 4.5.2.
 - **Look:** the HTMLX Pages brand. Its stylesheets and icon sprite were copied from
   `.claude/skills/brand-htmlx-pages/assets/` into `wwwroot`, and the pages use its components' markup.
-- **HTMX 2.0.11**, pinned: `wwwroot/js/htmx.min.js`, downloaded from <https://unpkg.com/htmx.org@2.0.11/dist/htmx.min.js>.
+- **HTMX 4.0.1**, pinned: `wwwroot/js/htmx.min.js`, downloaded from <https://unpkg.com/htmx.org@4.0.1/dist/htmx.min.js>.
   Every page still works without it, as plain Razor Pages of links and forms that GET. With it, a list's links and
-  forms swap only the list's card: the page handler sees HTMX's `HX-Request` header and returns the card's partial view
-  instead of the whole page.
+  forms swap only the list's card: HTMX 4 sends `HX-Request-Type: partial` when it will swap part of the page, and the
+  page handler then returns the card's partial view instead of the whole page. Two HTMX 4 rules shape the markup: an
+  attribute reaches an element's descendants only when written with `:inherited` (`hx-boost:inherited="true"`), and the
+  scripts load in `<head>`, because the back button swaps in a whole new body.
 
 ## License
 

@@ -27,10 +27,10 @@ public sealed class IndexModel : PageModel
     private const int DefaultPageSize = 10;
     private const string ListPartial = "_OrganizationList";
 
-    // HTMX sends HX-Request on every request it makes, and HX-History-Restore-Request when the back button needs a
-    // page it no longer holds, which must be the whole page.
-    private const string HtmxRequestHeader = "HX-Request";
-    private const string HtmxHistoryRestoreHeader = "HX-History-Restore-Request";
+    // HTMX 4 says on every request whether it will swap part of the page ("partial") or the whole body ("full"), as
+    // when the back button restores a page.
+    private const string HtmxRequestTypeHeader = "HX-Request-Type";
+    private const string PartialRequestType = "partial";
 
     private static readonly int[] PageSizes = [DefaultPageSize, 25, 50, PageSize.Largest];
 
@@ -111,7 +111,7 @@ public sealed class IndexModel : PageModel
 
         // One URL answers with two different bodies, so a cache must keep them apart by the header that chooses.
         IHeaderDictionary responseHeaders = this.Response.Headers;
-        responseHeaders.Vary = HtmxRequestHeader;
+        responseHeaders.Vary = HtmxRequestTypeHeader;
         if (IsHtmxSwap(this.Request))
         {
             return this.Partial(ListPartial, this);
@@ -183,11 +183,11 @@ public sealed class IndexModel : PageModel
     /// Says whether a request came from HTMX to swap part of a page, rather than to load a whole one.
     /// </summary>
     /// <param name="request">The request.</param>
-    /// <returns><see langword="true"/> when HTMX sent it and is not restoring a page from its history.</returns>
+    /// <returns><see langword="true"/> when HTMX will swap the response into part of the page.</returns>
     private static bool IsHtmxSwap(HttpRequest request)
     {
         IHeaderDictionary headers = request.Headers;
-        return headers[HtmxRequestHeader] == "true" && headers[HtmxHistoryRestoreHeader] != "true";
+        return headers[HtmxRequestTypeHeader] == PartialRequestType;
     }
 
     /// <summary>

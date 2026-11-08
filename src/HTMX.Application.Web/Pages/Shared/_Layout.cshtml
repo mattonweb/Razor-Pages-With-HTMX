@@ -12,6 +12,13 @@
     <link rel="stylesheet" href="~/css/data-display.css" />
     <link rel="stylesheet" href="~/css/inputs.css" />
     <link rel="stylesheet" href="~/css/feedback.css" />
+    @*
+        HTMX 4.0.1, the one version this application is built and tested with; README.md records it. The scripts sit in
+        the head because HTMX 4 answers the back button by swapping a fresh page body in: a script in the body would
+        run again, and load a second HTMX.
+    *@
+    <script src="~/js/htmx.min.js" defer></script>
+    <script src="~/js/app.js" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -41,9 +48,6 @@
             @RenderBody()
         </main>
     </div>
-    @* HTMX 2.0.11, the one version this application is built and tested with; README.md records it. *@
-    <script src="~/js/htmx.min.js"></script>
-    <script src="~/js/app.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

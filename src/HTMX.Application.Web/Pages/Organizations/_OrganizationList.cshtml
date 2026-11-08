@@ -8,11 +8,13 @@
     int last = first + list.Items.Length - 1;
     bool hasNext = last < list.Matching.Value;
 }
-@* hx-boost makes every link and form in the card load over HTMX; the response replaces the card itself, the
-   URL follows, and the card shows the busy bar while a request is in flight. Without HTMX they are plain links
+@* Every link and form in the card loads over HTMX: the response replaces the card itself, the URL follows, and
+   the card shows the busy bar while a request is in flight. In HTMX 4 an attribute reaches the card's descendants
+   only when it says :inherited, and "this" means the card that declares it. Without HTMX they are plain links
    and GET forms. *@
 <div class="card" id="organization-list"
-     hx-boost="true" hx-target="this" hx-swap="outerHTML" hx-indicator="#organization-list">
+     hx-boost:inherited="true" hx-target:inherited="this" hx-swap:inherited="outerHTML"
+     hx-indicator:inherited="#organization-list">
     <div class="toolbar">
         @* A GET form: typing a filter and pressing Enter loads the list again, keeping the status, sort and page size. *@
         <form class="filter-box" role="search" method="get">
