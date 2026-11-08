@@ -26,8 +26,9 @@ version per change, and each user's current row is built from their latest versi
 
 - **Identifiers run from 10001.** Every identifier is five digits wide, a comfortable target when it is a link. A user
   created in the application carries on from 10050, and a deleted user's identifier is never given out again.
-- **Dates move with the demo.** The seed is written as of 7 November 2026; when the application starts, every date moves
-  forward by the time since then, so a change written as "today" is today whenever the demo runs.
+- **Dates are always recent.** Every date is written as a time before the application starts, such as
+  `startedOn.AddDays(-236)`, so the demo looks the same whenever it runs: Pat Example was edited 13 minutes ago, and
+  the oldest user was created about eight months ago.
 - **Some users have a part to play.** Pat Example (10007) carries the five versions of the brand's history specimen;
   Sam Sample (10009) archived Pat and was archived, so cannot be deleted; Casey Mockup (10002) is archived and can.
 

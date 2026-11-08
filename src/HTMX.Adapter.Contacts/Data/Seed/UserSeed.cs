@@ -5,11 +5,15 @@ using HTMX.Adapter.Contacts.Contracts;
 using HTMX.Adapter.Contacts.Entities;
 
 /// <summary>
-/// The users every run of the demo starts with, written as their histories as of <see cref="WrittenOn"/>: the 20 with
-/// a part to play in the brand's specimens or in a test case. <see cref="FillerUserSeed"/> holds the 29 who fill out
-/// the list, for 49 in all: 42 active and 7 archived, the counts the brand's list specimen shows.
+/// The users every run of the demo starts with, written as their histories: the 20 with a part to play in the brand's
+/// specimens or in a test case. <see cref="FillerUserSeed"/> holds the 29 who fill out the list, for 49 in all: 42
+/// active and 7 archived, the counts the brand's list specimen shows.
 /// </summary>
 /// <remarks>
+/// <para>
+/// Every date is written as a time before the application started, so the data is as recent whenever the demo runs:
+/// Pat Example was edited minutes ago, and the oldest user was created about eight months ago.
+/// </para>
 /// <para>
 /// No current row is written here. <see cref="SeedWriter"/> builds each user's row from their latest version, so the
 /// two always agree, exactly as a save in the running application keeps them.
@@ -21,12 +25,6 @@ using HTMX.Adapter.Contacts.Entities;
 /// </remarks>
 internal static class UserSeed
 {
-    /// <summary>
-    /// Gets the moment the seed was written. When the application starts, every date in the seed moves forward by the
-    /// time since then, so a change written as "today" is today whenever the demo runs.
-    /// </summary>
-    internal static DateTime WrittenOn { get; } = new DateTime(2026, 11, 7, 9, 0, 0, DateTimeKind.Utc);
-
     /// <summary>
     /// Gets Demo User, who is signed in and makes most changes.
     /// </summary>
@@ -48,9 +46,11 @@ internal static class UserSeed
     internal static UserId TaylorDummy { get; } = new UserId(10011);
 
     /// <summary>
-    /// Gets every version of the 20 users, oldest first for each user. Each call builds new instances.
+    /// Creates every version of the 20 users, oldest first for each user.
     /// </summary>
-    internal static UserVersion[] Versions =>
+    /// <param name="startedOn">When the application started; every date is written as a time before it.</param>
+    /// <returns>New instances on every call.</returns>
+    internal static UserVersion[] CreateVersions(DateTime startedOn) =>
     [
 
         // Demo User: the signed-in user, the DU in the header. Created by itself, so every other change has
@@ -60,7 +60,7 @@ internal static class UserSeed
             UserId = DemoUser,
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 3, 1, 8, 0, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-251),
             ChangedBy = DemoUser,
             Username = new Username("demo.user"),
             Email = new EmailAddress("demo@example.com"),
@@ -73,7 +73,7 @@ internal static class UserSeed
             UserId = new UserId(10002),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 3, 2, 9, 30, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-250),
             ChangedBy = DemoUser,
             Username = new Username("casey.mockup"),
             Email = new EmailAddress("casey@example.org"),
@@ -84,23 +84,23 @@ internal static class UserSeed
             UserId = new UserId(10002),
             Version = new VersionNumber(2),
             Change = ChangeKind.Archived,
-            ChangedOn = new DateTime(2026, 10, 17, 16, 40, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-21),
             ChangedBy = DemoUser,
             Username = new Username("casey.mockup"),
             Email = new EmailAddress("casey@example.org"),
             DisplayName = new DisplayName("Casey Mockup"),
-            ArchivedOn = new DateTime(2026, 10, 17, 16, 40, 0, DateTimeKind.Utc),
+            ArchivedOn = startedOn.AddDays(-21),
             ArchivedBy = DemoUser,
         },
 
-        // Alex, Drew, Jordan, Lee, Morgan and Robin: the rows of the brand's list specimen, with its dates.
+        // Alex, Drew, Jordan, Lee, Morgan and Robin: the rows of the brand's list specimen, as old as it shows them.
         // Filtering on "alex" finds Alex and Alexandria.
         new UserVersion
         {
             UserId = new UserId(10003),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 11, 5, 10, 12, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-2),
             ChangedBy = DemoUser,
             Username = new Username("alex.placeholder"),
             Email = new EmailAddress("alex@example.org"),
@@ -111,7 +111,7 @@ internal static class UserSeed
             UserId = new UserId(10004),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 11, 4, 15, 20, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-3),
             ChangedBy = DemoUser,
             Username = new Username("drew.stub"),
             Email = new EmailAddress("drew@example.org"),
@@ -122,7 +122,7 @@ internal static class UserSeed
             UserId = new UserId(10005),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 11, 2, 9, 5, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-5),
             ChangedBy = DemoUser,
             Username = new Username("jordan.demo"),
             Email = new EmailAddress("jordan@example.net"),
@@ -133,7 +133,7 @@ internal static class UserSeed
             UserId = new UserId(10006),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 11, 1, 10, 45, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-6),
             ChangedBy = DemoUser,
             Username = new Username("lee.fixture"),
             Email = new EmailAddress("lee@example.net"),
@@ -147,7 +147,7 @@ internal static class UserSeed
             UserId = PatExample,
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 3, 12, 9, 14, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-240),
             ChangedBy = DemoUser,
             Username = new Username("pat.example"),
             Email = new EmailAddress("pat@placeholder.example"),
@@ -158,12 +158,12 @@ internal static class UserSeed
             UserId = PatExample,
             Version = new VersionNumber(2),
             Change = ChangeKind.Archived,
-            ChangedOn = new DateTime(2026, 9, 20, 14, 2, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-48),
             ChangedBy = SamSample,
             Username = new Username("pat.example"),
             Email = new EmailAddress("pat@placeholder.example"),
             DisplayName = new DisplayName("Pat Exampel"),
-            ArchivedOn = new DateTime(2026, 9, 20, 14, 2, 0, DateTimeKind.Utc),
+            ArchivedOn = startedOn.AddDays(-48),
             ArchivedBy = SamSample,
         },
         new UserVersion
@@ -171,7 +171,7 @@ internal static class UserSeed
             UserId = PatExample,
             Version = new VersionNumber(3),
             Change = ChangeKind.Restored,
-            ChangedOn = new DateTime(2026, 10, 4, 10, 20, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-34),
             ChangedBy = TaylorDummy,
             Username = new Username("pat.example"),
             Email = new EmailAddress("pat@placeholder.example"),
@@ -182,7 +182,7 @@ internal static class UserSeed
             UserId = PatExample,
             Version = new VersionNumber(4),
             Change = ChangeKind.Edited,
-            ChangedOn = new DateTime(2026, 11, 2, 16, 5, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-5),
             ChangedBy = TaylorDummy,
             Username = new Username("pat.example"),
             Email = new EmailAddress("pat@placeholder.example"),
@@ -193,7 +193,7 @@ internal static class UserSeed
             UserId = PatExample,
             Version = new VersionNumber(5),
             Change = ChangeKind.Edited,
-            ChangedOn = new DateTime(2026, 11, 7, 8, 47, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddMinutes(-13),
             ChangedBy = DemoUser,
             Username = new Username("pat.example"),
             Email = new EmailAddress("pat@example.com"),
@@ -204,7 +204,7 @@ internal static class UserSeed
             UserId = new UserId(10008),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 10, 31, 13, 22, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-7),
             ChangedBy = DemoUser,
             Username = new Username("morgan.lorem"),
             Email = new EmailAddress("morgan@example.net"),
@@ -218,7 +218,7 @@ internal static class UserSeed
             UserId = SamSample,
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 4, 2, 11, 0, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-219),
             ChangedBy = DemoUser,
             Username = new Username("sam.sample"),
             Email = new EmailAddress("sam@example.com"),
@@ -229,12 +229,12 @@ internal static class UserSeed
             UserId = SamSample,
             Version = new VersionNumber(2),
             Change = ChangeKind.Archived,
-            ChangedOn = new DateTime(2026, 9, 30, 15, 0, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-38),
             ChangedBy = DemoUser,
             Username = new Username("sam.sample"),
             Email = new EmailAddress("sam@example.com"),
             DisplayName = new DisplayName("Sam Sample"),
-            ArchivedOn = new DateTime(2026, 9, 30, 15, 0, 0, DateTimeKind.Utc),
+            ArchivedOn = startedOn.AddDays(-38),
             ArchivedBy = DemoUser,
         },
         new UserVersion
@@ -242,7 +242,7 @@ internal static class UserSeed
             UserId = new UserId(10010),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 10, 24, 11, 30, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-14),
             ChangedBy = DemoUser,
             Username = new Username("robin.testcase"),
             Email = new EmailAddress("robin@example.com"),
@@ -255,7 +255,7 @@ internal static class UserSeed
             UserId = TaylorDummy,
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 5, 4, 9, 40, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-187),
             ChangedBy = DemoUser,
             Username = new Username("taylor.dummy"),
             Email = new EmailAddress("taylor@dummy.example"),
@@ -266,7 +266,7 @@ internal static class UserSeed
             UserId = TaylorDummy,
             Version = new VersionNumber(2),
             Change = ChangeKind.Edited,
-            ChangedOn = new DateTime(2026, 11, 6, 17, 15, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-1),
             ChangedBy = PatExample,
             Username = new Username("taylor.dummy"),
             Email = new EmailAddress("taylor@example.com"),
@@ -279,7 +279,7 @@ internal static class UserSeed
             UserId = new UserId(10012),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 6, 10, 14, 25, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-150),
             ChangedBy = DemoUser,
             Username = new Username("jamie.oplaceholder"),
             Email = new EmailAddress("jamie@example.net"),
@@ -292,7 +292,7 @@ internal static class UserSeed
             UserId = new UserId(10013),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 6, 18, 10, 5, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-142),
             ChangedBy = DemoUser,
             Username = new Username("renee.exemple"),
             Email = new EmailAddress("renee@example.org"),
@@ -305,20 +305,20 @@ internal static class UserSeed
             UserId = new UserId(10014),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 7, 1, 13, 0, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-129),
             ChangedBy = TaylorDummy,
             Username = new Username("alexandria.wireframe-boilerplate"),
             Email = new EmailAddress("alexandria.wireframe-boilerplate@subdomain.example.org"),
             DisplayName = new DisplayName("Alexandria Wireframe-Boilerplate"),
         },
 
-        // Kit Sandbox: created half an hour before the seed was written, so its history has one entry.
+        // Kit Sandbox: created half an hour before the application started, so its history has one entry.
         new UserVersion
         {
             UserId = new UserId(10015),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 11, 7, 8, 30, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddMinutes(-30),
             ChangedBy = DemoUser,
             Username = new Username("kit.sandbox"),
             Email = new EmailAddress("kit@example.com"),
@@ -326,13 +326,13 @@ internal static class UserSeed
         },
 
         // Hollis, Logan, Kim, Val and Ari: the rest of the seven archived users. Kim and Ari are the brand's
-        // Archived specimen, with its dates.
+        // Archived specimen, as long ago as it shows them.
         new UserVersion
         {
             UserId = new UserId(10016),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 3, 20, 10, 0, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-232),
             ChangedBy = DemoUser,
             Username = new Username("hollis.dolor"),
             Email = new EmailAddress("hollis@example.org"),
@@ -343,12 +343,12 @@ internal static class UserSeed
             UserId = new UserId(10016),
             Version = new VersionNumber(2),
             Change = ChangeKind.Archived,
-            ChangedOn = new DateTime(2026, 8, 14, 11, 10, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-85),
             ChangedBy = DemoUser,
             Username = new Username("hollis.dolor"),
             Email = new EmailAddress("hollis@example.org"),
             DisplayName = new DisplayName("Hollis Dolor"),
-            ArchivedOn = new DateTime(2026, 8, 14, 11, 10, 0, DateTimeKind.Utc),
+            ArchivedOn = startedOn.AddDays(-85),
             ArchivedBy = DemoUser,
         },
         new UserVersion
@@ -356,7 +356,7 @@ internal static class UserSeed
             UserId = new UserId(10017),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 4, 8, 15, 45, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-213),
             ChangedBy = DemoUser,
             Username = new Username("logan.faux"),
             Email = new EmailAddress("logan@example.net"),
@@ -367,12 +367,12 @@ internal static class UserSeed
             UserId = new UserId(10017),
             Version = new VersionNumber(2),
             Change = ChangeKind.Archived,
-            ChangedOn = new DateTime(2026, 7, 22, 9, 30, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-108),
             ChangedBy = TaylorDummy,
             Username = new Username("logan.faux"),
             Email = new EmailAddress("logan@example.net"),
             DisplayName = new DisplayName("Logan Faux"),
-            ArchivedOn = new DateTime(2026, 7, 22, 9, 30, 0, DateTimeKind.Utc),
+            ArchivedOn = startedOn.AddDays(-108),
             ArchivedBy = TaylorDummy,
         },
         new UserVersion
@@ -380,7 +380,7 @@ internal static class UserSeed
             UserId = new UserId(10018),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 4, 20, 13, 15, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-201),
             ChangedBy = DemoUser,
             Username = new Username("kim.prototype"),
             Email = new EmailAddress("kim@example.org"),
@@ -391,12 +391,12 @@ internal static class UserSeed
             UserId = new UserId(10018),
             Version = new VersionNumber(2),
             Change = ChangeKind.Archived,
-            ChangedOn = new DateTime(2026, 9, 12, 10, 0, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-56),
             ChangedBy = DemoUser,
             Username = new Username("kim.prototype"),
             Email = new EmailAddress("kim@example.org"),
             DisplayName = new DisplayName("Kim Prototype"),
-            ArchivedOn = new DateTime(2026, 9, 12, 10, 0, 0, DateTimeKind.Utc),
+            ArchivedOn = startedOn.AddDays(-56),
             ArchivedBy = DemoUser,
         },
         new UserVersion
@@ -404,7 +404,7 @@ internal static class UserSeed
             UserId = new UserId(10019),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 5, 19, 16, 20, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-172),
             ChangedBy = DemoUser,
             Username = new Username("val.vanilla"),
             Email = new EmailAddress("val@example.com"),
@@ -415,12 +415,12 @@ internal static class UserSeed
             UserId = new UserId(10019),
             Version = new VersionNumber(2),
             Change = ChangeKind.Archived,
-            ChangedOn = new DateTime(2026, 10, 28, 12, 0, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-10),
             ChangedBy = PatExample,
             Username = new Username("val.vanilla"),
             Email = new EmailAddress("val@example.com"),
             DisplayName = new DisplayName("Val Vanilla"),
-            ArchivedOn = new DateTime(2026, 10, 28, 12, 0, 0, DateTimeKind.Utc),
+            ArchivedOn = startedOn.AddDays(-10),
             ArchivedBy = PatExample,
         },
         new UserVersion
@@ -428,7 +428,7 @@ internal static class UserSeed
             UserId = new UserId(10021),
             Version = new VersionNumber(1),
             Change = ChangeKind.Created,
-            ChangedOn = new DateTime(2026, 5, 11, 10, 30, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-180),
             ChangedBy = DemoUser,
             Username = new Username("ari.template"),
             Email = new EmailAddress("ari@example.net"),
@@ -439,12 +439,12 @@ internal static class UserSeed
             UserId = new UserId(10021),
             Version = new VersionNumber(2),
             Change = ChangeKind.Archived,
-            ChangedOn = new DateTime(2026, 10, 2, 14, 0, 0, DateTimeKind.Utc),
+            ChangedOn = startedOn.AddDays(-36),
             ChangedBy = DemoUser,
             Username = new Username("ari.template"),
             Email = new EmailAddress("ari@example.net"),
             DisplayName = new DisplayName("Ari Template"),
-            ArchivedOn = new DateTime(2026, 10, 2, 14, 0, 0, DateTimeKind.Utc),
+            ArchivedOn = startedOn.AddDays(-36),
             ArchivedBy = DemoUser,
         },
     ];

@@ -77,12 +77,12 @@ public sealed class UserVersionMappingTests
     #region Private Methods
 
     /// <summary>
-    /// Creates a database with its tables and the seed in them, with the clock at the seed's date.
+    /// Creates a database with its tables and the seed in them, with the clock stopped at the tests' start time.
     /// </summary>
     /// <returns>The database, which the caller disposes.</returns>
     private static Task<InMemoryDatabase> CreateSeededDatabaseAsync()
     {
-        return TestDatabase.CreateSeededAsync(TestDatabase.CreateClockAtSeedDate());
+        return TestDatabase.CreateSeededAsync(TestDatabase.CreateClock());
     }
 
     /// <summary>

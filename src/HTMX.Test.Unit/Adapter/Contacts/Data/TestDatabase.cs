@@ -16,12 +16,17 @@ using Microsoft.Extensions.Time.Testing;
 internal static class TestDatabase
 {
     /// <summary>
-    /// Creates a clock stopped at the moment the seed was written, so seeded dates come back exactly as written.
+    /// Gets the moment the tests' application starts, so every seeded date is a known time before it.
+    /// </summary>
+    internal static DateTime StartedOn { get; } = new DateTime(2026, 11, 7, 9, 0, 0, DateTimeKind.Utc);
+
+    /// <summary>
+    /// Creates a clock stopped at <see cref="StartedOn"/>.
     /// </summary>
     /// <returns>The clock.</returns>
-    internal static FakeTimeProvider CreateClockAtSeedDate()
+    internal static FakeTimeProvider CreateClock()
     {
-        return new FakeTimeProvider(new DateTimeOffset(UserSeed.WrittenOn));
+        return new FakeTimeProvider(new DateTimeOffset(StartedOn));
     }
 
     /// <summary>

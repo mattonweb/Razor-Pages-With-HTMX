@@ -8,8 +8,8 @@ using HTMX.Adapter.Contacts.Contracts;
 using HTMX.Adapter.Contacts.Entities;
 
 /// <summary>
-/// Writes the seed into a new database: every version, moved forward so the seed ends now, and each user's current
-/// row built from their latest version.
+/// Writes the seed into a new database: every version, dated back from now, and each user's current row built from
+/// their latest version.
 /// </summary>
 internal sealed class SeedWriter
 {
@@ -35,34 +35,18 @@ internal sealed class SeedWriter
     {
         ArgumentNullException.ThrowIfNull(context);
         DateTimeOffset now = this._timeProvider.GetUtcNow();
-        TimeSpan sinceWritten = now.UtcDateTime - UserSeed.WrittenOn;
+        DateTime startedOn = now.UtcDateTime;
 
         UserVersion[] versions =
         [
-            .. UserSeed.Versions
-                .Concat(FillerUserSeed.Versions)
-                .Select(version => MoveForward(version, sinceWritten)),
+            .. UserSeed.CreateVersions(startedOn),
+            .. FillerUserSeed.CreateVersions(startedOn),
         ];
         User[] users = [.. versions.GroupBy(static version => version.UserId).Select(BuildUser)];
 
         context.Set<User>().AddRange(users);
         context.Set<UserVersion>().AddRange(versions);
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Moves a version's dates forward by the time since the seed was written.
-    /// </summary>
-    /// <param name="version">The version as the seed writes it.</param>
-    /// <param name="sinceWritten">The time since the seed was written.</param>
-    /// <returns>The same version, with its dates moved.</returns>
-    private static UserVersion MoveForward(UserVersion version, TimeSpan sinceWritten)
-    {
-        return version with
-        {
-            ChangedOn = version.ChangedOn + sinceWritten,
-            ArchivedOn = version.ArchivedOn + sinceWritten,
-        };
     }
 
     /// <summary>

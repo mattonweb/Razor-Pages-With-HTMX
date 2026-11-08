@@ -77,14 +77,14 @@ public sealed class DatabaseCreatorTests
     #region Private Methods
 
     /// <summary>
-    /// Registers the adapter as the application does, over a database no other test uses, with the clock at the seed's
-    /// date.
+    /// Registers the adapter as the application does, over a database no other test uses, with the clock stopped at
+    /// the tests' start time.
     /// </summary>
     /// <returns>The services, which the caller disposes, and the database with them.</returns>
     private static ServiceProvider CreateServices()
     {
         ServiceCollection services = new ServiceCollection();
-        services.AddSingleton<TimeProvider>(TestDatabase.CreateClockAtSeedDate());
+        services.AddSingleton<TimeProvider>(TestDatabase.CreateClock());
         ContactsOptions options = new ContactsOptions
         {
             DatabaseName = new DatabaseName(Guid.NewGuid().ToString("N")),

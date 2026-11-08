@@ -28,7 +28,7 @@ public sealed class SeedWriterTests
     public async Task WriteAsync_NewDatabase_WritesFortyNineUsers()
     {
         // Arrange (Given)
-        FakeTimeProvider clock = TestDatabase.CreateClockAtSeedDate();
+        FakeTimeProvider clock = TestDatabase.CreateClock();
 
         // Act (When)
         (User[] users, _) = await SeedAndReadAsync(clock).ConfigureAwait(false);
@@ -47,7 +47,7 @@ public sealed class SeedWriterTests
     public async Task WriteAsync_NewDatabase_LeavesSevenUsersArchived()
     {
         // Arrange (Given)
-        FakeTimeProvider clock = TestDatabase.CreateClockAtSeedDate();
+        FakeTimeProvider clock = TestDatabase.CreateClock();
 
         // Act (When)
         (User[] users, _) = await SeedAndReadAsync(clock).ConfigureAwait(false);
@@ -68,7 +68,7 @@ public sealed class SeedWriterTests
     public async Task WriteAsync_NewDatabase_GivesPatExampleTheSpecimenVersion()
     {
         // Arrange (Given)
-        FakeTimeProvider clock = TestDatabase.CreateClockAtSeedDate();
+        FakeTimeProvider clock = TestDatabase.CreateClock();
 
         // Act (When)
         (User[] users, _) = await SeedAndReadAsync(clock).ConfigureAwait(false);
@@ -86,15 +86,16 @@ public sealed class SeedWriterTests
     }
 
     /// <summary>
-    /// Unit test to verify that with the clock at the moment the seed was written, every date comes back exactly as
-    /// the seed writes it.
+    /// Unit test to verify that every date is written as a time before the application started: Pat Example was
+    /// created 240 days before it, and edited 13 minutes before it.
     /// </summary>
     [TestMethod]
-    public async Task WriteAsync_ClockAtSeedDate_KeepsTheDatesAsWritten()
+    public async Task WriteAsync_StoppedClock_DatesEachChangeBeforeNow()
     {
         // Arrange (Given)
-        FakeTimeProvider clock = TestDatabase.CreateClockAtSeedDate();
-        DateTime written = new DateTime(2026, 3, 12, 9, 14, 0, DateTimeKind.Utc);
+        FakeTimeProvider clock = TestDatabase.CreateClock();
+        DateTime created = new DateTime(2026, 3, 12, 9, 0, 0, DateTimeKind.Utc);
+        DateTime edited = new DateTime(2026, 11, 7, 8, 47, 0, DateTimeKind.Utc);
 
         // Act (When)
         (User[] users, _) = await SeedAndReadAsync(clock).ConfigureAwait(false);
@@ -102,23 +103,27 @@ public sealed class SeedWriterTests
 
         // Assert (Then)
         Assert.AreEqual(
-            written,
+            created,
             pat.CreatedOn,
-            "Pat Example should be created on the date the seed writes.");
+            "Pat Example should be created 240 days before the application started.");
+        Assert.AreEqual(
+            edited,
+            pat.LastModifiedOn,
+            "Pat Example should be edited 13 minutes before the application started.");
     }
 
     /// <summary>
-    /// Unit test to verify that a demo started a day after the seed was written sees every date a day later, so a
-    /// change written as today is still today.
+    /// Unit test to verify that a demo started a day later sees every date a day later, so the data looks as recent
+    /// whenever the demo runs.
     /// </summary>
     [TestMethod]
     public async Task WriteAsync_ClockOneDayLater_MovesEveryDateForwardOneDay()
     {
         // Arrange (Given)
-        FakeTimeProvider clock = TestDatabase.CreateClockAtSeedDate();
+        FakeTimeProvider clock = TestDatabase.CreateClock();
         clock.Advance(TimeSpan.FromDays(1));
-        DateTime created = new DateTime(2026, 3, 13, 9, 14, 0, DateTimeKind.Utc);
-        DateTime archived = new DateTime(2026, 10, 1, 15, 0, 0, DateTimeKind.Utc);
+        DateTime created = new DateTime(2026, 3, 13, 9, 0, 0, DateTimeKind.Utc);
+        DateTime archived = new DateTime(2026, 10, 1, 9, 0, 0, DateTimeKind.Utc);
 
         // Act (When)
         (User[] users, _) = await SeedAndReadAsync(clock).ConfigureAwait(false);
@@ -144,7 +149,7 @@ public sealed class SeedWriterTests
     public async Task WriteAsync_NewDatabase_ReadsDatesBackAsUtc()
     {
         // Arrange (Given)
-        FakeTimeProvider clock = TestDatabase.CreateClockAtSeedDate();
+        FakeTimeProvider clock = TestDatabase.CreateClock();
 
         // Act (When)
         (User[] users, _) = await SeedAndReadAsync(clock).ConfigureAwait(false);
@@ -169,7 +174,7 @@ public sealed class SeedWriterTests
     public async Task WriteAsync_NewDatabase_BuildsEachUserFromTheirLatestVersion()
     {
         // Arrange (Given)
-        FakeTimeProvider clock = TestDatabase.CreateClockAtSeedDate();
+        FakeTimeProvider clock = TestDatabase.CreateClock();
 
         // Act (When)
         (User[] users, UserVersion[] versions) = await SeedAndReadAsync(clock).ConfigureAwait(false);
@@ -190,7 +195,7 @@ public sealed class SeedWriterTests
     public async Task WriteAsync_NewDatabase_RecordsChangesOnlyByActiveUsers()
     {
         // Arrange (Given)
-        FakeTimeProvider clock = TestDatabase.CreateClockAtSeedDate();
+        FakeTimeProvider clock = TestDatabase.CreateClock();
 
         // Act (When)
         (_, UserVersion[] versions) = await SeedAndReadAsync(clock).ConfigureAwait(false);
