@@ -56,7 +56,10 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   disk, so a clone needs no setup, and every run starts from the same known data. Restarting the application resets
   the demo.
 - **Tests:** MSTest 4.5.2.
-- **HTMX:** not added yet; its exact version is pinned and recorded here when it is.
+- **Look:** the HTMLX Pages brand. Its stylesheets and icon sprite were copied from
+  `.claude/skills/brand-htmlx-pages/assets/` into `wwwroot`, and the pages use its components' markup.
+- **HTMX:** not added yet; its exact version is pinned and recorded here when it is. Until then every page works as
+  plain Razor Pages: links, and forms that GET.
 
 ## License
 

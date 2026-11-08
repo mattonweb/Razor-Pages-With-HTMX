@@ -2,8 +2,11 @@ namespace HTMX.Adapter.Customers;
 
 using System;
 using HTMX.Adapter.Customers.Configuration;
+using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data;
 using HTMX.Adapter.Customers.Data.Seed;
+using HTMX.Adapter.Customers.Providers;
+using HTMX.Adapter.Customers.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -14,8 +17,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers the in-memory database, the context that reads and writes it, and the service that creates its
-    /// tables and writes the seed when the application starts.
+    /// Registers the in-memory database, the context that reads and writes it, the service that creates its tables
+    /// and writes the seed when the application starts, and the services behind the contracts.
     /// </summary>
     /// <param name="services">The host's service collection.</param>
     /// <param name="options">What the host supplies: the database's name.</param>
@@ -33,6 +36,10 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<CustomersDatabaseContext>(ConfigureContext);
         services.AddSingleton<SeedWriter>();
         services.AddHostedService<DatabaseCreator>();
+
+        // One of each per request, like the context they read through.
+        services.AddScoped<OrganizationProvider>();
+        services.AddScoped<IOrganizationService, OrganizationService>();
         return services;
     }
 

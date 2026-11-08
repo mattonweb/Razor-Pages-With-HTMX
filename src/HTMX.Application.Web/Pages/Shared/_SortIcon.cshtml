@@ -1,0 +1,15 @@
+@model string?
+@* A sort header's icon: an arrow the way the column is sorted, or the plain sort icon for a column that is not. The
+   model is the header's aria-sort value. *@
+@{
+    string icon = Model switch
+    {
+        "ascending" =>
+            "arrow-up",
+        "descending" =>
+            "arrow-down",
+        _ =>
+            "sort",
+    };
+}
+<svg class="icon sm" aria-hidden="true"><use href="/icons.svg#@icon"></use></svg>

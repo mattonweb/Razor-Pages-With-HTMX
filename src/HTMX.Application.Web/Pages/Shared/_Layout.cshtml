@@ -4,12 +4,44 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] · HTMLX Pages</title>
-    @* Pending: the HTMLX Pages brand stylesheets and the HTMX script, once the brand skill's assets are wired in. *@
+    @* The brand's stylesheets, in the order the brand gives: tokens first, feedback last. *@
+    <link rel="stylesheet" href="~/css/tokens.css" />
+    <link rel="stylesheet" href="~/css/base.css" />
+    <link rel="stylesheet" href="~/css/layout.css" />
+    <link rel="stylesheet" href="~/css/navigation.css" />
+    <link rel="stylesheet" href="~/css/data-display.css" />
+    <link rel="stylesheet" href="~/css/inputs.css" />
+    <link rel="stylesheet" href="~/css/feedback.css" />
 </head>
 <body>
-    <main id="main">
-        @RenderBody()
-    </main>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="app">
+        <header class="app-header">
+            <button class="btn ghost icon-only" type="button" data-action="toggle-nav" aria-label="Main menu" aria-controls="app-nav">
+                <svg class="icon" aria-hidden="true"><use href="/icons.svg#menu"></use></svg>
+            </button>
+            <a class="brand" asp-page="/Index">
+                <svg class="brand-mark" aria-hidden="true"><use href="/icons.svg#logo"></use></svg>
+                HTMLX Pages
+            </a>
+            <div class="end">
+                <span class="avatar" role="img" aria-label="Signed in as Demo User">DU</span>
+            </div>
+        </header>
+
+        @* Each page names its section in ViewData, and the section's link is marked as the current page. *@
+        <nav class="app-nav" id="app-nav" aria-label="Main">
+            <a asp-page="/Organizations/Index" title="Organizations"
+               aria-current="@(ViewData["Section"] as string == "Organizations" ? "page" : null)">
+                <svg class="icon" aria-hidden="true"><use href="/icons.svg#building"></use></svg><span>Organizations</span>
+            </a>
+        </nav>
+
+        <main class="app-main" id="main">
+            @RenderBody()
+        </main>
+    </div>
+    <script src="~/js/app.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

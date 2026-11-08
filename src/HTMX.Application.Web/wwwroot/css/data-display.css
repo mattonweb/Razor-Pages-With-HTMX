@@ -1,0 +1,177 @@
+/*
+  HTMLX Pages: data display. Showing records and values.
+    .grid          a table of records: sort headers, a title cell, a selection column, archived rows
+    .chip          a status label
+    .empty         what a list shows when it has nothing to show
+    .fields        label-over-value pairs, in as many columns as the width allows
+    .related       a link to another record, led by its type's icon
+    .panel         a side panel that shows one record's fields over the page
+    .version       a version badge
+    .timeline      a list of versions, newest first, each a <details> that opens on its changes
+    .diff          a table of changed values, before and after
+*/
+
+/* Grid */
+.grid-wrap { overflow-x: auto; }
+.grid { width: 100%; border-collapse: collapse; }
+.grid th {
+  height: 40px; padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm); font-weight: var(--weight-strong); color: var(--text-muted);
+  text-align: left; white-space: nowrap;
+}
+.grid td {
+  height: var(--row-height); padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--border); vertical-align: middle;
+}
+.grid tbody tr:last-child td { border-bottom: 0; }
+.grid tbody tr:hover { background: var(--surface-hover); }
+.grid tbody tr[aria-selected="true"] { background: var(--accent-subtle); }
+
+/* Selection column: a checkbox (bulk selection) or a radio (a picker) in the first cell. A row whose box is
+   checked is highlighted; its label is the row's title, so a click on the name also selects it. */
+.grid .select { width: 1%; padding-right: 0; }
+.grid tbody tr:has(.select input:checked) { background: var(--accent-subtle); }
+.grid td.title label { display: block; font-weight: var(--weight-strong); cursor: pointer; }
+.grid .actions { width: 1%; padding-block: 0; text-align: right; white-space: nowrap; }
+.grid .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Sortable header: <th aria-sort="ascending"><a href="?sort=name&amp;dir=desc">Name <svg class="icon sm">…</svg></a></th>.
+   The arrow shows on the sorted column, and on any header under the pointer or keyboard focus. */
+.grid th a { display: inline-flex; align-items: center; gap: var(--space-1); color: inherit; }
+.grid th a:hover { color: var(--text); text-decoration: none; }
+.grid th a .icon { opacity: 0; }
+.grid th a:hover .icon, .grid th a:focus-visible .icon,
+.grid th[aria-sort="ascending"] a .icon, .grid th[aria-sort="descending"] a .icon { opacity: 1; }
+.grid th[aria-sort="ascending"], .grid th[aria-sort="descending"] { color: var(--text); }
+
+/* An archived row in the All view: muted text, the chip says why. */
+.grid tr.archived td:not(.actions) { color: var(--text-muted); }
+.grid tr.archived td.title a { color: var(--text-muted); }
+
+/* Title cell: the first column. A link to the record, then a muted second line.
+   <td class="title"><a href="…">Pat Example</a><span class="sub">pat@example.com</span></td> */
+.grid td.title a { display: block; font-weight: var(--weight-strong); }
+.grid td.title .sub { display: block; font-size: var(--text-sm); color: var(--text-muted); }
+
+/* Chip: a status label with a dot. Tones: success, danger, warning, info, brand; neutral is the default. */
+.chip {
+  --tone: var(--neutral); --tone-subtle: var(--neutral-subtle); --tone-line: var(--neutral-line);
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 24px; padding: 0 10px;
+  border: 1px solid var(--tone-line); border-radius: var(--radius-full);
+  background: var(--tone-subtle); color: var(--tone);
+  font-size: var(--text-xs); font-weight: var(--weight-strong); white-space: nowrap;
+}
+.chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.chip.success { --tone: var(--success); --tone-subtle: var(--success-subtle); --tone-line: var(--success-line); }
+.chip.danger  { --tone: var(--danger);  --tone-subtle: var(--danger-subtle);  --tone-line: var(--danger-line); }
+.chip.warning { --tone: var(--warning); --tone-subtle: var(--warning-subtle); --tone-line: var(--warning-line); }
+.chip.info    { --tone: var(--info);    --tone-subtle: var(--info-subtle);    --tone-line: var(--info-line); }
+.chip.brand   { --tone: var(--brand-text); --tone-subtle: var(--brand-subtle); --tone-line: var(--brand-subtle); }
+
+/* Empty state: one icon, one heading, one sentence, at most one action. */
+.empty {
+  display: grid; justify-items: center; gap: var(--space-2);
+  padding: var(--space-8) var(--space-4); text-align: center;
+}
+.empty .icon { width: 40px; height: 40px; stroke-width: 1.5; color: var(--text-disabled); }
+.empty p { color: var(--text-muted); }
+.empty .btn { margin-top: var(--space-2); }
+
+/* Fields: <dl class="fields"><div><dt>Email</dt><dd>…</dd></div>…</dl>. Each label sits over its value, and the
+   list fills as many 260px columns as fit: two or three in a card, one in the side panel. .wide spans the row.
+   A value that was never set reads "Not set" in .unset, never a blank or a dash. */
+.fields {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: var(--space-4) var(--space-6); margin: 0;
+}
+.fields .wide { grid-column: 1 / -1; }
+.fields dt { font-size: var(--text-sm); color: var(--text-muted); }
+.fields dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+.fields .unset { color: var(--text-muted); }
+
+/* Related-record link: the record type's icon, then the record's name. A link to an archived record stays a
+   link, muted, followed by an Archived chip. */
+.related { display: inline-flex; align-items: center; gap: var(--space-1); }
+.related .icon { width: 16px; height: 16px; }
+.related.archived { color: var(--text-muted); }
+.related + .chip { margin-left: var(--space-2); }
+
+/* Side panel: <aside class="panel" id="record-panel" popover>. It covers the right edge of the page and closes
+   on Escape, on its close button, or on a click outside it. It is not modal: the list beside it stays usable,
+   and the row it shows carries aria-selected="true". */
+.panel {
+  inset: 0 0 0 auto; width: min(420px, 100vw); height: 100dvh; max-height: none; margin: 0; padding: 0;
+  border: 0; border-left: 1px solid var(--border);
+  background: var(--surface); color: var(--text); box-shadow: var(--shadow-popup);
+  flex-direction: column; overflow: hidden;
+  translate: 100% 0;
+  transition: translate .2s ease-out, display .2s allow-discrete, overlay .2s allow-discrete;
+}
+.panel:popover-open { display: flex; translate: 0 0; }
+@starting-style { .panel:popover-open { translate: 100% 0; } }
+
+.panel-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-4); border-bottom: 1px solid var(--border);
+}
+.panel-header .title { display: grid; justify-items: start; gap: var(--space-2); }
+.panel-body { flex: 1; overflow-y: auto; padding: var(--space-4); }
+.panel-footer {
+  display: flex; justify-content: flex-end; gap: var(--space-2);
+  padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border);
+}
+
+/* Version badge */
+.version {
+  display: inline-grid; place-items: center; min-width: 32px; height: 22px; padding: 0 6px;
+  border-radius: var(--radius-sm); background: var(--brand-subtle); color: var(--brand-text);
+  font-family: var(--font-mono); font-size: var(--text-xs); font-weight: var(--weight-strong);
+}
+.version.current { background: var(--brand); color: var(--on-brand); }
+
+/* Timeline: a line down the left with a dot per version; the current version's dot is the brand color. */
+.timeline { margin: 0; padding: 0; list-style: none; }
+.timeline > li { position: relative; padding-left: var(--space-8); }
+.timeline > li::before {
+  content: ""; position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: var(--border);
+}
+.timeline > li:first-child::before { top: 20px; }
+.timeline > li:last-child::before { bottom: auto; height: 20px; }
+.timeline > li::after {
+  content: ""; position: absolute; left: 5px; top: 14px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--border-input);
+}
+.timeline > li.current::after { background: var(--brand); border-color: var(--brand); }
+
+.timeline summary {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm);
+  list-style: none; cursor: pointer;
+}
+.timeline summary::-webkit-details-marker { display: none; }
+.timeline summary:hover { background: var(--surface-hover); }
+.timeline summary .chevron { color: var(--icon); transition: rotate .15s; }
+.timeline details[open] > summary .chevron { rotate: 90deg; }
+.timeline summary .when { margin-left: auto; font-size: var(--text-sm); color: var(--text-muted); }
+.timeline .entry-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-3) var(--space-5); }
+.timeline .entry-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* Diff: Field, Before, After. Only the fields that changed; a missing value reads "Not set". The column headers
+   carry the meaning, so the colors only reinforce it. */
+.diff { width: 100%; min-width: 440px; border-collapse: collapse; table-layout: fixed; font-size: var(--text-sm); }   /* narrower than that, .diff-wrap scrolls sideways, as a grid does */
+.diff thead th:first-child { width: 120px; }   /* Field is fixed; Before and After share the rest equally */
+.diff th, .diff td {
+  padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border);
+  text-align: left; vertical-align: top; overflow-wrap: anywhere;
+}
+.diff thead th { font-weight: var(--weight-strong); color: var(--text-muted); }
+.diff tbody th { font-weight: var(--weight-strong); }
+.diff tbody tr:last-child > * { border-bottom: 0; }
+.diff del {
+  background: var(--danger-subtle); color: var(--text);
+  text-decoration: line-through; text-decoration-color: var(--danger);
+}
+.diff ins { background: var(--success-subtle); color: var(--text); text-decoration: none; }
+.diff-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
