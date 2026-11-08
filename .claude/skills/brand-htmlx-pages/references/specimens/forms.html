@@ -79,11 +79,11 @@
                 <p class="hint" id="Phone-hint">Include the country code.</p>
               </div>
               <fieldset class="field">
-                <legend>Company</legend>
+                <legend>Organization</legend>
                 <div class="relation">
-                  <input type="hidden" name="CompanyId" value="3">
+                  <input type="hidden" name="OrganizationId" value="3">
                   <a class="related" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#building"></use></svg>Placeholder Logistics</a>
-                  <button class="btn" type="button" commandfor="company-picker" command="show-modal">Change</button>
+                  <button class="btn" type="button" commandfor="organization-picker" command="show-modal">Change</button>
                 </div>
               </fieldset>
               <div class="field">
@@ -182,8 +182,8 @@
           <fieldset class="field">
             <legend>No related record yet</legend>
             <div class="relation">
-              <span class="unset">No company</span>
-              <button class="btn" type="button" commandfor="company-picker" command="show-modal">Choose</button>
+              <span class="unset">No organization</span>
+              <button class="btn" type="button" commandfor="organization-picker" command="show-modal">Choose</button>
             </div>
           </fieldset>
           <div class="field">
@@ -210,8 +210,8 @@
     <section class="spec" aria-labelledby="picker">
       <h2 id="picker">Relation picker</h2>
       <p class="spec-lead">Change, or Choose, opens a dialog built from the list components: a filter box and a grid with a radio
-        in each row. It lists active records only; an archived company cannot be chosen.</p>
-      <button class="btn" type="button" commandfor="company-picker" command="show-modal">Open the company picker</button>
+        in each row. It lists active records only; an archived organization cannot be chosen.</p>
+      <button class="btn" type="button" commandfor="organization-picker" command="show-modal">Open the organization picker</button>
     </section>
 
     <dialog class="dialog" id="new-contact" aria-labelledby="new-contact-title">
@@ -233,23 +233,23 @@
       </form>
     </dialog>
 
-    <dialog class="dialog" id="company-picker" aria-labelledby="company-picker-title">
+    <dialog class="dialog" id="organization-picker" aria-labelledby="organization-picker-title">
       <form method="dialog"><!-- In the application: the chosen value goes back to the field; settled with the HTMX wiring. -->
         <header class="dialog-header">
-          <h2 id="company-picker-title">Choose a company</h2>
-          <button class="btn ghost icon-only" type="button" commandfor="company-picker" command="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button>
+          <h2 id="organization-picker-title">Choose an organization</h2>
+          <button class="btn ghost icon-only" type="button" commandfor="organization-picker" command="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button>
         </header>
         <div class="dialog-body">
           <div class="card">
             <div class="toolbar">
               <div class="filter-box" role="search">
                 <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#filter"></use></svg>
-                <input type="search" placeholder="Filter companies" aria-label="Filter companies">
+                <input type="search" placeholder="Filter organizations" aria-label="Filter organizations">
               </div>
             </div>
             <table class="grid">
-              <caption class="visually-hidden">Active companies</caption>
-              <thead><tr><th class="select" scope="col"><span class="visually-hidden">Choose</span></th><th scope="col">Company</th><th scope="col" class="num">Contacts</th></tr></thead>
+              <caption class="visually-hidden">Active organizations</caption>
+              <thead><tr><th class="select" scope="col"><span class="visually-hidden">Choose</span></th><th scope="col">Organization</th><th scope="col" class="num">Contacts</th></tr></thead>
               <tbody>
                 <tr><td class="select"><input type="radio" name="Pick" id="pick-1" value="1"></td><td class="title"><label for="pick-1">Demo Dairy Co.</label><span class="sub">Food and drink</span></td><td class="num">2</td></tr>
                 <tr><td class="select"><input type="radio" name="Pick" id="pick-2" value="2"></td><td class="title"><label for="pick-2">Fictional Freight</label><span class="sub">Shipping</span></td><td class="num">4</td></tr>
@@ -261,8 +261,8 @@
           </div>
         </div>
         <footer class="dialog-footer">
-          <button class="btn" type="button" commandfor="company-picker" command="close">Cancel</button>
-          <button class="btn primary" type="submit">Choose company</button>
+          <button class="btn" type="button" commandfor="organization-picker" command="close">Cancel</button>
+          <button class="btn primary" type="submit">Choose organization</button>
         </footer>
       </form>
     </dialog>

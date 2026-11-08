@@ -69,7 +69,7 @@ fieldset.field { margin: 0; padding: 0; border: 0; }
 .choices input:focus-visible { box-shadow: none; }
 
 /* Relation: the chosen record as a related-record link, and a Change button that opens a picker dialog.
-   <fieldset class="field"><legend>Company</legend><div class="relation">…</div></fieldset> */
+   <fieldset class="field"><legend>Organization</legend><div class="relation">…</div></fieldset> */
 .relation {
   display: flex; align-items: center; gap: var(--space-2);
   min-height: var(--control-height); padding-left: var(--space-3);

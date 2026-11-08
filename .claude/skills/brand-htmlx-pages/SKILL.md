@@ -128,7 +128,7 @@ right: Archive (secondary) and Edit (primary). Under the header, `nav.tabs` hold
 each with its own URL. The fields sit in cards, each with a `card-header` naming the group, as a
 `<dl class="fields">` with every label over its value. Email and web addresses are links; a value never set
 reads "Not set" (`.unset`); identifiers and numbers are `.mono`. Another record is always a related-record link,
-`<a class="related">` led by its type's icon (`user` for a contact, `building` for a company); a link to an
+`<a class="related">` led by its type's icon (`user` for a contact, `building` for an organization); a link to an
 archived record is muted and followed by an `Archived` chip, in a field or a grid cell alike. The Record card
 shows the current version badge. The side panel, `<aside class="panel" popover>`, shows the same fields for one row
 of a list, with Open full record and Edit in its footer; the row it shows carries `aria-selected="true"`. Without
@@ -171,7 +171,7 @@ that cannot come back, such as a related record since deleted, keeps its current
 in a warning alert.
 
 **Sample data.** Invented and obviously so: names like Pat Example and Sam Sample, addresses at `example.com`,
-`example.org` or `example.net`, companies like Placeholder Logistics.
+`example.org` or `example.net`, organizations like Placeholder Logistics.
 
 ## Open questions
 
