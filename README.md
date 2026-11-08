@@ -27,19 +27,25 @@ per change, with each current row built from its latest version:
 - **1,000 organizations**, 949 active and 51 archived, so paging is tested properly at every page size, the Archived
   filter included. Fifteen are written out because each has a part to play; the other 985 are generated from two word
   lists (Example Freight, Stand-In Software), the same ones on every run.
+- **1,500 contacts**, 1,440 active and 60 archived, every one belonging to exactly one organization. Eight are written
+  out because each has a part to play; the other 1,492 are generated, none to three for each generated organization
+  and 18 in all at Placeholder Logistics, so its own list of contacts pages. Each joined their organization while it
+  was active.
 
 The seed is written without logging its SQL, so the console shows only the SQL each request runs.
 
 - **Identifiers run from 10001** for every kind of record. Every identifier is five digits wide, a comfortable target
-  when it is a link. New records carry on from the seed's highest (users from 10050, organizations from 11001), and a
-  deleted record's identifier is never given out again.
+  when it is a link. New records carry on from the seed's highest (users from 10050, organizations from 11001,
+  contacts from 11501), and a deleted record's identifier is never given out again.
 - **Dates are always recent.** Every date is written as a time before the application starts, such as
   `startedOn.AddDays(-236)`, so the demo looks the same whenever it runs: Pat Example was edited 13 minutes ago, and
   the oldest user was created about eight months ago.
 - **Some records have a part to play.** Pat Example (10007) has the longest history, five versions; Sam Sample
   (10009) archived Pat and was archived, so cannot be deleted; Casey Mockup (10002) is archived and can. Among the
-  organizations, Placeholder Logistics (10003) has a history of two versions, Mockup Media (10009) is archived, and
-  Draft Distribution (10013) is archived with nothing belonging to it, so it can be deleted.
+  organizations, Placeholder Logistics (10003) has a history of two versions, Mockup Media (10009) is archived with
+  two contacts, so cannot be deleted, and Draft Distribution (10013) is archived with none, so can. Among the contacts,
+  Ainsley Archetype (10001) moved from Fictional Freight to Placeholder Logistics, so Fictional Freight can be deleted
+  although Ainsley's history names it, and Darcy Dataset (10004) is archived and can be deleted.
 
 ## Versions and choices
 

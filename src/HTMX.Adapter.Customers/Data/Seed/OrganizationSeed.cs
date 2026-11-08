@@ -47,6 +47,9 @@ internal static class OrganizationSeed
             Industry = Industry.FoodAndDrink,
             Website = new WebAddress("https://demo-dairy.example"),
         },
+
+        // Fictional Freight: Ainsley Archetype's organization before Placeholder Logistics. No contact belongs to it
+        // now, so it can be deleted, although Ainsley's history still names it.
         new OrganizationVersion
         {
             OrganizationId = new OrganizationId(10002),
@@ -59,7 +62,8 @@ internal static class OrganizationSeed
             Website = new WebAddress("https://fictional-freight.example"),
         },
 
-        // Placeholder Logistics: its website changed, so its history has two versions.
+        // Placeholder Logistics: its website changed, so its history has two versions. It has 18 contacts, so its
+        // own list of contacts pages.
         new OrganizationVersion
         {
             OrganizationId = PlaceholderLogistics,
@@ -143,7 +147,7 @@ internal static class OrganizationSeed
             Website = new WebAddress("https://lorem-ipsum-labs.example"),
         },
 
-        // Mockup Media: archived. Once contacts belong to it, it cannot be deleted while they do.
+        // Mockup Media: archived, with two contacts, so it cannot be deleted while they belong to it.
         new OrganizationVersion
         {
             OrganizationId = MockupMedia,
@@ -202,7 +206,7 @@ internal static class OrganizationSeed
             Website = new WebAddress("https://template-textiles.example"),
         },
 
-        // Draft Distribution: archived, and nothing will belong to it, so it can be deleted.
+        // Draft Distribution: archived, and no contact belongs to it, so it can be deleted.
         new OrganizationVersion
         {
             OrganizationId = DraftDistribution,

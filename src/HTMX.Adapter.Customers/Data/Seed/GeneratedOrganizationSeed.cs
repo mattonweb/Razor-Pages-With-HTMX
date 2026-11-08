@@ -18,8 +18,12 @@ using HTMX.Adapter.Customers.Entities;
 /// </remarks>
 internal static class GeneratedOrganizationSeed
 {
+    /// <summary>
+    /// The identifier of the first generated organization; the 15 written out come before it.
+    /// </summary>
+    internal const long FirstIdentifier = 10016;
+
     private const int Count = 985;
-    private const long FirstIdentifier = 10016;
     private const int LastWordsPerIndustry = 5;
     private const int NoWebsiteEvery = 7;
     private const int ArchiveEvery = 20;

@@ -40,6 +40,10 @@ internal sealed class CustomersDatabaseContext : DbContext
         configurationBuilder.Properties<OrganizationId>().HaveConversion<OrganizationIdConverter>();
         configurationBuilder.Properties<OrganizationName>().HaveConversion<OrganizationNameConverter>();
         configurationBuilder.Properties<WebAddress>().HaveConversion<WebAddressConverter>();
+        configurationBuilder.Properties<ContactId>().HaveConversion<ContactIdConverter>();
+        configurationBuilder.Properties<PhoneNumber>().HaveConversion<PhoneNumberConverter>();
+        configurationBuilder.Properties<JobTitle>().HaveConversion<JobTitleConverter>();
+        configurationBuilder.Properties<Notes>().HaveConversion<NotesConverter>();
         configurationBuilder.Properties<VersionNumber>().HaveConversion<VersionNumberConverter>();
         configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
 
@@ -59,5 +63,7 @@ internal sealed class CustomersDatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new UserVersionMapping());
         modelBuilder.ApplyConfiguration(new OrganizationMapping());
         modelBuilder.ApplyConfiguration(new OrganizationVersionMapping());
+        modelBuilder.ApplyConfiguration(new ContactMapping());
+        modelBuilder.ApplyConfiguration(new ContactVersionMapping());
     }
 }
