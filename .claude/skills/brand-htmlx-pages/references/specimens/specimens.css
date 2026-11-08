@@ -59,6 +59,6 @@
 .toast-frame .toast { animation: none; }
 .toast-frame + p { margin-top: var(--space-4); }
 
-/* A label above each state in the list page */
+/* A label above each state shown side by side */
 .state-label { margin: 0 0 var(--space-2); font-size: var(--text-xs); font-weight: var(--weight-strong); color: var(--text-muted); letter-spacing: .04em; text-transform: uppercase; }
 .states { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: var(--space-4); align-items: start; }

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Layout · HTMLX Pages</title>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/base.css">
+  <link rel="stylesheet" href="../../assets/css/layout.css">
+  <link rel="stylesheet" href="../../assets/css/navigation.css">
+  <link rel="stylesheet" href="../../assets/css/data-display.css">
+  <link rel="stylesheet" href="../../assets/css/inputs.css">
+  <link rel="stylesheet" href="../../assets/css/feedback.css">
+  <link rel="stylesheet" href="specimens.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="app">
+  <header class="app-header">
+    <button class="btn ghost icon-only" type="button" data-action="toggle-nav" aria-label="Main menu" aria-controls="app-nav">
+      <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg>
+    </button>
+    <a class="brand" href="foundations.html">
+      <svg class="brand-mark" aria-hidden="true"><use href="../../assets/icons.svg#logo"></use></svg>
+      HTMLX Pages
+    </a>
+    <div class="end">
+      <button class="btn ghost icon-only" type="button" data-action="toggle-theme" aria-label="Switch between light and dark mode">
+        <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#moon"></use></svg>
+      </button>
+      <span class="avatar" role="img" aria-label="Signed in as Demo User">DU</span>
+    </div>
+  </header>
+
+  <nav class="app-nav" id="app-nav" aria-label="Specimens">
+    <p class="nav-label">Specimens</p>
+    <a href="foundations.html" title="Foundations"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#palette"></use></svg><span>Foundations</span></a>
+    <a href="layout.html" title="Layout" aria-current="page"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#home"></use></svg><span>Layout</span></a>
+    <a href="navigation.html" title="Navigation"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg><span>Navigation</span></a>
+    <a href="data-display.html" title="Data display"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#list"></use></svg><span>Data display</span></a>
+    <a href="inputs.html" title="Inputs"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg><span>Inputs</span></a>
+    <a href="feedback.html" title="Feedback"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#info"></use></svg><span>Feedback</span></a>
+  </nav>
+
+  <main class="app-main" id="main">
+    <header class="page-header">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="foundations.html">Specimens</a></li><li><span aria-current="page">Layout</span></li></ol>
+      </nav>
+      <div class="title-row"><h1>Layout</h1></div>
+      <p class="muted">The frame of every page and the surfaces content sits on. The styles are in <code>assets/css/layout.css</code>.</p>
+    </header>
+
+    <section class="spec" aria-labelledby="shell">
+      <h2 id="shell">App shell</h2>
+      <p class="spec-lead">This page is the shell: the header across the top, the side nav down the left and the main content beside
+        it. The header holds the menu button and the brand at the left, and at the right whatever belongs to the whole
+        application, ending with the avatar. The nav is full from 900px and an icon rail below that; the menu button switches
+        between the two. A skip link comes first in the page.</p>
+      <h3>Avatar</h3>
+      <p class="spec-lead">The signed-in user's initials, at the right end of the header. It is the only avatar: grids, panels and
+        histories show people's names, not avatars. It carries <code>role="img"</code> and an <code>aria-label</code> naming the user.</p>
+      <div class="card card-body spec-row">
+        <span class="avatar" role="img" aria-label="Signed in as Demo User">DU</span>
+        <span class="avatar" role="img" aria-label="Signed in as Pat Example">PE</span>
+        <span class="avatar" role="img" aria-label="Signed in as Sam">S</span>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="page-header">
+      <h2 id="page-header">Page header</h2>
+      <p class="spec-lead">Breadcrumbs, then the title row: the title at the left, the page's actions at the right with the one
+        primary action last, then an optional muted line. A page about one record puts the record's status chip, and its version
+        badge if it has one, beside the title in a <code>.title</code>, and says under it who changed the record last and when.</p>
+      <div class="card card-body">
+        <header class="page-header">
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <ol><li><a href="#">Home</a></li><li><span aria-current="page">Records</span></li></ol>
+          </nav>
+          <div class="title-row">
+            <h1>Records</h1>
+            <a class="btn primary" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#plus"></use></svg>New record</a>
+          </div>
+        </header>
+      </div>
+      <h3>For one record</h3>
+      <div class="card card-body">
+        <header class="page-header">
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <ol><li><a href="#">Home</a></li><li><a href="#">Records</a></li><li><span aria-current="page">Pat Example</span></li></ol>
+          </nav>
+          <div class="title-row">
+            <div class="title"><h1>Pat Example</h1><span class="chip success">Active</span><span class="version current">v3</span></div>
+            <div class="btn-group">
+              <button class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Archive</button>
+              <a class="btn primary" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg>Edit</a>
+            </div>
+          </div>
+          <p class="muted">Updated <time datetime="2026-11-07T08:47">today</time> by Demo User</p>
+        </header>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="card">
+      <h2 id="card">Card</h2>
+      <p class="spec-lead">The surface every list, form and panel sits on. A <code>.card-header</code> names what the card holds and
+        may carry one action; <code>.card-body</code> pads the content. A card is a size container, so what is inside it adapts to
+        the card's width rather than the window's. <code>.cards</code> stacks cards with the standard gap between them.</p>
+      <div class="cards">
+        <section class="card" aria-labelledby="card-with-header">
+          <header class="card-header">
+            <h2 id="card-with-header">A card with a header</h2>
+            <button class="btn ghost" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg>Edit</button>
+          </header>
+          <div class="card-body"><p>Body text in a card. Paragraph text fills the card's width, however wide the card is.</p></div>
+        </section>
+        <div class="card card-body"><p>A card with a body and no header.</p></div>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="toolbar">
+      <h2 id="toolbar">Toolbar</h2>
+      <p class="spec-lead">The row at the top of a list's card: a filter box at the left and a segmented control at the right end.
+        On a narrow card the two wrap onto separate lines.</p>
+      <div class="card">
+        <div class="toolbar">
+          <form class="filter-box" role="search" action="#" method="get">
+            <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#filter"></use></svg>
+            <input type="search" name="q" placeholder="Filter records" aria-label="Filter records">
+          </form>
+          <nav class="segmented" aria-label="Show">
+            <a href="#" aria-current="page">Active <span class="count">12</span></a>
+            <a href="#">Archived <span class="count">3</span></a>
+            <a href="#">All <span class="count">15</span></a>
+          </nav>
+        </div>
+        <div class="card-body"><p class="muted">The card's content follows the toolbar.</p></div>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="tabs">
+      <h2 id="tabs">Tabs</h2>
+      <p class="spec-lead">Links to the sections of one page, each with its own URL, so every section works without HTMX. The current
+        tab carries <code>aria-current="page"</code>; a count may follow a label.</p>
+      <nav class="tabs" aria-label="Record sections">
+        <a href="#" aria-current="page">Details</a>
+        <a href="#">History <span class="count">3</span></a>
+        <a href="#">Notes <span class="count">12</span></a>
+      </nav>
+    </section>
+  </main>
+</div>
+<script src="specimens.js"></script>
+</body>
+</html>

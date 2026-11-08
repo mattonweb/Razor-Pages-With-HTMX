@@ -1,0 +1,113 @@
+/*
+  HTMLX Pages: navigation. Moving between pages and between parts of a page.
+    .app-nav       the side navigation, full or an icon rail
+    .breadcrumbs   where this page sits
+    .menu          a popover menu of actions, opened by a button
+    .segmented     a few mutually exclusive views of the same content, as links
+    .pager         the range shown, Previous and Next, and the rows per page
+  Every one of them is made of real links (or a GET form), so it works before HTMX is added.
+*/
+
+/* Side navigation. Each link is icon + <span> label; the current page carries aria-current="page". */
+.app-nav {
+  grid-area: nav; position: sticky; top: var(--header-height);
+  height: calc(100vh - var(--header-height)); overflow: hidden auto;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-2) 0;
+  background: var(--surface); border-right: 1px solid var(--border);
+}
+.app-nav a {
+  display: flex; align-items: center; gap: var(--space-3);
+  height: 40px; padding: 0 14px;               /* 14px centers a 20px icon in the 48px rail */
+  color: var(--text); white-space: nowrap;
+}
+.app-nav a:hover { background: var(--surface-hover); text-decoration: none; }
+.app-nav a .icon { color: var(--icon); }
+.app-nav a[aria-current="page"] {
+  background: var(--accent-subtle); color: var(--accent); font-weight: var(--weight-strong);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.app-nav a[aria-current="page"] .icon { color: var(--accent); }
+.app-nav .nav-label {
+  padding: var(--space-4) 14px var(--space-1);
+  font-size: var(--text-xs); font-weight: var(--weight-strong); letter-spacing: .04em;
+  text-transform: uppercase; color: var(--text-muted); white-space: nowrap;
+}
+
+/* Rail: labels leave the screen but stay in the accessibility tree; each link has a title for a tooltip. */
+.app[data-nav="rail"] .app-nav a span,
+.app[data-nav="rail"] .app-nav .nav-label {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+}
+@media (max-width: 899px) {
+  .app:not([data-nav="full"]) .app-nav a span,
+  .app:not([data-nav="full"]) .app-nav .nav-label {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+  }
+}
+
+.breadcrumbs ol {
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  margin: 0; padding: 0; list-style: none;
+  font-size: var(--text-sm); color: var(--text-muted);
+}
+.breadcrumbs li + li::before { content: "/"; margin-right: var(--space-2); color: var(--text-disabled); }
+.breadcrumbs [aria-current="page"] { color: var(--text); }
+
+/* Menu: a native popover. <button popovertarget="row-7-menu"> opens <div class="menu" id="row-7-menu" popover>.
+   Anchor positioning places it under its button; browsers without it show the menu centered. */
+.menu {
+  inset: auto; margin: var(--space-1) 0 0;
+  position-area: bottom span-left; position-try-fallbacks: flip-block;
+  min-width: 180px; padding: var(--space-1);
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-popup);
+}
+@supports not (position-area: bottom) { .menu { margin: auto; inset: 0; height: fit-content; } }
+.menu a, .menu button {
+  display: flex; align-items: center; gap: var(--space-2); width: 100%;
+  height: var(--control-height); padding: 0 var(--space-2);
+  border: 0; border-radius: var(--radius-sm); background: none;
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.menu a:hover, .menu button:hover { background: var(--surface-hover); text-decoration: none; }
+.menu .icon { width: 18px; height: 18px; color: var(--icon); }
+.menu .danger, .menu .danger .icon { color: var(--danger); }
+.menu hr { margin: var(--space-1) 0; border: 0; border-top: 1px solid var(--border); }
+
+/* Segmented filter: a <nav> of links; the current one carries aria-current="page". */
+.segmented {
+  display: inline-flex; gap: 2px; padding: 2px;
+  background: var(--neutral-subtle); border-radius: var(--radius-sm);
+}
+.segmented a {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  height: 28px; padding: 0 var(--space-3); border-radius: 3px;
+  color: var(--text-muted); font-weight: var(--weight-strong);
+}
+.segmented a:hover { color: var(--text); text-decoration: none; }
+.segmented a[aria-current="page"] {
+  background: var(--surface); color: var(--text); box-shadow: var(--shadow-card);
+}
+.segmented .count { font-size: var(--text-xs); font-weight: var(--weight-regular); font-variant-numeric: tabular-nums; }
+
+/* Pager: three columns. The range shown on the left, Previous and Next centered, rows per page on the right.
+   On a card narrower than 560px the range and the select share the first line and the buttons take the second.
+   The first page's Previous, and the last page's Next, is a <span class="btn" aria-disabled="true">, not a link. */
+.pager {
+  display: grid; grid-template-columns: 1fr auto 1fr; grid-template-areas: "summary pages size";
+  align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+.pager .summary { grid-area: summary; color: var(--text-muted); }
+.pager .pages { grid-area: pages; display: flex; gap: var(--space-2); }
+.pager .page-size {
+  grid-area: size; justify-self: end;
+  display: flex; align-items: center; gap: var(--space-2); color: var(--text-muted);
+}
+.pager select { font-variant-numeric: tabular-nums; }
+@container (max-width: 560px) {
+  .pager { grid-template-columns: 1fr auto; grid-template-areas: "summary size" "pages pages"; }
+  .pager .pages { justify-self: center; }
+}

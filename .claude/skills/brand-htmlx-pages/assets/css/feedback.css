@@ -1,11 +1,68 @@
 /*
-  HTMLX Pages: telling the user what happened, or what is about to.
-    .alert         a banner on the page about this page's record: archived, an old version, an error
-    .toasts        the fixed region, once per layout, that toasts appear in; .toast is one message, often with Undo
+  HTMLX Pages: feedback. Telling the user what happened, what is happening, or what is about to.
+    .dialog        a native modal dialog; .dialog.sm is a confirm dialog
+    .busy-bar      a thin progress line while a request is in flight
+    .bulk-bar      the bar that appears when rows are selected, with what can be done to them
+    .alert         a banner on the page about a state that lasts
+    .toasts        the region, once per layout, that toasts appear in; .toast is one message, often with Undo
     .dialog-icon   the toned icon that leads a confirm dialog's message
-  An action that can be undone (archive, restore, roll back) runs at once and says so in a toast with Undo.
-  Only an action that cannot be undone (delete permanently, discard unsaved changes) asks first, in a dialog.
+  An action that can be undone runs at once and says so in a toast with Undo. Only an action that cannot be
+  undone asks first, in a confirm dialog.
 */
+
+/* Dialog: a native modal <dialog class="dialog">, with .dialog-header, .dialog-body and .dialog-footer inside
+   (directly, or inside one <form>). Buttons open and close it with commandfor and command="show-modal" or
+   command="close", so it needs no script; Escape also closes it, and the page behind is inert. */
+.dialog {
+  width: min(560px, calc(100vw - 2 * var(--space-4))); max-height: calc(100dvh - 2 * var(--space-8));
+  padding: 0; border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--surface); color: var(--text); box-shadow: var(--shadow-popup);
+}
+.dialog[open] { display: flex; flex-direction: column; }
+.dialog::backdrop { background: var(--scrim); }
+.dialog > form { display: contents; }
+.dialog-header {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border);
+}
+.dialog-header h2 { font-size: var(--text-lg); }
+.dialog-body { flex: 1; overflow-y: auto; padding: var(--space-4); }
+.dialog-footer {
+  display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2);
+  padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border);
+}
+.dialog.sm { width: min(420px, calc(100vw - 2 * var(--space-4))); }
+
+/* Busy bar: shown while the card, or anything inside it, has .htmx-request; aria-busy="true" shows it without HTMX. */
+.busy-bar { position: relative; z-index: 1; height: 2px; margin-top: -2px; overflow: hidden; visibility: hidden; }
+.busy-bar::before {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 30%;
+  background: var(--accent); animation: busy-slide 1.1s ease-in-out infinite;
+}
+.htmx-request .busy-bar, .htmx-request.busy-bar, [aria-busy="true"] .busy-bar { visibility: visible; }
+.htmx-request .grid tbody, [aria-busy="true"] .grid tbody { opacity: .5; transition: opacity .2s; }
+@keyframes busy-slide { from { translate: -100% 0; } to { translate: 340% 0; } }
+@media (prefers-reduced-motion: reduce) { .busy-bar::before { animation-duration: 3s; } }
+
+/* Bulk selection: a checkbox in each row's .select cell, all tied to one empty <form id="bulk-form"> by
+   form="bulk-form", and a .bulk-bar after the grid. The bar appears as soon as one row is checked and shows how
+   many are, both in CSS (:has() and a counter); Clear is a reset button for that form. Only the header's
+   select-all box needs script. */
+/* The counter starts on .grid-wrap, not the card: the card is a size container, and a container's own
+   counter-reset does not reach its contents. The bar, a later sibling of .grid-wrap, still reads it. */
+.card:has(.bulk-bar) .grid-wrap { counter-reset: selected; }
+.grid tbody tr:has(.select input:checked) { counter-increment: selected; }   /* counted on the row: a checkbox itself does not count */
+.bulk-bar {
+  position: sticky; bottom: var(--space-4); z-index: 5;
+  display: none; align-items: center; gap: var(--space-2); flex-wrap: wrap;
+  width: fit-content; max-width: calc(100% - 2 * var(--space-4));
+  margin: var(--space-3) auto; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popup);
+}
+.card:has(.grid tbody .select input:checked) .bulk-bar { display: flex; }
+.bulk-bar .count { font-weight: var(--weight-strong); }
+.bulk-bar .count::before { content: counter(selected); font-variant-numeric: tabular-nums; }
 
 /* Alert: icon, message, then at most one or two actions. Tones as for chips: info, success, warning, danger;
    neutral is the default. The text keeps the page's text color; the tone colors the icon, fill and line. */
@@ -61,3 +118,9 @@
 }
 .dialog-icon.warning { --tone: var(--warning); --tone-subtle: var(--warning-subtle); }
 .dialog-icon.info    { --tone: var(--info);    --tone-subtle: var(--info-subtle); }
+
+/* Roll-back preview: a .dialog whose body says what will happen, warns in an .alert about anything that cannot
+   be carried out, and shows the .diff from now to the result. What it previews can be undone, so its button is
+   primary, not danger. */
+.rollback { display: grid; gap: var(--space-3); }
+.rollback .alert { margin: 0; }

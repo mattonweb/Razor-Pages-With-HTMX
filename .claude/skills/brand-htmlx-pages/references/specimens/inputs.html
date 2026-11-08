@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inputs · HTMLX Pages</title>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/base.css">
+  <link rel="stylesheet" href="../../assets/css/layout.css">
+  <link rel="stylesheet" href="../../assets/css/navigation.css">
+  <link rel="stylesheet" href="../../assets/css/data-display.css">
+  <link rel="stylesheet" href="../../assets/css/inputs.css">
+  <link rel="stylesheet" href="../../assets/css/feedback.css">
+  <link rel="stylesheet" href="specimens.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="app">
+  <header class="app-header">
+    <button class="btn ghost icon-only" type="button" data-action="toggle-nav" aria-label="Main menu" aria-controls="app-nav">
+      <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg>
+    </button>
+    <a class="brand" href="foundations.html">
+      <svg class="brand-mark" aria-hidden="true"><use href="../../assets/icons.svg#logo"></use></svg>
+      HTMLX Pages
+    </a>
+    <div class="end">
+      <button class="btn ghost icon-only" type="button" data-action="toggle-theme" aria-label="Switch between light and dark mode">
+        <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#moon"></use></svg>
+      </button>
+      <span class="avatar" role="img" aria-label="Signed in as Demo User">DU</span>
+    </div>
+  </header>
+
+  <nav class="app-nav" id="app-nav" aria-label="Specimens">
+    <p class="nav-label">Specimens</p>
+    <a href="foundations.html" title="Foundations"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#palette"></use></svg><span>Foundations</span></a>
+    <a href="layout.html" title="Layout"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#home"></use></svg><span>Layout</span></a>
+    <a href="navigation.html" title="Navigation"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg><span>Navigation</span></a>
+    <a href="data-display.html" title="Data display"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#list"></use></svg><span>Data display</span></a>
+    <a href="inputs.html" title="Inputs" aria-current="page"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg><span>Inputs</span></a>
+    <a href="feedback.html" title="Feedback"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#info"></use></svg><span>Feedback</span></a>
+  </nav>
+
+  <main class="app-main" id="main">
+    <header class="page-header">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="foundations.html">Specimens</a></li><li><span aria-current="page">Inputs</span></li></ol>
+      </nav>
+      <div class="title-row"><h1>Inputs</h1></div>
+      <p class="muted">Entering and changing values. Controls take no class: write them with the tag helpers and the brand styles what they emit. The styles are in <code>assets/css/inputs.css</code>, over the control defaults in <code>assets/css/base.css</code>.</p>
+    </header>
+
+    <section class="spec" aria-labelledby="form">
+      <h2 id="form">A form</h2>
+      <p class="spec-lead">Fields in cards, laid out in the same <code>.fields</code> grid that shows values, so a value keeps its place
+        between reading and editing; then the form action bar. This one shows the state after a save that failed on one field.
+        The markup is what the tag helpers emit, trimmed to the attributes the brand reads.</p>
+      <form method="post" action="#" novalidate>
+        <section class="card" aria-labelledby="form-card">
+          <header class="card-header"><h2 id="form-card">Record</h2></header>
+          <div class="card-body fields">
+            <div class="field">
+              <label for="Name">Name</label>
+              <input id="Name" name="Name" type="text" value="Pat Example" aria-required="true" data-val-required="Enter a name.">
+              <span class="field-validation-valid"></span>
+            </div>
+            <div class="field">
+              <label for="Email">Email</label>
+              <input id="Email" name="Email" type="email" value="pat@example" class="input-validation-error" aria-invalid="true" aria-describedby="Email-error" aria-required="true" data-val-required="Enter an email address.">
+              <span class="field-validation-error" id="Email-error">Enter an email address like name@example.com.</span>
+            </div>
+            <div class="field">
+              <label for="Phone">Phone</label>
+              <input id="Phone" name="Phone" type="tel" value="+1 555-0142" aria-describedby="Phone-hint">
+              <p class="hint" id="Phone-hint">Include the country code.</p>
+            </div>
+            <div class="field">
+              <label for="Website">Web address</label>
+              <input id="Website" name="Website" type="url" placeholder="https://">
+            </div>
+            <div class="field">
+              <label for="Kind">Kind</label>
+              <select id="Kind" name="Kind">
+                <option value="a" selected>First kind</option>
+                <option value="b">Second kind</option>
+                <option value="c">Third kind</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="Due">Due</label>
+              <input id="Due" name="Due" type="date" value="2027-01-11">
+            </div>
+            <div class="field">
+              <label for="Quantity">Quantity</label>
+              <input id="Quantity" name="Quantity" type="number" min="0" max="50" value="10" aria-describedby="Quantity-hint">
+              <p class="hint" id="Quantity-hint">A whole number from 0 to 50.</p>
+            </div>
+            <div class="field wide">
+              <label for="Note">Note</label>
+              <textarea id="Note" name="Note">A longer value, in a textarea that spans the row.</textarea>
+            </div>
+          </div>
+        </section>
+        <div class="form-actions">
+          <a class="btn ghost" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#copy"></use></svg>Duplicate</a>
+          <button class="btn ghost" type="submit" formaction="#" formnovalidate><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Archive</button>
+          <div class="end">
+            <a class="btn" href="#">Cancel</a>
+            <button class="btn primary" type="submit">Save changes</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section class="spec" aria-labelledby="field">
+      <h2 id="field">Field</h2>
+      <p class="spec-lead">A <code>.field</code> holds the label, the control, an optional <code>.hint</code>, then the validation
+        message. A required field gets its asterisk from <code>aria-required="true"</code> or the <code>data-val-required</code> the
+        tag helpers add. An invalid control carries <code>.input-validation-error</code> and <code>aria-invalid="true"</code>, and
+        points at its message with <code>aria-describedby</code>. An error that belongs to no single field, such as a save that
+        someone else's save overtook, goes in the validation summary at the top of the form.</p>
+      <div class="card card-body">
+        <div class="validation-summary-errors">
+          <ul><li>Someone else saved this record while you were editing. Your changes are still here; review them and save again.</li></ul>
+        </div>
+        <div class="fields">
+          <div class="field">
+            <label for="s-hint">With a hint</label>
+            <input id="s-hint" type="text" aria-describedby="s-hint-text">
+            <p class="hint" id="s-hint-text">One short sentence under the control.</p>
+          </div>
+          <div class="field">
+            <label for="s-required">Required</label>
+            <input id="s-required" type="text" aria-required="true">
+          </div>
+          <div class="field">
+            <label for="s-invalid">Invalid</label>
+            <input id="s-invalid" type="text" value="12/31" class="input-validation-error" aria-invalid="true" aria-describedby="s-invalid-error">
+            <span class="field-validation-error" id="s-invalid-error">Enter a date like 2027-01-11.</span>
+          </div>
+          <div class="field">
+            <label for="s-disabled">Disabled</label>
+            <input id="s-disabled" type="text" value="Not editable here" disabled>
+          </div>
+          <div class="field">
+            <label for="s-readonly">Read-only</label>
+            <input id="s-readonly" type="text" value="1042" readonly>
+          </div>
+          <div class="field">
+            <label for="s-select-invalid">Invalid select</label>
+            <select id="s-select-invalid" class="input-validation-error" aria-invalid="true" aria-describedby="s-select-error"><option>Choose a kind</option></select>
+            <span class="field-validation-error" id="s-select-error">Choose a kind.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="switch">
+      <h2 id="switch">Switch</h2>
+      <p class="spec-lead">A yes-or-no value: <code>&lt;label class="switch"&gt;</code> around <code>input[role="switch"]</code>, in a
+        fieldset whose legend names the value.</p>
+      <div class="card card-body fields">
+        <fieldset class="field">
+          <legend>Reminders</legend>
+          <label class="switch"><input type="checkbox" role="switch" name="Reminders" value="true" checked> Sends reminders</label>
+        </fieldset>
+        <fieldset class="field">
+          <legend>Digest</legend>
+          <label class="switch"><input type="checkbox" role="switch" name="Digest" value="true"> Sends a weekly digest</label>
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="choices">
+      <h2 id="choices">Choices</h2>
+      <p class="spec-lead">Several values from a short fixed list: a fieldset of checkboxes drawn as pills. For one value from a list,
+        use a select.</p>
+      <div class="card card-body">
+        <fieldset class="field choices">
+          <legend>Labels</legend>
+          <div class="options">
+            <label><input type="checkbox" name="Labels" value="first" checked> First</label>
+            <label><input type="checkbox" name="Labels" value="second"> Second</label>
+            <label><input type="checkbox" name="Labels" value="third" checked> Third</label>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="relation">
+      <h2 id="relation">Relation field</h2>
+      <p class="spec-lead">Another record as a value: the chosen record as a related-record link, and a Change button that opens a
+        picker dialog. With nothing chosen yet the field reads as unset and the button says Choose. The picker is built from the
+        list components, a filter box and a grid with a radio in each row, and lists only records that can be chosen.</p>
+      <div class="card card-body fields">
+        <fieldset class="field">
+          <legend>Group</legend>
+          <div class="relation">
+            <input type="hidden" name="GroupId" value="1002">
+            <a class="related" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#users"></use></svg>Group B</a>
+            <button class="btn" type="button" commandfor="group-picker" command="show-modal">Change</button>
+          </div>
+        </fieldset>
+        <fieldset class="field">
+          <legend>Reviewer</legend>
+          <div class="relation">
+            <span class="unset">No reviewer</span>
+            <button class="btn" type="button" commandfor="group-picker" command="show-modal">Choose</button>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="filter-box">
+      <h2 id="filter-box">Filter box</h2>
+      <p class="spec-lead">A search input that narrows a list as you type: a GET <code>&lt;form class="filter-box" role="search"&gt;</code>
+        with the filter icon and an <code>input type="search"</code>. Its placeholder reads "Filter …", never "Search …", and it
+        stops at 360px wide.</p>
+      <div class="card">
+        <div class="toolbar">
+          <form class="filter-box" role="search" action="#" method="get">
+            <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#filter"></use></svg>
+            <input type="search" name="q" placeholder="Filter records" aria-label="Filter records">
+          </form>
+        </div>
+        <div class="toolbar">
+          <form class="filter-box" role="search" action="#" method="get">
+            <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#filter"></use></svg>
+            <input type="search" name="q" value="zebra" aria-label="Filter records, with a value">
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="form-actions">
+      <h2 id="form-actions">Form action bar</h2>
+      <p class="spec-lead">The last thing in a form. It sticks to the bottom of the window while a long form scrolls. Actions on the
+        whole record sit at the left as ghost buttons; Cancel and the one primary action sit at the right, in <code>.end</code>.
+        The form at the top of this page ends with one.</p>
+    </section>
+
+    <dialog class="dialog" id="group-picker" aria-labelledby="group-picker-title">
+      <form method="dialog">
+        <header class="dialog-header">
+          <h2 id="group-picker-title">Choose a group</h2>
+          <button class="btn ghost icon-only" type="button" commandfor="group-picker" command="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button>
+        </header>
+        <div class="dialog-body">
+          <div class="card">
+            <div class="toolbar">
+              <div class="filter-box" role="search">
+                <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#filter"></use></svg>
+                <input type="search" placeholder="Filter groups" aria-label="Filter groups">
+              </div>
+            </div>
+            <table class="grid">
+              <caption class="visually-hidden">Groups that can be chosen</caption>
+              <thead><tr><th class="select" scope="col"><span class="visually-hidden">Choose</span></th><th scope="col">Group</th><th scope="col" class="num">Members</th></tr></thead>
+              <tbody>
+                <tr><td class="select"><input type="radio" name="Pick" id="pick-1" value="1001"></td><td class="title"><label for="pick-1">Group A</label><span class="sub">group-a.example</span></td><td class="num">6</td></tr>
+                <tr><td class="select"><input type="radio" name="Pick" id="pick-2" value="1002" checked></td><td class="title"><label for="pick-2">Group B</label><span class="sub">group-b.example</span></td><td class="num">4</td></tr>
+                <tr><td class="select"><input type="radio" name="Pick" id="pick-3" value="1003"></td><td class="title"><label for="pick-3">Group C</label><span class="sub">group-c.example</span></td><td class="num">3</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <footer class="dialog-footer">
+          <button class="btn" type="button" commandfor="group-picker" command="close">Cancel</button>
+          <button class="btn primary" type="submit">Choose group</button>
+        </footer>
+      </form>
+    </dialog>
+  </main>
+</div>
+<script src="specimens.js"></script>
+</body>
+</html>

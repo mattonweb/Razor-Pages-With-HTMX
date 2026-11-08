@@ -6,12 +6,11 @@
   <title>Foundations · HTMLX Pages</title>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/base.css">
-  <link rel="stylesheet" href="../../assets/css/shell.css">
-  <link rel="stylesheet" href="../../assets/css/list.css">
-  <link rel="stylesheet" href="../../assets/css/read.css">
-  <link rel="stylesheet" href="../../assets/css/forms.css">
+  <link rel="stylesheet" href="../../assets/css/layout.css">
+  <link rel="stylesheet" href="../../assets/css/navigation.css">
+  <link rel="stylesheet" href="../../assets/css/data-display.css">
+  <link rel="stylesheet" href="../../assets/css/inputs.css">
   <link rel="stylesheet" href="../../assets/css/feedback.css">
-  <link rel="stylesheet" href="../../assets/css/history.css">
   <link rel="stylesheet" href="specimens.css">
 </head>
 <body>
@@ -36,11 +35,11 @@
   <nav class="app-nav" id="app-nav" aria-label="Specimens">
     <p class="nav-label">Specimens</p>
     <a href="foundations.html" title="Foundations" aria-current="page"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#palette"></use></svg><span>Foundations</span></a>
-    <a href="list.html" title="List"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#list"></use></svg><span>List</span></a>
-    <a href="read.html" title="Read"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg><span>Read</span></a>
-    <a href="forms.html" title="Forms"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg><span>Forms</span></a>
+    <a href="layout.html" title="Layout"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#home"></use></svg><span>Layout</span></a>
+    <a href="navigation.html" title="Navigation"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg><span>Navigation</span></a>
+    <a href="data-display.html" title="Data display"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#list"></use></svg><span>Data display</span></a>
+    <a href="inputs.html" title="Inputs"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg><span>Inputs</span></a>
     <a href="feedback.html" title="Feedback"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#info"></use></svg><span>Feedback</span></a>
-    <a href="history.html" title="History"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#history"></use></svg><span>History</span></a>
   </nav>
 
   <main class="app-main" id="main">
@@ -49,7 +48,7 @@
         <ol><li><a href="foundations.html">Specimens</a></li><li><span aria-current="page">Foundations</span></li></ol>
       </nav>
       <div class="title-row"><h1>Foundations</h1></div>
-      <p class="muted">Color, type, space, icons and buttons. Every value is a token in <code>assets/css/tokens.css</code>.</p>
+      <p class="muted">Color, type, space, shape, icons and buttons. Every value is a token in <code>assets/css/tokens.css</code>; element defaults, icons and buttons are in <code>assets/css/base.css</code>.</p>
     </header>
 
     <section class="spec" aria-labelledby="color">
@@ -91,7 +90,7 @@
         </div>
         <div class="tone" style="--t: var(--warning); --s: var(--warning-subtle); --l: var(--warning-line)">
           <strong><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#alert"></use></svg>Warning</strong>
-          <p>Roll-back previews, unsaved changes.</p><small><code>--warning</code> <span data-hex="warning"></span> · MudBlazor, darkened</small>
+          <p>Previews of a change, unsaved changes.</p><small><code>--warning</code> <span data-hex="warning"></span> · MudBlazor, darkened</small>
         </div>
         <div class="tone" style="--t: var(--info); --s: var(--info-subtle); --l: var(--info-line)">
           <strong><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#info"></use></svg>Info</strong>
@@ -99,7 +98,7 @@
         </div>
         <div class="tone" style="--t: var(--neutral); --s: var(--neutral-subtle); --l: var(--neutral-line)">
           <strong><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Neutral</strong>
-          <p>Archived records, inactive states.</p><small><code>--neutral</code> <span data-hex="neutral"></span></small>
+          <p>Archived and inactive states.</p><small><code>--neutral</code> <span data-hex="neutral"></span></small>
         </div>
       </div>
     </section>
@@ -108,10 +107,10 @@
       <h2 id="type">Type</h2>
       <p class="spec-lead">Segoe UI on Windows, the system face elsewhere. Two weights only: 400 and 600.</p>
       <div class="card card-body type-scale">
-        <div><code>--text-2xl 22 / 600</code><span style="font-size: var(--text-2xl); font-weight: 600">Contacts</span></div>
-        <div><code>--text-xl 18 / 600</code><span style="font-size: var(--text-xl); font-weight: 600">Version history</span></div>
-        <div><code>--text-lg 16 / 600</code><span style="font-size: var(--text-lg); font-weight: 600">Contact details</span></div>
-        <div><code>--text-md 14 / 400</code><span>Body text. Pat Example works at Placeholder Logistics.</span></div>
+        <div><code>--text-2xl 22 / 600</code><span style="font-size: var(--text-2xl); font-weight: 600">Page title</span></div>
+        <div><code>--text-xl 18 / 600</code><span style="font-size: var(--text-xl); font-weight: 600">Section heading</span></div>
+        <div><code>--text-lg 16 / 600</code><span style="font-size: var(--text-lg); font-weight: 600">Card heading</span></div>
+        <div><code>--text-md 14 / 400</code><span>Body text: paragraphs, field values and table cells.</span></div>
         <div><code>--text-sm 13 / 400</code><span style="font-size: var(--text-sm)" class="muted">Second lines, table headers, the pager</span></div>
         <div><code>--text-xs 12 / 600</code><span style="font-size: var(--text-xs); font-weight: 600">Chips, avatar initials, labels</span></div>
         <div><code>--font-mono 13</code><span class="mono">v7 · 2026-11-05 14:32</span></div>
@@ -148,19 +147,19 @@
 
     <section class="spec" aria-labelledby="buttons">
       <h2 id="buttons">Buttons</h2>
-      <p class="spec-lead">One primary button per view. Danger is for actions that cannot be undone; archiving can be undone,
-        so it is a secondary button.</p>
+      <p class="spec-lead">One primary button per view. Danger is only for an action that cannot be undone; an action that
+        can be undone, such as archiving, is a secondary button.</p>
       <div class="card card-body">
         <h3>Variants</h3>
         <div class="spec-row">
-          <button class="btn primary" type="button">Save contact</button>
+          <button class="btn primary" type="button">Save</button>
           <button class="btn" type="button">Cancel</button>
           <button class="btn ghost" type="button">Clear filters</button>
           <button class="btn danger" type="button">Delete permanently</button>
         </div>
         <h3>With icons</h3>
         <div class="spec-row">
-          <button class="btn primary" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#plus"></use></svg>New contact</button>
+          <button class="btn primary" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#plus"></use></svg>New record</button>
           <button class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Archive</button>
           <button class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#restore"></use></svg>Restore</button>
           <button class="btn ghost" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#history"></use></svg>History</button>
@@ -169,7 +168,7 @@
         </div>
         <h3>States</h3>
         <div class="spec-row">
-          <button class="btn primary" type="button" disabled>Save contact</button>
+          <button class="btn primary" type="button" disabled>Save</button>
           <button class="btn primary" type="button" aria-busy="true">Saving</button>
           <button class="btn" type="button" aria-busy="true">Restoring</button>
         </div>

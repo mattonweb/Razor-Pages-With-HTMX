@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Navigation · HTMLX Pages</title>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/base.css">
+  <link rel="stylesheet" href="../../assets/css/layout.css">
+  <link rel="stylesheet" href="../../assets/css/navigation.css">
+  <link rel="stylesheet" href="../../assets/css/data-display.css">
+  <link rel="stylesheet" href="../../assets/css/inputs.css">
+  <link rel="stylesheet" href="../../assets/css/feedback.css">
+  <link rel="stylesheet" href="specimens.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="app">
+  <header class="app-header">
+    <button class="btn ghost icon-only" type="button" data-action="toggle-nav" aria-label="Main menu" aria-controls="app-nav">
+      <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg>
+    </button>
+    <a class="brand" href="foundations.html">
+      <svg class="brand-mark" aria-hidden="true"><use href="../../assets/icons.svg#logo"></use></svg>
+      HTMLX Pages
+    </a>
+    <div class="end">
+      <button class="btn ghost icon-only" type="button" data-action="toggle-theme" aria-label="Switch between light and dark mode">
+        <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#moon"></use></svg>
+      </button>
+      <span class="avatar" role="img" aria-label="Signed in as Demo User">DU</span>
+    </div>
+  </header>
+
+  <nav class="app-nav" id="app-nav" aria-label="Specimens">
+    <p class="nav-label">Specimens</p>
+    <a href="foundations.html" title="Foundations"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#palette"></use></svg><span>Foundations</span></a>
+    <a href="layout.html" title="Layout"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#home"></use></svg><span>Layout</span></a>
+    <a href="navigation.html" title="Navigation" aria-current="page"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg><span>Navigation</span></a>
+    <a href="data-display.html" title="Data display"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#list"></use></svg><span>Data display</span></a>
+    <a href="inputs.html" title="Inputs"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg><span>Inputs</span></a>
+    <a href="feedback.html" title="Feedback"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#info"></use></svg><span>Feedback</span></a>
+  </nav>
+
+  <main class="app-main" id="main">
+    <header class="page-header">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="foundations.html">Specimens</a></li><li><span aria-current="page">Navigation</span></li></ol>
+      </nav>
+      <div class="title-row"><h1>Navigation</h1></div>
+      <p class="muted">Moving between pages and between parts of a page. Every one is made of real links or a GET form, so it works before HTMX is added. The styles are in <code>assets/css/navigation.css</code>.</p>
+    </header>
+
+    <section class="spec" aria-labelledby="side-nav">
+      <h2 id="side-nav">Side nav</h2>
+      <p class="spec-lead">The nav down the left of this page. Each link is an icon and a <code>&lt;span&gt;</code> label; the current
+        page's link carries <code>aria-current="page"</code>, and a <code>.nav-label</code> heads a group of links. In the icon rail
+        the labels leave the screen but stay in the accessibility tree, and each link's <code>title</code> gives it a tooltip.
+        <code>data-nav="rail"</code> or <code>"full"</code> on <code>.app</code> overrides the width-based default.</p>
+    </section>
+
+    <section class="spec" aria-labelledby="breadcrumbs">
+      <h2 id="breadcrumbs">Breadcrumbs</h2>
+      <p class="spec-lead">Where the page sits. An ordered list of links ending in the current page, which is text with
+        <code>aria-current="page"</code>.</p>
+      <div class="card card-body">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+          <ol><li><a href="#">Home</a></li><li><span aria-current="page">Records</span></li></ol>
+        </nav>
+        <h3>Deeper</h3>
+        <nav class="breadcrumbs" aria-label="Breadcrumb, deeper">
+          <ol><li><a href="#">Home</a></li><li><a href="#">Records</a></li><li><a href="#">Pat Example</a></li><li><span aria-current="page">Edit</span></li></ol>
+        </nav>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="menu">
+      <h2 id="menu">Menu</h2>
+      <p class="spec-lead">A native popover of actions, opened by the button that names it in <code>popovertarget</code>. It opens under
+        that button with its right edge on the button's, as a menu at the right end of a row or a header needs. Each item is a
+        link or a button with an icon; an <code>&lt;hr&gt;</code> separates groups, and an action that cannot be undone comes last, in
+        <code>.danger</code>. An icon-only button that opens a menu says whose actions they are in its <code>aria-label</code>.</p>
+      <div class="card card-body spec-row" style="justify-content: flex-end">
+        <button class="btn ghost icon-only" type="button" popovertarget="menu-icon" aria-label="Actions for Pat Example"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#more"></use></svg></button>
+        <div class="menu" id="menu-icon" popover>
+          <a href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg>View</a>
+          <a href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg>Edit</a>
+          <a href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#copy"></use></svg>Duplicate</a>
+          <hr>
+          <button type="button" class="danger"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#trash"></use></svg>Delete permanently</button>
+        </div>
+        <button class="btn" type="button" popovertarget="menu-labelled">More<svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#chevron-down"></use></svg></button>
+        <div class="menu" id="menu-labelled" popover>
+          <a href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#history"></use></svg>History</a>
+          <button type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Archive</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="segmented">
+      <h2 id="segmented">Segmented control</h2>
+      <p class="spec-lead">A few mutually exclusive views of the same content, as links in a <code>&lt;nav&gt;</code>. The current one
+        carries <code>aria-current="page"</code>; a count may follow each label.</p>
+      <div class="card card-body spec-row">
+        <nav class="segmented" aria-label="Show, with counts">
+          <a href="#" aria-current="page">Active <span class="count">12</span></a>
+          <a href="#">Archived <span class="count">3</span></a>
+          <a href="#">All <span class="count">15</span></a>
+        </nav>
+        <nav class="segmented" aria-label="Period">
+          <a href="#">Day</a>
+          <a href="#" aria-current="page">Week</a>
+          <a href="#">Month</a>
+        </nav>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="pager">
+      <h2 id="pager">Pager</h2>
+      <p class="spec-lead">Three columns: the range shown, Previous and Next, and the rows per page. A Previous or Next with nowhere to
+        go is a <code>&lt;span class="btn" aria-disabled="true"&gt;</code>, not a link. On a card narrower than 560px the buttons move
+        to a second line.</p>
+      <h3>First page</h3>
+      <div class="card">
+        <footer class="pager">
+          <p class="summary">Showing <strong>1–10</strong> of <strong>128</strong></p>
+          <nav class="pages" aria-label="Pages">
+            <span class="btn" aria-disabled="true"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#chevron-left"></use></svg>Previous</span>
+            <a class="btn" href="#" rel="next">Next<svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#chevron-right"></use></svg></a>
+          </nav>
+          <form class="page-size" action="#" method="get">
+            <label for="size-first">Rows per page</label>
+            <select id="size-first" name="size">
+              <option value="10" selected>10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </form>
+        </footer>
+      </div>
+      <h3>A middle page</h3>
+      <div class="card">
+        <footer class="pager">
+          <p class="summary">Showing <strong>41–50</strong> of <strong>128</strong></p>
+          <nav class="pages" aria-label="Pages">
+            <a class="btn" href="#" rel="prev"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#chevron-left"></use></svg>Previous</a>
+            <a class="btn" href="#" rel="next">Next<svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#chevron-right"></use></svg></a>
+          </nav>
+          <form class="page-size" action="#" method="get">
+            <label for="size-middle">Rows per page</label>
+            <select id="size-middle" name="size">
+              <option value="10" selected>10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </form>
+        </footer>
+      </div>
+      <h3>Last page</h3>
+      <div class="card">
+        <footer class="pager">
+          <p class="summary">Showing <strong>121–128</strong> of <strong>128</strong></p>
+          <nav class="pages" aria-label="Pages">
+            <a class="btn" href="#" rel="prev"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#chevron-left"></use></svg>Previous</a>
+            <span class="btn" aria-disabled="true">Next<svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#chevron-right"></use></svg></span>
+          </nav>
+          <form class="page-size" action="#" method="get">
+            <label for="size-last">Rows per page</label>
+            <select id="size-last" name="size">
+              <option value="10" selected>10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </form>
+        </footer>
+      </div>
+      <h3>On a narrow card</h3>
+      <div class="card" style="max-width: 440px">
+        <footer class="pager">
+          <p class="summary">Showing <strong>11–20</strong> of <strong>128</strong></p>
+          <nav class="pages" aria-label="Pages">
+            <a class="btn" href="#" rel="prev"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#chevron-left"></use></svg>Previous</a>
+            <a class="btn" href="#" rel="next">Next<svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#chevron-right"></use></svg></a>
+          </nav>
+          <form class="page-size" action="#" method="get">
+            <label for="size-narrow">Rows per page</label>
+            <select id="size-narrow" name="size">
+              <option value="10" selected>10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </form>
+        </footer>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="specimens.js"></script>
+</body>
+</html>

@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data display · HTMLX Pages</title>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/base.css">
+  <link rel="stylesheet" href="../../assets/css/layout.css">
+  <link rel="stylesheet" href="../../assets/css/navigation.css">
+  <link rel="stylesheet" href="../../assets/css/data-display.css">
+  <link rel="stylesheet" href="../../assets/css/inputs.css">
+  <link rel="stylesheet" href="../../assets/css/feedback.css">
+  <link rel="stylesheet" href="specimens.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="app">
+  <header class="app-header">
+    <button class="btn ghost icon-only" type="button" data-action="toggle-nav" aria-label="Main menu" aria-controls="app-nav">
+      <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg>
+    </button>
+    <a class="brand" href="foundations.html">
+      <svg class="brand-mark" aria-hidden="true"><use href="../../assets/icons.svg#logo"></use></svg>
+      HTMLX Pages
+    </a>
+    <div class="end">
+      <button class="btn ghost icon-only" type="button" data-action="toggle-theme" aria-label="Switch between light and dark mode">
+        <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#moon"></use></svg>
+      </button>
+      <span class="avatar" role="img" aria-label="Signed in as Demo User">DU</span>
+    </div>
+  </header>
+
+  <nav class="app-nav" id="app-nav" aria-label="Specimens">
+    <p class="nav-label">Specimens</p>
+    <a href="foundations.html" title="Foundations"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#palette"></use></svg><span>Foundations</span></a>
+    <a href="layout.html" title="Layout"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#home"></use></svg><span>Layout</span></a>
+    <a href="navigation.html" title="Navigation"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg><span>Navigation</span></a>
+    <a href="data-display.html" title="Data display" aria-current="page"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#list"></use></svg><span>Data display</span></a>
+    <a href="inputs.html" title="Inputs"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg><span>Inputs</span></a>
+    <a href="feedback.html" title="Feedback"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#info"></use></svg><span>Feedback</span></a>
+  </nav>
+
+  <main class="app-main" id="main">
+    <header class="page-header">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="foundations.html">Specimens</a></li><li><span aria-current="page">Data display</span></li></ol>
+      </nav>
+      <div class="title-row"><h1>Data display</h1></div>
+      <p class="muted">Showing records and their values. The styles are in <code>assets/css/data-display.css</code>.</p>
+    </header>
+
+    <section class="spec" aria-labelledby="grid">
+      <h2 id="grid">Grid</h2>
+      <p class="spec-lead">A table of records in a <code>.grid-wrap</code>, which scrolls sideways when the card is too narrow. The first
+        column is the title cell: a link to the record, then a muted second line in <code>.sub</code>. A sortable header is a link;
+        the sorted one carries <code>aria-sort</code> and shows its arrow, and the others show theirs on hover or focus. Numbers are
+        right-aligned in <code>.num</code>. An archived row among active ones has <code>class="archived"</code> and a neutral chip.
+        The last column holds the row's menu button; in a page each row's menu has an id built from its record's id, where here
+        all the rows share one.</p>
+      <div class="card">
+        <div class="grid-wrap">
+          <table class="grid">
+            <caption class="visually-hidden">Records, sorted by name, ascending</caption>
+            <thead>
+              <tr>
+                <th scope="col" aria-sort="ascending"><a href="#">Name <svg class="icon sm" aria-hidden="true"><use href="../../assets/icons.svg#arrow-up"></use></svg></a></th>
+                <th scope="col"><a href="#">Group <svg class="icon sm" aria-hidden="true"><use href="../../assets/icons.svg#sort"></use></svg></a></th>
+                <th scope="col">Status</th>
+                <th scope="col"><a href="#">Updated <svg class="icon sm" aria-hidden="true"><use href="../../assets/icons.svg#sort"></use></svg></a></th>
+                <th scope="col" class="num">Items</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="title"><a href="#">Alex Placeholder</a><span class="sub">alex@example.org</span></td>
+                <td>Group A</td>
+                <td><span class="chip success">Active</span></td>
+                <td><time datetime="2026-11-05T10:12">2 days ago</time></td>
+                <td class="num">14</td>
+                <td class="actions"><button class="btn ghost icon-only" type="button" popovertarget="row-menu" aria-label="Actions for Alex Placeholder"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#more"></use></svg></button></td>
+              </tr>
+              <tr class="archived">
+                <td class="title"><a href="#">Casey Mockup</a><span class="sub">casey@example.org</span></td>
+                <td>Group B</td>
+                <td><span class="chip">Archived</span></td>
+                <td><time datetime="2026-10-17T16:40">3 weeks ago</time></td>
+                <td class="num">3</td>
+                <td class="actions"><button class="btn ghost icon-only" type="button" popovertarget="row-menu" aria-label="Actions for Casey Mockup"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#more"></use></svg></button></td>
+              </tr>
+              <tr>
+                <td class="title"><a href="#">Drew Stub</a><span class="sub">drew@example.org</span></td>
+                <td>Group A</td>
+                <td><span class="chip success">Active</span></td>
+                <td><time datetime="2026-11-04T15:20">3 days ago</time></td>
+                <td class="num">1,250</td>
+                <td class="actions"><button class="btn ghost icon-only" type="button" popovertarget="row-menu" aria-label="Actions for Drew Stub"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#more"></use></svg></button></td>
+              </tr>
+              <tr>
+                <td class="title"><a href="#">Jordan Demo</a><span class="sub">jordan@example.net</span></td>
+                <td>Group C</td>
+                <td><span class="chip warning">Pending</span></td>
+                <td><time datetime="2026-11-02T09:05">5 days ago</time></td>
+                <td class="num">0</td>
+                <td class="actions"><button class="btn ghost icon-only" type="button" popovertarget="row-menu" aria-label="Actions for Jordan Demo"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#more"></use></svg></button></td>
+              </tr>
+              <tr>
+                <td class="title"><a href="#">Pat Example</a><span class="sub">pat@example.com</span></td>
+                <td>Group B</td>
+                <td><span class="chip success">Active</span></td>
+                <td><time datetime="2026-11-07T08:47">Today</time></td>
+                <td class="num">27</td>
+                <td class="actions"><button class="btn ghost icon-only" type="button" popovertarget="row-menu" aria-label="Actions for Pat Example"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#more"></use></svg></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="menu" id="row-menu" popover>
+        <a href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg>View</a>
+        <a href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg>Edit</a>
+        <hr>
+        <button type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Archive</button>
+      </div>
+
+      <h3>Selection column</h3>
+      <p class="spec-lead">A <code>.select</code> cell first in each row, with a checkbox (or, in a picker, a radio) whose label is the
+        row's title, so a click on the name selects the row too. A checked row is highlighted. The header's box selects every
+        row on the page; it is one of the two pieces of the brand that need script. The bulk bar that acts on the selection is
+        on the Feedback page.</p>
+      <div class="card">
+        <div class="grid-wrap">
+          <table class="grid">
+            <caption class="visually-hidden">Records, with a selection column</caption>
+            <thead>
+              <tr>
+                <th class="select" scope="col"><input type="checkbox" data-select-all aria-label="Select every record on this page"></th>
+                <th scope="col">Name</th>
+                <th scope="col">Group</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="select"><input type="checkbox" id="s-1" data-start-checked></td><td class="title"><label for="s-1">Alex Placeholder</label><span class="sub">alex@example.org</span></td><td>Group A</td></tr>
+              <tr><td class="select"><input type="checkbox" id="s-2"></td><td class="title"><label for="s-2">Drew Stub</label><span class="sub">drew@example.org</span></td><td>Group A</td></tr>
+              <tr><td class="select"><input type="checkbox" id="s-3" data-start-checked></td><td class="title"><label for="s-3">Pat Example</label><span class="sub">pat@example.com</span></td><td>Group B</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3>Read-only</h3>
+      <p class="spec-lead">For records the user may see but not change, and for reports: the same grid with no selection column and no
+        row menu. The title still links to the record.</p>
+      <div class="card">
+        <div class="grid-wrap">
+          <table class="grid">
+            <caption class="visually-hidden">Groups</caption>
+            <thead><tr><th scope="col">Group</th><th scope="col">Lead</th><th scope="col" class="num">Members</th></tr></thead>
+            <tbody>
+              <tr><td class="title"><a href="#">Group A</a><span class="sub">group-a.example</span></td><td>Alex Placeholder</td><td class="num">6</td></tr>
+              <tr><td class="title"><a href="#">Group B</a><span class="sub">group-b.example</span></td><td>Pat Example</td><td class="num">4</td></tr>
+              <tr><td class="title"><a href="#">Group C</a><span class="sub">group-c.example</span></td><td>Jordan Demo</td><td class="num">3</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="empty">
+      <h2 id="empty">Empty state</h2>
+      <p class="spec-lead">What a list shows when it has nothing to show: one icon, one heading, one sentence saying why, and at most one
+        action.</p>
+      <div class="states">
+        <div>
+          <p class="state-label">Nothing yet</p>
+          <div class="card">
+            <div class="empty">
+              <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#inbox"></use></svg>
+              <h3>No archived records</h3>
+              <p>Records you archive appear here, and you can restore them at any time.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p class="state-label">No matches</p>
+          <div class="card">
+            <div class="empty">
+              <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#filter"></use></svg>
+              <h3>No records match “zebra”</h3>
+              <p>Check the spelling, or filter by another word.</p>
+              <a class="btn" href="#">Clear filter</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="chips">
+      <h2 id="chips">Chip</h2>
+      <p class="spec-lead">A status, never a button. Its tone is one of the status tones on the Foundations page; neutral is the default.</p>
+      <div class="card card-body spec-row">
+        <span class="chip success">Active</span>
+        <span class="chip">Archived</span>
+        <span class="chip info">Restored</span>
+        <span class="chip warning">Pending</span>
+        <span class="chip danger">Failed</span>
+        <span class="chip brand">Current version</span>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="fields">
+      <h2 id="fields">Fields</h2>
+      <p class="spec-lead">Label-over-value pairs in a <code>&lt;dl class="fields"&gt;</code>, filling as many 260px columns as fit; a
+        <code>.wide</code> pair spans the row. Email and web addresses are links, another record is a related-record link, a value
+        never set reads "Not set" in <code>.unset</code>, and numbers and identifiers are <code>.mono</code>.</p>
+      <div class="card card-body">
+        <dl class="fields">
+          <div><dt>Text</dt><dd>An ordinary value</dd></div>
+          <div><dt>Email</dt><dd><a href="mailto:sam@example.com">sam@example.com</a></dd></div>
+          <div><dt>Web address</dt><dd><a href="#">https://placeholder.example</a></dd></div>
+          <div><dt>Related record</dt><dd><a class="related" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#user"></use></svg>Sam Sample</a></dd></div>
+          <div><dt>Archived related record</dt><dd><a class="related archived" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#users"></use></svg>Group D</a><span class="chip">Archived</span></dd></div>
+          <div><dt>Not set</dt><dd><span class="unset">Not set</span></dd></div>
+          <div><dt>Yes or no</dt><dd>Yes</dd></div>
+          <div><dt>Number</dt><dd class="mono">1,250</dd></div>
+          <div><dt>Identifier</dt><dd class="mono">1042</dd></div>
+          <div class="wide"><dt>Long text</dt><dd>A value that needs the whole row, such as a note. It wraps within the row rather than
+            pushing the other fields aside.</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="related">
+      <h2 id="related">Related-record link</h2>
+      <p class="spec-lead">Another record, always as a link led by its type's icon. A link to an archived record stays a link, muted,
+        followed by an Archived chip, in a field or a grid cell alike.</p>
+      <div class="card card-body spec-row">
+        <a class="related" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#user"></use></svg>Pat Example</a>
+        <a class="related" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#users"></use></svg>Group A</a>
+        <span><a class="related archived" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#users"></use></svg>Group D</a><span class="chip">Archived</span></span>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="badges">
+      <h2 id="badges">Version badge</h2>
+      <p class="spec-lead">A version is its number in the brand violet; <code>.current</code>, the version a record is at now, is filled.</p>
+      <div class="card card-body spec-row">
+        <span class="version current">v5</span>
+        <span class="version">v4</span>
+        <span class="version">v3</span>
+        <span class="version">v12</span>
+        <span class="version">v128</span>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="timeline">
+      <h2 id="timeline">Timeline</h2>
+      <p class="spec-lead">A record's versions, newest first, in an <code>&lt;ol class="timeline" reversed&gt;</code>. Each entry is a
+        <code>&lt;details&gt;</code> whose summary holds a chevron, the version badge, what happened and who did it when; opening it
+        shows the diff and the entry's actions. The current entry is <code>li.current</code> and has no actions.</p>
+      <div class="card card-body">
+        <ol class="timeline" reversed>
+          <li class="current">
+            <details open>
+              <summary>
+                <svg class="icon sm chevron" aria-hidden="true"><use href="../../assets/icons.svg#chevron-right"></use></svg>
+                <span class="version current">v3</span>
+                <span><strong>Edited</strong> Name and Email</span>
+                <span class="when"><time datetime="2026-11-07T08:47">Today, 08:47</time> by Demo User</span>
+              </summary>
+              <div class="entry-body">
+                <div class="diff-wrap">
+                  <table class="diff">
+                    <caption class="visually-hidden">Changes in version 3</caption>
+                    <thead><tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+                    <tbody>
+                      <tr><th scope="row">Name</th><td><del>Pat Exampel</del></td><td><ins>Pat Example</ins></td></tr>
+                      <tr><th scope="row">Email</th><td><del>pat@placeholder.example</del></td><td><ins>pat@example.com</ins></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="muted">This is the current version.</p>
+              </div>
+            </details>
+          </li>
+          <li>
+            <details>
+              <summary>
+                <svg class="icon sm chevron" aria-hidden="true"><use href="../../assets/icons.svg#chevron-right"></use></svg>
+                <span class="version">v2</span>
+                <span><strong>Edited</strong> Phone</span>
+                <span class="when"><time datetime="2026-10-04T10:20">4 October 2026, 10:20</time> by Sam Sample</span>
+              </summary>
+              <div class="entry-body">
+                <div class="diff-wrap">
+                  <table class="diff">
+                    <caption class="visually-hidden">Changes in version 2</caption>
+                    <thead><tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+                    <tbody>
+                      <tr><th scope="row">Phone</th><td><span class="unset">Not set</span></td><td><ins>+1 555-0142</ins></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="entry-actions">
+                  <a class="btn" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg>View version 2</a>
+                  <a class="btn" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#restore"></use></svg>Roll back to version 2</a>
+                </div>
+              </div>
+            </details>
+          </li>
+          <li>
+            <details>
+              <summary>
+                <svg class="icon sm chevron" aria-hidden="true"><use href="../../assets/icons.svg#chevron-right"></use></svg>
+                <span class="version">v1</span>
+                <span><strong>Created</strong></span>
+                <span class="when"><time datetime="2026-03-12T09:14">12 March 2026, 09:14</time> by Demo User</span>
+              </summary>
+              <div class="entry-body">
+                <p class="muted">The first version, with every field as it was entered.</p>
+                <div class="entry-actions">
+                  <a class="btn" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg>View version 1</a>
+                </div>
+              </div>
+            </details>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="diff">
+      <h2 id="diff">Diff</h2>
+      <p class="spec-lead">Field, Before, After, as <code>&lt;del&gt;</code> and <code>&lt;ins&gt;</code>, for only the fields that changed.
+        The column headers carry the meaning, so the colors only reinforce it; a missing value reads "Not set". In a
+        <code>.diff-wrap</code> it scrolls sideways below 440px, as a grid does.</p>
+      <div class="diff-wrap">
+        <table class="diff">
+          <caption class="visually-hidden">An example of changed values</caption>
+          <thead><tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Name</th><td><del>Pat Exampel</del></td><td><ins>Pat Example</ins></td></tr>
+            <tr><th scope="row">Phone</th><td><del>+1 555-0142</del></td><td><span class="unset">Not set</span></td></tr>
+            <tr><th scope="row">Note</th><td><span class="unset">Not set</span></td><td><ins>A long value wraps inside its cell rather than widening the table, however long it gets.</ins></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="panel">
+      <h2 id="panel">Side panel</h2>
+      <p class="spec-lead">A quick look at one record without leaving the page: a native popover, <code>&lt;aside class="panel" popover&gt;</code>,
+        that slides in from the right with the record's fields, and Open full record and the one primary action in its footer.
+        It is not modal: the page beside it stays usable, the row it shows carries <code>aria-selected="true"</code>, and Escape,
+        the close button or a click outside closes it. Click Pat Example below. The name is still a link to the record's page,
+        so without script it opens that page.</p>
+      <div class="card">
+        <div class="grid-wrap">
+          <table class="grid">
+            <caption class="visually-hidden">Records that open in the side panel</caption>
+            <thead><tr><th scope="col">Name</th><th scope="col">Group</th><th scope="col">Status</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="title"><a href="#">Alex Placeholder</a><span class="sub">alex@example.org</span></td>
+                <td><a class="related" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#users"></use></svg>Group A</a></td>
+                <td><span class="chip success">Active</span></td>
+              </tr>
+              <tr>
+                <td class="title"><a href="#" data-panel>Pat Example</a><span class="sub">pat@example.com</span></td>
+                <td><a class="related" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#users"></use></svg>Group B</a></td>
+                <td><span class="chip success">Active</span></td>
+              </tr>
+              <tr>
+                <td class="title"><a href="#">Jordan Demo</a><span class="sub">jordan@example.net</span></td>
+                <td><a class="related archived" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#users"></use></svg>Group D</a><span class="chip">Archived</span></td>
+                <td><span class="chip warning">Pending</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel" id="record-panel" popover aria-labelledby="panel-name">
+      <header class="panel-header">
+        <div class="title">
+          <h2 id="panel-name">Pat Example</h2>
+          <span class="chip success">Active</span>
+        </div>
+        <button class="btn ghost icon-only" type="button" popovertarget="record-panel" popovertargetaction="hide" aria-label="Close" autofocus>
+          <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg>
+        </button>
+      </header>
+      <div class="panel-body">
+        <dl class="fields">
+          <div><dt>Email</dt><dd><a href="mailto:pat@example.com">pat@example.com</a></dd></div>
+          <div><dt>Group</dt><dd><a class="related" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#users"></use></svg>Group B</a></dd></div>
+          <div><dt>Items</dt><dd class="mono">27</dd></div>
+          <div><dt>Updated</dt><dd><time datetime="2026-11-07T08:47">Today, 08:47</time> by Demo User</dd></div>
+        </dl>
+      </div>
+      <footer class="panel-footer">
+        <a class="btn" href="#">Open full record</a>
+        <a class="btn primary" href="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg>Edit</a>
+      </footer>
+    </aside>
+  </main>
+</div>
+<script src="specimens.js"></script>
+</body>
+</html>

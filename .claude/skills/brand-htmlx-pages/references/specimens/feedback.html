@@ -6,12 +6,11 @@
   <title>Feedback · HTMLX Pages</title>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/base.css">
-  <link rel="stylesheet" href="../../assets/css/shell.css">
-  <link rel="stylesheet" href="../../assets/css/list.css">
-  <link rel="stylesheet" href="../../assets/css/read.css">
-  <link rel="stylesheet" href="../../assets/css/forms.css">
+  <link rel="stylesheet" href="../../assets/css/layout.css">
+  <link rel="stylesheet" href="../../assets/css/navigation.css">
+  <link rel="stylesheet" href="../../assets/css/data-display.css">
+  <link rel="stylesheet" href="../../assets/css/inputs.css">
   <link rel="stylesheet" href="../../assets/css/feedback.css">
-  <link rel="stylesheet" href="../../assets/css/history.css">
   <link rel="stylesheet" href="specimens.css">
 </head>
 <body>
@@ -36,11 +35,11 @@
   <nav class="app-nav" id="app-nav" aria-label="Specimens">
     <p class="nav-label">Specimens</p>
     <a href="foundations.html" title="Foundations"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#palette"></use></svg><span>Foundations</span></a>
-    <a href="list.html" title="List"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#list"></use></svg><span>List</span></a>
-    <a href="read.html" title="Read"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#eye"></use></svg><span>Read</span></a>
-    <a href="forms.html" title="Forms"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg><span>Forms</span></a>
+    <a href="layout.html" title="Layout"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#home"></use></svg><span>Layout</span></a>
+    <a href="navigation.html" title="Navigation"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#menu"></use></svg><span>Navigation</span></a>
+    <a href="data-display.html" title="Data display"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#list"></use></svg><span>Data display</span></a>
+    <a href="inputs.html" title="Inputs"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg><span>Inputs</span></a>
     <a href="feedback.html" title="Feedback" aria-current="page"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#info"></use></svg><span>Feedback</span></a>
-    <a href="history.html" title="History"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#history"></use></svg><span>History</span></a>
   </nav>
 
   <main class="app-main" id="main">
@@ -49,75 +48,190 @@
         <ol><li><a href="foundations.html">Specimens</a></li><li><span aria-current="page">Feedback</span></li></ol>
       </nav>
       <div class="title-row"><h1>Feedback</h1></div>
-      <p class="muted">An action that can be undone runs at once and says so in a toast with Undo. Only an action that cannot be
-        undone asks first, in a dialog. A state that lasts, such as an archived record, is a banner on the page.</p>
+      <p class="muted">Telling the user what happened, what is happening, or what is about to. An action that can be undone runs at once and says so in a toast with Undo; only an action that cannot be undone asks first, in a confirm dialog; a state that lasts is a banner on the page. The styles are in <code>assets/css/feedback.css</code>.</p>
     </header>
 
     <section class="spec" aria-labelledby="alerts">
-      <h2 id="alerts">Alert banners</h2>
-      <p class="spec-lead">A banner sits between the page header and the content, and describes the record on this page. The text
-        keeps the page's color; the tone colors the icon, the fill and the line. One or two actions at most.</p>
-
+      <h2 id="alerts">Alert</h2>
+      <p class="spec-lead">A banner between the page header and the content, about a state that lasts. An icon, the message, then at
+        most one or two actions. The text keeps the page's color; the tone colors the icon, the fill and the line. A failure that
+        needs attention now is <code>role="alert"</code>; the rest are <code>role="status"</code>.</p>
       <div class="alert" role="status">
         <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>
-        <div class="content"><p><strong>This contact is archived.</strong> It is hidden from the Active list and cannot be edited until it is restored.</p></div>
+        <div class="content"><p><strong>This record is archived.</strong> It is hidden from the active list and cannot be edited until it is restored.</p></div>
         <div class="actions"><button class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#restore"></use></svg>Restore</button></div>
       </div>
       <div class="alert info" role="status">
         <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#history"></use></svg>
-        <div class="content"><p><strong>You are looking at version 3 of 5.</strong> Saved 4 October 2026 by Sam Sample.</p></div>
+        <div class="content"><p><strong>You are looking at version 2 of 3.</strong> Saved 4 October 2026 by Sam Sample.</p></div>
         <div class="actions"><a class="btn" href="#">Back to the current version</a></div>
       </div>
       <div class="alert warning" role="status">
         <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#alert"></use></svg>
-        <div class="content"><p><strong>Sam Sample changed this contact two minutes ago.</strong> Reload to see their changes before you edit.</p></div>
+        <div class="content"><p><strong>Sam Sample changed this record two minutes ago.</strong> Reload to see the changes before you edit.</p></div>
         <div class="actions"><a class="btn" href="#">Reload</a></div>
       </div>
       <div class="alert success" role="status">
         <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#check-circle"></use></svg>
-        <div class="content"><p><strong>Rolled back to version 3.</strong> The change is saved as version 6, so it can be rolled back too.</p></div>
+        <div class="content"><p><strong>Everything is up to date.</strong> A success banner is rare: a toast usually says it better.</p></div>
       </div>
       <div class="alert danger" role="alert">
         <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x-circle"></use></svg>
-        <div class="content"><p><strong>This contact could not be saved.</strong> The server did not answer. Your changes are still in the form.</p></div>
+        <div class="content"><p><strong>This record could not be saved.</strong> The server did not answer. Your changes are still in the form.</p></div>
         <div class="actions"><button class="btn" type="button">Try again</button></div>
       </div>
     </section>
 
     <section class="spec" aria-labelledby="toasts">
-      <h2 id="toasts">Toasts</h2>
-      <p class="spec-lead">A toast confirms an action that just ran and, when the action can be undone, offers Undo. It leaves by
-        itself after 8 seconds, waiting while the pointer or keyboard is on it. Below, three toasts held still; the button
-        sends a real one to the bottom of the window.</p>
+      <h2 id="toasts">Toast</h2>
+      <p class="spec-lead">A short message about an action that just ran, with Undo when the action can be undone. Toasts appear in one
+        <code>&lt;div class="toasts" role="status" aria-live="polite"&gt;</code> that sits in the layout, empty, until the server adds one.
+        A toast leaves by itself after 8 seconds, waiting while the pointer or keyboard is on it. Below, three held still; the
+        button sends a real one to the bottom of the window.</p>
       <div class="card card-body toast-frame">
         <div class="toasts">
-          <div class="toast"><span class="message">Sam Sample archived.</span><button class="btn ghost" type="button">Undo</button><button class="btn ghost icon-only" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
-          <div class="toast"><span class="message">2 contacts restored.</span><button class="btn ghost" type="button">Undo</button><button class="btn ghost icon-only" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
-          <div class="toast"><span class="message">Pat Example saved as version 5.</span><button class="btn ghost icon-only" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
+          <div class="toast"><span class="message">Pat Example archived.</span><button class="btn ghost" type="button">Undo</button><button class="btn ghost icon-only" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
+          <div class="toast"><span class="message">2 records restored.</span><button class="btn ghost" type="button">Undo</button><button class="btn ghost icon-only" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
+          <div class="toast"><span class="message">Changes saved.</span><button class="btn ghost icon-only" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
         </div>
       </div>
-      <p><button class="btn" type="button" data-demo-toast><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Archive Sam Sample</button></p>
+      <p><button class="btn" type="button" data-demo-toast><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Archive Pat Example</button></p>
     </section>
 
-    <section class="spec" aria-labelledby="confirms">
-      <h2 id="confirms">Confirm dialogs</h2>
-      <p class="spec-lead">Only for what cannot be undone. The title asks the question with the record's name; the safe choice
-        comes first and has focus; the destructive one is red and last. When the action is not allowed at all, the dialog
-        says why and what to do instead, and offers no way to force it.</p>
+    <section class="spec" aria-labelledby="dialogs">
+      <h2 id="dialogs">Dialog</h2>
+      <p class="spec-lead">A native modal <code>&lt;dialog class="dialog"&gt;</code> with <code>.dialog-header</code>, <code>.dialog-body</code>
+        and <code>.dialog-footer</code>, directly or inside one <code>&lt;form&gt;</code>. Buttons open and close it with
+        <code>commandfor</code> and <code>command</code>, so it needs no script; Escape closes it and the page behind is inert.
+        The footer ends with the one primary action.</p>
       <div class="btn-group">
-        <button class="btn" type="button" commandfor="confirm-delete" command="show-modal">Delete one permanently</button>
-        <button class="btn" type="button" commandfor="confirm-delete-many" command="show-modal">Delete several permanently</button>
-        <button class="btn" type="button" commandfor="confirm-blocked" command="show-modal">Delete a record others need</button>
-        <button class="btn" type="button" commandfor="confirm-discard" command="show-modal">Leave with unsaved changes</button>
+        <button class="btn" type="button" commandfor="rename" command="show-modal">A dialog with a form</button>
+        <button class="btn" type="button" commandfor="preview" command="show-modal">A preview dialog</button>
+      </div>
+
+      <h3>Confirm dialog</h3>
+      <p class="spec-lead">Only for an action that cannot be undone. A <code>.dialog.sm</code>: the title asks the question and names the
+        record, a <code>.dialog-icon</code> in the dialog's tone leads the message, the safe choice comes first with
+        <code>autofocus</code>, and the destructive <code>.btn.danger</code> comes last. When the action is not allowed at all, the
+        dialog says why and what to do instead, and offers no way to force it.</p>
+      <div class="btn-group">
+        <button class="btn" type="button" commandfor="confirm-delete" command="show-modal">Delete one</button>
+        <button class="btn" type="button" commandfor="confirm-delete-many" command="show-modal">Delete several</button>
+        <button class="btn" type="button" commandfor="confirm-blocked" command="show-modal">Not allowed</button>
+        <button class="btn" type="button" commandfor="confirm-discard" command="show-modal">Discard changes</button>
       </div>
     </section>
+
+    <section class="spec" aria-labelledby="busy">
+      <h2 id="busy">Busy bar</h2>
+      <p class="spec-lead">A 2px line under a card's toolbar that runs while a request from the card is in flight, while the rows dim;
+        the toolbar stays usable. HTMX's <code>.htmx-request</code> shows it, and so does <code>aria-busy="true"</code> without HTMX.
+        A button that sent a request shows its own spinner instead; see Buttons on the Foundations page.</p>
+      <div class="card" aria-busy="true">
+        <div class="toolbar">
+          <nav class="segmented" aria-label="Show"><a href="#" aria-current="page">Active <span class="count">12</span></a><a href="#">Archived <span class="count">3</span></a></nav>
+        </div>
+        <div class="busy-bar"></div>
+        <table class="grid">
+          <caption class="visually-hidden">A list while it loads</caption>
+          <thead><tr><th scope="col">Name</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><td>Alex Placeholder</td><td><span class="chip success">Active</span></td></tr>
+            <tr><td>Jordan Demo</td><td><span class="chip warning">Pending</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="spec" aria-labelledby="bulk">
+      <h2 id="bulk">Bulk bar</h2>
+      <p class="spec-lead">What can be done to the rows checked in a grid's selection column. Every row's checkbox names one empty
+        <code>&lt;form id="bulk-form" method="post"&gt;</code> in the card with <code>form="bulk-form"</code>. The bar follows the grid,
+        appears with the first checked row and counts them, in CSS alone; Clear is a reset button for that form, and each action
+        is a submit button with its own <code>formaction</code>. An action that cannot be undone is <code>.danger</code> and comes last.</p>
+      <div class="card">
+        <form id="bulk-form" method="post" action="#"></form>
+        <div class="grid-wrap">
+          <table class="grid">
+            <caption class="visually-hidden">Records, two of them selected</caption>
+            <thead>
+              <tr>
+                <th class="select" scope="col"><input type="checkbox" data-select-all aria-label="Select every record on this page"></th>
+                <th scope="col">Name</th>
+                <th scope="col">Group</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="select"><input type="checkbox" form="bulk-form" name="ids" value="1001" id="b-1"></td><td class="title"><label for="b-1">Alex Placeholder</label><span class="sub">alex@example.org</span></td><td>Group A</td></tr>
+              <tr><td class="select"><input type="checkbox" form="bulk-form" name="ids" value="1002" id="b-2" data-start-checked></td><td class="title"><label for="b-2">Casey Mockup</label><span class="sub">casey@example.org</span></td><td>Group B</td></tr>
+              <tr><td class="select"><input type="checkbox" form="bulk-form" name="ids" value="1003" id="b-3"></td><td class="title"><label for="b-3">Drew Stub</label><span class="sub">drew@example.org</span></td><td>Group A</td></tr>
+              <tr><td class="select"><input type="checkbox" form="bulk-form" name="ids" value="1004" id="b-4" data-start-checked></td><td class="title"><label for="b-4">Sam Sample</label><span class="sub">sam@example.com</span></td><td>Group C</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="bulk-bar" role="region" aria-label="Selected records">
+          <span><span class="count"></span> selected</span>
+          <button class="btn ghost" type="reset" form="bulk-form">Clear</button>
+          <button class="btn" type="submit" form="bulk-form" formaction="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Archive</button>
+          <button class="btn danger" type="submit" form="bulk-form" formaction="#"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#trash"></use></svg>Delete permanently</button>
+        </div>
+      </div>
+    </section>
+
+    <dialog class="dialog" id="rename" aria-labelledby="rename-title">
+      <form method="dialog">
+        <header class="dialog-header">
+          <h2 id="rename-title">Rename Pat Example</h2>
+          <button class="btn ghost icon-only" type="button" commandfor="rename" command="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button>
+        </header>
+        <div class="dialog-body fields">
+          <div class="field"><label for="rename-name">Name</label><input id="rename-name" name="Name" type="text" value="Pat Example" aria-required="true" autofocus></div>
+          <div class="field"><label for="rename-note">Reason</label><input id="rename-note" name="Reason" type="text"></div>
+        </div>
+        <footer class="dialog-footer">
+          <button class="btn" type="button" commandfor="rename" command="close">Cancel</button>
+          <button class="btn primary" type="submit">Rename</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="dialog" id="preview" aria-labelledby="preview-title">
+      <form method="dialog">
+        <header class="dialog-header">
+          <h2 id="preview-title">Roll back to version 2?</h2>
+          <button class="btn ghost icon-only" type="button" commandfor="preview" command="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button>
+        </header>
+        <div class="dialog-body rollback">
+          <p>A preview dialog says what the action will do, warns in an alert about anything it cannot carry out, then shows the
+            diff from now to the result. What it previews can be undone, so its button is primary, not danger.</p>
+          <div class="alert warning">
+            <svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#alert"></use></svg>
+            <div class="content"><p><strong>Group stays Group B.</strong> Group E, the group in version 2, no longer exists.</p></div>
+          </div>
+          <div class="diff-wrap">
+            <table class="diff">
+              <caption class="visually-hidden">What the roll-back changes</caption>
+              <thead><tr><th scope="col">Field</th><th scope="col">Now (v3)</th><th scope="col">After the roll-back</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Name</th><td><del>Pat Example</del></td><td><ins>Pat Exampel</ins></td></tr>
+                <tr><th scope="row">Email</th><td><del>pat@example.com</del></td><td><ins>pat@placeholder.example</ins></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <footer class="dialog-footer">
+          <button class="btn" type="button" commandfor="preview" command="close" autofocus>Cancel</button>
+          <button class="btn primary" type="submit"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#restore"></use></svg>Roll back to version 2</button>
+        </footer>
+      </form>
+    </dialog>
 
     <dialog class="dialog sm" id="confirm-delete" aria-labelledby="confirm-delete-title" aria-describedby="confirm-delete-text">
       <form method="dialog">
-        <header class="dialog-header"><h2 id="confirm-delete-title">Delete Sam Sample permanently?</h2></header>
+        <header class="dialog-header"><h2 id="confirm-delete-title">Delete Pat Example permanently?</h2></header>
         <div class="dialog-body confirm">
           <span class="dialog-icon"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#trash"></use></svg></span>
-          <div class="message"><p id="confirm-delete-text">This removes the contact and all 4 versions of its history. It cannot be undone.</p></div>
+          <div class="message" id="confirm-delete-text"><p>This removes the record and its history. It cannot be undone.</p></div>
         </div>
         <footer class="dialog-footer">
           <button class="btn" type="button" commandfor="confirm-delete" command="close" autofocus>Cancel</button>
@@ -128,13 +242,10 @@
 
     <dialog class="dialog sm" id="confirm-delete-many" aria-labelledby="confirm-delete-many-title" aria-describedby="confirm-delete-many-text">
       <form method="dialog">
-        <header class="dialog-header"><h2 id="confirm-delete-many-title">Delete 2 contacts permanently?</h2></header>
+        <header class="dialog-header"><h2 id="confirm-delete-many-title">Delete 2 records permanently?</h2></header>
         <div class="dialog-body confirm">
           <span class="dialog-icon"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#trash"></use></svg></span>
-          <div class="message" id="confirm-delete-many-text">
-            <ul><li>Casey Mockup</li><li>Sam Sample</li></ul>
-            <p>Their history goes with them. It cannot be undone.</p>
-          </div>
+          <div class="message" id="confirm-delete-many-text"><ul><li>Casey Mockup</li><li>Sam Sample</li></ul><p>Their history goes with them. It cannot be undone.</p></div>
         </div>
         <footer class="dialog-footer">
           <button class="btn" type="button" commandfor="confirm-delete-many" command="close" autofocus>Cancel</button>
@@ -145,16 +256,13 @@
 
     <dialog class="dialog sm" id="confirm-blocked" aria-labelledby="confirm-blocked-title" aria-describedby="confirm-blocked-text">
       <form method="dialog">
-        <header class="dialog-header"><h2 id="confirm-blocked-title">Mockup Media cannot be deleted</h2></header>
+        <header class="dialog-header"><h2 id="confirm-blocked-title">Group A cannot be deleted</h2></header>
         <div class="dialog-body confirm">
           <span class="dialog-icon warning"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#alert"></use></svg></span>
-          <div class="message" id="confirm-blocked-text">
-            <p>2 contacts still belong to it: Casey Mockup and Robin Testcase.</p>
-            <p>Move them to another organization, or delete them permanently, then try again.</p>
-          </div>
+          <div class="message" id="confirm-blocked-text"><p>3 records still belong to it: Alex Placeholder, Drew Stub and Pat Example.</p><p>Move them to another group, or delete them, then try again.</p></div>
         </div>
         <footer class="dialog-footer">
-          <a class="btn" href="list.html">Show its contacts</a>
+          <a class="btn" href="#">Show its records</a>
           <button class="btn primary" type="button" commandfor="confirm-blocked" command="close" autofocus>OK</button>
         </footer>
       </form>
@@ -165,7 +273,7 @@
         <header class="dialog-header"><h2 id="confirm-discard-title">Discard your changes?</h2></header>
         <div class="dialog-body confirm">
           <span class="dialog-icon warning"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#alert"></use></svg></span>
-          <div class="message"><p id="confirm-discard-text">You changed 2 fields on Pat Example: Email and Notes. Leaving now loses those changes.</p></div>
+          <div class="message" id="confirm-discard-text"><p>You changed 2 fields: Name and Email. Leaving now loses those changes.</p></div>
         </div>
         <footer class="dialog-footer">
           <button class="btn" type="button" commandfor="confirm-discard" command="close" autofocus>Keep editing</button>
@@ -177,7 +285,7 @@
 </div>
 <div class="toasts" role="status" aria-live="polite"></div>
 <template id="demo-toast">
-  <div class="toast"><span class="message">Sam Sample archived.</span><button class="btn ghost" type="button">Undo</button><button class="btn ghost icon-only" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
+  <div class="toast"><span class="message">Pat Example archived.</span><button class="btn ghost" type="button">Undo</button><button class="btn ghost icon-only" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
 </template>
 <script src="specimens.js"></script>
 </body>
