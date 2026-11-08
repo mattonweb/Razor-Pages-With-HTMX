@@ -2,6 +2,9 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-08 (attended session with Matt): the adapter is now `HTMX.Adapter.Customers`**, named for the customer
+  database it owns: organizations and their contacts, and the internal users who manage them. The layout and the
+  solution-architecture paragraph say so. The entries below that name `HTMX.Adapter.Contacts` predate the rename.
 - **2026-11-07, late (attended session with Matt): the database moved into `HTMX.Adapter.Contacts`.** The layout
   and the solution-architecture paragraph name it; the web project now only registers it. No entity exists yet.
 - **2026-11-07, night (attended session with Matt): the `dotnet-solution-architecture` skill was adopted**, this
@@ -63,7 +66,7 @@ decline it and say why.
 src/
   HTMX Pages Solution.slnx          the one solution file
   Directory.Build.props             house build settings for every project (code-csharp-standards, section 1)
-  HTMX.Adapter.Contacts/            the in-memory database, its entities and their data access
+  HTMX.Adapter.Customers/           the in-memory customer database, its entities and their data access
   HTMX.Application.Web/             the Razor Pages application
   HTMX.Test.Unit/                   the unit tests
   .editorconfig                     house copy, see below
@@ -103,10 +106,11 @@ EMPTY**, and the repository starts with no files over it. A file that needs to e
 here, with its line count and a reason, in the same session that creates it.
 
 **Solution architecture (`dotnet-solution-architecture` section 7): adoption state `conforming`.** The solution holds
-one Application (`HTMX.Application.Web`), one Adapter (`HTMX.Adapter.Contacts`) and one optional test project
-(`HTMX.Test.Unit`). **One Adapter per database:** `HTMX.Adapter.Contacts` owns the in-memory `Contacts` database
-and every entity in it, with each entity's provider (its Entity Framework queries) and service (its rules) beside it;
-a second entity type joins this Adapter, never a new one. A data source or an external system that earns its own
+one Application (`HTMX.Application.Web`), one Adapter (`HTMX.Adapter.Customers`) and one optional test project
+(`HTMX.Test.Unit`). **One Adapter per database:** `HTMX.Adapter.Customers` owns the in-memory `Customers` database
+and every entity in it (organizations, their contacts, and the internal users who manage them), with each entity's
+provider (its Entity Framework queries) and service (its rules) beside it; a new entity type joins this Adapter,
+never a new one. A data source or an external system that earns its own
 project is an `HTMX.Adapter.<Name>` exposing only `Configuration/`, `Contracts/` and
 `ServiceCollectionExtensions`; a workflow across capabilities is an
 `HTMX.Orchestrator.<Name>`; page models stay presentation. A change that would break a dependency rule or make an

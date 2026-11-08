@@ -3,7 +3,7 @@
   <!-- Target framework, language version and analyzers come from src/Directory.Build.props. -->
 
   <ItemGroup>
-    <ProjectReference Include="..\HTMX.Adapter.Contacts\HTMX.Adapter.Contacts.csproj" />
+    <ProjectReference Include="..\HTMX.Adapter.Customers\HTMX.Adapter.Customers.csproj" />
   </ItemGroup>
 
 </Project>

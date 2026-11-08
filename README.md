@@ -5,7 +5,7 @@ interactive with [HTMX](https://htmx.org/). Built as the worked example for a pr
 with HTMX, and kept small enough to read on a screen.
 
 - `src/HTMX Pages Solution.slnx` — the solution: the Razor Pages application in `src/HTMX.Application.Web/`, the
-  database and everything that reads and writes it in `src/HTMX.Adapter.Contacts/`, and the unit tests in
+  customer database and everything that reads and writes it in `src/HTMX.Adapter.Customers/`, and the unit tests in
   `src/HTMX.Test.Unit/`.
 - `CLAUDE.md` — the working agreement for AI coding sessions in this repository.
 - `src/.editorconfig` — the house C# style, a verbatim copy of the one in [Signalbox](https://github.com/mattonweb/Signalbox).
@@ -20,7 +20,7 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
 
 ## Sample data
 
-The database starts with invented data, built in `src/HTMX.Adapter.Contacts/Data/Seed/` as histories, one version
+The database starts with invented data, built in `src/HTMX.Adapter.Customers/Data/Seed/` as histories, one version
 per change, with each current row built from its latest version:
 
 - **49 users**, 42 active and 7 archived, so the list runs to five pages of ten with a last page of nine.
@@ -44,8 +44,8 @@ The seed is written without logging its SQL, so the console shows only the SQL e
 ## Versions and choices
 
 - **.NET 10** (SDK 10.0.402) and **C# 14**.
-- **Persistence: Entity Framework Core 10.0.14 over SQLite, in memory.** The database, named `Contacts` and owned by
-  `HTMX.Adapter.Contacts`, is created when the application starts and filled from seed data written in C#; it
+- **Persistence: Entity Framework Core 10.0.14 over SQLite, in memory.** The database, named `Customers` and owned by
+  `HTMX.Adapter.Customers`, is created when the application starts and filled from seed data written in C#; it
   disappears when the application stops. Nothing is written to
   disk, so a clone needs no setup, and every run starts from the same known data. Restarting the application resets
   the demo.

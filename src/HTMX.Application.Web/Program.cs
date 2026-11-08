@@ -1,7 +1,7 @@
 namespace HTMX.Application.Web;
 
-using HTMX.Adapter.Contacts;
-using HTMX.Adapter.Contacts.Configuration;
+using HTMX.Adapter.Customers;
+using HTMX.Adapter.Customers.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -12,9 +12,9 @@ using Microsoft.Extensions.Hosting;
 public static class Program
 {
     /// <summary>
-    /// The name of the contacts adapter's in-memory database, which is created each time the application starts.
+    /// The name of the customers adapter's in-memory database, which is created each time the application starts.
     /// </summary>
-    private static readonly DatabaseName ContactsDatabaseName = new DatabaseName("Contacts");
+    private static readonly DatabaseName CustomersDatabaseName = new DatabaseName("Customers");
 
     /// <summary>
     /// Starts the application and runs it until it is stopped.
@@ -31,18 +31,18 @@ public static class Program
     }
 
     /// <summary>
-    /// Registers Razor Pages and the contacts adapter, which owns the database.
+    /// Registers Razor Pages and the customers adapter, which owns the database.
     /// </summary>
     /// <param name="services">The application's service collection.</param>
     private static void AddServices(IServiceCollection services)
     {
         services.AddRazorPages();
 
-        ContactsOptions contacts = new ContactsOptions
+        CustomersOptions customers = new CustomersOptions
         {
-            DatabaseName = ContactsDatabaseName,
+            DatabaseName = CustomersDatabaseName,
         };
-        services.AddContactsAdapter(contacts);
+        services.AddCustomersAdapter(customers);
     }
 
     /// <summary>
