@@ -2,6 +2,10 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-08, later (attended session with Matt): the `code-htmx-pages` skill was started.** It is the
+  second real folder under `.claude/skills/`: how Razor Pages and HTMX 4 work together, drafted here beside the
+  application that proves each pattern, and written to be copied into other repositories. Read its status table before
+  writing any HTMX. The skills section, the edit rule and the `skills` scope below now cover it.
 - **2026-11-08 (attended session with Matt): the adapter is now `HTMX.Adapter.Customers`**, named for the customer
   database it owns: organizations and their contacts, and the internal users who manage them. The layout and the
   solution-architecture paragraph say so. The entries below that name `HTMX.Adapter.Contacts` predate the rename.
@@ -76,8 +80,9 @@ src/
 
 `.claude/skills/` holds 5 Windows junctions, never copies, each gitignored. They point into the public
 [Signalbox](https://github.com/mattonweb/Signalbox) repository, cloned at `C:\Source\Signalbox`; its `REPO-SETUP.md`
-explains the mechanism. It also holds one real folder, `brand-htmlx-pages`, tracked in this repository because the
-brand belongs to this application and to no other.
+explains the mechanism. It also holds two real folders, tracked in this repository: `brand-htmlx-pages`, because the
+brand belongs to this application and to no other, and `code-htmx-pages`, because its patterns are proven by
+building this application.
 
 | Skill | Home | What it governs |
 |---|---|---|
@@ -87,17 +92,18 @@ brand belongs to this application and to no other.
 | `dotnet-solution-architecture` | Signalbox | Which projects exist and what each may reference: `{{solution}}.{{kind}}.{{name}}` naming, the four project kinds, the dependency rules, and the public surface of a class library. Read it before creating a project or adding a project reference |
 | `devops-git-conventions` | Signalbox | The commit-message form you draft for Matt. Its branch, pull-request and tag sections do not apply here; this repository has no branches and no pipeline |
 | `brand-htmlx-pages` | this repository | The HTMLX Pages brand: tokens, CSS, icons and the markup of every UI component, with specimen pages. A draft; its status table says which groups are settled |
+| `code-htmx-pages` | this repository | How Razor Pages and HTMX 4 work together: the HTMX 4 changes that break HTMX 2 habits, loading HTMX, a handler that returns a partial or the whole page by `HX-Request-Type`, history, testing, and the patterns still open. Read it before writing any `hx-` attribute or a handler that answers HTMX. A draft; its status table says which sections are proven |
 
 ⛔ **Matt owns every skill. Never edit a file inside one of the five junctions**, however wrong it looks; report the
 defect in your final message instead. An edit through a junction lands in Signalbox's working tree.
-`brand-htmlx-pages` is Matt's too, and changes only in a session he attends; an unattended session that finds it
-wrong reports the defect and leaves it.
+`brand-htmlx-pages` and `code-htmx-pages` are Matt's too, and change only in a session he attends; an
+unattended session that finds one wrong reports the defect and leaves it.
 
 **Commit scopes (`devops-git-conventions` section 3): one scope per drafted commit, from this list, or none when the
 change spans the repository.** `web` (the Razor Pages application), `htmx` (the client-side interaction layer and
 its partials), `data` (the store and its models), `tests` (the unit tests), `deps` (package updates), `docs`
-(`README.md` and presentation notes), `skills` (the `brand-htmlx-pages` skill, the junctions and their gitignore
-lines), `charter` (this file). A scope
+(`README.md` and presentation notes), `skills` (the `brand-htmlx-pages` and `code-htmx-pages` skills, the
+junctions and their gitignore lines), `charter` (this file). A scope
 that is not here is added to this list in its own commit before the commit that uses it; never invented in the
 message.
 
