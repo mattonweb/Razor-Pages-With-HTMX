@@ -18,6 +18,14 @@ dotnet run --project src/HTMX.Application.Web --launch-profile http
 
 Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pages Solution.slnx"`.
 
+## Pages
+
+- **`/organizations`** — the list: filter, status, sort and key-based paging, each view its own URL, swapped in place
+  by HTMX and working without it.
+- **`/organizations/{id}`** — one organization: its name, status and version, who changed it last, and every value it
+  holds. It is read in one query that joins the users who created, last changed and archived it. An identifier that
+  names no organization gets the same page saying so, with the status 404 Not Found.
+
 ## Sample data
 
 The database starts with invented data, built in `src/HTMX.Adapter.Customers/Data/Seed/` as histories, one version

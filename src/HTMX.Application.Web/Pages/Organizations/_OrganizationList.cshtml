@@ -75,13 +75,13 @@
                         <tr class="@(current.Status == RecordStatus.All && organization.ArchivedOn is not null ? "archived" : null)">
                             <td class="title">
                                 @* A link to the organization leaves the list, so it is a normal link, not a swap. *@
-                                <a href="/organizations/@organization.Id.Value" hx-boost="false">@organization.Name.Value</a>
+                                <a asp-page="./Details" asp-route-id="@organization.Id.Value" hx-boost="false">@organization.Name.Value</a>
                                 @if (organization.Website is WebAddress website)
                                 {
                                     <span class="sub">@IndexModel.WebsiteHost(website)</span>
                                 }
                             </td>
-                            <td>@IndexModel.IndustryName(organization.Industry)</td>
+                            <td>@IndustryNames.Of(organization.Industry)</td>
                             <td class="num">@organization.Contacts.Value.ToString("N0", CultureInfo.CurrentCulture)</td>
                             <td>
                                 @if (organization.ArchivedOn is null)

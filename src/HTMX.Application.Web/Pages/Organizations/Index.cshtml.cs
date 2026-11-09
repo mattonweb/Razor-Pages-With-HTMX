@@ -2,9 +2,7 @@ namespace HTMX.Application.Web.Pages.Organizations;
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
@@ -103,19 +101,6 @@ public sealed class IndexModel : PageModel
     /// Gets the page sizes the Rows per page select offers.
     /// </summary>
     public IReadOnlyList<int> PageSizeOptions { get; } = PageSizes;
-
-    /// <summary>
-    /// Gives an industry's name as the page shows it, such as Food and drink.
-    /// </summary>
-    /// <param name="industry">The industry.</param>
-    /// <returns>The display name its <see cref="DisplayAttribute"/> gives.</returns>
-    public static string IndustryName(Industry industry)
-    {
-        string name = industry.ToString();
-        FieldInfo? field = typeof(Industry).GetField(name);
-        DisplayAttribute? display = field?.GetCustomAttribute<DisplayAttribute>();
-        return display?.GetName() ?? name;
-    }
 
     /// <summary>
     /// Gives the part of a website's address a list shows under the name, such as placeholder.example.

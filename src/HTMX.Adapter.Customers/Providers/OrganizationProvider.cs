@@ -51,6 +51,77 @@ internal sealed class OrganizationProvider
     }
 
     /// <summary>
+    /// Reads one organization with every value it holds, its number of contacts, and the users who created, last
+    /// changed and archived it, all in one query.
+    /// </summary>
+    /// <remarks>
+    /// Each user the organization names is a join on the Users table: an inner join for the creator and the last
+    /// editor, who are always set, and an outer join for the archiver, who is set only once the organization is
+    /// archived. A subquery that picks the first matching user would read the same, but becomes a window function over
+    /// every user in the SQL.
+    /// </remarks>
+    /// <param name="id">The organization's identifier.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the organization.</param>
+    /// <returns>The organization, or <see langword="null"/> when no organization has the identifier.</returns>
+    public Task<OrganizationSingleResponse?> FindAsync(
+        OrganizationId id,
+        CancellationToken cancellationToken = default)
+    {
+        IQueryable<Contact> contacts = this._context.Set<Contact>();
+        IQueryable<User> users = this._context.Set<User>();
+        IQueryable<Organization> organizations = this._context.Set<Organization>();
+        IQueryable<OrganizationSingleResponse> found =
+            from organization in organizations
+            where organization.Id == id
+            join creator in users on organization.CreatedBy equals creator.Id
+            join editor in users on organization.LastModifiedBy equals editor.Id
+            join archivedBy in users on organization.ArchivedBy equals (UserId?)archivedBy.Id into archivers
+            from archiver in archivers.DefaultIfEmpty()
+            select new OrganizationSingleResponse
+            {
+                Id = organization.Id,
+                Name = organization.Name,
+                Industry = organization.Industry,
+                Website = organization.Website,
+                Contacts = new RecordCount(contacts.Count(contact => contact.OrganizationId == organization.Id)),
+                Version = organization.Version,
+                Created = new RecordChange
+                {
+                    On = organization.CreatedOn,
+                    By = new UserReference
+                    {
+                        Id = creator.Id,
+                        Name = creator.DisplayName,
+                        ArchivedOn = creator.ArchivedOn,
+                    },
+                },
+                LastModified = new RecordChange
+                {
+                    On = organization.LastModifiedOn,
+                    By = new UserReference
+                    {
+                        Id = editor.Id,
+                        Name = editor.DisplayName,
+                        ArchivedOn = editor.ArchivedOn,
+                    },
+                },
+                Archived = organization.ArchivedOn == null || archiver == null
+                    ? null
+                    : new RecordChange
+                    {
+                        On = organization.ArchivedOn.Value,
+                        By = new UserReference
+                        {
+                            Id = archiver.Id,
+                            Name = archiver.DisplayName,
+                            ArchivedOn = archiver.ArchivedOn,
+                        },
+                    },
+            };
+        return found.FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <summary>
     /// Reads how the list sorts the organization a cursor names: its value in every sortable column.
     /// </summary>
     /// <param name="id">The organization's identifier.</param>

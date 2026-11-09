@@ -1,13 +1,11 @@
 namespace HTMX.Test.Unit.Adapter.Customers.Services;
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data.Seed;
 using HTMX.Adapter.Customers.Services;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
@@ -17,9 +15,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 [TestClass]
 public sealed class OrganizationServiceTests
 {
-    // More pages than any list in the seed runs to, so a walk that never ends fails instead of hanging.
-    private const int MaximumPages = 50;
-
     #region Public Methods
 
     /// <summary>
@@ -33,7 +28,8 @@ public sealed class OrganizationServiceTests
         OrganizationCollectionRequest request = CreateRequest(RecordStatus.Active, OrganizationSortColumn.Name);
 
         // Act (When)
-        OrganizationCollectionResponse response = await ListAsync(request).ConfigureAwait(false);
+        OrganizationCollectionResponse response =
+            await OrganizationServiceCalls.ListAsync(request).ConfigureAwait(false);
         string[] names = [.. response.Items.Select(static item => item.Name.Value)];
         string[] sorted = [.. names.Order(StringComparer.OrdinalIgnoreCase)];
         OrganizationCursor next = new OrganizationCursor(response.Items[^1].Id, CursorPosition.After);
@@ -78,7 +74,8 @@ public sealed class OrganizationServiceTests
         OrganizationCollectionRequest request = CreateRequest(RecordStatus.All, OrganizationSortColumn.Name, "FREIGHT");
 
         // Act (When)
-        OrganizationCollectionResponse response = await ListAsync(request).ConfigureAwait(false);
+        OrganizationCollectionResponse response =
+            await OrganizationServiceCalls.ListAsync(request).ConfigureAwait(false);
         OrganizationSummary[] others =
         [
             .. response.Items.Where(static item =>
@@ -110,7 +107,8 @@ public sealed class OrganizationServiceTests
         OrganizationCollectionRequest request = CreateRequest(RecordStatus.All, OrganizationSortColumn.Name, "%");
 
         // Act (When)
-        OrganizationCollectionResponse response = await ListAsync(request).ConfigureAwait(false);
+        OrganizationCollectionResponse response =
+            await OrganizationServiceCalls.ListAsync(request).ConfigureAwait(false);
 
         // Assert (Then)
         Assert.AreEqual(
@@ -137,8 +135,9 @@ public sealed class OrganizationServiceTests
             pageSize: 20);
 
         // Act (When)
-        OrganizationCollectionResponse[] pages = await ReadInTurnAsync(tens, CursorPosition.After).ConfigureAwait(false);
-        OrganizationCollectionResponse whole = await ListAsync(twenty).ConfigureAwait(false);
+        OrganizationCollectionResponse[] pages =
+            await OrganizationServiceCalls.ReadInTurnAsync(tens, CursorPosition.After).ConfigureAwait(false);
+        OrganizationCollectionResponse whole = await OrganizationServiceCalls.ListAsync(twenty).ConfigureAwait(false);
         OrganizationId[] followed = [.. pages.SelectMany(static page => page.Items).Select(static item => item.Id)];
         OrganizationId[] expected = [.. whole.Items.Select(static item => item.Id)];
 
@@ -164,7 +163,7 @@ public sealed class OrganizationServiceTests
         OrganizationCollectionRequest request = CreateRequest(RecordStatus.Active, OrganizationSortColumn.Name);
 
         // Act (When)
-        OrganizationCollectionResponse[] pages = await ReadInTurnAsync(
+        OrganizationCollectionResponse[] pages = await OrganizationServiceCalls.ReadInTurnAsync(
             request,
             CursorPosition.After,
             CursorPosition.Before).ConfigureAwait(false);
@@ -190,13 +189,15 @@ public sealed class OrganizationServiceTests
     {
         // Arrange (Given)
         OrganizationCollectionRequest tens = CreateRequest(RecordStatus.Active, OrganizationSortColumn.Name);
-        OrganizationCollectionResponse[] pages = await ReadInTurnAsync(tens, CursorPosition.After).ConfigureAwait(false);
-        OrganizationCollectionRequest larger = At(
+        OrganizationCollectionResponse[] pages =
+            await OrganizationServiceCalls.ReadInTurnAsync(tens, CursorPosition.After).ConfigureAwait(false);
+        OrganizationCollectionRequest larger = OrganizationServiceCalls.At(
             CreateRequest(RecordStatus.Active, OrganizationSortColumn.Name, pageSize: 25),
             pages[1].Previous);
 
         // Act (When)
-        OrganizationCollectionResponse response = await ListAsync(larger).ConfigureAwait(false);
+        OrganizationCollectionResponse response =
+            await OrganizationServiceCalls.ListAsync(larger).ConfigureAwait(false);
 
         // Assert (Then)
         Assert.HasCount(
@@ -220,12 +221,13 @@ public sealed class OrganizationServiceTests
     {
         // Arrange (Given)
         OrganizationCursor unknown = new OrganizationCursor(new OrganizationId(99999), CursorPosition.After);
-        OrganizationCollectionRequest request = At(
+        OrganizationCollectionRequest request = OrganizationServiceCalls.At(
             CreateRequest(RecordStatus.Active, OrganizationSortColumn.Name),
             unknown);
 
         // Act (When)
-        OrganizationCollectionResponse response = await ListAsync(request).ConfigureAwait(false);
+        OrganizationCollectionResponse response =
+            await OrganizationServiceCalls.ListAsync(request).ConfigureAwait(false);
 
         // Assert (Then)
         Assert.IsNull(
@@ -263,7 +265,8 @@ public sealed class OrganizationServiceTests
         OrganizationCollectionRequest request = CreateRequest(RecordStatus.All, sort, direction: direction);
 
         // Act (When)
-        OrganizationCollectionResponse[] pages = await WalkToTheEndAsync(request).ConfigureAwait(false);
+        OrganizationCollectionResponse[] pages =
+            await OrganizationServiceCalls.WalkToTheEndAsync(request).ConfigureAwait(false);
         OrganizationId[] visited = [.. pages.SelectMany(static page => page.Items).Select(static item => item.Id)];
         OrganizationId[] distinct = [.. visited.Distinct()];
 
@@ -299,7 +302,8 @@ public sealed class OrganizationServiceTests
             pageSize: 10);
 
         // Act (When)
-        OrganizationCollectionResponse response = await ListAsync(request).ConfigureAwait(false);
+        OrganizationCollectionResponse response =
+            await OrganizationServiceCalls.ListAsync(request).ConfigureAwait(false);
         OrganizationSummary first = response.Items[0];
 
         // Assert (Then)
@@ -327,7 +331,8 @@ public sealed class OrganizationServiceTests
             pageSize: 25);
 
         // Act (When)
-        OrganizationCollectionResponse response = await ListAsync(request).ConfigureAwait(false);
+        OrganizationCollectionResponse response =
+            await OrganizationServiceCalls.ListAsync(request).ConfigureAwait(false);
         DateTime[] changes = [.. response.Items.Select(static item => item.LastModifiedOn)];
         DateTime[] newestFirst = [.. changes.OrderDescending()];
 
@@ -336,6 +341,101 @@ public sealed class OrganizationServiceTests
             newestFirst,
             changes,
             "The page should be in order of the last change, newest first.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that finding Placeholder Logistics reads every value its page shows: its industry, its 18
+    /// contacts, its second version, and who created it and who changed it last.
+    /// </summary>
+    [TestMethod]
+    public async Task FindAsync_PlaceholderLogistics_ReturnsItsValuesAndWhoChangedIt()
+    {
+        // Arrange (Given)
+        OrganizationId id = OrganizationSeed.PlaceholderLogistics;
+
+        // Act (When)
+        OrganizationSingleResponse? organization = await OrganizationServiceCalls.FindAsync(id).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsNotNull(
+            organization,
+            "Placeholder Logistics should be found.");
+        UserReference creator = organization.Created.By;
+        UserReference editor = organization.LastModified.By;
+        Assert.AreEqual(
+            Industry.Shipping,
+            organization.Industry,
+            "Placeholder Logistics should be in shipping.");
+        Assert.AreEqual(
+            18,
+            organization.Contacts.Value,
+            "Placeholder Logistics should count its 18 contacts.");
+        Assert.AreEqual(
+            2,
+            organization.Version.Value,
+            "Placeholder Logistics should be at its second version.");
+        Assert.AreEqual(
+            "Demo User",
+            creator.Name.Value,
+            "Demo User should have created Placeholder Logistics.");
+        Assert.AreEqual(
+            "Taylor Dummy",
+            editor.Name.Value,
+            "Taylor Dummy should have changed Placeholder Logistics last.");
+        Assert.IsNull(
+            organization.Archived,
+            "Placeholder Logistics is active, so it should have no archive change.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an archived organization says who archived it and when: Mockup Media, archived by Demo
+    /// User as its last change.
+    /// </summary>
+    [TestMethod]
+    public async Task FindAsync_MockupMedia_SaysWhoArchivedIt()
+    {
+        // Arrange (Given)
+        OrganizationId id = OrganizationSeed.MockupMedia;
+
+        // Act (When)
+        OrganizationSingleResponse? organization = await OrganizationServiceCalls.FindAsync(id).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsNotNull(
+            organization,
+            "Mockup Media should be found.");
+        RecordChange? archived = organization.Archived;
+        Assert.IsNotNull(
+            archived,
+            "Mockup Media should say it was archived.");
+        UserReference archiver = archived.By;
+        Assert.AreEqual(
+            "Demo User",
+            archiver.Name.Value,
+            "Demo User should have archived Mockup Media.");
+        Assert.AreEqual(
+            organization.LastModified.On,
+            archived.On,
+            "Archiving should be Mockup Media's last change.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an identifier no organization has finds nothing, rather than throwing.
+    /// </summary>
+    [TestMethod]
+    public async Task FindAsync_UnknownIdentifier_ReturnsNull()
+    {
+        // Arrange (Given)
+        OrganizationId unknown = new OrganizationId(99999);
+
+        // Act (When)
+        OrganizationSingleResponse? organization =
+            await OrganizationServiceCalls.FindAsync(unknown).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsNull(
+            organization,
+            "No organization has the identifier 99999.");
     }
 
     #endregion Public Methods
@@ -368,130 +468,6 @@ public sealed class OrganizationServiceTests
             Direction = direction,
             PageSize = new PageSize(size),
         };
-    }
-
-    /// <summary>
-    /// Makes the same request with a cursor, as a Previous or Next link would.
-    /// </summary>
-    /// <param name="request">The request to move.</param>
-    /// <param name="cursor">Where the page lies, or <see langword="null"/> for the first page.</param>
-    /// <returns>The request with the cursor.</returns>
-    private static OrganizationCollectionRequest At(OrganizationCollectionRequest request, OrganizationCursor? cursor)
-    {
-        return new OrganizationCollectionRequest
-        {
-            Filter = request.Filter,
-            Status = request.Status,
-            Sort = request.Sort,
-            Direction = request.Direction,
-            Cursor = cursor,
-            PageSize = request.PageSize,
-        };
-    }
-
-    /// <summary>
-    /// Reads one page through the service, over a database of its own.
-    /// </summary>
-    /// <param name="request">The page to read.</param>
-    /// <returns>The page.</returns>
-    private static async Task<OrganizationCollectionResponse> ListAsync(OrganizationCollectionRequest request)
-    {
-        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
-        {
-            return await ReadAsync(services, request).ConfigureAwait(false);
-        }
-    }
-
-    /// <summary>
-    /// Reads a first page and then, in turn, the page each step leads to: Next for After, Previous for Before.
-    /// </summary>
-    /// <param name="first">The first page to read.</param>
-    /// <param name="steps">The links to follow, one after another.</param>
-    /// <returns>Every page read, the first page first.</returns>
-    private static async Task<OrganizationCollectionResponse[]> ReadInTurnAsync(
-        OrganizationCollectionRequest first,
-        params CursorPosition[] steps)
-    {
-        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
-        {
-            return await FollowAsync(services, first, steps).ConfigureAwait(false);
-        }
-    }
-
-    /// <summary>
-    /// Reads a first page and then follows Next until there is no next page.
-    /// </summary>
-    /// <param name="first">The first page to read.</param>
-    /// <returns>Every page read, in order.</returns>
-    private static async Task<OrganizationCollectionResponse[]> WalkToTheEndAsync(OrganizationCollectionRequest first)
-    {
-        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
-        {
-            return await FollowNextAsync(services, first).ConfigureAwait(false);
-        }
-    }
-
-    /// <summary>
-    /// Reads a first page and then the page each step leads to, over one database.
-    /// </summary>
-    /// <param name="services">The started services.</param>
-    /// <param name="first">The first page to read.</param>
-    /// <param name="steps">The links to follow, one after another.</param>
-    /// <returns>Every page read, the first page first.</returns>
-    private static async Task<OrganizationCollectionResponse[]> FollowAsync(
-        ServiceProvider services,
-        OrganizationCollectionRequest first,
-        CursorPosition[] steps)
-    {
-        OrganizationCollectionResponse page = await ReadAsync(services, first).ConfigureAwait(false);
-        List<OrganizationCollectionResponse> pages = [page];
-        foreach (CursorPosition step in steps)
-        {
-            OrganizationCursor? cursor = step == CursorPosition.After ? page.Next : page.Previous;
-            page = await ReadAsync(services, At(first, cursor)).ConfigureAwait(false);
-            pages.Add(page);
-        }
-
-        return [.. pages];
-    }
-
-    /// <summary>
-    /// Reads a first page and follows Next until there is no next page, over one database.
-    /// </summary>
-    /// <param name="services">The started services.</param>
-    /// <param name="first">The first page to read.</param>
-    /// <returns>Every page read, in order.</returns>
-    private static async Task<OrganizationCollectionResponse[]> FollowNextAsync(
-        ServiceProvider services,
-        OrganizationCollectionRequest first)
-    {
-        List<OrganizationCollectionResponse> pages = [];
-        OrganizationCollectionRequest? request = first;
-        while (request is not null && pages.Count < MaximumPages)
-        {
-            OrganizationCollectionResponse page = await ReadAsync(services, request).ConfigureAwait(false);
-            pages.Add(page);
-            request = page.Next is OrganizationCursor next ? At(first, next) : null;
-        }
-
-        return [.. pages];
-    }
-
-    /// <summary>
-    /// Reads one page through the service, in a scope of its own as one request would.
-    /// </summary>
-    /// <param name="services">The started services.</param>
-    /// <param name="request">The page to read.</param>
-    /// <returns>The page.</returns>
-    private static async Task<OrganizationCollectionResponse> ReadAsync(
-        ServiceProvider services,
-        OrganizationCollectionRequest request)
-    {
-        using (IServiceScope scope = services.CreateScope())
-        {
-            IOrganizationService organizations = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
-            return await organizations.ListAsync(request).ConfigureAwait(false);
-        }
     }
 
     #endregion Private Methods

@@ -55,6 +55,14 @@ internal sealed class OrganizationService : IOrganizationService
         return CreatePage(answered, read, active, archived);
     }
 
+    /// <inheritdoc/>
+    public Task<OrganizationSingleResponse?> FindAsync(
+        OrganizationId id,
+        CancellationToken cancellationToken = default)
+    {
+        return this._provider.FindAsync(id, cancellationToken);
+    }
+
     /// <summary>
     /// Says whether a cursor left too little to show: nothing at all past it, or a short page before it, which means
     /// the page reached the start of the list, and the first page, read forwards, should be shown whole instead.

@@ -1,0 +1,4 @@
+@model DateTime
+@using System.Globalization
+@* A moment stored in UTC: the text shows it in the server's time zone, and the datetime attribute keeps it exact. *@
+<time datetime="@Model.ToString("O", CultureInfo.InvariantCulture)">@Model.ToLocalTime().ToString("d MMM yyyy, HH:mm", CultureInfo.CurrentCulture)</time>

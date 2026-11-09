@@ -1,0 +1,83 @@
+@page "/organizations/{id:long}"
+@model HTMX.Application.Web.Pages.Organizations.DetailsModel
+@using System.Globalization
+@using HTMX.Adapter.Customers.Contracts
+@{
+    OrganizationSingleResponse? organization = Model.Organization;
+    ViewData["Title"] = organization?.Name.Value ?? "Organization not found";
+    ViewData["Section"] = "Organizations";
+}
+@* The page's route is written out in full, so an organization's address is /organizations/10003. *@
+
+@if (organization is null)
+{
+    <header class="page-header">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Organizations</a></li><li><span aria-current="page">Not found</span></li></ol>
+        </nav>
+        <div class="title-row"><h1>Organization not found</h1></div>
+    </header>
+
+    <div class="card">
+        <div class="empty">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#building"></use></svg>
+            <h3>No organization has the identifier @Model.Input.Id</h3>
+            <p>It may have been deleted, or the link may be mistyped.</p>
+            <a class="btn" asp-page="./Index">Back to organizations</a>
+        </div>
+    </div>
+}
+else
+{
+    RecordChange lastChange = organization.LastModified;
+    RecordChange created = organization.Created;
+
+    <header class="page-header">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Organizations</a></li><li><span aria-current="page">@organization.Name.Value</span></li></ol>
+        </nav>
+        <div class="title-row">
+            <div class="title">
+                <h1>@organization.Name.Value</h1>
+                @if (organization.Archived is null)
+                {
+                    <span class="chip success">Active</span>
+                }
+                else
+                {
+                    <span class="chip">Archived</span>
+                }
+                <span class="version current">v@(organization.Version.Value)</span>
+            </div>
+        </div>
+        @* Users have no page of their own yet, so who changed the organization is a name, not a link. *@
+        <p class="muted">Updated <partial name="_Moment" model="lastChange.On" /> by @lastChange.By.Name.Value</p>
+    </header>
+
+    <section class="card" aria-labelledby="details-heading">
+        <header class="card-header"><h2 id="details-heading">Details</h2></header>
+        <div class="card-body">
+            <dl class="fields">
+                <div><dt>Industry</dt><dd>@IndustryNames.Of(organization.Industry)</dd></div>
+                <div>
+                    <dt>Website</dt>
+                    @if (organization.Website is WebAddress website)
+                    {
+                        <dd><a href="@website.Value">@website.Value</a></dd>
+                    }
+                    else
+                    {
+                        <dd><span class="unset">Not set</span></dd>
+                    }
+                </div>
+                <div><dt>Contacts</dt><dd class="mono">@organization.Contacts.Value.ToString("N0", CultureInfo.CurrentCulture)</dd></div>
+                <div><dt>Identifier</dt><dd class="mono">@organization.Id.Value</dd></div>
+                <div><dt>Created</dt><dd><partial name="_Moment" model="created.On" /> by @created.By.Name.Value</dd></div>
+                @if (organization.Archived is RecordChange archived)
+                {
+                    <div><dt>Archived</dt><dd><partial name="_Moment" model="archived.On" /> by @archived.By.Name.Value</dd></div>
+                }
+            </dl>
+        </div>
+    </section>
+}
