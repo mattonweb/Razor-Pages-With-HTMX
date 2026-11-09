@@ -17,7 +17,7 @@ public sealed record Toast
     public string? UndoAction { get; init; }
 
     /// <summary>
-    /// Gets the element an Undo that HTMX sends replaces, such as <c>#organization-details</c>.
+    /// Gets the element an Undo that HTMX sends replaces, such as <c>#organization</c>.
     /// </summary>
     public string? UndoTarget { get; init; }
 }

@@ -1,0 +1,122 @@
+@model HTMX.Application.Web.Pages.Organizations.HistoryModel
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The History tab's content: the organization's header and its versions, newest first, in the brand's timeline. HTMX
+    replaces #organization whole (outerHTML) with it after Archive, Restore, a roll-back or Undo on this tab, as part of
+    _OrganizationChanged, so the new version is at the top of the timeline when the toast arrives.
+
+    Each earlier version whose values differ from now offers a roll-back, previewed in a dialog that Roll back opens
+    with commandfor and command, which need no script. The dialog's form posts to the RollBack handler with the version
+    to go back to and the version the page shows, with HTMX or without it; a modal dialog that the answer replaces
+    closes with it.
+*@
+@{
+    OrganizationSingleResponse organization = Model.Organization
+        ?? throw new InvalidOperationException("The History tab needs the organization.");
+    IReadOnlyList<OrganizationVersionResponse> versions = Model.Versions;
+    string name = organization.Name.Value;
+    string? rollBackAction = Url.Page("./History", "RollBack", new { id = organization.Id.Value });
+
+    // Only an active organization is rolled back, and only to a version whose values differ from now.
+    bool canRollBack = organization.Archived is null && versions.Count > 0;
+}
+<div id="organization">
+    <partial name="_OrganizationHeader" model="Model" />
+
+    <section class="card" aria-labelledby="history-heading">
+        <header class="card-header"><h2 id="history-heading">History</h2></header>
+        <div class="card-body">
+            <ol class="timeline" reversed>
+                @for (int index = 0; index < versions.Count; index++)
+                {
+                    OrganizationVersionResponse entry = versions[index];
+                    int number = entry.Version.Value;
+                    bool current = index == 0;
+                    FieldChange[] changes = index + 1 < versions.Count ? OrganizationChanges.Between(versions[index + 1], entry) : [];
+                    string summary = entry.Change switch
+                    {
+                        ChangeKind.Edited => OrganizationChanges.Fields(changes),
+                        ChangeKind.RolledBack => $"to version {entry.RolledBackTo?.Value}",
+                        _ => string.Empty,
+                    };
+                    FieldChange[] rollBack = canRollBack && !current ? OrganizationChanges.RollBack(versions[0], entry) : [];
+                    string dialogId = $"rollback-{number}";
+                    Diff entryDiff = new Diff
+                    {
+                        Caption = $"Changes in version {number}",
+                        BeforeHeading = "Before",
+                        AfterHeading = "After",
+                        Changes = changes,
+                    };
+                    Diff rollBackDiff = new Diff
+                    {
+                        Caption = $"What rolling back to version {number} changes",
+                        BeforeHeading = $"Now (v{organization.Version.Value})",
+                        AfterHeading = "After the roll-back",
+                        Changes = rollBack,
+                    };
+
+                    <li class="@(current ? "current" : null)">
+                        <details open="@current">
+                            <summary>
+                                <svg class="icon sm chevron" aria-hidden="true"><use href="/icons.svg#chevron-right"></use></svg>
+                                <span class="version @(current ? "current" : null)">v@(number)</span>
+                                <span><strong>@OrganizationChanges.Title(entry.Change)</strong> @summary</span>
+                                <span class="when"><partial name="_Moment" model="entry.Changed.On" /> by @entry.Changed.By.Name.Value</span>
+                            </summary>
+                            <div class="entry-body">
+                                @if (entry.Change == ChangeKind.Created)
+                                {
+                                    <p class="muted">The first version, with every value as it was entered.</p>
+                                }
+                                else if (changes.Length > 0)
+                                {
+                                    <partial name="_Diff" model="entryDiff" />
+                                }
+
+                                @if (current)
+                                {
+                                    <p class="muted">This is the current version.</p>
+                                }
+                                else if (rollBack.Length > 0)
+                                {
+                                    <div class="entry-actions">
+                                        <button class="btn" type="button" commandfor="@dialogId" command="show-modal"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Roll back to version @number</button>
+                                    </div>
+                                }
+                                else if (canRollBack)
+                                {
+                                    <p class="muted">Version @number holds the same values as now.</p>
+                                }
+                            </div>
+                        </details>
+
+                        @if (rollBack.Length > 0)
+                        {
+                            <dialog class="dialog" id="@dialogId" aria-labelledby="@(dialogId)-title">
+                                <form method="post" action="@rollBackAction" asp-antiforgery="true"
+                                      hx-post="@rollBackAction" hx-target="#organization" hx-swap="outerHTML"
+                                      hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+                                    <input type="hidden" name="to" value="@number" />
+                                    <input type="hidden" name="version" value="@organization.Version.Value" />
+                                    <header class="dialog-header">
+                                        <h2 id="@(dialogId)-title">Roll back to version @number?</h2>
+                                        <button class="btn ghost icon-only" type="button" commandfor="@dialogId" command="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button>
+                                    </header>
+                                    <div class="dialog-body rollback">
+                                        <p>@name takes back the values it held at version @number, as a new version, v@(organization.Version.Value + 1). Every version stays in its history, so this can be undone.</p>
+                                        <partial name="_Diff" model="rollBackDiff" />
+                                    </div>
+                                    <footer class="dialog-footer">
+                                        <button class="btn" type="button" commandfor="@dialogId" command="close" autofocus>Cancel</button>
+                                        <button class="btn primary" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Roll back to version @number</button>
+                                    </footer>
+                                </form>
+                            </dialog>
+                        }
+                    </li>
+                }
+            </ol>
+        </div>
+    </section>
+</div>

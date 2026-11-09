@@ -137,6 +137,46 @@ internal static class OrganizationServiceCalls
     }
 
     /// <summary>
+    /// Reads every version of one organization through the service, newest first, as its History tab does.
+    /// </summary>
+    /// <param name="id">The organization's identifier.</param>
+    /// <returns>The versions, newest first.</returns>
+    internal static async Task<OrganizationVersionResponse[]> ListVersionsAsync(OrganizationId id)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IOrganizationService organizations = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
+                return await organizations.ListVersionsAsync(id).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Rolls an organization back through the service, then reads it, and every version of it, as they are afterwards.
+    /// </summary>
+    /// <param name="request">The roll-back.</param>
+    /// <returns>What became of it, the organization afterwards, and its versions, oldest first.</returns>
+    internal static async Task<(UpdateOutcome Outcome, OrganizationSingleResponse? After, OrganizationVersion[] History)>
+        RollBackAsync(OrganizationRollBackRequest request)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            UpdateOutcome outcome;
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IOrganizationService organizations = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
+                outcome = await organizations.RollBackAsync(request).ConfigureAwait(false);
+            }
+
+            OrganizationSingleResponse? after = await FindAsync(services, request.Id).ConfigureAwait(false);
+            OrganizationVersion[] history = await ReadHistoryAsync(services, request.Id).ConfigureAwait(false);
+            return (outcome, after, history);
+        }
+    }
+
+    /// <summary>
     /// Reads every version of one organization, oldest first, straight from the database.
     /// </summary>
     /// <param name="services">The started services.</param>

@@ -1,0 +1,15 @@
+@model HTMX.Application.Web.Pages.Organizations.OrganizationPageModel
+@*
+    What HTMX gets after an action on a tab of an organization's page: the tab's content, which replaces
+    #organization, and the toast, which replaces whatever the layout's #toasts region holds, so an Undo never outlives
+    the action it undoes. HTMX 4 turns <hx-partial> into a template, swaps the main content first and then each partial
+    into its own hx-target (4.0.1 source, #makeFragment and #processPartials); Razor writes the element through as it
+    is.
+*@
+<partial name="@Model.ContentPartial" model="Model" />
+@if (Model.Toast is Toast toast)
+{
+    <hx-partial hx-target="#toasts" hx-swap="innerHTML">
+        <partial name="_Toast" model="toast" />
+    </hx-partial>
+}

@@ -1,0 +1,71 @@
+@model HTMX.Application.Web.Pages.Organizations.OrganizationPageModel
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The top of every tab of an organization's page: its header, the alert that says it is archived, and the tabs.
+    Archive and Restore post to the current tab's own handlers, with HTMX or without it, so the answer is that tab again.
+    Their buttons share the id status-action, so that HTMX puts the focus back on whichever the new content holds.
+    Neither says hx-disable: a disabled button loses the focus, and HTMX would have none to put back. The busy style
+    that hx-indicator turns on already stops a second click.
+*@
+@{
+    OrganizationSingleResponse organization = Model.Organization
+        ?? throw new InvalidOperationException("The organization's header needs the organization.");
+    RecordChange lastChange = organization.LastModified;
+    long id = organization.Id.Value;
+    string? archiveAction = Url.Page(Model.PageName, "Archive", new { id });
+    string? restoreAction = Url.Page(Model.PageName, "Restore", new { id });
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Organizations</a></li><li><span aria-current="page">@organization.Name.Value</span></li></ol>
+    </nav>
+    <div class="title-row">
+        <div class="title">
+            <h1>@organization.Name.Value</h1>
+            @if (organization.Archived is null)
+            {
+                <span class="chip success">Active</span>
+            }
+            else
+            {
+                <span class="chip">Archived</span>
+            }
+            <span class="version current">v@(organization.Version.Value)</span>
+        </div>
+        @* An archived organization is closed to edits until it is restored, so it offers no Edit; its alert holds Restore. *@
+        @if (organization.Archived is null)
+        {
+            <div class="btn-group">
+                <form method="post" action="@archiveAction" asp-antiforgery="true"
+                      hx-post="@archiveAction" hx-target="#organization" hx-swap="outerHTML"
+                      hx-indicator="find button">
+                    <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>Archive</button>
+                </form>
+                <a class="btn primary" asp-page="./Edit" asp-route-id="@id"><svg class="icon" aria-hidden="true"><use href="/icons.svg#edit"></use></svg>Edit</a>
+            </div>
+        }
+    </div>
+    @* Users have no page of their own yet, so who changed the organization is a name, not a link. *@
+    <p class="muted">Updated <partial name="_Moment" model="lastChange.On" /> by @lastChange.By.Name.Value</p>
+</header>
+
+@if (organization.Archived is not null)
+{
+    <div class="alert" role="status">
+        <svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>
+        <div class="content"><p><strong>This organization is archived.</strong> It is hidden from the active list and can't be edited until it is restored.</p></div>
+        <div class="actions">
+            <form method="post" action="@restoreAction" asp-antiforgery="true"
+                  hx-post="@restoreAction" hx-target="#organization" hx-swap="outerHTML"
+                  hx-indicator="find button">
+                <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Restore</button>
+            </form>
+        </div>
+    </div>
+}
+
+@* Each tab is a page with its own URL; the count after History is how many versions the organization has. *@
+<nav class="tabs" aria-label="Organization">
+    <a asp-page="./Details" asp-route-id="@id" aria-current="@(Model.PageName == "./Details" ? "page" : null)">Details</a>
+    <a asp-page="./History" asp-route-id="@id" aria-current="@(Model.PageName == "./History" ? "page" : null)">History <span class="count">@organization.Version.Value</span></a>
+</nav>

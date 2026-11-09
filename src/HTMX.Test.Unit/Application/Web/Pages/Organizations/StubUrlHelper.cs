@@ -1,14 +1,15 @@
 namespace HTMX.Test.Unit.Application.Web.Pages.Organizations;
 
 using System;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 
 /// <summary>
-/// Stands in for routing in page tests: a page's address comes back as the page's name and the identifier, and the
-/// handler if one is named, such as <c>/Organizations/Details/10003?handler=Restore</c>, so a test sees which page,
-/// record and handler a page model asked for without the application's routes.
+/// Stands in for routing in page tests: a page's address comes back as the page's name and the identifier, then the
+/// handler and any other values, such as <c>/Organizations/History/10003?handler=RollBack&amp;to=2&amp;version=3</c>, so
+/// a test sees which page, record, handler and values a page model asked for without the application's routes.
 /// </summary>
 internal sealed class StubUrlHelper : IUrlHelper
 {
@@ -54,8 +55,13 @@ internal sealed class StubUrlHelper : IUrlHelper
         ArgumentNullException.ThrowIfNull(routeContext);
         RouteValueDictionary values = new RouteValueDictionary(routeContext.Values);
         string address = $"{values["page"]}/{values["id"]}";
-        return values.TryGetValue("handler", out object? handler) && handler is not null
-            ? $"{address}?handler={handler}"
-            : address;
+        string[] query =
+        [
+            .. values
+                .Where(static value => value.Key is not "page" and not "id" && value.Value is not null)
+                .OrderBy(static value => value.Key == "handler" ? string.Empty : value.Key, StringComparer.Ordinal)
+                .Select(static value => $"{value.Key}={value.Value}"),
+        ];
+        return query.Length == 0 ? address : $"{address}?{string.Join('&', query)}";
     }
 }

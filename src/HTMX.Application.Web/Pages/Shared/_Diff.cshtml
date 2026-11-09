@@ -1,0 +1,35 @@
+@model HTMX.Application.Web.Pages.Diff
+@*
+    The brand's diff: Field, then the value before and after, as <del> and <ins>, for only the fields that changed. A
+    missing value reads "Not set". The column headings carry the meaning; the colors only reinforce it.
+*@
+<div class="diff-wrap">
+    <table class="diff">
+        <caption class="visually-hidden">@Model.Caption</caption>
+        <thead><tr><th scope="col">Field</th><th scope="col">@Model.BeforeHeading</th><th scope="col">@Model.AfterHeading</th></tr></thead>
+        <tbody>
+            @foreach (FieldChange change in Model.Changes)
+            {
+                <tr>
+                    <th scope="row">@change.Field</th>
+                    @if (change.Before is string before)
+                    {
+                        <td><del>@before</del></td>
+                    }
+                    else
+                    {
+                        <td><span class="unset">Not set</span></td>
+                    }
+                    @if (change.After is string after)
+                    {
+                        <td><ins>@after</ins></td>
+                    }
+                    else
+                    {
+                        <td><span class="unset">Not set</span></td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

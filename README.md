@@ -32,6 +32,11 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   **Undo** posts the opposite; each is a version in the organization's history. With HTMX one answer carries both the
   page's content and the toast, in an `<hx-partial>`. Without HTMX the post is redirected back to the page, and the toast
   waits in TempData for it.
+- **`/organizations/{id}/history`** — the History tab: every version, newest first, in a timeline, each with the fields
+  it changed. An earlier version whose values differ from now offers **Roll back**, previewed in a dialog with the
+  change from now; rolling back saves those values as a new version, under the same rules as an edit, and its toast's
+  Undo rolls back again. The page's two tabs share one base page model, so Archive and Restore work on either and
+  answer with the tab they were pressed on.
 - **`/organizations/{id}/edit`** — the edit form: name, industry and website. A save becomes the organization's next
   version, recorded in its history. A form that fails validation comes back with 422 and its messages: the whole page
   without HTMX, and with HTMX only the page's content, swapped in place, with the cursor on the first field to fix. A

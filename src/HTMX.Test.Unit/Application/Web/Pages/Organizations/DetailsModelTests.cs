@@ -85,7 +85,7 @@ public sealed class DetailsModelTests
 
     /// <summary>
     /// Unit test to verify that the page shows the toast an action left in TempData before the redirect, with an Undo
-    /// that posts to the handler it names.
+    /// that posts to the address it left.
     /// </summary>
     [TestMethod]
     public async Task OnGetAsync_ToastLeftByAnAction_ShowsItWithUndo()
@@ -93,7 +93,7 @@ public sealed class DetailsModelTests
         // Arrange (Given)
         DetailsModel page = CreatePage(new StubOrganizationService(CreateOrganization(10003)), 10003);
         page.TempData["ToastMessage"] = "Placeholder Logistics archived.";
-        page.TempData["ToastUndo"] = "Restore";
+        page.TempData["ToastUndo"] = "/Organizations/Details/10003?handler=Restore";
 
         // Act (When)
         await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
@@ -133,7 +133,7 @@ public sealed class DetailsModelTests
             result,
             "HTMX should get the page's content to swap in place.");
         Assert.AreEqual(
-            "_OrganizationStatusChanged",
+            "_OrganizationChanged",
             partial.ViewName,
             "The answer should hold the page's content and the toast.");
         Assert.AreEqual(
@@ -177,7 +177,7 @@ public sealed class DetailsModelTests
             page.TempData["ToastMessage"],
             "The toast should wait in TempData.");
         Assert.AreEqual(
-            "Archive",
+            "/Organizations/Details/10009?handler=Archive",
             page.TempData["ToastUndo"],
             "Undo should archive the organization again.");
     }

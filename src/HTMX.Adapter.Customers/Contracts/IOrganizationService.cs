@@ -28,6 +28,16 @@ public interface IOrganizationService
     Task<OrganizationSingleResponse?> FindAsync(OrganizationId id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Reads every version of one organization, newest first, each with who made it.
+    /// </summary>
+    /// <param name="id">The organization's identifier.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the versions.</param>
+    /// <returns>The versions, newest first; none when no organization has the identifier.</returns>
+    Task<OrganizationVersionResponse[]> ListVersionsAsync(
+        OrganizationId id,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Creates an organization, with its first version, unless another organization already has its name.
     /// </summary>
     /// <param name="request">The new organization's values, and who is creating it.</param>
@@ -45,6 +55,19 @@ public interface IOrganizationService
     /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
     /// <returns>Whether the change was saved and, if not, why.</returns>
     Task<UpdateOutcome> UpdateAsync(OrganizationUpdateRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Saves an earlier version's values again, as the organization's next version, under the same rules as a change:
+    /// the organization must be active, still at the version the request names, hold some value other than the earlier
+    /// version's, and the earlier name must not have passed to another organization since.
+    /// </summary>
+    /// <param name="request">Which organization, the version it is at, the version to roll back to, and who asks.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Whether the values were saved and, if not, why; NotFound also when the earlier version does not
+    /// exist.</returns>
+    Task<UpdateOutcome> RollBackAsync(
+        OrganizationRollBackRequest request,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Archives an active organization as its next version: it leaves the Active list and is closed to edits until it

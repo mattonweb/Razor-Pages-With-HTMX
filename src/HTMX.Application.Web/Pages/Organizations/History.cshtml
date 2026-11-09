@@ -1,0 +1,23 @@
+@page "/organizations/{id:long}/history"
+@model HTMX.Application.Web.Pages.Organizations.HistoryModel
+@{
+    ViewData["Title"] = Model.Organization is null ? "Organization not found" : $"History · {Model.Organization.Name.Value}";
+    ViewData["Section"] = "Organizations";
+}
+
+@if (Model.Organization is null)
+{
+    <partial name="_OrganizationNotFound" model="Model.Input.Id" />
+}
+else
+{
+    <partial name="_OrganizationHistory" model="Model" />
+}
+
+@* After an action without HTMX, the redirect's page shows the toast the action left. *@
+@section Toasts {
+    @if (Model.Toast is Toast toast)
+    {
+        <partial name="_Toast" model="toast" />
+    }
+}

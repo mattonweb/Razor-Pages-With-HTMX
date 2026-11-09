@@ -39,6 +39,7 @@ public static class ServiceCollectionExtensions
 
         // One of each per request, like the context they read through.
         services.AddScoped<OrganizationProvider>();
+        services.AddScoped<OrganizationVersionProvider>();
         services.AddScoped<IOrganizationService, OrganizationService>();
         return services;
     }

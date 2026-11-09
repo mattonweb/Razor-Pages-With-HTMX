@@ -817,6 +817,111 @@ public sealed class OrganizationServiceTests
             "The history should gain no version.");
     }
 
+    /// <summary>
+    /// Unit test to verify that an organization's versions come newest first, each with what happened, who did it and
+    /// the values it left.
+    /// </summary>
+    [TestMethod]
+    public async Task ListVersionsAsync_PlaceholderLogistics_ReturnsNewestFirstWithWhoMadeEach()
+    {
+        // Arrange (Given)
+        OrganizationId id = OrganizationSeed.PlaceholderLogistics;
+
+        // Act (When)
+        OrganizationVersionResponse[] versions = await OrganizationServiceCalls.ListVersionsAsync(id).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.HasCount(
+            2,
+            versions,
+            "Placeholder Logistics has two versions.");
+        Assert.AreEqual(
+            (new VersionNumber(2), ChangeKind.Edited, "Taylor Dummy"),
+            (versions[0].Version, versions[0].Change, versions[0].Changed.By.Name.Value),
+            "The newest version should come first, with who made it.");
+        Assert.AreEqual(
+            (new VersionNumber(1), ChangeKind.Created, "Demo User"),
+            (versions[1].Version, versions[1].Change, versions[1].Changed.By.Name.Value),
+            "The first version should come last.");
+        Assert.AreEqual(
+            new WebAddress("https://placeholder-logistics.example"),
+            versions[1].Website,
+            "Each version should hold the values it left.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that rolling back saves the earlier version's values as the next version, a RolledBack one
+    /// that names the version it went back to.
+    /// </summary>
+    [TestMethod]
+    public async Task RollBackAsync_ToAnEarlierVersion_SavesItsValuesAsTheNextVersion()
+    {
+        // Arrange (Given)
+        OrganizationRollBackRequest request = CreateRollBack(OrganizationSeed.PlaceholderLogistics, 2, 1);
+
+        // Act (When)
+        (UpdateOutcome outcome, OrganizationSingleResponse? after, OrganizationVersion[] history) =
+            await OrganizationServiceCalls.RollBackAsync(request).ConfigureAwait(false);
+        OrganizationVersion latest = history[^1];
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.Saved,
+            outcome,
+            "Rolling back to a version with other values should be saved.");
+        Assert.AreEqual(
+            new WebAddress("https://placeholder-logistics.example"),
+            after?.Website,
+            "The organization should take version 1's website again.");
+        Assert.AreEqual(
+            new VersionNumber(3),
+            after?.Version,
+            "The roll-back should be version 3, not a return to version 1.");
+        Assert.AreEqual(
+            (ChangeKind.RolledBack, new VersionNumber(1)),
+            (latest.Change, latest.RolledBackTo),
+            "The new version should record a roll-back to version 1.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a roll-back the rules refuse, or that changes nothing, saves nothing.
+    /// </summary>
+    /// <param name="id">The organization's identifier.</param>
+    /// <param name="version">The version the request says the organization is at.</param>
+    /// <param name="to">The version to roll back to.</param>
+    /// <param name="expected">What should become of the request.</param>
+    [TestMethod]
+    [DataRow(10003L, 1, 1, UpdateOutcome.Overtaken, DisplayName = "From a version it has moved on from")]
+    [DataRow(10003L, 2, 2, UpdateOutcome.Unchanged, DisplayName = "To the version it is at")]
+    [DataRow(10009L, 2, 1, UpdateOutcome.Archived, DisplayName = "An archived organization")]
+    [DataRow(10003L, 2, 9, UpdateOutcome.NotFound, DisplayName = "To a version it never had")]
+    [DataRow(99999L, 1, 1, UpdateOutcome.NotFound, DisplayName = "An unknown identifier")]
+    public async Task RollBackAsync_RefusedOrUnchanged_SavesNothing(
+        long id,
+        int version,
+        int to,
+        UpdateOutcome expected)
+    {
+        // Arrange (Given)
+        OrganizationId organizationId = new OrganizationId(id);
+        OrganizationRollBackRequest request = CreateRollBack(organizationId, version, to);
+        OrganizationSingleResponse? before = await OrganizationServiceCalls.FindAsync(organizationId).ConfigureAwait(false);
+
+        // Act (When)
+        (UpdateOutcome outcome, OrganizationSingleResponse? after, _) =
+            await OrganizationServiceCalls.RollBackAsync(request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            outcome,
+            $"The roll-back should be answered {expected}.");
+        Assert.AreEqual(
+            before?.Version,
+            after?.Version,
+            "The organization should keep its version.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -846,6 +951,24 @@ public sealed class OrganizationServiceTests
             Sort = sort,
             Direction = direction,
             PageSize = new PageSize(size),
+        };
+    }
+
+    /// <summary>
+    /// Creates a roll-back as Demo User would send it from the History tab.
+    /// </summary>
+    /// <param name="id">The organization to roll back.</param>
+    /// <param name="version">The version the History tab showed it at.</param>
+    /// <param name="to">The version to roll back to.</param>
+    /// <returns>The roll-back.</returns>
+    private static OrganizationRollBackRequest CreateRollBack(OrganizationId id, int version, int to)
+    {
+        return new OrganizationRollBackRequest
+        {
+            Id = id,
+            Version = new VersionNumber(version),
+            To = new VersionNumber(to),
+            ChangedBy = UserSeed.DemoUser,
         };
     }
 

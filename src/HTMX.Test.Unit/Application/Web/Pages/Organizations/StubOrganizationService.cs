@@ -8,8 +8,9 @@ using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
 /// Stands in for the organization service in page tests: it keeps each request the page sends and answers with an
-/// empty page for a list, with the one organization it was given for a lookup, and with the outcomes it was given for a
-/// change, an archive or restore, and a new organization, so a test sees what the page asked for without a database.
+/// empty page for a list, with the one organization and the versions it was given for a lookup, and with the outcomes
+/// it was given for a change, an archive or restore, a roll-back and a new organization, so a test sees what the page
+/// asked for without a database.
 /// </summary>
 internal sealed class StubOrganizationService : IOrganizationService
 {
@@ -18,25 +19,30 @@ internal sealed class StubOrganizationService : IOrganizationService
     private readonly List<OrganizationUpdateRequest> _updates = [];
     private readonly List<OrganizationCreateRequest> _creations = [];
     private readonly List<(ChangeKind Change, OrganizationStatusRequest Request)> _statusChanges = [];
+    private readonly List<OrganizationRollBackRequest> _rollBacks = [];
     private readonly OrganizationSingleResponse? _found;
     private readonly UpdateOutcome _outcome;
     private readonly CreateOutcome _creation;
+    private readonly OrganizationVersionResponse[] _versions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StubOrganizationService"/> class.
     /// </summary>
     /// <param name="found">The organization a lookup answers with, or <see langword="null"/> for none.</param>
-    /// <param name="outcome">What a change, an archive and a restore are answered with.</param>
+    /// <param name="outcome">What a change, an archive, a restore and a roll-back are answered with.</param>
     /// <param name="creation">What a new organization is answered with; one that is created gets the identifier
     /// 11001, as the first after the seed would.</param>
+    /// <param name="versions">The versions a lookup of the history answers with, newest first.</param>
     public StubOrganizationService(
         OrganizationSingleResponse? found = null,
         UpdateOutcome outcome = UpdateOutcome.Saved,
-        CreateOutcome creation = CreateOutcome.Created)
+        CreateOutcome creation = CreateOutcome.Created,
+        OrganizationVersionResponse[]? versions = null)
     {
         this._found = found;
         this._outcome = outcome;
         this._creation = creation;
+        this._versions = versions ?? [];
     }
 
     /// <summary>
@@ -85,6 +91,15 @@ internal sealed class StubOrganizationService : IOrganizationService
         return this._statusChanges.Count == 0 ? null : this._statusChanges[^1];
     }
 
+    /// <summary>
+    /// Gives the last roll-back the page asked for.
+    /// </summary>
+    /// <returns>The roll-back, or <see langword="null"/> before the page asks for one.</returns>
+    public OrganizationRollBackRequest? LastRollBack()
+    {
+        return this._rollBacks.LastOrDefault();
+    }
+
     /// <inheritdoc/>
     public Task<OrganizationCollectionResponse> ListAsync(
         OrganizationCollectionRequest request,
@@ -118,6 +133,24 @@ internal sealed class StubOrganizationService : IOrganizationService
         CancellationToken cancellationToken = default)
     {
         this._updates.Add(request);
+        return Task.FromResult(this._outcome);
+    }
+
+    /// <inheritdoc/>
+    public Task<OrganizationVersionResponse[]> ListVersionsAsync(
+        OrganizationId id,
+        CancellationToken cancellationToken = default)
+    {
+        this._looked.Add(id);
+        return Task.FromResult(this._versions);
+    }
+
+    /// <inheritdoc/>
+    public Task<UpdateOutcome> RollBackAsync(
+        OrganizationRollBackRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        this._rollBacks.Add(request);
         return Task.FromResult(this._outcome);
     }
 
