@@ -48,6 +48,13 @@
             @RenderBody()
         </main>
     </div>
+
+    @*
+        The one region toasts appear in, as the brand asks. It is empty unless a page puts a toast in its Toasts section;
+        after an action HTMX sent, the response replaces what it holds. Being a live region from the start, it has
+        screen readers announce each toast as it arrives.
+    *@
+    <div class="toasts" id="toasts" role="status" aria-live="polite">@await RenderSectionAsync("Toasts", required: false)</div>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -27,7 +27,11 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   the save goes to its page. A name another organization has, however it is capitalized, is refused with 422.
 - **`/organizations/{id}`** — one organization: its name, status and version, who changed it last, and every value it
   holds. It is read in one query that joins the users who created, last changed and archived it. An identifier that
-  names no organization gets the same page saying so, with the status 404 Not Found.
+  names no organization gets the same page saying so, with the status 404 Not Found. **Archive** and **Restore** post
+  to the page's named handlers (`?handler=Archive`, `?handler=Restore`), run at once, and say so in a toast whose
+  **Undo** posts the opposite; each is a version in the organization's history. With HTMX one answer carries both the
+  page's content and the toast, in an `<hx-partial>`. Without HTMX the post is redirected back to the page, and the toast
+  waits in TempData for it.
 - **`/organizations/{id}/edit`** — the edit form: name, industry and website. A save becomes the organization's next
   version, recorded in its history. A form that fails validation comes back with 422 and its messages: the whole page
   without HTMX, and with HTMX only the page's content, swapped in place, with the cursor on the first field to fix. A

@@ -11,7 +11,8 @@ public enum UpdateOutcome
     Saved,
 
     /// <summary>
-    /// The values sent are the values the record already holds, so nothing was saved and no version was made.
+    /// The record already holds the values sent, or is already archived or active as asked, so nothing was saved and
+    /// no version was made.
     /// </summary>
     Unchanged,
 

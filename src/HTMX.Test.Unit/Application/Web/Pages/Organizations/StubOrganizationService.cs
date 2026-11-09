@@ -9,7 +9,7 @@ using HTMX.Adapter.Customers.Contracts;
 /// <summary>
 /// Stands in for the organization service in page tests: it keeps each request the page sends and answers with an
 /// empty page for a list, with the one organization it was given for a lookup, and with the outcomes it was given for a
-/// change and a new organization, so a test sees what the page asked for without a database.
+/// change, an archive or restore, and a new organization, so a test sees what the page asked for without a database.
 /// </summary>
 internal sealed class StubOrganizationService : IOrganizationService
 {
@@ -17,6 +17,7 @@ internal sealed class StubOrganizationService : IOrganizationService
     private readonly List<OrganizationId> _looked = [];
     private readonly List<OrganizationUpdateRequest> _updates = [];
     private readonly List<OrganizationCreateRequest> _creations = [];
+    private readonly List<(ChangeKind Change, OrganizationStatusRequest Request)> _statusChanges = [];
     private readonly OrganizationSingleResponse? _found;
     private readonly UpdateOutcome _outcome;
     private readonly CreateOutcome _creation;
@@ -25,7 +26,7 @@ internal sealed class StubOrganizationService : IOrganizationService
     /// Initializes a new instance of the <see cref="StubOrganizationService"/> class.
     /// </summary>
     /// <param name="found">The organization a lookup answers with, or <see langword="null"/> for none.</param>
-    /// <param name="outcome">What a change is answered with.</param>
+    /// <param name="outcome">What a change, an archive and a restore are answered with.</param>
     /// <param name="creation">What a new organization is answered with; one that is created gets the identifier
     /// 11001, as the first after the seed would.</param>
     public StubOrganizationService(
@@ -74,6 +75,16 @@ internal sealed class StubOrganizationService : IOrganizationService
         return this._creations.LastOrDefault();
     }
 
+    /// <summary>
+    /// Gives the last archive or restore the page asked for.
+    /// </summary>
+    /// <returns>Archived or Restored, with the request, or <see langword="null"/> before the page asks for
+    /// either.</returns>
+    public (ChangeKind Change, OrganizationStatusRequest Request)? LastStatusChange()
+    {
+        return this._statusChanges.Count == 0 ? null : this._statusChanges[^1];
+    }
+
     /// <inheritdoc/>
     public Task<OrganizationCollectionResponse> ListAsync(
         OrganizationCollectionRequest request,
@@ -107,6 +118,24 @@ internal sealed class StubOrganizationService : IOrganizationService
         CancellationToken cancellationToken = default)
     {
         this._updates.Add(request);
+        return Task.FromResult(this._outcome);
+    }
+
+    /// <inheritdoc/>
+    public Task<UpdateOutcome> ArchiveAsync(
+        OrganizationStatusRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        this._statusChanges.Add((ChangeKind.Archived, request));
+        return Task.FromResult(this._outcome);
+    }
+
+    /// <inheritdoc/>
+    public Task<UpdateOutcome> RestoreAsync(
+        OrganizationStatusRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        this._statusChanges.Add((ChangeKind.Restored, request));
         return Task.FromResult(this._outcome);
     }
 

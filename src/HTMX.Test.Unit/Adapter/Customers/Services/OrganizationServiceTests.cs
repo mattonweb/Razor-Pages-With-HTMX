@@ -690,6 +690,133 @@ public sealed class OrganizationServiceTests
             "No version should be written.");
     }
 
+    /// <summary>
+    /// Unit test to verify that archiving an active organization saves an Archived version that says who archived it
+    /// and when, keeps its values, and leaves the organization archived at that version.
+    /// </summary>
+    [TestMethod]
+    public async Task ArchiveAsync_ActiveOrganization_ArchivesItAsTheNextVersion()
+    {
+        // Arrange (Given)
+        OrganizationId id = OrganizationSeed.PlaceholderLogistics;
+
+        // Act (When)
+        (UpdateOutcome outcome, OrganizationSingleResponse? after, OrganizationVersion[] history) =
+            await OrganizationServiceCalls.ChangeStatusAsync(id, ChangeKind.Archived).ConfigureAwait(false);
+        OrganizationVersion latest = history[^1];
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.Saved,
+            outcome,
+            "An active organization should be archived.");
+        Assert.IsNotNull(
+            after?.Archived,
+            "The organization should say it is archived.");
+        Assert.AreEqual(
+            UserSeed.DemoUser,
+            after.Archived.By.Id,
+            "The organization should say who archived it.");
+        Assert.AreEqual(
+            TestDatabase.StartedOn,
+            after.Archived.On,
+            "The organization should say when it was archived.");
+        Assert.AreEqual(
+            new VersionNumber(3),
+            after.Version,
+            "Archiving should move the organization from version 2 to version 3.");
+        Assert.AreEqual(
+            "Placeholder Logistics",
+            after.Name.Value,
+            "Archiving should keep the organization's values.");
+        Assert.AreEqual(
+            ChangeKind.Archived,
+            latest.Change,
+            "The new version should record the archiving.");
+        Assert.AreEqual(
+            UserSeed.DemoUser,
+            latest.ArchivedBy,
+            "The new version should say who archived the organization.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that restoring an archived organization saves a Restored version and leaves the
+    /// organization active at that version.
+    /// </summary>
+    [TestMethod]
+    public async Task RestoreAsync_ArchivedOrganization_RestoresItAsTheNextVersion()
+    {
+        // Arrange (Given)
+        OrganizationId id = OrganizationSeed.MockupMedia;
+
+        // Act (When)
+        (UpdateOutcome outcome, OrganizationSingleResponse? after, OrganizationVersion[] history) =
+            await OrganizationServiceCalls.ChangeStatusAsync(id, ChangeKind.Restored).ConfigureAwait(false);
+        OrganizationVersion latest = history[^1];
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.Saved,
+            outcome,
+            "An archived organization should be restored.");
+        Assert.IsNotNull(
+            after,
+            "Mockup Media should still be found.");
+        Assert.IsNull(
+            after.Archived,
+            "The organization should be active again.");
+        Assert.AreEqual(
+            new VersionNumber(3),
+            after.Version,
+            "Restoring should move the organization from version 2 to version 3.");
+        Assert.AreEqual(
+            ChangeKind.Restored,
+            latest.Change,
+            "The new version should record the restoring.");
+        Assert.IsNull(
+            latest.ArchivedOn,
+            "The new version should leave the organization unarchived.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that archiving an organization already archived, restoring one already active, or either
+    /// for an unknown identifier, saves nothing.
+    /// </summary>
+    /// <param name="id">The organization's identifier.</param>
+    /// <param name="change">Archived to archive it, Restored to restore it.</param>
+    /// <param name="expected">What should become of the request.</param>
+    [TestMethod]
+    [DataRow(10009L, ChangeKind.Archived, UpdateOutcome.Unchanged, DisplayName = "Archive one already archived")]
+    [DataRow(10003L, ChangeKind.Restored, UpdateOutcome.Unchanged, DisplayName = "Restore one already active")]
+    [DataRow(99999L, ChangeKind.Archived, UpdateOutcome.NotFound, DisplayName = "An unknown identifier")]
+    public async Task ChangeStatus_AlreadyThatWayOrUnknown_SavesNothing(
+        long id,
+        ChangeKind change,
+        UpdateOutcome expected)
+    {
+        // Arrange (Given)
+        OrganizationId organizationId = new OrganizationId(id);
+        OrganizationSingleResponse? before = await OrganizationServiceCalls.FindAsync(organizationId).ConfigureAwait(false);
+
+        // Act (When)
+        (UpdateOutcome outcome, OrganizationSingleResponse? after, OrganizationVersion[] history) =
+            await OrganizationServiceCalls.ChangeStatusAsync(organizationId, change).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            outcome,
+            $"The request should be answered {expected}.");
+        Assert.AreEqual(
+            before?.Version,
+            after?.Version,
+            "The organization should keep its version.");
+        Assert.HasCount(
+            before is null ? 0 : before.Version.Value,
+            history,
+            "The history should gain no version.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods

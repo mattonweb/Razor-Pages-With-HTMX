@@ -1,0 +1,18 @@
+@model HTMX.Application.Web.Pages.Toast
+@*
+    One toast, for the layout's #toasts region. Undo is a real form that posts the undo, with HTMX or without it; with
+    HTMX it replaces UndoTarget. Its button keeps the id toast-undo, so that HTMX puts the focus back on the next
+    toast's Undo when the response replaces this one. The brand's CSS makes the toast leave by itself after 8 seconds,
+    paused while the pointer or the keyboard is on it; app.js removes it then, or when Dismiss is pressed.
+*@
+<div class="toast">
+    <span class="message">@Model.Message</span>
+    @if (Model.UndoAction is string undo)
+    {
+        <form method="post" action="@undo" asp-antiforgery="true"
+              hx-post="@undo" hx-target="@Model.UndoTarget" hx-swap="outerHTML">
+            <button class="btn ghost" id="toast-undo" type="submit">Undo</button>
+        </form>
+    }
+    <button class="btn ghost icon-only" type="button" data-action="dismiss-toast" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button>
+</div>

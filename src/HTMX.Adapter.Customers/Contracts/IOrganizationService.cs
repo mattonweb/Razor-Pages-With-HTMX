@@ -45,4 +45,22 @@ public interface IOrganizationService
     /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
     /// <returns>Whether the change was saved and, if not, why.</returns>
     Task<UpdateOutcome> UpdateAsync(OrganizationUpdateRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Archives an active organization as its next version: it leaves the Active list and is closed to edits until it
+    /// is restored. Its values and its contacts are kept.
+    /// </summary>
+    /// <param name="request">Which organization, and who is archiving it.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Saved when it was archived; Unchanged when it already was; NotFound or Overtaken otherwise.</returns>
+    Task<UpdateOutcome> ArchiveAsync(OrganizationStatusRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Restores an archived organization as its next version, making it active and open to edits again.
+    /// </summary>
+    /// <param name="request">Which organization, and who is restoring it.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Saved when it was restored; Unchanged when it was already active; NotFound or Overtaken
+    /// otherwise.</returns>
+    Task<UpdateOutcome> RestoreAsync(OrganizationStatusRequest request, CancellationToken cancellationToken = default);
 }

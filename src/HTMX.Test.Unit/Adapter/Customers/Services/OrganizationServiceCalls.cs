@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data;
+using HTMX.Adapter.Customers.Data.Seed;
 using HTMX.Adapter.Customers.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -104,6 +105,34 @@ internal static class OrganizationServiceCalls
             OrganizationSingleResponse? after = await FindAsync(services, readBack).ConfigureAwait(false);
             OrganizationVersion[] history = await ReadHistoryAsync(services, readBack).ConfigureAwait(false);
             return (response, after, history);
+        }
+    }
+
+    /// <summary>
+    /// Archives or restores an organization through the service, then reads it, and every version of it, as they are
+    /// afterwards.
+    /// </summary>
+    /// <param name="id">The organization to archive or restore.</param>
+    /// <param name="change">Archived to archive it, Restored to restore it.</param>
+    /// <returns>What became of the request, the organization afterwards, and its versions, oldest first.</returns>
+    internal static async Task<(UpdateOutcome Outcome, OrganizationSingleResponse? After, OrganizationVersion[] History)>
+        ChangeStatusAsync(OrganizationId id, ChangeKind change)
+    {
+        OrganizationStatusRequest request = new OrganizationStatusRequest { Id = id, ChangedBy = UserSeed.DemoUser };
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            UpdateOutcome outcome;
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IOrganizationService organizations = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
+                outcome = change == ChangeKind.Archived
+                    ? await organizations.ArchiveAsync(request).ConfigureAwait(false)
+                    : await organizations.RestoreAsync(request).ConfigureAwait(false);
+            }
+
+            OrganizationSingleResponse? after = await FindAsync(services, id).ConfigureAwait(false);
+            OrganizationVersion[] history = await ReadHistoryAsync(services, id).ConfigureAwait(false);
+            return (outcome, after, history);
         }
     }
 

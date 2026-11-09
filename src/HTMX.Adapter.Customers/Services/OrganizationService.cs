@@ -135,6 +135,22 @@ internal sealed class OrganizationService : IOrganizationService
         return saved ? UpdateOutcome.Saved : UpdateOutcome.Overtaken;
     }
 
+    /// <inheritdoc/>
+    public Task<UpdateOutcome> ArchiveAsync(
+        OrganizationStatusRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return this.ChangeStatusAsync(request, ChangeKind.Archived, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public Task<UpdateOutcome> RestoreAsync(
+        OrganizationStatusRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return this.ChangeStatusAsync(request, ChangeKind.Restored, cancellationToken);
+    }
+
     /// <summary>
     /// Gives the outcome a change has before anything is saved: refused because the organization is archived or has
     /// moved on since the form was filled, or done already because it holds the values sent.
@@ -220,6 +236,37 @@ internal sealed class OrganizationService : IOrganizationService
             Name = request.Name,
             Industry = request.Industry,
             Website = request.Website,
+        };
+    }
+
+    /// <summary>
+    /// Makes the version that records an organization being archived or restored: the next number, its values as they
+    /// are, and when and by whom it was archived, or nothing there once it is restored.
+    /// </summary>
+    /// <param name="current">The organization as it is now.</param>
+    /// <param name="change">Archived or Restored.</param>
+    /// <param name="by">Who is archiving or restoring it.</param>
+    /// <param name="now">When, in UTC.</param>
+    /// <returns>The version.</returns>
+    private static OrganizationVersion RecordStatusChange(
+        Organization current,
+        ChangeKind change,
+        UserId by,
+        DateTime now)
+    {
+        bool archiving = change == ChangeKind.Archived;
+        return new OrganizationVersion
+        {
+            OrganizationId = current.Id,
+            Version = new VersionNumber(current.Version.Value + 1),
+            Change = change,
+            ChangedOn = now,
+            ChangedBy = by,
+            Name = current.Name,
+            Industry = current.Industry,
+            Website = current.Website,
+            ArchivedOn = archiving ? now : null,
+            ArchivedBy = archiving ? by : null,
         };
     }
 
@@ -388,5 +435,42 @@ internal sealed class OrganizationService : IOrganizationService
     {
         RecordCount limit = new RecordCount(request.PageSize.Value + 1);
         return this._provider.ListAsync(request, key, limit, cancellationToken);
+    }
+
+    /// <summary>
+    /// Archives or restores an organization as its next version. An organization already archived, or already active,
+    /// is left as it is.
+    /// </summary>
+    /// <param name="request">Which organization, and who is asking.</param>
+    /// <param name="change">Archived or Restored.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>What became of the request.</returns>
+    private async Task<UpdateOutcome> ChangeStatusAsync(
+        OrganizationStatusRequest request,
+        ChangeKind change,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        Organization? current = await this._provider
+            .FindForChangeAsync(request.Id, cancellationToken)
+            .ConfigureAwait(false);
+        if (current is null)
+        {
+            return UpdateOutcome.NotFound;
+        }
+
+        bool archived = current.ArchivedOn is not null;
+        if (archived == (change == ChangeKind.Archived))
+        {
+            return UpdateOutcome.Unchanged;
+        }
+
+        DateTime now = this._clock.GetUtcNow().UtcDateTime;
+        OrganizationVersion version = RecordStatusChange(current, change, request.ChangedBy, now);
+        Organization changed = Apply(current, version);
+        bool saved = await this._provider
+            .SaveChangeAsync(current, changed, version, cancellationToken)
+            .ConfigureAwait(false);
+        return saved ? UpdateOutcome.Saved : UpdateOutcome.Overtaken;
     }
 }
