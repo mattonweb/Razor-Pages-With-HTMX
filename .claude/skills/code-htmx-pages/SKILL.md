@@ -1,8 +1,8 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, and the patterns still open (row actions and fields checked as you type, more than one target, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and the patterns still open (row actions, fields checked as you type, confirmation, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
 owner: Matt
-version: 0.3.0
+version: 0.4.0
 visibility: public
 ---
 
@@ -21,7 +21,7 @@ page looks (the repository's brand skill, if it has one).
 post. HTMX only narrows what a response replaces and keeps the address bar in step. A page that cannot be built that
 way is a decision to make out loud, never a default.
 
-## Status: draft 0.3.0, HTMX 4.0.1
+## Status: draft 0.4.0, HTMX 4.0.1
 
 | Section | State |
 |---|---|
@@ -32,9 +32,8 @@ way is a decision to make out loud, never a default.
 | 5. Back and Forward | Proven |
 | 6. Testing | Proven |
 | 7. Forms that post | Proven |
-| 8. Actions and fields beyond one form | Open |
-| 9. More than one target | Open |
-| 10. Polling | Open |
+| 8. More than one target | Proven |
+| 9. Still open | Open |
 
 - **Proven:** built in a Razor Pages application on HTMX 4.0.1, and shown working by a unit test or in the browser.
 - **Checked:** read in the 4.0.1 source and the reference, and true of that version, but not yet built.
@@ -53,7 +52,7 @@ A section moves up only when that is true of it, in a session Matt attends.
   Its unminified source is `https://unpkg.com/htmx.org@<version>/dist/htmx.js`; citations below to "4.0.1 source"
   name a method in that file.
 - **Chris Woodruff's [htmx Razor Pages workshop](https://github.com/cwoodruff/htmx-razor-workshop)**, MIT. Good on the
-  Razor Pages side, and sections 3 and 6 to 10 take several ideas from it, each credited by chapter: a comment that
+  Razor Pages side, and sections 3 and 6 to 9 take several ideas from it, each credited by chapter: a comment that
   states each partial's contract, what each request gets back, handlers named for what they do, a row action that
   draws the list again, checking a field as you type, form rows added by the server, polling the server stops, and
   what to look for in the network panel. It is written for htmx 1.9.12, and some of its central code does not carry
@@ -323,18 +322,47 @@ itself.
   unless told otherwise. `hx-indicator="find button[type=submit]"` marks the button instead, and
   `hx-disable="find button[type=submit]"` disables it while the request runs, which also stops Enter in a field from
   sending the form again: HTML's implicit submission does nothing when the default button is disabled. `find` is HTMX
-  4's selector for the first matching descendant (4.0.1 source, `#findAllExt`).
+  4's selector for the first matching descendant (4.0.1 source, `#findAllExt`). `hx-disable` costs the focus: a
+  disabled button loses it, and HTMX can put back only an element that had it (section 8). On a form whose answer
+  sets `autofocus` that does not matter; on a one-button form whose answer replaces the button, leave `hx-disable`
+  off, and let a busy style keyed on `htmx-request` stop a second click.
+- **A button that acts on the record posts to a named handler**, named for what it does. A browser form can only GET
+  or POST, so Archive is a one-button form posting to `?handler=Archive`, answered by `OnPostArchiveAsync`, and
+  Restore is a handler of its own beside it. `Url.Page("./Details", "Archive", new { id })` writes the address for
+  both `action` and `hx-post`, and the handler binds the route's values as the GET handler does. `?handler=Archive` in
+  the network panel leads straight to the method (workshop, "Checkpoint: Make It Production-Livable"). HTMX 4's
+  `hx-delete` would leave out the form's fields (section 1), and the token with them, so the form posts.
 
-## 8. Actions and fields beyond one form (open)
+## 8. More than one target (proven)
+
+Built as Archive and Restore on a record's page: one answer replaces the page's content and puts a toast with Undo in
+a region of the layout.
+
+- **One response, two places.** The answer renders the main content first, then the extra content inside
+  `<hx-partial hx-target="#toasts" hx-swap="innerHTML">`. HTMX 4 rewrites each `<hx-…>` tag as a
+  `<template hx type="…">` before it parses the answer (4.0.1 source, `#makeFragment`), swaps the main content into
+  the request's target, then each partial into its own target with its own swap (`#processPartials`). Razor writes
+  `<hx-partial>` through unchanged, so no `<template>` needs writing by hand. A partial names its own target and swap,
+  so the extra content needs no `id` that matches an element on the page, as an `hx-swap-oob` element would
+  ([Multi-target updates](https://four.htmx.org/docs#multi-target-updates)).
+- **The page renders the same pieces.** The answer is a partial that holds two partials: the main content, which the
+  page renders too, and the toast, which the page renders into the layout's region through a section
+  (`@section Toasts`). The region sits empty in the layout, so a live region (`role="status"`) is in place before any
+  toast arrives, and screen readers announce each one.
+- **Replace the region's content, never add to it.** `hx-swap="innerHTML"` leaves one toast at a time, so an Undo
+  never outlives the action it undoes.
+- **Without HTMX the extra content waits for the redirect.** A plain post answers with `RedirectToPage()`, as section
+  7 says, and leaves the toast's message in `TempData`; the page's GET handler reads it there, and a read removes it,
+  so refreshing the page does not show it again. Undo is a real form, so it works the same way.
+- **The focus survives the swap by `id`.** Before a swap HTMX notes the focused element if it has an `id`, and after
+  it focuses the element in the document with that `id` (4.0.1 source, `#insertContent`). Give Archive and Restore
+  one `id` between them, and the keyboard stays on the button that undoes what was just done.
+
+## 9. Still open (open)
 
 Nothing in this section is built yet. What is known, to start from; an idea taken from the workshop names its
 chapter.
 
-- **Post to a named handler, and name it for what it does.** A browser form can only GET or POST, so a button that
-  must work without HTMX, such as Archive, posts to `asp-page-handler="Archive"`, answered by `OnPostArchiveAsync`.
-  HTMX 4's `hx-delete` also leaves out the form's fields (section 1), and the token with them. A handler named for its
-  action, returning the partial that action changes, is easy to trace: `?handler=Archive` in the network panel leads
-  straight to the method (workshop, "Checkpoint: Make It Production-Livable").
 - **A request with no form around it** has to send the antiforgery token another way, such as in the
   `RequestVerificationToken` header through an inherited `hx-headers`
   ([CSRF prevention](https://four.htmx.org/docs#csrf-prevention)). An input that posts on its own, such as one checked
@@ -355,25 +383,14 @@ chapter.
   of objects needs indexed names (`Input.Lines[0].Name`), and so more care when a row leaves.
 - **A select that applies when it changes** (`hx-trigger="change"` on its GET form) does nothing without HTMX unless
   the form also has a submit button.
-
-## 9. More than one target (open)
-
-- **A response that updates the target and something else**, such as a toast after an archive or the count on a tab,
-  can carry the extra content as elements marked `hx-swap-oob`, matched by `id`, or wrapped in
-  `<hx-partial hx-target="…" hx-swap="…">`. In 4 both swap after the main content, and a response with nothing but
-  extra content leaves the main target alone
-  ([Multi-target updates](https://four.htmx.org/docs#multi-target-updates)). Check that Razor writes `<hx-partial>`
-  through unchanged; the `<template hx-type="partial">` form is the fallback.
 - **An `HX-Trigger` response header** raises a client-side event, and an element elsewhere can listen for it and load
   itself again: `hx-get="?handler=Messages" hx-trigger="showMessage from:body"`. That is how the workshop shows a
-  message after a save (Lab 3). It costs a second request for each message, where an out-of-band element arrives with
-  the first. In HTMX 4 a `from:` selector that holds a space needs single quotes (section 1); `from:body` does not.
-  Compare the two when the first toast is built.
-- **Confirmation.** `hx-confirm` uses the browser's `confirm()` and needs HTMX; a confirm page, or a `<dialog>` with
-  its own form, works without it. Choose when the first action that cannot be undone is built.
-
-## 10. Polling (open)
-
+  message after a save (Lab 3). It costs a second request for each message, where section 8's `<hx-partial>` arrives
+  with the first; it suits an element that reloads itself for reasons of its own. In HTMX 4 a `from:` selector that
+  holds a space needs single quotes (section 1); `from:body` does not.
+- **Confirmation, for an action that cannot be undone.** An action that can be undone runs at once and offers Undo
+  (section 8). `hx-confirm` uses the browser's `confirm()` and needs HTMX; a confirm page, or a `<dialog>` with its own
+  form, works without it. Choose when the first such action, such as Delete, is built.
 - **A long job reports its progress by polling.** While the job runs, its status element carries `hx-get` and
   `hx-trigger="every 1s"`, and each answer replaces the element. The answer for a finished job leaves the trigger out,
   and the polling stops (workshop, Lab 5). HTMX 4 still reads `every` (4.0.1 source, `#parseTriggerSpecs`). Without
