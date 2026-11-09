@@ -1,8 +1,8 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and the patterns still open (row actions, fields checked as you type, confirmation, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, and the patterns still open (fields checked as you type, confirmation, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
 owner: Matt
-version: 0.5.0
+version: 0.6.0
 visibility: public
 ---
 
@@ -21,7 +21,7 @@ page looks (the repository's brand skill, if it has one).
 post. HTMX only narrows what a response replaces and keeps the address bar in step. A page that cannot be built that
 way is a decision to make out loud, never a default.
 
-## Status: draft 0.5.0, HTMX 4.0.1
+## Status: draft 0.6.0, HTMX 4.0.1
 
 | Section | State |
 |---|---|
@@ -33,7 +33,8 @@ way is a decision to make out loud, never a default.
 | 6. Testing | Proven |
 | 7. Forms that post | Proven |
 | 8. More than one target | Proven |
-| 9. Still open | Open |
+| 9. Actions on a row | Proven |
+| 10. Still open | Open |
 
 - **Proven:** built in a Razor Pages application on HTMX 4.0.1, and shown working by a unit test or in the browser.
 - **Checked:** read in the 4.0.1 source and the reference, and true of that version, but not yet built.
@@ -52,7 +53,7 @@ A section moves up only when that is true of it, in a session Matt attends.
   Its unminified source is `https://unpkg.com/htmx.org@<version>/dist/htmx.js`; citations below to "4.0.1 source"
   name a method in that file.
 - **Chris Woodruff's [htmx Razor Pages workshop](https://github.com/cwoodruff/htmx-razor-workshop)**, MIT. Good on the
-  Razor Pages side, and sections 3 and 6 to 9 take several ideas from it, each credited by chapter: a comment that
+  Razor Pages side, and sections 3 and 6 to 10 take several ideas from it, each credited by chapter: a comment that
   states each partial's contract, what each request gets back, handlers named for what they do, a row action that
   draws the list again, checking a field as you type, form rows added by the server, polling the server stops, and
   what to look for in the network panel. It is written for htmx 1.9.12, and some of its central code does not carry
@@ -368,7 +369,38 @@ a region of the layout.
   roll-back, so its address holds the version to go back to and the version it starts from
   (`?handler=RollBack&to=2&version=3`); a POST handler's parameters bind from the query string as they do from a form.
 
-## 9. Still open (open)
+## 9. Actions on a row (proven)
+
+Built as Archive and Restore on each row of a paged list of a record's related records, under a header whose own
+actions post to the page's address.
+
+- **The row's form posts to the list's own address.** Its `action` and `hx-post` are the list's current URL, its
+  state included, with the handler and the row's identifier added (`?after=10017&contact=10018&handler=ArchiveContact`).
+  The POST handler binds where the list is from the query string through the same
+  `[BindProperty(SupportsGet = true)]` model as the GET handler, reads the same page again, and answers with the
+  list's partial (workshop, Lab 4). The identifier rides in the address, not in a hidden field, so the toast's Undo
+  (section 8) is an address and nothing more.
+- **The URL stays.** `hx-post` pushes nothing, so the address bar keeps the list's URL, which still loads the same
+  page. Without HTMX the handler redirects to that URL (section 7), and the toast waits in `TempData` with the target
+  its Undo replaces, since that is no longer the page's main content.
+- **A form that says `hx-post` is not boosted.** Inside a container with `hx-boost:inherited`, HTMX sets up every
+  element that names its own request first, and boosts only the links and forms not yet set up (4.0.1 source,
+  `process` and `#maybeBoost`). The row's form keeps the container's inherited swap unless it names its own
+  `hx-target`.
+- **Whatever carries the URL's state is drawn again when the URL changes.** A form outside the list that posts to the
+  page's address, such as Archive in the record's header, carries the list's state too. A Previous or Next that
+  replaced only the list would leave that form posting from the old page, so paging replaces the list and the header
+  together. An action on a row leaves the URL as it was, so it replaces the list alone. Choose each target as the
+  smallest element that holds everything the request changes.
+- **A row's menu is a popover, and its form posts like any other.** The answer replaces the list, the open popover
+  with it, and the menu closes.
+- **`autofocus` puts the keyboard back on the row.** The button pressed was inside the menu, and the answer's menu is
+  closed, so putting the focus back by `id` would find a hidden button. The answer marks the row's menu button
+  `autofocus` instead: after a swap HTMX focuses the first `[autofocus]` in the new content (4.0.1 source,
+  `#handleAutoFocus`), and it does so after putting focus back by `id` (`#insertContent`), so the row's button takes
+  the focus even when the toast's Undo sent the request.
+
+## 10. Still open (open)
 
 Nothing in this section is built yet. What is known, to start from; an idea taken from the workshop names its
 chapter.
@@ -378,10 +410,11 @@ chapter.
   ([CSRF prevention](https://four.htmx.org/docs#csrf-prevention)). An input that posts on its own, such as one checked
   as you type, sends only its own value unless it says `hx-include="closest form"` (workshop, "Checkpoint:
   Troubleshooting + Pattern Review").
-- **An action on a row draws the list again as it was.** The list's state is in the query string (section 4), so the
-  row's form posts to the list's current URL with the handler added (`asp-all-route-data` carries the state). The POST
-  handler binds the same `InputModel` as the GET, reads the same page of the list and returns the list's partial.
-  When the action took away the last row of the last page, it shows the page before (workshop, Lab 4).
+- **An action that takes its row out of the list.** Section 9's rows stay, an archived one shown among the rest, so
+  the page read again holds the same rows. Where the action removes the row, as a delete or a list of active records
+  only would, the page read again from the same cursor is one row short, and when that row was the last on its page
+  the page is empty. The workshop shows the page before (Lab 4); with key-based paging the list's own rule for a
+  cursor that leaves nothing to show decides.
 - **Check one field as you type.** The input posts on its own to a handler of its own: `hx-post="?handler=CheckName"`,
   `hx-trigger="input changed delay:500ms"`, `hx-include="closest form"` for the token and the other fields, and the
   field's message element as its `hx-target`. The handler validates what was bound and returns only that field's
