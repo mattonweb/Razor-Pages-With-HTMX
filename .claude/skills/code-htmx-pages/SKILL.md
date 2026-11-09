@@ -1,8 +1,8 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, and the patterns still open (forms that post, more than one target, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, and the patterns still open (row actions and fields checked as you type, more than one target, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
 owner: Matt
-version: 0.2.0
+version: 0.3.0
 visibility: public
 ---
 
@@ -21,7 +21,7 @@ page looks (the repository's brand skill, if it has one).
 post. HTMX only narrows what a response replaces and keeps the address bar in step. A page that cannot be built that
 way is a decision to make out loud, never a default.
 
-## Status: draft 0.2.0, HTMX 4.0.1
+## Status: draft 0.3.0, HTMX 4.0.1
 
 | Section | State |
 |---|---|
@@ -31,9 +31,10 @@ way is a decision to make out loud, never a default.
 | 4. A list in the query string | Proven |
 | 5. Back and Forward | Proven |
 | 6. Testing | Proven |
-| 7. Forms that post | Open |
-| 8. More than one target | Open |
-| 9. Polling | Open |
+| 7. Forms that post | Proven |
+| 8. Actions and fields beyond one form | Open |
+| 9. More than one target | Open |
+| 10. Polling | Open |
 
 - **Proven:** built in a Razor Pages application on HTMX 4.0.1, and shown working by a unit test or in the browser.
 - **Checked:** read in the 4.0.1 source and the reference, and true of that version, but not yet built.
@@ -52,7 +53,7 @@ A section moves up only when that is true of it, in a session Matt attends.
   Its unminified source is `https://unpkg.com/htmx.org@<version>/dist/htmx.js`; citations below to "4.0.1 source"
   name a method in that file.
 - **Chris Woodruff's [htmx Razor Pages workshop](https://github.com/cwoodruff/htmx-razor-workshop)**, MIT. Good on the
-  Razor Pages side, and sections 3 and 6 to 9 take several ideas from it, each credited by chapter: a comment that
+  Razor Pages side, and sections 3 and 6 to 10 take several ideas from it, each credited by chapter: a comment that
   states each partial's contract, what each request gets back, handlers named for what they do, a row action that
   draws the list again, checking a field as you type, form rows added by the server, polling the server stops, and
   what to look for in the network panel. It is written for htmx 1.9.12, and some of its central code does not carry
@@ -223,68 +224,139 @@ private static bool IsHtmxSwap(HttpRequest request)
   One more test checks that the response's `Vary` header names `HX-Request-Type`. `this.Partial(…)` reads the page's
   `ViewData` and `MetadataProvider`, so the test sets both: a `ViewDataDictionary` on the `PageContext`, and an
   `EmptyModelMetadataProvider` for each.
+- **A handler that posts is tested the same way** (section 7). A plain post that succeeds gives a
+  `RedirectToPageResult`; an HTMX one gives a `StatusCodeResult` of 204, with `HX-Location` among the response's
+  headers; a refused one gives a `PageResult` or a `PartialViewResult`, with its status on the response. Two things
+  the framework would have done need the test's hand:
+  - `this.Url.Page("./Details", …)`, which writes the `HX-Location` address, needs `PageModel.Url`. A stand-in
+    `IUrlHelper` will do, but its `ActionContext` must name the current page as the `page` route value: `Url.Page`
+    resolves a relative name such as `./Details` against it, and throws without it.
+  - A value the test posts and means to be valid: `ModelState.SetModelValue` leaves its entry unvalidated, and
+    `ModelState.IsValid` is false while any entry is, so mark it with `MarkFieldValid`.
 - **What a unit test cannot see is checked in the browser:** which element a swap replaces, inheritance, focus, and
   the URL that is pushed. Read the request headers and the response body in the developer tools' network panel: the
   body holds the target's own outer element, and the target's `id` appears once on the page (workshop, "Checkpoint:
   Troubleshooting + Pattern Review"). Then press Back and Forward after a few swaps.
 
-## 7. Forms that post (open)
+## 7. Forms that post (proven)
 
-Nothing in this section is built yet. What is known, to start from; an idea taken from the workshop names its
-chapter.
+Built as an edit form: one record's fields, posted to the page's own `OnPostAsync`, which HTMX sends from the form
+itself.
 
-- **What each request gets back** is the starting plan (workshop, "Checkpoint: Make It Production-Livable"):
+- **What each request gets back** (the plan the workshop gives in "Checkpoint: Make It Production-Livable", with the
+  answers HTMX 4 needs):
 
   | Request | Answer |
   |---|---|
   | A plain GET | `Page()` |
-  | A plain POST that succeeds | `RedirectToPage()`, so that refreshing the page does not post again |
-  | A plain POST that fails validation | `Page()`, with the messages |
-  | An HTMX POST that succeeds | The partial that changed |
-  | An HTMX POST that fails validation | The form's partial, with the messages |
+  | A plain POST that succeeds | `RedirectToPage()`, so that refreshing the next page does not post again |
+  | A plain POST that is refused | `Page()`, with the messages and a status that says why |
+  | An HTMX POST that succeeds | 204 No Content, with `HX-Location` naming the next page |
+  | An HTMX POST that is refused | The form's partial, with the messages and the same status |
 
-- **Antiforgery.** Razor Pages checks the antiforgery token on every POST to a page handler, and the form tag helper
-  writes the token into every `<form method="post">`. A boosted form, or an `hx-post` inside the form, sends the
-  form's fields and the token with them. An input that posts on its own, such as one checked as you type, sends only
-  its own value unless it says `hx-include="closest form"`, and without the token its POST is refused (workshop,
-  "Checkpoint: Troubleshooting + Pattern Review"). A request with no form around it has to send the token another
-  way, such as in the `RequestVerificationToken` header through an inherited `hx-headers`
-  ([CSRF prevention](https://four.htmx.org/docs#csrf-prevention)). To be verified on the first handler that needs it.
+  The handler tells the two apart by section 3's test: the form's target is not the body, so HTMX sends
+  `HX-Request-Type: partial`.
+- **The form posts to one address, with HTMX or without it.**
+
+  ```cshtml
+  @{ string? action = Url.Page("./Edit", new { id = Model.Id }); }
+  <form method="post" action="@action" asp-antiforgery="true" novalidate
+        hx-post="@action" hx-target="#product-edit" hx-swap="outerHTML"
+        hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+  ```
+
+  HTMX sends every field in the form, the antiforgery token among them, and Razor Pages checks the token as it would
+  for a plain post. An `hx-post` pushes no URL unless told to (4.0.1 source, `#resolveHistoryAction`), so a refused
+  save leaves the address bar and the history alone.
+- **Antiforgery.** The form tag helper writes the token into a `<form method="post">` whose address it builds with
+  `asp-page`, but not into one whose `action` is written by hand; `asp-antiforgery="true"` puts it back. Without the
+  token Razor Pages answers 400 with an empty body, and HTMX 4 swaps an empty answer like any other (4.0.1 source,
+  `swap`: empty content is swapped unless `swapEmpty` says otherwise), so the form vanishes without a message. When a
+  form disappears on save, look for its token first.
+- **A refused save answers 422 or 409, with the form's partial.** HTMX 4 swaps every status but 204 and 304
+  (section 1), so the handler needs no `HX-Retarget` or `HX-Reswap`: 422 Unprocessable Entity when a value must change,
+  409 Conflict when the record has moved on since the form was filled. A plain post gets `Page()` with the same status,
+  which a browser shows like any page. HTMX raises `htmx:response:error` for each (4.0.1 source, `#issueRequest`), and
+  the browser's console lists each one as a resource that failed to load; both are expected. `this.Partial(name, this)` hands the page's
+  `ModelState` to the partial (ASP.NET Core 10 source, `PageModel.Partial`), so the messages render with no helper.
+- **The swapped element holds everything a refused save can change.** That is more than the form: a page header that
+  shows the record's name, version and who changed it last belongs inside it too, so that a save refused because the
+  record moved on shows the record as it is now. The handler reads the record again before it answers.
+- **The cursor goes to the first field to fix.** After a swap HTMX focuses the first element with `autofocus` in the
+  new content (4.0.1 source, `#handleAutoFocus`), as a browser does when it loads a page. The framework's tag helpers
+  mark an invalid control with the class `input-validation-error`, but write no `aria-invalid`, no
+  `aria-describedby` naming the message, and no `autofocus`. A tag helper of the application's own on `input`,
+  `select` and `textarea` with `asp-for` can add all three from the view's `ViewData.ModelState`, the dictionary the
+  framework's tag helpers read, running after them (theirs run at the order -1000) and giving `autofocus` to the first
+  invalid control in the response only. A second, on `span` with `asp-validation-for`, gives each message the `id`
+  the control names.
+- **A save that succeeds answers 204 with `HX-Location`, never a redirect.** `fetch` follows a redirect itself (4.0.1
+  source, `#issueRequest` leaves `redirect` at its default), so HTMX would swap whatever the next page returns into the
+  form's target. `HX-Location` makes HTMX GET the address as a boosted link would: into `<body>`, with
+  `HX-Request-Type: full`, so that the next page's handler returns the whole page, then pushing the URL and setting the
+  title (4.0.1 source, `#handleHeadersAndMaybeReturnEarly`, which reads the header whatever the status and before any
+  swap). The status 204 says there is nothing to swap. `HX-Redirect` would reload the whole page instead.
+
+  ```csharp
+  private IActionResult ShowProduct(long id)
+  {
+      if (!IsHtmxSwap(this.Request))
+      {
+          return this.RedirectToPage("./Details", new { id });
+      }
+
+      // fetch would follow a redirect itself, and HTMX would swap the next page into the form.
+      string url = this.Url.Page("./Details", new { id })
+          ?? throw new InvalidOperationException("The product's page has no address.");
+      IHeaderDictionary headers = this.Response.Headers;
+      headers["HX-Location"] = url;
+      return this.StatusCode(StatusCodes.Status204NoContent);
+  }
+  ```
+
+  `PageModel` has no `NoContent()`; `StatusCode` gives the same result.
+- **A save that another save overtook.** When the form carries the record's version, for optimistic concurrency, and
+  the record has moved on, the form comes back with 409, keeps the values being edited, and starts from the saved
+  version, so that saving again replaces it on purpose. Remove the posted version from `ModelState` before setting the
+  new one on the input model: a tag helper writes the value that was posted ahead of the model's.
+- **A submit button that is busy.** The form is the request's source, so HTMX marks the form with `htmx-request`
+  unless told otherwise. `hx-indicator="find button[type=submit]"` marks the button instead, and
+  `hx-disable="find button[type=submit]"` disables it while the request runs, which also stops Enter in a field from
+  sending the form again: HTML's implicit submission does nothing when the default button is disabled. `find` is HTMX
+  4's selector for the first matching descendant (4.0.1 source, `#findAllExt`).
+
+## 8. Actions and fields beyond one form (open)
+
+Nothing in this section is built yet. What is known, to start from; an idea taken from the workshop names its
+chapter.
+
 - **Post to a named handler, and name it for what it does.** A browser form can only GET or POST, so a button that
   must work without HTMX, such as Archive, posts to `asp-page-handler="Archive"`, answered by `OnPostArchiveAsync`.
   HTMX 4's `hx-delete` also leaves out the form's fields (section 1), and the token with them. A handler named for its
   action, returning the partial that action changes, is easy to trace: `?handler=Archive` in the network panel leads
   straight to the method (workshop, "Checkpoint: Make It Production-Livable").
+- **A request with no form around it** has to send the antiforgery token another way, such as in the
+  `RequestVerificationToken` header through an inherited `hx-headers`
+  ([CSRF prevention](https://four.htmx.org/docs#csrf-prevention)). An input that posts on its own, such as one checked
+  as you type, sends only its own value unless it says `hx-include="closest form"` (workshop, "Checkpoint:
+  Troubleshooting + Pattern Review").
 - **An action on a row draws the list again as it was.** The list's state is in the query string (section 4), so the
   row's form posts to the list's current URL with the handler added (`asp-all-route-data` carries the state). The POST
   handler binds the same `InputModel` as the GET, reads the same page of the list and returns the list's partial.
   When the action took away the last row of the last page, it shows the page before (workshop, Lab 4).
-- **A form that fails validation** comes back with its messages. HTMX 4 swaps a 422, so the handler can answer a
-  `partial` request with the form's partial and status 422, with `hx-status:422` to retarget it if needed, and a plain
-  POST with `Page()`. The workshop instead answers 200 and retargets with `HX-Retarget` and `HX-Reswap`, because htmx
-  1 would not swap a 4xx. Choose one when the first form is built. `this.Partial(name, model)` hands the page's
-  `ModelState` to the partial (ASP.NET Core 10 source, `PageModel.Partial`), so the messages render with no helper;
-  the workshop's `Fragment()` helper does the same work again. After every swap, HTMX focuses the first element with
-  `autofocus` in the new content (4.0.1 source, `#handleAutoFocus`), which can put the cursor on the first field in
-  error.
 - **Check one field as you type.** The input posts on its own to a handler of its own: `hx-post="?handler=CheckName"`,
   `hx-trigger="input changed delay:500ms"`, `hx-include="closest form"` for the token and the other fields, and the
   field's message element as its `hx-target`. The handler validates what was bound and returns only that field's
   message, as a partial whose root is the message element (workshop, Lab 3). Without HTMX the same rule runs when
   the form is posted.
-- **After a successful post** the plain form needs Post/Redirect/Get. Under HTMX, `fetch` follows a redirect by itself
-  and HTMX swaps whatever the final URL returns; find out which headers the redirected GET carries, and so which
-  answer section 3 gives it, before relying on it, and compare the `HX-Location` and `HX-Redirect` response headers.
 - **Rows added to and removed from a form.** For a list of plain values, every row's input has the same name, such
   as `name="Input.Tags"`, which binds to a `List<string>` with no index numbers. The server renders one new row as a
   fragment that `hx-swap="beforeend"` appends, and removing a row only removes its element (workshop, Lab 5). A list
   of objects needs indexed names (`Input.Lines[0].Name`), and so more care when a row leaves.
-- **A submit button that is busy** says `hx-disable="this"` to disable itself while the request runs (HTMX 2's
-  `hx-disabled-elt`).
 - **A select that applies when it changes** (`hx-trigger="change"` on its GET form) does nothing without HTMX unless
   the form also has a submit button.
 
-## 8. More than one target (open)
+## 9. More than one target (open)
 
 - **A response that updates the target and something else**, such as a toast after an archive or the count on a tab,
   can carry the extra content as elements marked `hx-swap-oob`, matched by `id`, or wrapped in
@@ -300,7 +372,7 @@ chapter.
 - **Confirmation.** `hx-confirm` uses the browser's `confirm()` and needs HTMX; a confirm page, or a `<dialog>` with
   its own form, works without it. Choose when the first action that cannot be undone is built.
 
-## 9. Polling (open)
+## 10. Polling (open)
 
 - **A long job reports its progress by polling.** While the job runs, its status element carries `hx-get` and
   `hx-trigger="every 1s"`, and each answer replaces the element. The answer for a finished job leaves the trigger out,
