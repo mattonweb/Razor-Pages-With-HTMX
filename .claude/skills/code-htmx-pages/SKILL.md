@@ -2,7 +2,7 @@
 name: code-htmx-pages
 description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and the patterns still open (row actions, fields checked as you type, confirmation, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
 owner: Matt
-version: 0.4.0
+version: 0.5.0
 visibility: public
 ---
 
@@ -21,7 +21,7 @@ page looks (the repository's brand skill, if it has one).
 post. HTMX only narrows what a response replaces and keeps the address bar in step. A page that cannot be built that
 way is a decision to make out loud, never a default.
 
-## Status: draft 0.4.0, HTMX 4.0.1
+## Status: draft 0.5.0, HTMX 4.0.1
 
 | Section | State |
 |---|---|
@@ -332,6 +332,13 @@ itself.
   both `action` and `hx-post`, and the handler binds the route's values as the GET handler does. `?handler=Archive` in
   the network panel leads straight to the method (workshop, "Checkpoint: Make It Production-Livable"). HTMX 4's
   `hx-delete` would leave out the form's fields (section 1), and the token with them, so the form posts.
+- **Handlers that several pages share live on a base page model.** Razor Pages finds the handlers an abstract base
+  class declares on every page that inherits it, so the tabs of one record, each a page with its own URL, share
+  Archive and Restore while each posts to its own address and answers with its own content.
+- **A form inside a `<dialog>` posts like any other.** The dialog opens with `commandfor` and `command="show-modal"`,
+  which need no script, and its form says `hx-post` as any form does. When the answer replaces the element that holds
+  the dialog, the modal dialog leaves the document with it, and nothing is left inert. Without HTMX the post
+  redirects, and the next page loads with the dialog shut.
 
 ## 8. More than one target (proven)
 
@@ -357,6 +364,9 @@ a region of the layout.
 - **The focus survives the swap by `id`.** Before a swap HTMX notes the focused element if it has an `id`, and after
   it focuses the element in the document with that `id` (4.0.1 source, `#insertContent`). Give Archive and Restore
   one `id` between them, and the keyboard stays on the button that undoes what was just done.
+- **An Undo that needs more than the record's identifier carries it in its address.** A roll-back's Undo is another
+  roll-back, so its address holds the version to go back to and the version it starts from
+  (`?handler=RollBack&to=2&version=3`); a POST handler's parameters bind from the query string as they do from a form.
 
 ## 9. Still open (open)
 
