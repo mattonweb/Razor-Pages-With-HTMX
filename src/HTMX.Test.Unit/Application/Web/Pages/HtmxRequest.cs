@@ -1,4 +1,4 @@
-namespace HTMX.Test.Unit.Application.Web.Pages.Organizations;
+namespace HTMX.Test.Unit.Application.Web.Pages;
 
 /// <summary>
 /// The kinds of request a page test sends, each with the headers HTMX 4 sends for it.

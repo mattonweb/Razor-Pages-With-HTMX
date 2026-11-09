@@ -133,7 +133,7 @@ public sealed class DetailsModelTests
             result,
             "HTMX should get the page's content to swap in place.");
         Assert.AreEqual(
-            "_OrganizationChanged",
+            "_RecordChanged",
             partial.ViewName,
             "The answer should hold the page's content and the toast.");
         Assert.AreEqual(

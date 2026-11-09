@@ -7,10 +7,27 @@ using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
 /// What changed between two versions of an organization, as its History tab shows it: the fields whose values differ,
-/// in the order the Details tab lists them, and the words that sum them up.
+/// in the order the Details tab lists them, and the timeline's entries made from them.
 /// </summary>
 public static class OrganizationChanges
 {
+    /// <summary>
+    /// Turns an organization's versions into its timeline's entries, newest first: what each version changed from the
+    /// one before it and, while the organization is active, what rolling back to each earlier version would change.
+    /// </summary>
+    /// <param name="organization">The organization as it is now.</param>
+    /// <param name="versions">Its versions, newest first.</param>
+    /// <returns>The entries, in the same order.</returns>
+    public static TimelineEntry[] Entries(
+        OrganizationSingleResponse organization,
+        IReadOnlyList<OrganizationVersionResponse> versions)
+    {
+        ArgumentNullException.ThrowIfNull(organization);
+        ArgumentNullException.ThrowIfNull(versions);
+        bool active = organization.Archived is null;
+        return [.. versions.Select((version, index) => Entry(versions, index, active))];
+    }
+
     /// <summary>
     /// Gives the fields a version changed from the one before it, its status included.
     /// </summary>
@@ -44,31 +61,28 @@ public static class OrganizationChanges
     }
 
     /// <summary>
-    /// Names the fields that changed, as a summary reads them: Name, Name and Website, or Name, Industry and Website.
+    /// Makes the timeline's entry for one version: what it changed from the version after it in the list, which is
+    /// the one before it in time, and what rolling back to it would change now.
     /// </summary>
-    /// <param name="changes">The fields that changed.</param>
-    /// <returns>Their names, joined.</returns>
-    public static string Fields(IReadOnlyList<FieldChange> changes)
+    /// <param name="versions">Every version, newest first.</param>
+    /// <param name="index">Which one.</param>
+    /// <param name="active">Whether the organization is active, and so can be rolled back.</param>
+    /// <returns>The entry.</returns>
+    private static TimelineEntry Entry(IReadOnlyList<OrganizationVersionResponse> versions, int index, bool active)
     {
-        ArgumentNullException.ThrowIfNull(changes);
-        string[] names = [.. changes.Select(static change => change.Field)];
-        return names.Length < 2 ? string.Concat(names) : $"{string.Join(", ", names[..^1])} and {names[^1]}";
-    }
-
-    /// <summary>
-    /// Names what a version records happening, as its entry in the timeline leads with it.
-    /// </summary>
-    /// <param name="change">What happened.</param>
-    /// <returns>The words, such as Rolled back.</returns>
-    public static string Title(ChangeKind change)
-    {
-        return change switch
+        OrganizationVersionResponse version = versions[index];
+        bool earlier = active && index > 0;
+        FieldChange[] rollBack = earlier ? RollBack(versions[0], version) : [];
+        bool same = earlier && rollBack.Length == 0;
+        return new TimelineEntry
         {
-            ChangeKind.Created => "Created",
-            ChangeKind.Edited => "Edited",
-            ChangeKind.Archived => "Archived",
-            ChangeKind.Restored => "Restored",
-            _ => "Rolled back",
+            Version = version.Version,
+            Change = version.Change,
+            RolledBackTo = version.RolledBackTo,
+            Changed = version.Changed,
+            Changes = index + 1 < versions.Count ? Between(versions[index + 1], version) : [],
+            RollBack = rollBack,
+            Note = same ? $"Version {version.Version.Value} holds the same values as now." : null,
         };
     }
 

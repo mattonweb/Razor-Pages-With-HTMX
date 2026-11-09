@@ -11,7 +11,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Contains unit tests for verifying the behavior of the contact service behind <see cref="IContactService"/>, over a
-/// seeded in-memory database: the pages of an organization's contacts, and archiving and restoring a contact.
+/// seeded in-memory database: the pages of an organization's contacts, one contact and their versions, and
+/// archiving, restoring and rolling back a contact.
 /// </summary>
 [TestClass]
 public sealed class ContactServiceTests
@@ -216,6 +217,186 @@ public sealed class ContactServiceTests
             "No version should have been saved.");
     }
 
+    /// <summary>
+    /// Unit test to verify that archiving from the contact's own page, which names no organization, archives them
+    /// wherever they belong.
+    /// </summary>
+    [TestMethod]
+    public async Task ArchiveAsync_NoOrganizationNamed_ArchivesThem()
+    {
+        // Arrange (Given)
+        ContactStatusRequest request = new ContactStatusRequest
+        {
+            Id = ContactSeed.AinsleyArchetype,
+            ChangedBy = UserSeed.DemoUser,
+        };
+
+        // Act (When)
+        (UpdateOutcome outcome, Contact? after, ContactVersion[] _) =
+            await ContactServiceCalls.ChangeStatusAsync(request, ChangeKind.Archived).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (UpdateOutcome.Saved, (DateTime?)TestDatabase.StartedOn),
+            (outcome, after?.ArchivedOn),
+            "Ainsley Archetype should be archived.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that one contact is read with their values, the organization they belong to, and who
+    /// created and last changed them.
+    /// </summary>
+    [TestMethod]
+    public async Task FindAsync_AinsleyArchetype_ReturnsTheirValuesAndOrganization()
+    {
+        // Arrange (Given)
+        ContactId id = ContactSeed.AinsleyArchetype;
+
+        // Act (When)
+        ContactSingleResponse? contact = await ContactServiceCalls.FindAsync(id).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            ("Placeholder Logistics", new VersionNumber(4), "Head of Examples"),
+            (contact?.Organization.Name.Value, contact?.Version, contact?.JobTitle?.Value),
+            "Ainsley Archetype should be at Placeholder Logistics, at version 4, as Head of Examples.");
+        Assert.AreEqual(
+            (UserSeed.DemoUser, (RecordChange?)null),
+            (contact?.Created.By.Id, contact?.Archived),
+            "Demo User created them, and they are active.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an identifier no contact has is answered with nothing.
+    /// </summary>
+    [TestMethod]
+    public async Task FindAsync_UnknownIdentifier_ReturnsNull()
+    {
+        // Arrange (Given)
+        ContactId id = new ContactId(99999);
+
+        // Act (When)
+        ContactSingleResponse? contact = await ContactServiceCalls.FindAsync(id).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsNull(
+            contact,
+            "No contact has the identifier 99999.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a contact's versions come newest first, each naming the organization it left them in.
+    /// </summary>
+    [TestMethod]
+    public async Task ListVersionsAsync_AinsleyArchetype_ReturnsNewestFirstWithEachOrganization()
+    {
+        // Arrange (Given)
+        ContactId id = ContactSeed.AinsleyArchetype;
+
+        // Act (When)
+        ContactVersionResponse[] versions = await ContactServiceCalls.ListVersionsAsync(id).ConfigureAwait(false);
+
+        // Assert (Then)
+        CollectionAssert.AreEqual(
+            new[] { 4, 3, 2, 1 },
+            versions.Select(static version => version.Version.Value).ToArray(),
+            "The four versions should come newest first.");
+        CollectionAssert.AreEqual(
+            new[] { "Placeholder Logistics", "Placeholder Logistics", "Fictional Freight", "Fictional Freight" },
+            versions.Select(static version => version.Organization?.Name.Value).ToArray(),
+            "Each version should name the organization it left Ainsley Archetype in.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that rolling back to a version in another organization saves its values, the organization
+    /// among them, as a RolledBack version that names the version it went back to.
+    /// </summary>
+    [TestMethod]
+    public async Task RollBackAsync_ToAVersionInAnotherOrganization_MovesThemBack()
+    {
+        // Arrange (Given)
+        ContactRollBackRequest request = CreateRollBack(ContactSeed.AinsleyArchetype, version: 4, to: 2);
+
+        // Act (When)
+        (UpdateOutcome outcome, Contact? after, ContactVersion[] history) =
+            await ContactServiceCalls.RollBackAsync(request).ConfigureAwait(false);
+        ContactVersion latest = history[^1];
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.Saved,
+            outcome,
+            "The roll-back should be saved.");
+        Assert.AreEqual(
+            (new OrganizationId(10002), "Head of Samples", new VersionNumber(5)),
+            (after?.OrganizationId, after?.JobTitle?.Value, after?.Version),
+            "Ainsley Archetype should be back at Fictional Freight as Head of Samples, at version 5.");
+        Assert.AreEqual(
+            (ChangeKind.RolledBack, (VersionNumber?)new VersionNumber(2)),
+            (latest.Change, latest.RolledBackTo),
+            "The new version should record a roll-back to version 2.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a roll-back to a version whose organization is now archived is refused, and saves
+    /// nothing.
+    /// </summary>
+    [TestMethod]
+    public async Task RollBackAsync_ToAnArchivedOrganization_SavesNothing()
+    {
+        // Arrange (Given)
+        ContactRollBackRequest request = CreateRollBack(ContactSeed.AinsleyArchetype, version: 4, to: 2);
+        OrganizationId fictionalFreight = new OrganizationId(10002);
+
+        // Act (When)
+        (UpdateOutcome outcome, Contact? after, ContactVersion[] _) =
+            await ContactServiceCalls.RollBackAsync(request, fictionalFreight).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (UpdateOutcome.OrganizationUnavailable, OrganizationSeed.PlaceholderLogistics),
+            (outcome, after?.OrganizationId),
+            "Fictional Freight is archived, so Ainsley Archetype should stay at Placeholder Logistics.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a roll-back that is refused, or that asks for what is already so, saves nothing and
+    /// says why.
+    /// </summary>
+    /// <param name="contact">The contact's identifier.</param>
+    /// <param name="version">The version the request says they are at.</param>
+    /// <param name="to">The version to roll back to.</param>
+    /// <param name="expected">What should become of it.</param>
+    [TestMethod]
+    [DataRow(10001L, 3, 1, UpdateOutcome.Overtaken, DisplayName = "From a version moved on from")]
+    [DataRow(10001L, 4, 4, UpdateOutcome.Unchanged, DisplayName = "To the version they are at")]
+    [DataRow(10004L, 2, 1, UpdateOutcome.Archived, DisplayName = "An archived contact")]
+    [DataRow(10002L, 1, 1, UpdateOutcome.Archived, DisplayName = "Organization archived")]
+    [DataRow(10001L, 4, 9, UpdateOutcome.NotFound, DisplayName = "To a version never had")]
+    [DataRow(99999L, 1, 1, UpdateOutcome.NotFound, DisplayName = "An unknown identifier")]
+    public async Task RollBackAsync_RefusedOrUnchanged_SavesNothing(
+        long contact,
+        int version,
+        int to,
+        UpdateOutcome expected)
+    {
+        // Arrange (Given)
+        ContactRollBackRequest request = CreateRollBack(new ContactId(contact), version, to);
+
+        // Act (When)
+        (UpdateOutcome outcome, Contact? _, ContactVersion[] history) =
+            await ContactServiceCalls.RollBackAsync(request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            outcome,
+            "The roll-back should be answered with why nothing was changed.");
+        Assert.IsFalse(
+            history.Any(static saved => saved.ChangedOn == TestDatabase.StartedOn),
+            "No version should have been saved.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -232,6 +413,24 @@ public sealed class ContactServiceTests
         {
             Id = contact,
             Organization = organization,
+            ChangedBy = UserSeed.DemoUser,
+        };
+    }
+
+    /// <summary>
+    /// Creates a roll-back from Demo User.
+    /// </summary>
+    /// <param name="contact">The contact.</param>
+    /// <param name="version">The version the request says they are at.</param>
+    /// <param name="to">The version to roll back to.</param>
+    /// <returns>The request.</returns>
+    private static ContactRollBackRequest CreateRollBack(ContactId contact, int version, int to)
+    {
+        return new ContactRollBackRequest
+        {
+            Id = contact,
+            Version = new VersionNumber(version),
+            To = new VersionNumber(to),
             ChangedBy = UserSeed.DemoUser,
         };
     }

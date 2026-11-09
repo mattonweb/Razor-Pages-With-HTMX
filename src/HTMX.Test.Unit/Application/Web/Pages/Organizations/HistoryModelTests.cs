@@ -60,7 +60,7 @@ public sealed class HistoryModelTests
             result,
             "HTMX should get the tab's content to swap in place.");
         Assert.AreEqual(
-            "_OrganizationChanged",
+            "_RecordChanged",
             partial.ViewName,
             "The answer should hold the tab's content and the toast.");
         Assert.AreEqual(

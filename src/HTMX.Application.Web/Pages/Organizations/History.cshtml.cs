@@ -39,6 +39,11 @@ public sealed class HistoryModel : OrganizationPageModel
     public IReadOnlyList<OrganizationVersionResponse> Versions { get; private set; } = [];
 
     /// <summary>
+    /// Gets the versions as the timeline shows them, or <see langword="null"/> until they are read.
+    /// </summary>
+    public Timeline? Timeline { get; private set; }
+
+    /// <summary>
     /// Rolls the organization back to an earlier version, from the version the page showed it at.
     /// </summary>
     /// <param name="to">The version to roll back to, from the preview's form.</param>
@@ -78,6 +83,16 @@ public sealed class HistoryModel : OrganizationPageModel
     protected override async Task ReadMoreAsync(OrganizationId id, CancellationToken cancellationToken)
     {
         this.Versions = await this.Organizations.ListVersionsAsync(id, cancellationToken).ConfigureAwait(false);
+        OrganizationSingleResponse organization = this.Organization
+            ?? throw new InvalidOperationException("The versions are read after the organization.");
+        this.Timeline = new Timeline
+        {
+            RecordName = organization.Name.Value,
+            Current = organization.Version,
+            Entries = OrganizationChanges.Entries(organization, this.Versions),
+            RollBackAction = this.HandlerAddress(RollBackHandler, new { id = this.Input.Id }),
+            Target = this.ContentTarget,
+        };
     }
 
     /// <summary>

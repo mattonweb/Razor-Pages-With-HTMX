@@ -1,0 +1,10 @@
+@model HTMX.Application.Web.Pages.RecordPageModel
+@*
+    What HTMX gets after an action on a record, on any tab of its page: the tab's content, which replaces the element
+    that holds it, such as #organization, and the toast, which replaces whatever the layout's #toasts region holds.
+*@
+<partial name="@Model.ContentPartial" model="Model" />
+@if (Model.Toast is Toast toast)
+{
+    <partial name="_ToastUpdate" model="toast" />
+}

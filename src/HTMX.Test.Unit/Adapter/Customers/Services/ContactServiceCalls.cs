@@ -5,13 +5,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data;
+using HTMX.Adapter.Customers.Data.Seed;
 using HTMX.Adapter.Customers.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// Calls <see cref="IContactService"/> as the Contacts tab does, over a seeded database of its own: a page and then the
-/// pages its Previous and Next lead to, or an archive or a restore.
+/// Calls <see cref="IContactService"/> as the pages do, over a seeded database of its own: a page and then the pages
+/// its Previous and Next lead to, one contact or their versions, or an archive, a restore or a roll-back.
 /// </summary>
 internal static class ContactServiceCalls
 {
@@ -57,6 +58,72 @@ internal static class ContactServiceCalls
     }
 
     /// <summary>
+    /// Reads one contact through the service.
+    /// </summary>
+    /// <param name="id">The contact's identifier.</param>
+    /// <returns>The contact, or <see langword="null"/> when there is none.</returns>
+    internal static async Task<ContactSingleResponse?> FindAsync(ContactId id)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IContactService contacts = scope.ServiceProvider.GetRequiredService<IContactService>();
+                return await contacts.FindAsync(id).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reads every version of one contact through the service, newest first, as their History tab does.
+    /// </summary>
+    /// <param name="id">The contact's identifier.</param>
+    /// <returns>The versions, newest first.</returns>
+    internal static async Task<ContactVersionResponse[]> ListVersionsAsync(ContactId id)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IContactService contacts = scope.ServiceProvider.GetRequiredService<IContactService>();
+                return await contacts.ListVersionsAsync(id).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Rolls a contact back through the service, after archiving an organization first if asked, then reads their row,
+    /// and every version of them, straight from the database as they are afterwards.
+    /// </summary>
+    /// <param name="request">The roll-back.</param>
+    /// <param name="archivedFirst">An organization to archive before the roll-back, or <see langword="null"/> for
+    /// none.</param>
+    /// <returns>What became of the roll-back, the contact afterwards, and their versions, oldest first.</returns>
+    internal static async Task<(UpdateOutcome Outcome, Contact? After, ContactVersion[] History)> RollBackAsync(
+        ContactRollBackRequest request,
+        OrganizationId? archivedFirst = null)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            if (archivedFirst is OrganizationId organization)
+            {
+                await ArchiveAsync(services, organization).ConfigureAwait(false);
+            }
+
+            UpdateOutcome outcome;
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IContactService contacts = scope.ServiceProvider.GetRequiredService<IContactService>();
+                outcome = await contacts.RollBackAsync(request).ConfigureAwait(false);
+            }
+
+            (Contact? after, ContactVersion[] history) =
+                await ReadBackAsync(services, request.Id).ConfigureAwait(false);
+            return (outcome, after, history);
+        }
+    }
+
+    /// <summary>
     /// Archives or restores a contact through the service, then reads their row, and every version of them, straight
     /// from the database as they are afterwards.
     /// </summary>
@@ -78,19 +145,53 @@ internal static class ContactServiceCalls
                     : await contacts.RestoreAsync(request).ConfigureAwait(false);
             }
 
-            using (IServiceScope scope = services.CreateScope())
+            (Contact? after, ContactVersion[] history) =
+                await ReadBackAsync(services, request.Id).ConfigureAwait(false);
+            return (outcome, after, history);
+        }
+    }
+
+    /// <summary>
+    /// Archives an organization through its service, in a scope of its own as one request would.
+    /// </summary>
+    /// <param name="services">The started services.</param>
+    /// <param name="organization">The organization to archive.</param>
+    /// <returns>A task that completes when it is archived.</returns>
+    private static async Task ArchiveAsync(ServiceProvider services, OrganizationId organization)
+    {
+        using (IServiceScope scope = services.CreateScope())
+        {
+            IOrganizationService organizations = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
+            OrganizationStatusRequest request = new OrganizationStatusRequest
             {
-                CustomersDatabaseContext context = scope.ServiceProvider.GetRequiredService<CustomersDatabaseContext>();
-                ContactId id = request.Id;
-                Contact? after = await context.Set<Contact>()
-                    .FirstOrDefaultAsync(contact => contact.Id == id)
-                    .ConfigureAwait(false);
-                ContactVersion[] versions = await context.Set<ContactVersion>()
-                    .Where(version => version.ContactId == id)
-                    .ToArrayAsync()
-                    .ConfigureAwait(false);
-                return (outcome, after, [.. versions.OrderBy(static version => version.Version.Value)]);
-            }
+                Id = organization,
+                ChangedBy = UserSeed.DemoUser,
+            };
+            await organizations.ArchiveAsync(request).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Reads a contact's row, and every version of them, oldest first, straight from the database.
+    /// </summary>
+    /// <param name="services">The started services.</param>
+    /// <param name="id">The contact's identifier.</param>
+    /// <returns>The row, or <see langword="null"/> when there is none, and the versions.</returns>
+    private static async Task<(Contact? After, ContactVersion[] History)> ReadBackAsync(
+        ServiceProvider services,
+        ContactId id)
+    {
+        using (IServiceScope scope = services.CreateScope())
+        {
+            CustomersDatabaseContext context = scope.ServiceProvider.GetRequiredService<CustomersDatabaseContext>();
+            Contact? after = await context.Set<Contact>()
+                .FirstOrDefaultAsync(contact => contact.Id == id)
+                .ConfigureAwait(false);
+            ContactVersion[] versions = await context.Set<ContactVersion>()
+                .Where(version => version.ContactId == id)
+                .ToArrayAsync()
+                .ConfigureAwait(false);
+            return (after, [.. versions.OrderBy(static version => version.Version.Value)]);
         }
     }
 

@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Application.Web.Authentication;
+using HTMX.Application.Web.Pages.Contacts;
 using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
@@ -238,39 +239,8 @@ public sealed class ContactsModel : OrganizationPageModel
             undo = this.ContactAddress(opposite, request.Id);
         }
 
-        string message = this.ContactMessage(change, outcome, request.Id, organization.Name);
+        string message = ContactMessages.Status(change, outcome, this.NameOf(request.Id), organization.Name);
         return this.Answer(message, undo, ListChangedPartial, ListTarget);
-    }
-
-    /// <summary>
-    /// Writes the toast's message for what became of an archive or a restore of a contact.
-    /// </summary>
-    /// <param name="change">Archived or Restored.</param>
-    /// <param name="outcome">What became of it.</param>
-    /// <param name="contact">The contact.</param>
-    /// <param name="organization">The organization's name.</param>
-    /// <returns>The message.</returns>
-    private string ContactMessage(
-        ChangeKind change,
-        UpdateOutcome outcome,
-        ContactId contact,
-        OrganizationName organization)
-    {
-        bool archiving = change == ChangeKind.Archived;
-        string name = this.NameOf(contact);
-        return outcome switch
-        {
-            UpdateOutcome.Saved =>
-                archiving ? $"{name} archived." : $"{name} restored.",
-            UpdateOutcome.Unchanged =>
-                archiving ? $"{name} was already archived." : $"{name} was already active.",
-            UpdateOutcome.Archived =>
-                $"{organization.Value} is archived, so its contacts can't be changed until it is restored.",
-            UpdateOutcome.NotFound =>
-                $"That contact no longer belongs to {organization.Value}.",
-            _ =>
-                $"{name} was changed by someone else at the same moment. Try again.",
-        };
     }
 
     /// <summary>

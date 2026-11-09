@@ -1,0 +1,23 @@
+@page "/contacts/{id:long}/history"
+@model HTMX.Application.Web.Pages.Contacts.HistoryModel
+@{
+    ViewData["Title"] = Model.Contact is null ? "Contact not found" : $"History · {Model.Contact.Name.Value}";
+    ViewData["Section"] = "Organizations";
+}
+
+@if (Model.Contact is null)
+{
+    <partial name="_ContactNotFound" model="Model.Input.Id" />
+}
+else
+{
+    <partial name="_ContactHistory" model="Model" />
+}
+
+@* After an action without HTMX, the redirect's page shows the toast the action left. *@
+@section Toasts {
+    @if (Model.Toast is Toast toast)
+    {
+        <partial name="_Toast" model="toast" />
+    }
+}

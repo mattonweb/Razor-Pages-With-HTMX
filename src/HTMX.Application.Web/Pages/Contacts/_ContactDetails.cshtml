@@ -1,0 +1,84 @@
+@model HTMX.Application.Web.Pages.Contacts.DetailsModel
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The Details tab's content: the contact's header and every value they hold. HTMX replaces #contact whole
+    (outerHTML) with it after Archive, Restore or Undo on this tab, as part of _RecordChanged. The organization is a
+    related-record link, muted and followed by a chip while the organization is archived.
+*@
+@{
+    ContactSingleResponse contact = Model.Contact
+        ?? throw new InvalidOperationException("The Details tab needs the contact.");
+    OrganizationReference organization = contact.Organization;
+    RecordChange created = contact.Created;
+}
+<div id="contact">
+    <partial name="_ContactHeader" model="Model" />
+
+    <section class="card" aria-labelledby="details-heading">
+        <header class="card-header"><h2 id="details-heading">Details</h2></header>
+        <div class="card-body">
+            <dl class="fields">
+                <div>
+                    <dt>Organization</dt>
+                    <dd>
+                        <a class="related @(organization.ArchivedOn is null ? null : "archived")" asp-page="/Organizations/Details" asp-route-id="@organization.Id.Value"><svg class="icon" aria-hidden="true"><use href="/icons.svg#building"></use></svg>@organization.Name.Value</a>
+                        @if (organization.ArchivedOn is not null)
+                        {
+                            <span class="chip">Archived</span>
+                        }
+                    </dd>
+                </div>
+                <div>
+                    <dt>Job title</dt>
+                    @if (contact.JobTitle is JobTitle jobTitle)
+                    {
+                        <dd>@jobTitle.Value</dd>
+                    }
+                    else
+                    {
+                        <dd><span class="unset">Not set</span></dd>
+                    }
+                </div>
+                <div>
+                    <dt>Email</dt>
+                    @if (contact.Email is EmailAddress email)
+                    {
+                        <dd><a href="mailto:@email.Value">@email.Value</a></dd>
+                    }
+                    else
+                    {
+                        <dd><span class="unset">Not set</span></dd>
+                    }
+                </div>
+                <div>
+                    <dt>Phone</dt>
+                    @if (contact.Phone is PhoneNumber phone)
+                    {
+                        <dd>@phone.Value</dd>
+                    }
+                    else
+                    {
+                        <dd><span class="unset">Not set</span></dd>
+                    }
+                </div>
+                <div><dt>Identifier</dt><dd class="mono">@contact.Id.Value</dd></div>
+                <div><dt>Created</dt><dd><partial name="_Moment" model="created.On" /> by @created.By.Name.Value</dd></div>
+                @if (contact.Archived is RecordChange archived)
+                {
+                    <div><dt>Archived</dt><dd><partial name="_Moment" model="archived.On" /> by @archived.By.Name.Value</dd></div>
+                }
+                <div class="wide">
+                    <dt>Notes</dt>
+                    @if (contact.Notes is Notes notes)
+                    {
+                        <dd>@notes.Value</dd>
+                    }
+                    else
+                    {
+                        <dd><span class="unset">Not set</span></dd>
+                    }
+                </div>
+            </dl>
+        </div>
+    </section>
+</div>

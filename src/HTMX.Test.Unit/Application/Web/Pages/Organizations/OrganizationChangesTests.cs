@@ -9,7 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Contains unit tests for verifying the behavior of the <see cref="OrganizationChanges"/> class: which fields a
-/// version or a roll-back changes, and the words that sum them up.
+/// version or a roll-back changes, and what each entry of the timeline offers.
 /// </summary>
 [TestClass]
 public sealed class OrganizationChangesTests
@@ -65,37 +65,91 @@ public sealed class OrganizationChangesTests
     }
 
     /// <summary>
-    /// Unit test to verify that a summary names one, two or three fields as a sentence would.
+    /// Unit test to verify that an active organization's timeline offers a roll-back to an earlier version whose
+    /// values differ from now, and says so of one whose values do not.
     /// </summary>
-    /// <param name="count">How many fields changed.</param>
-    /// <param name="expected">The summary.</param>
     [TestMethod]
-    [DataRow(1, "Name", DisplayName = "One field")]
-    [DataRow(2, "Name and Industry", DisplayName = "Two fields")]
-    [DataRow(3, "Name, Industry and Website", DisplayName = "Three fields")]
-    public void Fields_SomeFieldsChanged_JoinsThemAsASentence(int count, string expected)
+    public void Entries_ActiveOrganization_OffersRollBackWhereValuesDiffer()
     {
         // Arrange (Given)
-        FieldChange[] changes =
-        [
-            .. new[] { "Name", "Industry", "Website" }
-                .Take(count)
-                .Select(static field => new FieldChange { Field = field }),
-        ];
+        OrganizationVersionResponse[] versions = CreateHistory();
 
         // Act (When)
-        string summary = OrganizationChanges.Fields(changes);
+        TimelineEntry[] entries = OrganizationChanges.Entries(CreateOrganization(archived: false), versions);
 
         // Assert (Then)
+        CollectionAssert.AreEqual(
+            new[] { 0, 0, 1 },
+            entries.Select(static entry => entry.RollBack.Length).ToArray(),
+            "Only version 1, named Placeholder Freight, should offer a roll-back, of the name alone.");
         Assert.AreEqual(
-            expected,
-            summary,
-            "The fields should read as a list in a sentence.");
+            "Version 2 holds the same values as now.",
+            entries[1].Note,
+            "Version 2 should say why it offers none.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an archived organization's timeline offers no roll-back and says nothing in its place,
+    /// since the header already says why.
+    /// </summary>
+    [TestMethod]
+    public void Entries_ArchivedOrganization_OffersNoRollBack()
+    {
+        // Arrange (Given)
+        OrganizationVersionResponse[] versions = CreateHistory();
+
+        // Act (When)
+        TimelineEntry[] entries = OrganizationChanges.Entries(CreateOrganization(archived: true), versions);
+
+        // Assert (Then)
+        Assert.IsTrue(
+            entries.All(static entry => entry.RollBack.Length == 0 && entry.Note is null),
+            "No entry should offer a roll-back, or say anything in its place.");
     }
 
     #endregion Public Methods
 
     #region Private Methods
+
+    /// <summary>
+    /// Creates Placeholder Logistics at version 3, with invented values.
+    /// </summary>
+    /// <param name="archived">Whether it is archived.</param>
+    /// <returns>The organization.</returns>
+    private static OrganizationSingleResponse CreateOrganization(bool archived)
+    {
+        RecordChange change = new RecordChange
+        {
+            On = new DateTime(2026, 11, 8, 9, 30, 0, DateTimeKind.Utc),
+            By = new UserReference { Id = new UserId(10001), Name = new DisplayName("Demo User") },
+        };
+        return new OrganizationSingleResponse
+        {
+            Id = new OrganizationId(10003),
+            Name = new OrganizationName("Placeholder Logistics"),
+            Industry = Industry.Shipping,
+            Contacts = new RecordCount(18),
+            Version = new VersionNumber(3),
+            Created = change,
+            LastModified = change,
+            Archived = archived ? change : null,
+        };
+    }
+
+    /// <summary>
+    /// Creates three versions, newest first: two that leave the values as Placeholder Logistics, and the first, as
+    /// Placeholder Freight.
+    /// </summary>
+    /// <returns>The versions.</returns>
+    private static OrganizationVersionResponse[] CreateHistory()
+    {
+        return
+        [
+            CreateVersion(3, "Placeholder Logistics"),
+            CreateVersion(2, "Placeholder Logistics"),
+            CreateVersion(1, "Placeholder Freight"),
+        ];
+    }
 
     /// <summary>
     /// Creates a version with invented values, in shipping.

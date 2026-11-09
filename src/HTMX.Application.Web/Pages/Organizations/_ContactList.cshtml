@@ -56,9 +56,9 @@
                         bool archived = contact.ArchivedOn is not null;
                         string menu = $"contact-{contact.Id.Value}-menu";
                         <tr class="@(archived ? "archived" : null)">
-                            @* Contacts have no page of their own yet, so the name is text, not a link. *@
+                            @* A link to the contact leaves the list, so it is a normal link, not a swap. *@
                             <td class="title">
-                                @contact.Name.Value
+                                <a asp-page="/Contacts/Details" asp-route-id="@contact.Id.Value" hx-boost="false">@contact.Name.Value</a>
                                 @if (contact.JobTitle is JobTitle jobTitle)
                                 {
                                     <span class="sub">@jobTitle.Value</span>

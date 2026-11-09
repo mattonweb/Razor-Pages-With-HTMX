@@ -1,4 +1,4 @@
-namespace HTMX.Test.Unit.Application.Web.Pages.Organizations;
+namespace HTMX.Test.Unit.Application.Web.Pages;
 
 using System.Collections.Generic;
 using System.Linq;

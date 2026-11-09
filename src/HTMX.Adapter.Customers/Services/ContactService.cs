@@ -14,18 +14,22 @@ using HTMX.Adapter.Customers.Providers;
 internal sealed class ContactService : IContactService
 {
     private readonly ContactProvider _provider;
+    private readonly ContactVersionProvider _versions;
     private readonly TimeProvider _clock;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ContactService"/> class.
     /// </summary>
     /// <param name="provider">Runs the queries over contacts.</param>
+    /// <param name="versions">Runs the queries over their versions.</param>
     /// <param name="clock">Says when a change is made.</param>
-    public ContactService(ContactProvider provider, TimeProvider clock)
+    public ContactService(ContactProvider provider, ContactVersionProvider versions, TimeProvider clock)
     {
         ArgumentNullException.ThrowIfNull(provider);
+        ArgumentNullException.ThrowIfNull(versions);
         ArgumentNullException.ThrowIfNull(clock);
         this._provider = provider;
+        this._versions = versions;
         this._clock = clock;
     }
 
@@ -53,6 +57,58 @@ internal sealed class ContactService : IContactService
         }
 
         return ContactPages.CreatePage(answered, read, total);
+    }
+
+    /// <inheritdoc/>
+    public Task<ContactSingleResponse?> FindAsync(ContactId id, CancellationToken cancellationToken = default)
+    {
+        return this._provider.FindAsync(id, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public Task<ContactVersionResponse[]> ListVersionsAsync(
+        ContactId id,
+        CancellationToken cancellationToken = default)
+    {
+        return this._versions.ListAsync(id, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// The rules are the ones a change to a contact's values runs, in order, and the first that applies is the answer.
+    /// A roll-back is recorded as a RolledBack version that names the version it went back to; history is never
+    /// rewritten, and rolling back again undoes it. The organization is one of the values, so a roll-back can move the
+    /// contact back to an organization they left, as long as it still takes people in.
+    /// </remarks>
+    public async Task<UpdateOutcome> RollBackAsync(
+        ContactRollBackRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ContactVersion? earlier = await this._versions
+            .FindAsync(request.Id, request.To, cancellationToken)
+            .ConfigureAwait(false);
+        Contact? current = await this._provider.FindForChangeAsync(request.Id, cancellationToken).ConfigureAwait(false);
+        if (earlier is null || current is null)
+        {
+            return UpdateOutcome.NotFound;
+        }
+
+        UpdateOutcome? settled = await this
+            .OutcomeWithoutSavingAsync(current, earlier, request.Version, cancellationToken)
+            .ConfigureAwait(false);
+        if (settled is UpdateOutcome refused)
+        {
+            return refused;
+        }
+
+        DateTime now = this._clock.GetUtcNow().UtcDateTime;
+        ContactVersion version = RecordRollBack(current, earlier, request.ChangedBy, now);
+        Contact changed = Apply(current, version);
+        bool saved = await this._provider
+            .SaveChangeAsync(current, changed, version, cancellationToken)
+            .ConfigureAwait(false);
+        return saved ? UpdateOutcome.Saved : UpdateOutcome.Overtaken;
     }
 
     /// <inheritdoc/>
@@ -102,6 +158,50 @@ internal sealed class ContactService : IContactService
     }
 
     /// <summary>
+    /// Makes the version that records a roll-back: the next number, the earlier version's values, active, and who
+    /// rolled back and when.
+    /// </summary>
+    /// <param name="current">The contact as they are now, who is active.</param>
+    /// <param name="earlier">The version whose values are saved again.</param>
+    /// <param name="by">Who is rolling the contact back.</param>
+    /// <param name="now">When, in UTC.</param>
+    /// <returns>The version.</returns>
+    private static ContactVersion RecordRollBack(Contact current, ContactVersion earlier, UserId by, DateTime now)
+    {
+        return new ContactVersion
+        {
+            ContactId = current.Id,
+            Version = new VersionNumber(current.Version.Value + 1),
+            Change = ChangeKind.RolledBack,
+            RolledBackTo = earlier.Version,
+            ChangedOn = now,
+            ChangedBy = by,
+            Name = earlier.Name,
+            Email = earlier.Email,
+            Phone = earlier.Phone,
+            JobTitle = earlier.JobTitle,
+            OrganizationId = earlier.OrganizationId,
+            Notes = earlier.Notes,
+        };
+    }
+
+    /// <summary>
+    /// Says whether a contact already holds every value a version holds.
+    /// </summary>
+    /// <param name="current">The contact as they are now.</param>
+    /// <param name="version">The version.</param>
+    /// <returns><see langword="true"/> when nothing would change.</returns>
+    private static bool HoldsTheValuesOf(Contact current, ContactVersion version)
+    {
+        return current.Name == version.Name
+            && current.Email == version.Email
+            && current.Phone == version.Phone
+            && current.JobTitle == version.JobTitle
+            && current.OrganizationId == version.OrganizationId
+            && current.Notes == version.Notes;
+    }
+
+    /// <summary>
     /// Gives a contact's row the values of their newest version, keeping who created them and when.
     /// </summary>
     /// <param name="current">The row as it is now.</param>
@@ -128,6 +228,47 @@ internal sealed class ContactService : IContactService
             ArchivedBy = version.ArchivedBy,
             Version = version.Version,
         };
+    }
+
+    /// <summary>
+    /// Gives the outcome a roll-back has before anything is saved: refused because the contact or their organization
+    /// is archived, because the contact has moved on since their history was shown, or because the organization the
+    /// earlier version names no longer takes people in; or done already because the contact holds those values.
+    /// </summary>
+    /// <param name="current">The contact as they are now.</param>
+    /// <param name="earlier">The version to roll back to.</param>
+    /// <param name="expected">The version the request says the contact is at.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>The outcome, or <see langword="null"/> when the roll-back can go on to be saved.</returns>
+    private async Task<UpdateOutcome?> OutcomeWithoutSavingAsync(
+        Contact current,
+        ContactVersion earlier,
+        VersionNumber expected,
+        CancellationToken cancellationToken)
+    {
+        bool open = current.ArchivedOn is null && await this._provider
+            .IsOrganizationActiveAsync(current.OrganizationId, cancellationToken)
+            .ConfigureAwait(false);
+        if (!open)
+        {
+            return UpdateOutcome.Archived;
+        }
+
+        if (current.Version != expected)
+        {
+            return UpdateOutcome.Overtaken;
+        }
+
+        if (HoldsTheValuesOf(current, earlier))
+        {
+            return UpdateOutcome.Unchanged;
+        }
+
+        bool moving = earlier.OrganizationId != current.OrganizationId;
+        bool welcome = !moving || await this._provider
+            .IsOrganizationActiveAsync(earlier.OrganizationId, cancellationToken)
+            .ConfigureAwait(false);
+        return welcome ? null : UpdateOutcome.OrganizationUnavailable;
     }
 
     /// <summary>
@@ -168,9 +309,9 @@ internal sealed class ContactService : IContactService
     }
 
     /// <summary>
-    /// Archives or restores a contact as their next version, after the rules, in order: the organization the request
-    /// names must have the contact, and must be active; a contact already archived, or already active, is left as
-    /// they are.
+    /// Archives or restores a contact as their next version, after the rules, in order: the contact must exist and,
+    /// when the request names an organization, belong to it; their organization must be active; a contact already
+    /// archived, or already active, is left as they are.
     /// </summary>
     /// <param name="request">Which contact, their organization, and who is asking.</param>
     /// <param name="change">Archived or Restored.</param>
@@ -183,15 +324,16 @@ internal sealed class ContactService : IContactService
     {
         ArgumentNullException.ThrowIfNull(request);
         Contact? current = await this._provider.FindForChangeAsync(request.Id, cancellationToken).ConfigureAwait(false);
-        if (current is null || current.OrganizationId != request.Organization)
+        bool elsewhere = request.Organization is OrganizationId named && current?.OrganizationId != named;
+        if (current is null || elsewhere)
         {
             return UpdateOutcome.NotFound;
         }
 
-        bool closed = await this._provider
-            .IsOrganizationArchivedAsync(current.OrganizationId, cancellationToken)
+        bool open = await this._provider
+            .IsOrganizationActiveAsync(current.OrganizationId, cancellationToken)
             .ConfigureAwait(false);
-        if (closed)
+        if (!open)
         {
             return UpdateOutcome.Archived;
         }

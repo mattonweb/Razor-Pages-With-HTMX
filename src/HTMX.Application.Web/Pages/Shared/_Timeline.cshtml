@@ -1,0 +1,96 @@
+@model HTMX.Application.Web.Pages.Timeline
+@using HTMX.Adapter.Customers.Contracts
+@*
+    A record's versions, newest first, in the brand's timeline, for the History tab of any kind of record. The newest
+    entry starts open; opening another shows what that version changed.
+
+    An entry that can be rolled back to offers Roll back, previewed in a dialog that the button opens with commandfor
+    and command, which need no script. The dialog's form posts to the History tab's RollBack handler with the version
+    to go back to and the version the page shows, with HTMX or without it; a modal dialog that the answer replaces
+    closes with it. What an entry can offer, and what it says instead, its page model has worked out.
+*@
+@{
+    int current = Model.Current.Value;
+}
+<ol class="timeline" reversed>
+    @foreach (TimelineEntry entry in Model.Entries)
+    {
+        int number = entry.Version.Value;
+        bool isCurrent = number == current;
+        string dialogId = $"rollback-{number}";
+        Diff entryDiff = new Diff
+        {
+            Caption = $"Changes in version {number}",
+            BeforeHeading = "Before",
+            AfterHeading = "After",
+            Changes = entry.Changes,
+        };
+        Diff rollBackDiff = new Diff
+        {
+            Caption = $"What rolling back to version {number} changes",
+            BeforeHeading = $"Now (v{current})",
+            AfterHeading = "After the roll-back",
+            Changes = entry.RollBack,
+        };
+
+        <li class="@(isCurrent ? "current" : null)">
+            <details open="@isCurrent">
+                <summary>
+                    <svg class="icon sm chevron" aria-hidden="true"><use href="/icons.svg#chevron-right"></use></svg>
+                    <span class="version @(isCurrent ? "current" : null)">v@(number)</span>
+                    <span><strong>@TimelineText.Title(entry.Change)</strong> @TimelineText.Summary(entry)</span>
+                    <span class="when"><partial name="_Moment" model="entry.Changed.On" /> by @entry.Changed.By.Name.Value</span>
+                </summary>
+                <div class="entry-body">
+                    @if (entry.Change == ChangeKind.Created)
+                    {
+                        <p class="muted">The first version, with every value as it was entered.</p>
+                    }
+                    else if (entry.Changes.Length > 0)
+                    {
+                        <partial name="_Diff" model="entryDiff" />
+                    }
+
+                    @if (isCurrent)
+                    {
+                        <p class="muted">This is the current version.</p>
+                    }
+                    else if (entry.RollBack.Length > 0)
+                    {
+                        <div class="entry-actions">
+                            <button class="btn" type="button" commandfor="@dialogId" command="show-modal"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Roll back to version @number</button>
+                        </div>
+                    }
+                    else if (entry.Note is string note)
+                    {
+                        <p class="muted">@note</p>
+                    }
+                </div>
+            </details>
+
+            @if (!isCurrent && entry.RollBack.Length > 0)
+            {
+                <dialog class="dialog" id="@dialogId" aria-labelledby="@(dialogId)-title">
+                    <form method="post" action="@Model.RollBackAction" asp-antiforgery="true"
+                          hx-post="@Model.RollBackAction" hx-target="@Model.Target" hx-swap="outerHTML"
+                          hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+                        <input type="hidden" name="to" value="@number" />
+                        <input type="hidden" name="version" value="@current" />
+                        <header class="dialog-header">
+                            <h2 id="@(dialogId)-title">Roll back to version @number?</h2>
+                            <button class="btn ghost icon-only" type="button" commandfor="@dialogId" command="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button>
+                        </header>
+                        <div class="dialog-body rollback">
+                            <p>@Model.RecordName goes back to the values of version @number, as a new version, v@(current + 1). Every version stays in the history, so this can be undone.</p>
+                            <partial name="_Diff" model="rollBackDiff" />
+                        </div>
+                        <footer class="dialog-footer">
+                            <button class="btn" type="button" commandfor="@dialogId" command="close" autofocus>Cancel</button>
+                            <button class="btn primary" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Roll back to version @number</button>
+                        </footer>
+                    </form>
+                </dialog>
+            }
+        </li>
+    }
+</ol>

@@ -214,7 +214,7 @@ public sealed class ContactsModelTests
             result,
             "HTMX should get the tab's content to swap in place.");
         Assert.AreEqual(
-            ("_OrganizationChanged", "/Organizations/Contacts/10003?handler=Restore&after=10017", "#organization"),
+            ("_RecordChanged", "/Organizations/Contacts/10003?handler=Restore&after=10017", "#organization"),
             (partial.ViewName, page.Toast?.UndoAction, page.Toast?.UndoTarget),
             "Undo should restore the organization from the same page, and replace the tab's whole content.");
     }

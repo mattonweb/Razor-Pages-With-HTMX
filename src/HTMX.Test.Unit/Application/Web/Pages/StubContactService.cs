@@ -1,4 +1,4 @@
-namespace HTMX.Test.Unit.Application.Web.Pages.Organizations;
+namespace HTMX.Test.Unit.Application.Web.Pages;
 
 using System.Collections.Generic;
 using System.Linq;
@@ -8,25 +8,37 @@ using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
 /// Stands in for the contact service in page tests: it keeps each request the page sends, answers a page of contacts
-/// with the contacts it was given as the page the request asked for, and answers an archive or a restore with the
-/// outcome it was given, so a test sees what the page asked for without a database.
+/// with the contacts it was given as the page the request asked for, a lookup with the one contact and the versions it
+/// was given, and an archive, a restore or a roll-back with the outcome it was given, so a test sees what the page
+/// asked for without a database.
 /// </summary>
 internal sealed class StubContactService : IContactService
 {
     private readonly List<ContactCollectionRequest> _received = [];
     private readonly List<(ChangeKind Change, ContactStatusRequest Request)> _statusChanges = [];
+    private readonly List<ContactRollBackRequest> _rollBacks = [];
     private readonly ContactSummary[] _contacts;
     private readonly UpdateOutcome _outcome;
+    private readonly ContactSingleResponse? _found;
+    private readonly ContactVersionResponse[] _versions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StubContactService"/> class.
     /// </summary>
     /// <param name="contacts">The contacts every page holds.</param>
-    /// <param name="outcome">What an archive and a restore are answered with.</param>
-    public StubContactService(ContactSummary[]? contacts = null, UpdateOutcome outcome = UpdateOutcome.Saved)
+    /// <param name="outcome">What an archive, a restore and a roll-back are answered with.</param>
+    /// <param name="found">The contact a lookup answers with, or <see langword="null"/> for none.</param>
+    /// <param name="versions">The versions a lookup of the history answers with, newest first.</param>
+    public StubContactService(
+        ContactSummary[]? contacts = null,
+        UpdateOutcome outcome = UpdateOutcome.Saved,
+        ContactSingleResponse? found = null,
+        ContactVersionResponse[]? versions = null)
     {
         this._contacts = contacts ?? [];
         this._outcome = outcome;
+        this._found = found;
+        this._versions = versions ?? [];
     }
 
     /// <summary>
@@ -48,6 +60,15 @@ internal sealed class StubContactService : IContactService
         return this._statusChanges.Count == 0 ? null : this._statusChanges[^1];
     }
 
+    /// <summary>
+    /// Gives the last roll-back the page asked for.
+    /// </summary>
+    /// <returns>The roll-back, or <see langword="null"/> before the page asks for one.</returns>
+    public ContactRollBackRequest? LastRollBack()
+    {
+        return this._rollBacks.LastOrDefault();
+    }
+
     /// <inheritdoc/>
     public Task<ContactCollectionResponse> ListAsync(
         ContactCollectionRequest request,
@@ -61,6 +82,29 @@ internal sealed class StubContactService : IContactService
             Total = new RecordCount(this._contacts.Length),
         };
         return Task.FromResult(response);
+    }
+
+    /// <inheritdoc/>
+    public Task<ContactSingleResponse?> FindAsync(ContactId id, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(this._found);
+    }
+
+    /// <inheritdoc/>
+    public Task<ContactVersionResponse[]> ListVersionsAsync(
+        ContactId id,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(this._versions);
+    }
+
+    /// <inheritdoc/>
+    public Task<UpdateOutcome> RollBackAsync(
+        ContactRollBackRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        this._rollBacks.Add(request);
+        return Task.FromResult(this._outcome);
     }
 
     /// <inheritdoc/>

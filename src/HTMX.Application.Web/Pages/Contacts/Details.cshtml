@@ -1,0 +1,25 @@
+@page "/contacts/{id:long}"
+@model HTMX.Application.Web.Pages.Contacts.DetailsModel
+@{
+    ViewData["Title"] = Model.Contact?.Name.Value ?? "Contact not found";
+
+    // Contacts are reached through their organizations, so the side nav marks Organizations.
+    ViewData["Section"] = "Organizations";
+}
+
+@if (Model.Contact is null)
+{
+    <partial name="_ContactNotFound" model="Model.Input.Id" />
+}
+else
+{
+    <partial name="_ContactDetails" model="Model" />
+}
+
+@* After Archive, Restore or Undo without HTMX, the redirect's page shows the toast the action left. *@
+@section Toasts {
+    @if (Model.Toast is Toast toast)
+    {
+        <partial name="_Toast" model="toast" />
+    }
+}

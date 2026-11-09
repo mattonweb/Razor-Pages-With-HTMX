@@ -11,10 +11,10 @@ public sealed record ContactStatusRequest
     required public ContactId Id { get; init; }
 
     /// <summary>
-    /// Gets the organization whose contacts the request was made among. A contact who has moved to another
-    /// organization since is not changed.
+    /// Gets the organization whose contacts the request was made among, or <see langword="null"/> when it was made on
+    /// the contact's own page. A contact who has moved to another organization since the one named is not changed.
     /// </summary>
-    required public OrganizationId Organization { get; init; }
+    public OrganizationId? Organization { get; init; }
 
     /// <summary>
     /// Gets who is archiving or restoring the contact: the signed-in user.

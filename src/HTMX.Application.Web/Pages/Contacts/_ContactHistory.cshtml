@@ -1,0 +1,20 @@
+@model HTMX.Application.Web.Pages.Contacts.HistoryModel
+@*
+    The History tab's content: the contact's header and their versions in the shared timeline. HTMX replaces #contact
+    whole (outerHTML) with it after Archive, Restore, a roll-back or Undo on this tab, as part of _RecordChanged, so the
+    new version is at the top of the timeline when the toast arrives.
+*@
+@{
+    Timeline timeline = Model.Timeline
+        ?? throw new InvalidOperationException("The History tab needs the contact's versions.");
+}
+<div id="contact">
+    <partial name="_ContactHeader" model="Model" />
+
+    <section class="card" aria-labelledby="history-heading">
+        <header class="card-header"><h2 id="history-heading">History</h2></header>
+        <div class="card-body">
+            <partial name="_Timeline" model="timeline" />
+        </div>
+    </section>
+</div>

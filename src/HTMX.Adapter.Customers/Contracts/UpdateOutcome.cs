@@ -36,4 +36,10 @@ public enum UpdateOutcome
     /// Another record already has the name the changes give, however it is capitalized.
     /// </summary>
     NameTaken,
+
+    /// <summary>
+    /// The changes would put a contact in an organization that is archived, and so takes no one in, or that no
+    /// longer exists.
+    /// </summary>
+    OrganizationUnavailable,
 }

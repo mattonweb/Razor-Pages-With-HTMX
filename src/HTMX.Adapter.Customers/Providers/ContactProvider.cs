@@ -51,6 +51,83 @@ internal sealed class ContactProvider
     }
 
     /// <summary>
+    /// Reads one contact with every value they hold, the organization they belong to, and the users who created, last
+    /// changed and archived them, all in one query.
+    /// </summary>
+    /// <remarks>
+    /// As for an organization, each user is a join on the Users table, an outer join for the archiver, who is set only
+    /// once the contact is archived; the organization is an inner join, since every contact belongs to one.
+    /// </remarks>
+    /// <param name="id">The contact's identifier.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the contact.</param>
+    /// <returns>The contact, or <see langword="null"/> when no contact has the identifier.</returns>
+    public Task<ContactSingleResponse?> FindAsync(ContactId id, CancellationToken cancellationToken = default)
+    {
+        IQueryable<Contact> contacts = this._context.Set<Contact>();
+        IQueryable<Organization> organizations = this._context.Set<Organization>();
+        IQueryable<User> users = this._context.Set<User>();
+        IQueryable<ContactSingleResponse> found =
+            from contact in contacts
+            where contact.Id == id
+            join organization in organizations on contact.OrganizationId equals organization.Id
+            join creator in users on contact.CreatedBy equals creator.Id
+            join editor in users on contact.LastModifiedBy equals editor.Id
+            join archivedBy in users on contact.ArchivedBy equals (UserId?)archivedBy.Id into archivers
+            from archiver in archivers.DefaultIfEmpty()
+            select new ContactSingleResponse
+            {
+                Id = contact.Id,
+                Name = contact.Name,
+                JobTitle = contact.JobTitle,
+                Email = contact.Email,
+                Phone = contact.Phone,
+                Notes = contact.Notes,
+                Organization = new OrganizationReference
+                {
+                    Id = organization.Id,
+                    Name = organization.Name,
+                    ArchivedOn = organization.ArchivedOn,
+                },
+                Version = contact.Version,
+                Created = new RecordChange
+                {
+                    On = contact.CreatedOn,
+                    By = new UserReference
+                    {
+                        Id = creator.Id,
+                        Name = creator.DisplayName,
+                        ArchivedOn = creator.ArchivedOn,
+                    },
+                },
+                LastModified = new RecordChange
+                {
+                    On = contact.LastModifiedOn,
+                    By = new UserReference
+                    {
+                        Id = editor.Id,
+                        Name = editor.DisplayName,
+                        ArchivedOn = editor.ArchivedOn,
+                    },
+                },
+                Archived = contact.ArchivedOn == null || archiver == null
+                    ? null
+                    : new RecordChange
+                    {
+                        // The condition above has made sure it is set; the compiler loses track of that across four
+                        // joins, so the value is read without .Value, which it would warn of.
+                        On = contact.ArchivedOn.GetValueOrDefault(),
+                        By = new UserReference
+                        {
+                            Id = archiver.Id,
+                            Name = archiver.DisplayName,
+                            ArchivedOn = archiver.ArchivedOn,
+                        },
+                    },
+            };
+        return found.FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <summary>
     /// Reads how the list sorts the contact a cursor names, as long as they still belong to the organization.
     /// </summary>
     /// <param name="organization">The organization whose contacts are listed.</param>
@@ -132,18 +209,19 @@ internal sealed class ContactProvider
     }
 
     /// <summary>
-    /// Says whether an organization is archived, which closes its contacts to changes until it is restored.
+    /// Says whether an organization exists and is active. An archived organization's contacts are closed to changes
+    /// until it is restored, and it takes no one in.
     /// </summary>
     /// <param name="organization">The organization's identifier.</param>
     /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
-    /// <returns><see langword="true"/> when the organization is archived.</returns>
-    public Task<bool> IsOrganizationArchivedAsync(
+    /// <returns><see langword="true"/> when the organization exists and is active.</returns>
+    public Task<bool> IsOrganizationActiveAsync(
         OrganizationId organization,
         CancellationToken cancellationToken = default)
     {
         IQueryable<Organization> organizations = this._context.Set<Organization>();
         return organizations.AnyAsync(
-            candidate => candidate.Id == organization && candidate.ArchivedOn != null,
+            candidate => candidate.Id == organization && candidate.ArchivedOn == null,
             cancellationToken);
     }
 
