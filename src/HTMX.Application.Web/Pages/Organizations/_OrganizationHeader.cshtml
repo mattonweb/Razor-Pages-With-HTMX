@@ -1,8 +1,10 @@
 @model HTMX.Application.Web.Pages.Organizations.OrganizationPageModel
+@using System.Globalization
 @using HTMX.Adapter.Customers.Contracts
 @*
     The top of every tab of an organization's page: its header, the alert that says it is archived, and the tabs.
-    Archive and Restore post to the current tab's own handlers, with HTMX or without it, so the answer is that tab again.
+    Archive and Restore post to the current tab's own handlers, with HTMX or without it, so the answer is that tab again,
+    with the tab's own values, such as where its list is, so the list stays where it was.
     Their buttons share the id status-action, so that HTMX puts the focus back on whichever the new content holds.
     Neither says hx-disable: a disabled button loses the focus, and HTMX would have none to put back. The busy style
     that hx-indicator turns on already stops a second click.
@@ -12,8 +14,8 @@
         ?? throw new InvalidOperationException("The organization's header needs the organization.");
     RecordChange lastChange = organization.LastModified;
     long id = organization.Id.Value;
-    string? archiveAction = Url.Page(Model.PageName, "Archive", new { id });
-    string? restoreAction = Url.Page(Model.PageName, "Restore", new { id });
+    string? archiveAction = Url.Page(Model.PageName, "Archive", Model.TabValues());
+    string? restoreAction = Url.Page(Model.PageName, "Restore", Model.TabValues());
 }
 <header class="page-header">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -64,8 +66,10 @@
     </div>
 }
 
-@* Each tab is a page with its own URL; the count after History is how many versions the organization has. *@
+@* Each tab is a page with its own URL. The count after Contacts is how many people belong to the organization,
+   archived ones included, and the count after History is how many versions it has. *@
 <nav class="tabs" aria-label="Organization">
     <a asp-page="./Details" asp-route-id="@id" aria-current="@(Model.PageName == "./Details" ? "page" : null)">Details</a>
+    <a asp-page="./Contacts" asp-route-id="@id" aria-current="@(Model.PageName == "./Contacts" ? "page" : null)">Contacts <span class="count">@organization.Contacts.Value.ToString("N0", CultureInfo.CurrentCulture)</span></a>
     <a asp-page="./History" asp-route-id="@id" aria-current="@(Model.PageName == "./History" ? "page" : null)">History <span class="count">@organization.Version.Value</span></a>
 </nav>

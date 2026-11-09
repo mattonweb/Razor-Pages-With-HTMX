@@ -32,10 +32,18 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   **Undo** posts the opposite; each is a version in the organization's history. With HTMX one answer carries both the
   page's content and the toast, in an `<hx-partial>`. Without HTMX the post is redirected back to the page, and the toast
   waits in TempData for it.
+- **`/organizations/{id}/contacts`** — the Contacts tab: the people who belong to the organization, in name order,
+  archived ones muted among the rest, ten to a page, paged by key as the list is (`?after=10017`). Each row's menu
+  archives or restores its contact at once, with a toast whose Undo does the opposite. The row's form posts to the
+  list's own address with the handler and the contact added (`?after=10017&contact=10018&handler=ArchiveContact`), so
+  the answer is the same page of the list: with HTMX the list's card alone, with the keyboard back on that row's menu
+  button; without it, a redirect to the same page. Previous and Next redraw the whole tab, header included, because
+  the header's Archive and Restore post to the page's address too. An archived organization's contacts can be seen
+  but not changed until it is restored.
 - **`/organizations/{id}/history`** — the History tab: every version, newest first, in a timeline, each with the fields
   it changed. An earlier version whose values differ from now offers **Roll back**, previewed in a dialog with the
   change from now; rolling back saves those values as a new version, under the same rules as an edit, and its toast's
-  Undo rolls back again. The page's two tabs share one base page model, so Archive and Restore work on either and
+  Undo rolls back again. The page's tabs share one base page model, so Archive and Restore work on any of them and
   answer with the tab they were pressed on.
 - **`/organizations/{id}/edit`** — the edit form: name, industry and website. A save becomes the organization's next
   version, recorded in its history. A form that fails validation comes back with 422 and its messages: the whole page
@@ -100,7 +108,8 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   starts, so the pager shows the rows on the page and the total ("Showing 10 of 946"). A cursor whose organization is
   gone starts again at the first page. Sorting by Contacts pages the same way but cannot use an index, because the
   count is worked out for each organization. With 1,000 rows in memory the difference cannot be measured; the demo
-  pages this way because it is the pattern to copy.
+  pages this way because it is the pattern to copy. An organization's contacts page the same way, by name, through
+  one index on the organization, the name and the identifier.
 - **Every URL is lower case** (`/organizations`), and the list's query string uses short names: `filter`, `status`,
   `sort`, `dir`, `size`, `after` and `before`.
 - **A save never overwrites a newer one** (optimistic concurrency). The edit form carries the version it was filled

@@ -1,0 +1,10 @@
+@model HTMX.Application.Web.Pages.Organizations.ContactsModel
+@*
+    The Contacts tab's content: the organization's header and the list of its contacts. HTMX replaces #organization
+    whole (outerHTML) with it after Previous or Next, and after Archive, Restore or Undo of the organization on this
+    tab, as part of _OrganizationChanged; an action on a contact replaces only the list.
+*@
+<div id="organization">
+    <partial name="_OrganizationHeader" model="Model" />
+    <partial name="_ContactList" model="Model" />
+</div>

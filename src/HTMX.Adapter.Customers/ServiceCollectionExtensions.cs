@@ -41,6 +41,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<OrganizationProvider>();
         services.AddScoped<OrganizationVersionProvider>();
         services.AddScoped<IOrganizationService, OrganizationService>();
+        services.AddScoped<ContactProvider>();
+        services.AddScoped<IContactService, ContactService>();
         return services;
     }
 

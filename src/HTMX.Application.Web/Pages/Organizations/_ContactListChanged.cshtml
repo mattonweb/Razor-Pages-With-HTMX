@@ -1,0 +1,11 @@
+@model HTMX.Application.Web.Pages.Organizations.ContactsModel
+@*
+    What HTMX gets after an action on a row of the Contacts tab: the list, drawn again from the same page, which
+    replaces #contact-list, and the toast, which replaces whatever the layout's #toasts region holds. The header and the
+    tabs are left as they are; archiving a contact changes neither.
+*@
+<partial name="_ContactList" model="Model" />
+@if (Model.Toast is Toast toast)
+{
+    <partial name="_ToastUpdate" model="toast" />
+}

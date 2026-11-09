@@ -1,0 +1,144 @@
+@model HTMX.Application.Web.Pages.Organizations.ContactsModel
+@using System.Globalization
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The Contacts tab's list: one card, which the tab renders and an action on a row draws again. Every link and form in
+    the card loads over HTMX; in HTMX 4 an attribute reaches the card's descendants only when it says :inherited.
+    Previous and Next are boosted links, so the URL follows them, and they replace the tab's whole content,
+    #organization: the header's Archive and Restore post to the URL's values, so they must be drawn again whenever the
+    URL changes. A row's form leaves the URL as it is and replaces only this card; it says hx-post, which HTMX sets up
+    before it boosts anything, so the post is not boosted. Without HTMX they are plain links and forms that post.
+*@
+@{
+    OrganizationSingleResponse organization = Model.Organization
+        ?? throw new InvalidOperationException("The list of contacts needs the organization.");
+    ContactCollectionResponse list = Model.Contacts
+        ?? throw new InvalidOperationException("The list of contacts needs the page of contacts.");
+
+    // An archived organization's contacts can be seen but not changed until it is restored, so its rows have no
+    // actions.
+    bool changeable = organization.Archived is null;
+}
+<section class="card" id="contact-list" aria-labelledby="contacts-heading"
+         hx-boost:inherited="true" hx-target:inherited="#organization" hx-swap:inherited="outerHTML"
+         hx-indicator:inherited="#contact-list">
+    <header class="card-header"><h2 id="contacts-heading">Contacts</h2></header>
+    <div class="busy-bar"></div>
+
+    @if (list.Total.Value == 0)
+    {
+        <div class="empty">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#users"></use></svg>
+            <h3>No contacts yet</h3>
+            <p>Nobody at @organization.Name.Value is on record.</p>
+        </div>
+    }
+    else
+    {
+        <div class="grid-wrap">
+            <table class="grid">
+                <caption class="visually-hidden">Contacts at @organization.Name.Value, sorted by name</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Phone</th>
+                        <th scope="col">Status</th>
+                        @if (changeable)
+                        {
+                            <th scope="col"><span class="visually-hidden">Actions</span></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (ContactSummary contact in list.Items)
+                    {
+                        bool archived = contact.ArchivedOn is not null;
+                        string menu = $"contact-{contact.Id.Value}-menu";
+                        <tr class="@(archived ? "archived" : null)">
+                            @* Contacts have no page of their own yet, so the name is text, not a link. *@
+                            <td class="title">
+                                @contact.Name.Value
+                                @if (contact.JobTitle is JobTitle jobTitle)
+                                {
+                                    <span class="sub">@jobTitle.Value</span>
+                                }
+                            </td>
+                            <td>
+                                @if (contact.Email is EmailAddress email)
+                                {
+                                    <a href="mailto:@email.Value">@email.Value</a>
+                                }
+                            </td>
+                            <td>@contact.Phone?.Value</td>
+                            <td>
+                                @if (archived)
+                                {
+                                    <span class="chip">Archived</span>
+                                }
+                                else
+                                {
+                                    <span class="chip success">Active</span>
+                                }
+                            </td>
+                            @if (changeable)
+                            {
+                                string action = Model.RowAction(contact);
+                                @* The row's menu, a popover with an id built from the contact's. Once the answer
+                                   has drawn the list again, HTMX focuses the element that says autofocus: this row's
+                                   menu button. *@
+                                <td class="actions">
+                                    <button class="btn ghost icon-only" type="button" popovertarget="@menu"
+                                            aria-label="Actions for @contact.Name.Value"
+                                            autofocus="@(Model.Focused == contact.Id)">
+                                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#more"></use></svg>
+                                    </button>
+                                    <div class="menu" id="@menu" popover>
+                                        <form method="post" action="@action" asp-antiforgery="true"
+                                              hx-post="@action" hx-target="#contact-list">
+                                            @if (archived)
+                                            {
+                                                <button type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Restore</button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>Archive</button>
+                                            }
+                                        </form>
+                                    </div>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @* A pager with nowhere to go is left out. Key-based paging knows the total and whether there is a page either
+           side, not where in the list this page starts, so the summary gives the count shown and the total. *@
+        @if (list.Previous is not null || list.Next is not null)
+        {
+            <footer class="pager">
+                <p class="summary">Showing <strong>@list.Items.Length.ToString("N0", CultureInfo.CurrentCulture)</strong> of <strong>@list.Total.Value.ToString("N0", CultureInfo.CurrentCulture)</strong></p>
+                <nav class="pages" aria-label="Pages">
+                    @if (list.Previous is ContactCursor previous)
+                    {
+                        <a class="btn" rel="prev" asp-page="./Contacts" asp-all-route-data="Model.PageValues(previous)"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-left"></use></svg>Previous</a>
+                    }
+                    else
+                    {
+                        <span class="btn" aria-disabled="true"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-left"></use></svg>Previous</span>
+                    }
+                    @if (list.Next is ContactCursor next)
+                    {
+                        <a class="btn" rel="next" asp-page="./Contacts" asp-all-route-data="Model.PageValues(next)">Next<svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-right"></use></svg></a>
+                    }
+                    else
+                    {
+                        <span class="btn" aria-disabled="true">Next<svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-right"></use></svg></span>
+                    }
+                </nav>
+            </footer>
+        }
+    }
+</section>

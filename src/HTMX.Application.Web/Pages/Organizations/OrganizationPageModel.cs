@@ -1,6 +1,8 @@
 namespace HTMX.Application.Web.Pages.Organizations;
 
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
@@ -18,6 +20,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 /// An action runs at once and says so in a toast with Undo, as the brand asks of an action that can be undone. With
 /// HTMX the answer is the tab's content and the toast together; without it, a redirect back to the tab, which shows the
 /// toast the action left in TempData. Razor Pages finds the handlers declared here on each tab that inherits them.
+/// A tab that holds a list keeps where the list is in its query string, and every form and redirect here carries it,
+/// so an action leaves the list where it was.
 /// </remarks>
 public abstract class OrganizationPageModel : PageModel
 {
@@ -31,6 +35,7 @@ public abstract class OrganizationPageModel : PageModel
     // Where a toast waits in TempData across the redirect that follows an action sent without HTMX.
     private const string ToastMessageKey = "ToastMessage";
     private const string ToastUndoKey = "ToastUndo";
+    private const string ToastUndoTargetKey = "ToastUndoTarget";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OrganizationPageModel"/> class.
@@ -77,9 +82,12 @@ public abstract class OrganizationPageModel : PageModel
     /// Reads the organization the route names, what the tab shows of it, and the toast an action left, if any.
     /// </summary>
     /// <param name="cancellationToken">Signals that the browser has gone away.</param>
-    /// <returns>The page, which says so when no organization has the identifier.</returns>
+    /// <returns>Only the tab's content when HTMX asked for it, as for another page of a list, to swap into the page it
+    /// already shows; the whole page otherwise, which says so when no organization has the identifier.</returns>
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
+        // One URL answers with two different bodies, so a cache must keep them apart by the header that chooses.
+        HtmxHeaders.VaryByRequestType(this.Response);
         OrganizationSingleResponse? organization = await this.ReadAsync(cancellationToken).ConfigureAwait(false);
         if (organization is null)
         {
@@ -90,10 +98,22 @@ public abstract class OrganizationPageModel : PageModel
 
         if (this.TempData[ToastMessageKey] is string message)
         {
-            this.Toast = CreateToast(message, this.TempData[ToastUndoKey] as string);
+            string target = this.TempData[ToastUndoTargetKey] as string ?? ContentTarget;
+            this.Toast = CreateToast(message, this.TempData[ToastUndoKey] as string, target);
         }
 
-        return this.Page();
+        return HtmxAnswers.PartOrPage(this, this.ContentPartial);
+    }
+
+    /// <summary>
+    /// Gives the route and query string values that bring the tab back as it is shown: the organization's identifier
+    /// and, on a tab that holds a list, where the list is. The tab's forms post to them, and an action without HTMX is
+    /// redirected to them.
+    /// </summary>
+    /// <returns>The values, by name.</returns>
+    public virtual Dictionary<string, string> TabValues()
+    {
+        return new Dictionary<string, string> { ["id"] = this.Input.Id.ToString(CultureInfo.InvariantCulture) };
     }
 
     /// <summary>
@@ -158,24 +178,40 @@ public abstract class OrganizationPageModel : PageModel
     }
 
     /// <summary>
-    /// Answers an action. HTMX gets the tab's content and the toast, to swap in place. A browser without HTMX is
-    /// redirected back to the tab, so that refreshing it does not post again, and the toast waits in TempData for the
-    /// tab to show.
+    /// Answers an action on the organization. HTMX gets the tab's content and the toast, to swap in place. A browser
+    /// without HTMX is redirected back to the tab, so that refreshing it does not post again, and the toast waits in
+    /// TempData for the tab to show.
     /// </summary>
     /// <param name="message">The toast's message.</param>
     /// <param name="undoAction">The address Undo posts to, or <see langword="null"/> for no Undo.</param>
     /// <returns>The content and toast, or the redirect.</returns>
     protected IActionResult Answer(string message, string? undoAction)
     {
+        return this.Answer(message, undoAction, ChangedPartial, ContentTarget);
+    }
+
+    /// <summary>
+    /// Answers an action on one part of the tab, such as a row of its list: HTMX gets that part and the toast, and the
+    /// toast's Undo replaces that part again. Without HTMX it is the redirect back to the tab, as for an action on the
+    /// organization.
+    /// </summary>
+    /// <param name="message">The toast's message.</param>
+    /// <param name="undoAction">The address Undo posts to, or <see langword="null"/> for no Undo.</param>
+    /// <param name="changedPartial">The partial that holds the part and the toast.</param>
+    /// <param name="undoTarget">The element the part replaces, which an Undo that HTMX sends replaces too.</param>
+    /// <returns>The part and toast, or the redirect.</returns>
+    protected IActionResult Answer(string message, string? undoAction, string changedPartial, string undoTarget)
+    {
         if (HtmxHeaders.IsPartialRequest(this.Request))
         {
-            this.Toast = CreateToast(message, undoAction);
-            return this.Partial(ChangedPartial, this);
+            this.Toast = CreateToast(message, undoAction, undoTarget);
+            return this.Partial(changedPartial, this);
         }
 
         this.TempData[ToastMessageKey] = message;
         this.TempData[ToastUndoKey] = undoAction;
-        return this.RedirectToPage(this.PageName, new { id = this.Input.Id });
+        this.TempData[ToastUndoTargetKey] = undoTarget;
+        return this.RedirectToPage(this.PageName, this.TabValues());
     }
 
     /// <summary>
@@ -188,18 +224,19 @@ public abstract class OrganizationPageModel : PageModel
     }
 
     /// <summary>
-    /// Makes a toast whose Undo, if any, replaces the tab's content when HTMX sends it.
+    /// Makes a toast whose Undo, if any, replaces an element of the tab when HTMX sends it.
     /// </summary>
     /// <param name="message">The toast's message.</param>
     /// <param name="undoAction">The address Undo posts to, or <see langword="null"/> for no Undo.</param>
+    /// <param name="undoTarget">The element Undo replaces, such as <c>#organization</c>.</param>
     /// <returns>The toast.</returns>
-    private static Toast CreateToast(string message, string? undoAction)
+    private static Toast CreateToast(string message, string? undoAction, string undoTarget)
     {
         return new Toast
         {
             Message = message,
             UndoAction = undoAction,
-            UndoTarget = undoAction is null ? null : ContentTarget,
+            UndoTarget = undoAction is null ? null : undoTarget,
         };
     }
 
@@ -252,7 +289,7 @@ public abstract class OrganizationPageModel : PageModel
         if (outcome == UpdateOutcome.Saved)
         {
             string opposite = change == ChangeKind.Archived ? RestoreHandler : ArchiveHandler;
-            undo = this.HandlerAddress(opposite, new { id = this.Input.Id });
+            undo = this.HandlerAddress(opposite, this.TabValues());
         }
 
         return this.Answer(StatusMessage(change, outcome, organization.Name), undo);

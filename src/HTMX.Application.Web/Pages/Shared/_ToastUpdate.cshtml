@@ -1,0 +1,10 @@
+@model HTMX.Application.Web.Pages.Toast
+@*
+    The toast, as the part of an HTMX answer that goes to the layout's #toasts region. HTMX 4 turns <hx-partial> into a
+    template, swaps the answer's main content first and then each partial into its own hx-target (4.0.1 source,
+    #makeFragment and #processPartials); Razor writes the element through as it is. innerHTML replaces whatever the
+    region holds, so an Undo never outlives the action it undoes.
+*@
+<hx-partial hx-target="#toasts" hx-swap="innerHTML">
+    <partial name="_Toast" model="Model" />
+</hx-partial>

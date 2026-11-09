@@ -11,8 +11,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 internal sealed class ContactMapping : IEntityTypeConfiguration<Contact>
 {
     /// <summary>
-    /// Names the table, sorts names however they are capitalized, makes the version number refuse a save from an
-    /// out-of-date form, ties each contact to its organization, and points the three "by" columns at users.
+    /// Names the table, sorts names however they are capitalized, indexes the order an organization's contacts are
+    /// paged in, makes the version number refuse a save from an out-of-date form, ties each contact to its
+    /// organization, and points the three "by" columns at users.
     /// </summary>
     /// <param name="builder">The builder for the contact entity.</param>
     public void Configure(EntityTypeBuilder<Contact> builder)
@@ -26,6 +27,11 @@ internal sealed class ContactMapping : IEntityTypeConfiguration<Contact>
 
         // Names are not unique, since two people can share one, but they sort and filter however they are capitalized.
         builder.Property(static contact => contact.Name).UseCollation("NOCASE");
+
+        // An organization's contacts are listed in name order and paged by key, so the index holds that order: the
+        // organization, then the name, then the identifier that settles a tie. It also serves the foreign key, so
+        // Entity Framework makes no index of its own for that.
+        builder.HasIndex(static contact => new { contact.OrganizationId, contact.Name, contact.Id });
 
         builder.Property(static contact => contact.Version).IsConcurrencyToken();
 

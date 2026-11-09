@@ -169,9 +169,9 @@ public sealed class DetailsModelTests
             result,
             "A restore without HTMX should be redirected.");
         Assert.AreEqual(
-            10009L,
+            "10009",
             redirect.RouteValues?["id"],
-            "The redirect should go back to the organization's page.");
+            "The redirect should go back to the organization's page, with its identifier as the URL writes it.");
         Assert.AreEqual(
             "Placeholder Logistics restored.",
             page.TempData["ToastMessage"],
