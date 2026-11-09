@@ -8,26 +8,34 @@ using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
 /// Stands in for the organization service in page tests: it keeps each request the page sends and answers with an
-/// empty page for a list, with the one organization it was given for a lookup, and with the outcome it was given for a
-/// change, so a test sees what the page asked for without a database.
+/// empty page for a list, with the one organization it was given for a lookup, and with the outcomes it was given for a
+/// change and a new organization, so a test sees what the page asked for without a database.
 /// </summary>
 internal sealed class StubOrganizationService : IOrganizationService
 {
     private readonly List<OrganizationCollectionRequest> _received = [];
     private readonly List<OrganizationId> _looked = [];
     private readonly List<OrganizationUpdateRequest> _updates = [];
+    private readonly List<OrganizationCreateRequest> _creations = [];
     private readonly OrganizationSingleResponse? _found;
     private readonly UpdateOutcome _outcome;
+    private readonly CreateOutcome _creation;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StubOrganizationService"/> class.
     /// </summary>
     /// <param name="found">The organization a lookup answers with, or <see langword="null"/> for none.</param>
     /// <param name="outcome">What a change is answered with.</param>
-    public StubOrganizationService(OrganizationSingleResponse? found = null, UpdateOutcome outcome = UpdateOutcome.Saved)
+    /// <param name="creation">What a new organization is answered with; one that is created gets the identifier
+    /// 11001, as the first after the seed would.</param>
+    public StubOrganizationService(
+        OrganizationSingleResponse? found = null,
+        UpdateOutcome outcome = UpdateOutcome.Saved,
+        CreateOutcome creation = CreateOutcome.Created)
     {
         this._found = found;
         this._outcome = outcome;
+        this._creation = creation;
     }
 
     /// <summary>
@@ -55,6 +63,15 @@ internal sealed class StubOrganizationService : IOrganizationService
     public OrganizationUpdateRequest? LastUpdate()
     {
         return this._updates.LastOrDefault();
+    }
+
+    /// <summary>
+    /// Gives the last new organization the page sent.
+    /// </summary>
+    /// <returns>The new organization, or <see langword="null"/> before the page sends one.</returns>
+    public OrganizationCreateRequest? LastCreation()
+    {
+        return this._creations.LastOrDefault();
     }
 
     /// <inheritdoc/>
@@ -91,5 +108,19 @@ internal sealed class StubOrganizationService : IOrganizationService
     {
         this._updates.Add(request);
         return Task.FromResult(this._outcome);
+    }
+
+    /// <inheritdoc/>
+    public Task<OrganizationCreateResponse> CreateAsync(
+        OrganizationCreateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        this._creations.Add(request);
+        OrganizationCreateResponse response = new OrganizationCreateResponse
+        {
+            Outcome = this._creation,
+            Id = this._creation == CreateOutcome.Created ? new OrganizationId(11001) : null,
+        };
+        return Task.FromResult(response);
     }
 }

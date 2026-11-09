@@ -16,12 +16,12 @@
     RecordChange lastChange = organization.LastModified;
     string? action = Url.Page("./Edit", new { id = organization.Id.Value });
 
-    // After another save overtook this one, each field whose saved value differs from the one being edited
-    // shows the saved value under it.
-    string savedWebsite = organization.Website?.Value ?? string.Empty;
-    bool nameMoved = Model.Overtaken && organization.Name.Value != Model.Input.Name.Trim();
-    bool industryMoved = Model.Overtaken && organization.Industry != Model.Input.Industry;
-    bool websiteMoved = Model.Overtaken && savedWebsite != (Model.Input.Website?.Trim() ?? string.Empty);
+    // After another save overtook this one, the fields show the values it saved beside the ones being edited.
+    OrganizationFields fields = new OrganizationFields
+    {
+        Input = Model.Input,
+        Saved = Model.Overtaken ? organization : null,
+    };
 }
 <div id="organization-edit">
     <header class="page-header">
@@ -56,41 +56,7 @@
             <div asp-validation-summary="ModelOnly" role="alert"></div>
             <input type="hidden" asp-for="Input.Version" />
 
-            <section class="card" aria-labelledby="details-heading">
-                <header class="card-header"><h2 id="details-heading">Details</h2></header>
-                <div class="card-body fields">
-                    <div class="field">
-                        <label asp-for="Input.Name"></label>
-                        <input asp-for="Input.Name" aria-describedby="@(nameMoved ? "name-saved" : null)" />
-                        @if (nameMoved)
-                        {
-                            <p class="hint" id="name-saved">Saved as @organization.Name.Value</p>
-                        }
-                        <span asp-validation-for="Input.Name"></span>
-                    </div>
-                    <div class="field">
-                        <label asp-for="Input.Industry"></label>
-                        <select asp-for="Input.Industry" asp-items="Html.GetEnumSelectList<Industry>()"
-                                aria-describedby="@(industryMoved ? "industry-saved" : null)"></select>
-                        @if (industryMoved)
-                        {
-                            <p class="hint" id="industry-saved">Saved as @IndustryNames.Of(organization.Industry)</p>
-                        }
-                        <span asp-validation-for="Input.Industry"></span>
-                    </div>
-                    <div class="field">
-                        <label asp-for="Input.Website"></label>
-                        <input asp-for="Input.Website" type="url" placeholder="https://"
-                               aria-describedby="@(websiteMoved ? "website-hint website-saved" : "website-hint")" />
-                        <p class="hint" id="website-hint">Leave it empty when the organization has no website.</p>
-                        @if (websiteMoved)
-                        {
-                            <p class="hint" id="website-saved">Saved as @(savedWebsite.Length == 0 ? "no website" : savedWebsite)</p>
-                        }
-                        <span asp-validation-for="Input.Website"></span>
-                    </div>
-                </div>
-            </section>
+            <partial name="_OrganizationFields" model="fields" />
 
             <div class="form-actions">
                 <div class="end">

@@ -1,0 +1,23 @@
+@model HTMX.Application.Web.Pages.Organizations.CreateModel
+@*
+    The create form. HTMX replaces it whole (outerHTML, hx-target="this") when a save it sent is refused:
+    CreateModel.OnPostAsync answers with it, with 422, and HTMX 4 swaps that status like any other. Nothing outside
+    the form changes when a save is refused. A save that succeeds answers with no content, and HX-Location loads the
+    new organization's page.
+*@
+@{
+    string? action = Url.Page("./Create");
+    OrganizationFields fields = new OrganizationFields { Input = Model.Input };
+}
+<form id="organization-create" method="post" action="@action" asp-antiforgery="true" novalidate
+      hx-post="@action" hx-target="this" hx-swap="outerHTML"
+      hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+    <partial name="_OrganizationFields" model="fields" />
+
+    <div class="form-actions">
+        <div class="end">
+            <a class="btn" asp-page="./Index">Cancel</a>
+            <button class="btn primary" type="submit">Create organization</button>
+        </div>
+    </div>
+</form>

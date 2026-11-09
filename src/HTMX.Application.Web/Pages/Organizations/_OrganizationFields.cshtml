@@ -1,0 +1,58 @@
+@model HTMX.Application.Web.Pages.Organizations.OrganizationFields
+@using HTMX.Adapter.Customers.Contracts
+@*
+    An organization's fields, in the card both the create and the edit form hold. Each field's name is Input.Name and
+    so on, as the pages bind them, so the messages in ModelState find their fields. When another save overtook this
+    one (Saved is set), each field whose saved value differs from the one being edited shows the saved value under it.
+*@
+@{
+    // Each saved value is set only when it differs from the one being edited.
+    OrganizationInput input = Model.Input;
+    OrganizationSingleResponse? saved = Model.Saved;
+    string? savedName = saved is not null && saved.Name.Value != input.Name.Trim() ? saved.Name.Value : null;
+    string? savedIndustry = saved is not null && saved.Industry != input.Industry
+        ? IndustryNames.Of(saved.Industry)
+        : null;
+    string website = saved?.Website?.Value ?? string.Empty;
+    string websiteShown = website.Length == 0 ? "no website" : website;
+    string? savedWebsite = saved is not null && website != (input.Website?.Trim() ?? string.Empty)
+        ? websiteShown
+        : null;
+}
+<section class="card" aria-labelledby="details-heading">
+    <header class="card-header"><h2 id="details-heading">Details</h2></header>
+    <div class="card-body fields">
+        <div class="field">
+            <label asp-for="Input.Name"></label>
+            <input asp-for="Input.Name" aria-describedby="@(savedName is null ? null : "name-saved")" />
+            @if (savedName is not null)
+            {
+                <p class="hint" id="name-saved">Saved as @savedName</p>
+            }
+            <span asp-validation-for="Input.Name"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Industry"></label>
+            <select asp-for="Input.Industry" asp-items="Html.GetEnumSelectList<Industry>()"
+                    aria-describedby="@(savedIndustry is null ? null : "industry-saved")">
+                <option value="">Choose an industry</option>
+            </select>
+            @if (savedIndustry is not null)
+            {
+                <p class="hint" id="industry-saved">Saved as @savedIndustry</p>
+            }
+            <span asp-validation-for="Input.Industry"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Website"></label>
+            <input asp-for="Input.Website" type="url" placeholder="https://"
+                   aria-describedby="@(savedWebsite is null ? "website-hint" : "website-hint website-saved")" />
+            <p class="hint" id="website-hint">Leave it empty when the organization has no website.</p>
+            @if (savedWebsite is not null)
+            {
+                <p class="hint" id="website-saved">Saved as @savedWebsite</p>
+            }
+            <span asp-validation-for="Input.Website"></span>
+        </div>
+    </div>
+</section>

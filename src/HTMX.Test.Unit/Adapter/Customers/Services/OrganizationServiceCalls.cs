@@ -83,6 +83,31 @@ internal static class OrganizationServiceCalls
     }
 
     /// <summary>
+    /// Creates an organization through the service, then reads the organization at an identifier, and every version of
+    /// it, as they are afterwards.
+    /// </summary>
+    /// <param name="request">The new organization.</param>
+    /// <param name="readBack">The identifier to read afterwards: the one the organization should be given.</param>
+    /// <returns>What became of the request, the organization at the identifier, and its versions, oldest first.</returns>
+    internal static async Task<(OrganizationCreateResponse Response, OrganizationSingleResponse? After, OrganizationVersion[] History)>
+        CreateAsync(OrganizationCreateRequest request, OrganizationId readBack)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            OrganizationCreateResponse response;
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IOrganizationService organizations = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
+                response = await organizations.CreateAsync(request).ConfigureAwait(false);
+            }
+
+            OrganizationSingleResponse? after = await FindAsync(services, readBack).ConfigureAwait(false);
+            OrganizationVersion[] history = await ReadHistoryAsync(services, readBack).ConfigureAwait(false);
+            return (response, after, history);
+        }
+    }
+
+    /// <summary>
     /// Reads every version of one organization, oldest first, straight from the database.
     /// </summary>
     /// <param name="services">The started services.</param>

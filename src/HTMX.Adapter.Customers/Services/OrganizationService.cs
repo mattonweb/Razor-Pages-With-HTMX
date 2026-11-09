@@ -70,6 +70,32 @@ internal sealed class OrganizationService : IOrganizationService
 
     /// <inheritdoc/>
     /// <remarks>
+    /// The new organization is at version 1, created and last changed by the same user at the same moment, and its
+    /// first version, a Created one, holds the same values. Its identifier carries on from the highest the database has
+    /// ever given.
+    /// </remarks>
+    public async Task<OrganizationCreateResponse> CreateAsync(
+        OrganizationCreateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        bool taken = await this._provider
+            .IsNameTakenAsync(request.Name, except: null, cancellationToken)
+            .ConfigureAwait(false);
+        if (taken)
+        {
+            return new OrganizationCreateResponse { Outcome = CreateOutcome.NameTaken };
+        }
+
+        Organization organization = Start(request, this._clock.GetUtcNow().UtcDateTime);
+        OrganizationId id = await this._provider
+            .AddAsync(organization, RecordCreation, cancellationToken)
+            .ConfigureAwait(false);
+        return new OrganizationCreateResponse { Outcome = CreateOutcome.Created, Id = id };
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
     /// The rules run in order, and the first that applies is the answer: the organization must exist, be active, still
     /// be at the version the form was filled from, hold some value other than the ones sent, and keep a name no other
     /// organization has. A change that passes is saved as the next version, and the row takes that version's values,
@@ -132,6 +158,47 @@ internal sealed class OrganizationService : IOrganizationService
             && current.Industry == request.Industry
             && current.Website == request.Website;
         return same ? UpdateOutcome.Unchanged : null;
+    }
+
+    /// <summary>
+    /// Makes a new organization's row: the values sent, at version 1, created and last changed by whoever sent them.
+    /// </summary>
+    /// <param name="request">The new organization.</param>
+    /// <param name="now">When it is created, in UTC.</param>
+    /// <returns>The row, without an identifier until the database gives it one.</returns>
+    private static Organization Start(OrganizationCreateRequest request, DateTime now)
+    {
+        return new Organization
+        {
+            Name = request.Name,
+            Industry = request.Industry,
+            Website = request.Website,
+            CreatedOn = now,
+            CreatedBy = request.CreatedBy,
+            LastModifiedOn = now,
+            LastModifiedBy = request.CreatedBy,
+            Version = new VersionNumber(1),
+        };
+    }
+
+    /// <summary>
+    /// Makes the first version of a new organization from its row as saved: a Created version holding the same values.
+    /// </summary>
+    /// <param name="organization">The row, with the identifier the database gave it.</param>
+    /// <returns>The version.</returns>
+    private static OrganizationVersion RecordCreation(Organization organization)
+    {
+        return new OrganizationVersion
+        {
+            OrganizationId = organization.Id,
+            Version = organization.Version,
+            Change = ChangeKind.Created,
+            ChangedOn = organization.CreatedOn,
+            ChangedBy = organization.CreatedBy,
+            Name = organization.Name,
+            Industry = organization.Industry,
+            Website = organization.Website,
+        };
     }
 
     /// <summary>

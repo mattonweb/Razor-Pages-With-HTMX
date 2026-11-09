@@ -9,7 +9,10 @@
     <nav class="breadcrumbs" aria-label="Breadcrumb">
         <ol><li><a asp-page="/Index">Home</a></li><li><span aria-current="page">Organizations</span></li></ol>
     </nav>
-    <div class="title-row"><h1>Organizations</h1></div>
+    <div class="title-row">
+        <h1>Organizations</h1>
+        <a class="btn primary" asp-page="./Create"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>New organization</a>
+    </div>
 </header>
 
 @* The list's card is a partial: the page renders it here, and the handler sends it alone to an HTMX request. *@

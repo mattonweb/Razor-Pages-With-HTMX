@@ -28,6 +28,16 @@ public interface IOrganizationService
     Task<OrganizationSingleResponse?> FindAsync(OrganizationId id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Creates an organization, with its first version, unless another organization already has its name.
+    /// </summary>
+    /// <param name="request">The new organization's values, and who is creating it.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Whether the organization was created and, if it was, its identifier.</returns>
+    Task<OrganizationCreateResponse> CreateAsync(
+        OrganizationCreateRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Saves a change to one organization's values as its next version, unless the organization has moved on since the
     /// form was filled, is archived, or would take another organization's name.
     /// </summary>

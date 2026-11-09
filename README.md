@@ -22,6 +22,9 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
 
 - **`/organizations`** — the list: filter, status, sort and key-based paging, each view its own URL, swapped in place
   by HTMX and working without it.
+- **`/organizations/create`** — a new organization: the same fields, rules and answers as the edit form below. It is
+  saved at version 1, with a Created version in its history, at the next identifier (11001 on a fresh start), and
+  the save goes to its page. A name another organization has, however it is capitalized, is refused with 422.
 - **`/organizations/{id}`** — one organization: its name, status and version, who changed it last, and every value it
   holds. It is read in one query that joins the users who created, last changed and archived it. An identifier that
   names no organization gets the same page saying so, with the status 404 Not Found.

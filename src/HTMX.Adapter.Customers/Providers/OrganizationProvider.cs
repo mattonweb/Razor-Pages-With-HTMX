@@ -165,18 +165,54 @@ internal sealed class OrganizationProvider
     /// capitalized, by the column's NOCASE collation, through its unique index.
     /// </summary>
     /// <param name="name">The name to look for.</param>
-    /// <param name="except">The organization whose own name does not count.</param>
+    /// <param name="except">The organization whose own name does not count, or <see langword="null"/> when every
+    /// organization's does, as for a new one.</param>
     /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
     /// <returns><see langword="true"/> when another organization has the name.</returns>
     public Task<bool> IsNameTakenAsync(
         OrganizationName name,
-        OrganizationId except,
+        OrganizationId? except,
         CancellationToken cancellationToken = default)
     {
         IQueryable<Organization> organizations = this._context.Set<Organization>();
-        return organizations.AnyAsync(
-            organization => organization.Name == name && organization.Id != except,
-            cancellationToken);
+        IQueryable<Organization> named = organizations.Where(organization => organization.Name == name);
+        if (except is OrganizationId other)
+        {
+            named = named.Where(organization => organization.Id != other);
+        }
+
+        return named.AnyAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Saves a new organization: its row, then its first version, in one transaction.
+    /// </summary>
+    /// <remarks>
+    /// The database gives the row its identifier as it is saved, and the version is keyed by that identifier, so the
+    /// version is made only once the row is saved: the caller says how to make it from the saved row.
+    /// </remarks>
+    /// <param name="organization">The new row, without an identifier.</param>
+    /// <param name="record">Makes the first version from the row as saved, its identifier included.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>The identifier the database gave the organization.</returns>
+    public async Task<OrganizationId> AddAsync(
+        Organization organization,
+        Func<Organization, OrganizationVersion> record,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(organization);
+        ArgumentNullException.ThrowIfNull(record);
+        DatabaseFacade database = this._context.Database;
+        IDbContextTransaction transaction = await database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using (transaction.ConfigureAwait(false))
+        {
+            this._context.Add(organization);
+            await this._context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            this._context.Add(record(organization));
+            await this._context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return organization.Id;
+        }
     }
 
     /// <summary>

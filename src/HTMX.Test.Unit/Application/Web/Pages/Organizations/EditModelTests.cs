@@ -1,7 +1,6 @@
 namespace HTMX.Test.Unit.Application.Web.Pages.Organizations;
 
 using System;
-using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
@@ -10,8 +9,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
@@ -358,31 +355,12 @@ public sealed class EditModelTests
     /// <returns>The page, ready for its handler to run.</returns>
     private static EditModel CreatePage(StubOrganizationService service, HtmxRequest kind)
     {
-        Claim[] claims = [new Claim(ClaimTypes.NameIdentifier, "10001")];
-        DefaultHttpContext http = new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test")),
-        };
-        IHeaderDictionary headers = http.Request.Headers;
-        if (kind != HtmxRequest.None)
-        {
-            headers["HX-Request"] = "true";
-            headers["HX-Request-Type"] = kind == HtmxRequest.Partial ? "partial" : "full";
-        }
-
-        RouteData route = new RouteData();
-        route.Values["page"] = "/Organizations/Edit";
-        EmptyModelMetadataProvider metadata = new EmptyModelMetadataProvider();
-        ActionContext action = new ActionContext(http, route, new CompiledPageActionDescriptor());
-        PageContext context = new PageContext(action)
-        {
-            ViewData = new ViewDataDictionary(metadata, new ModelStateDictionary()),
-        };
+        PageContext context = PageRequests.Create(kind, "/Organizations/Edit");
         return new EditModel(service)
         {
             PageContext = context,
-            MetadataProvider = metadata,
-            Url = new StubUrlHelper(action),
+            MetadataProvider = new EmptyModelMetadataProvider(),
+            Url = new StubUrlHelper(context),
         };
     }
 

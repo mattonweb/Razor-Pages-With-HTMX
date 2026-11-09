@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Application.Web.Authentication;
-using HTMX.Application.Web.Validation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -100,7 +99,7 @@ public sealed class EditModel : PageModel
         return outcome switch
         {
             UpdateOutcome.NameTaken =>
-                await this.RefuseNameAsync(id, request.Name, cancellationToken).ConfigureAwait(false),
+                await this.RefuseNameAsync(id, cancellationToken).ConfigureAwait(false),
             UpdateOutcome.Overtaken =>
                 await this.RefuseOvertakenAsync(id, cancellationToken).ConfigureAwait(false),
             UpdateOutcome.Archived =>
@@ -167,12 +166,12 @@ public sealed class EditModel : PageModel
     /// Marks the name as taken by another organization, and answers with the form.
     /// </summary>
     /// <param name="id">The organization's identifier.</param>
-    /// <param name="name">The name that was sent.</param>
     /// <param name="cancellationToken">Signals that the browser has gone away.</param>
     /// <returns>The form, with the status 422.</returns>
-    private Task<IActionResult> RefuseNameAsync(long id, OrganizationName name, CancellationToken cancellationToken)
+    private Task<IActionResult> RefuseNameAsync(long id, CancellationToken cancellationToken)
     {
-        this.ModelState.AddModelError(NameKey, $"Another organization is already called {name.Value}.");
+        // Names match however they are capitalized, so the message does not repeat the one typed.
+        this.ModelState.AddModelError(NameKey, "Another organization already has this name.");
         return this.RefuseAsync(id, StatusCodes.Status422UnprocessableEntity, cancellationToken);
     }
 
@@ -219,73 +218,36 @@ public sealed class EditModel : PageModel
     }
 
     /// <summary>
-    /// Answers with the edit page's content when HTMX sent the save, to swap into the page it already shows, and with
-    /// the whole page otherwise.
+    /// Answers a refused save with the edit page's content when HTMX sent it, to swap into the page it already shows,
+    /// and with the whole page otherwise.
     /// </summary>
-    /// <param name="statusCode">The status to answer with.</param>
+    /// <param name="statusCode">The status that says why the save was refused.</param>
     /// <returns>The content or the page.</returns>
     private IActionResult Answer(int statusCode)
     {
         this.Response.StatusCode = statusCode;
-        if (HtmxHeaders.IsPartialRequest(this.Request))
-        {
-            return this.Partial(EditPartial, this);
-        }
-
-        return this.Page();
+        return HtmxAnswers.PartOrPage(this, EditPartial);
     }
 
     /// <summary>
-    /// Goes to the organization's page. Without HTMX that is a redirect, so that refreshing the next page does not post
-    /// the form again. With HTMX it is a request to load the page, because <c>fetch</c> would follow a redirect itself.
+    /// Goes to the organization's page: by a redirect without HTMX, and by asking HTMX to load it with HTMX.
     /// </summary>
     /// <param name="id">The organization's identifier.</param>
     /// <returns>The redirect, or 204 No Content with the request to load the page.</returns>
     private IActionResult ShowOrganization(long id)
     {
-        if (!HtmxHeaders.IsPartialRequest(this.Request))
-        {
-            return this.RedirectToPage(DetailsPage, new { id });
-        }
-
-        string url = this.Url.Page(DetailsPage, new { id })
-            ?? throw new InvalidOperationException("The organization's page has no address.");
-        HtmxHeaders.LoadPage(this.Response, url);
-        return this.StatusCode(StatusCodes.Status204NoContent);
+        return HtmxAnswers.NextPage(this, DetailsPage, new { id });
     }
 
     /// <summary>
-    /// The form's values, as the browser posted them.
+    /// The form's values, as the browser posted them: an organization's values, and the version they were filled from.
     /// </summary>
-    public sealed class InputModel
+    public sealed class InputModel : OrganizationInput
     {
         /// <summary>
         /// Gets or sets the version the form was filled from, which the form carries in a hidden field.
         /// </summary>
         [Range(1, int.MaxValue)]
         public int Version { get; set; }
-
-        /// <summary>
-        /// Gets or sets the organization's name.
-        /// </summary>
-        [Display(Name = "Name")]
-        [Required(ErrorMessage = "Enter a name.")]
-        [StringLength(100, ErrorMessage = "Keep the name to 100 characters or fewer.")]
-        public string Name { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets the industry the organization works in.
-        /// </summary>
-        [Display(Name = "Industry")]
-        [Required(ErrorMessage = "Choose an industry.")]
-        public Industry? Industry { get; set; }
-
-        /// <summary>
-        /// Gets or sets the organization's website, or <see langword="null"/> when the field is left empty.
-        /// </summary>
-        [Display(Name = "Website")]
-        [AbsoluteWebAddress(ErrorMessage = "Enter a full web address, such as https://placeholder.example.")]
-        [StringLength(200, ErrorMessage = "Keep the web address to 200 characters or fewer.")]
-        public string? Website { get; set; }
     }
 }

@@ -603,6 +603,93 @@ public sealed class OrganizationServiceTests
             "Only the first change should add a version.");
     }
 
+    /// <summary>
+    /// Unit test to verify that a new organization is created at the next identifier after the seed, at version 1, with
+    /// no contacts, created and last changed by whoever sent it, and with one Created version holding its values.
+    /// </summary>
+    [TestMethod]
+    public async Task CreateAsync_NewName_CreatesItWithItsFirstVersion()
+    {
+        // Arrange (Given)
+        OrganizationId expected = new OrganizationId(11001);
+        OrganizationCreateRequest request = CreateNew("Newcomer Networks");
+
+        // Act (When)
+        (OrganizationCreateResponse response, OrganizationSingleResponse? after, OrganizationVersion[] history) =
+            await OrganizationServiceCalls.CreateAsync(request, expected).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            CreateOutcome.Created,
+            response.Outcome,
+            "A name no organization has should be created.");
+        Assert.AreEqual(
+            expected,
+            response.Id,
+            "The first organization after the seed should be 11001.");
+        Assert.IsNotNull(
+            after,
+            "The new organization should be found at its identifier.");
+        Assert.AreEqual(
+            "Newcomer Networks",
+            after.Name.Value,
+            "The organization should hold the name sent.");
+        Assert.AreEqual(
+            new VersionNumber(1),
+            after.Version,
+            "A new organization should be at version 1.");
+        Assert.AreEqual(
+            0,
+            after.Contacts.Value,
+            "A new organization should have no contacts.");
+        Assert.AreEqual(
+            UserSeed.DemoUser,
+            after.Created.By.Id,
+            "The organization should name who created it.");
+        Assert.AreEqual(
+            TestDatabase.StartedOn,
+            after.LastModified.On,
+            "A new organization was last changed when it was created.");
+        Assert.HasCount(
+            1,
+            history,
+            "A new organization should have one version.");
+        Assert.AreEqual(
+            ChangeKind.Created,
+            history[0].Change,
+            "The first version should record the creation.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a new organization with another's name, in other capitals, is not created.
+    /// </summary>
+    [TestMethod]
+    public async Task CreateAsync_NameOfAnotherInCapitals_CreatesNothing()
+    {
+        // Arrange (Given)
+        OrganizationId next = new OrganizationId(11001);
+        OrganizationCreateRequest request = CreateNew("PLACEHOLDER LOGISTICS");
+
+        // Act (When)
+        (OrganizationCreateResponse response, OrganizationSingleResponse? after, OrganizationVersion[] history) =
+            await OrganizationServiceCalls.CreateAsync(request, next).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            CreateOutcome.NameTaken,
+            response.Outcome,
+            "Another organization's name in capitals should be refused.");
+        Assert.IsNull(
+            response.Id,
+            "Nothing should be given an identifier.");
+        Assert.IsNull(
+            after,
+            "No organization should be created.");
+        Assert.IsEmpty(
+            history,
+            "No version should be written.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -632,6 +719,21 @@ public sealed class OrganizationServiceTests
             Sort = sort,
             Direction = direction,
             PageSize = new PageSize(size),
+        };
+    }
+
+    /// <summary>
+    /// Creates a new organization as Demo User would send it from the create form, in shipping, with no website.
+    /// </summary>
+    /// <param name="name">The new organization's name.</param>
+    /// <returns>The new organization.</returns>
+    private static OrganizationCreateRequest CreateNew(string name)
+    {
+        return new OrganizationCreateRequest
+        {
+            Name = new OrganizationName(name),
+            Industry = Industry.Shipping,
+            CreatedBy = UserSeed.DemoUser,
         };
     }
 
