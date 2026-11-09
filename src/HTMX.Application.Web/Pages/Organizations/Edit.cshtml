@@ -1,0 +1,16 @@
+@page "/organizations/{id:long}/edit"
+@model HTMX.Application.Web.Pages.Organizations.EditModel
+@{
+    ViewData["Title"] = Model.Organization is null ? "Organization not found" : $"Edit {Model.Organization.Name.Value}";
+    ViewData["Section"] = "Organizations";
+}
+@* The page's content is a partial: the page renders it here, and a refused save that HTMX sent gets it alone. *@
+
+@if (Model.Organization is null)
+{
+    <partial name="_OrganizationNotFound" model="Model.Id" />
+}
+else
+{
+    <partial name="_OrganizationEdit" model="Model" />
+}

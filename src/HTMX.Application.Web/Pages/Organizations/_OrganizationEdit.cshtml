@@ -1,0 +1,103 @@
+@model HTMX.Application.Web.Pages.Organizations.EditModel
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The edit page's content: the page header and the form, or, for an archived organization, the alert that says it
+    cannot be edited. HTMX replaces #organization-edit whole (outerHTML) with it when a save it sent is refused:
+    EditModel.OnPostAsync answers with it, with 422 or 409, and HTMX 4 swaps those statuses like any other. The header
+    is inside so that a refused save also shows the organization as it is saved now: its name, its version, and who
+    changed it last. A save that succeeds answers with no content, and HX-Location loads the organization's page.
+
+    The form posts to the same address with or without HTMX. HTMX sends the form's fields, the antiforgery token
+    among them, and marks the Save button busy and disabled until the answer arrives.
+*@
+@{
+    OrganizationSingleResponse organization = Model.Organization
+        ?? throw new InvalidOperationException("The edit form needs the organization it edits.");
+    RecordChange lastChange = organization.LastModified;
+    string? action = Url.Page("./Edit", new { id = organization.Id.Value });
+
+    // After another save overtook this one, each field whose saved value differs from the one being edited
+    // shows the saved value under it.
+    string savedWebsite = organization.Website?.Value ?? string.Empty;
+    bool nameMoved = Model.Overtaken && organization.Name.Value != Model.Input.Name.Trim();
+    bool industryMoved = Model.Overtaken && organization.Industry != Model.Input.Industry;
+    bool websiteMoved = Model.Overtaken && savedWebsite != (Model.Input.Website?.Trim() ?? string.Empty);
+}
+<div id="organization-edit">
+    <header class="page-header">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Organizations</a></li><li><a asp-page="./Details" asp-route-id="@organization.Id.Value">@organization.Name.Value</a></li><li><span aria-current="page">Edit</span></li></ol>
+        </nav>
+        <div class="title-row">
+            <div class="title">
+                <h1>Edit @organization.Name.Value</h1>
+                <span class="version current">v@(organization.Version.Value)</span>
+            </div>
+        </div>
+        <p class="muted">Updated <partial name="_Moment" model="lastChange.On" /> by @lastChange.By.Name.Value</p>
+    </header>
+
+    @if (organization.Archived is not null)
+    {
+        <div class="alert warning" role="status">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#alert"></use></svg>
+            <div class="content">
+                <strong>@organization.Name.Value is archived</strong>
+                <span>An archived organization can't be edited until it is restored.</span>
+            </div>
+            <div class="actions"><a class="btn" asp-page="./Details" asp-route-id="@organization.Id.Value">Back to the organization</a></div>
+        </div>
+    }
+    else
+    {
+        <form method="post" action="@action" asp-antiforgery="true" novalidate
+              hx-post="@action" hx-target="#organization-edit" hx-swap="outerHTML"
+              hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+            <div asp-validation-summary="ModelOnly" role="alert"></div>
+            <input type="hidden" asp-for="Input.Version" />
+
+            <section class="card" aria-labelledby="details-heading">
+                <header class="card-header"><h2 id="details-heading">Details</h2></header>
+                <div class="card-body fields">
+                    <div class="field">
+                        <label asp-for="Input.Name"></label>
+                        <input asp-for="Input.Name" aria-describedby="@(nameMoved ? "name-saved" : null)" />
+                        @if (nameMoved)
+                        {
+                            <p class="hint" id="name-saved">Saved as @organization.Name.Value</p>
+                        }
+                        <span asp-validation-for="Input.Name"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="Input.Industry"></label>
+                        <select asp-for="Input.Industry" asp-items="Html.GetEnumSelectList<Industry>()"
+                                aria-describedby="@(industryMoved ? "industry-saved" : null)"></select>
+                        @if (industryMoved)
+                        {
+                            <p class="hint" id="industry-saved">Saved as @IndustryNames.Of(organization.Industry)</p>
+                        }
+                        <span asp-validation-for="Input.Industry"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="Input.Website"></label>
+                        <input asp-for="Input.Website" type="url" placeholder="https://"
+                               aria-describedby="@(websiteMoved ? "website-hint website-saved" : "website-hint")" />
+                        <p class="hint" id="website-hint">Leave it empty when the organization has no website.</p>
+                        @if (websiteMoved)
+                        {
+                            <p class="hint" id="website-saved">Saved as @(savedWebsite.Length == 0 ? "no website" : savedWebsite)</p>
+                        }
+                        <span asp-validation-for="Input.Website"></span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <div class="end">
+                    <a class="btn" asp-page="./Details" asp-route-id="@organization.Id.Value">Cancel</a>
+                    <button class="btn primary" type="submit">Save changes</button>
+                </div>
+            </div>
+        </form>
+    }
+</div>

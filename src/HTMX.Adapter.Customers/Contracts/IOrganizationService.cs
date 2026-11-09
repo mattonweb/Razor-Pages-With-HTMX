@@ -26,4 +26,13 @@ public interface IOrganizationService
     /// <param name="cancellationToken">Signals that the caller no longer needs the organization.</param>
     /// <returns>The organization, or <see langword="null"/> when no organization has the identifier.</returns>
     Task<OrganizationSingleResponse?> FindAsync(OrganizationId id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Saves a change to one organization's values as its next version, unless the organization has moved on since the
+    /// form was filled, is archived, or would take another organization's name.
+    /// </summary>
+    /// <param name="request">The values to save, the version they started from, and who is saving them.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Whether the change was saved and, if not, why.</returns>
+    Task<UpdateOutcome> UpdateAsync(OrganizationUpdateRequest request, CancellationToken cancellationToken = default);
 }

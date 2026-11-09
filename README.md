@@ -25,6 +25,12 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
 - **`/organizations/{id}`** — one organization: its name, status and version, who changed it last, and every value it
   holds. It is read in one query that joins the users who created, last changed and archived it. An identifier that
   names no organization gets the same page saying so, with the status 404 Not Found.
+- **`/organizations/{id}/edit`** — the edit form: name, industry and website. A save becomes the organization's next
+  version, recorded in its history. A form that fails validation comes back with 422 and its messages: the whole page
+  without HTMX, and with HTMX only the page's content, swapped in place, with the cursor on the first field to fix. A
+  save that succeeds goes to the organization's page: a redirect without HTMX, and with HTMX a 204 with `HX-Location`,
+  because `fetch` would follow a redirect itself and HTMX would swap the whole of the next page into the form. An
+  archived organization can't be edited, so its page offers no Edit and its edit page says why.
 
 ## Sample data
 
@@ -85,6 +91,13 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   pages this way because it is the pattern to copy.
 - **Every URL is lower case** (`/organizations`), and the list's query string uses short names: `filter`, `status`,
   `sort`, `dir`, `size`, `after` and `before`.
+- **A save never overwrites a newer one** (optimistic concurrency). The edit form carries the version it was filled
+  from, and the save names it: `UPDATE "Organizations" … WHERE "Id" = @id AND "Version" = @version`, then the new
+  version's row, in one transaction. If another save got there first, from someone else or from the same person in
+  another tab, nothing is written and the form comes back with 409, the values being edited, and the saved value under
+  each field that differs; saving again then replaces the newer version on purpose.
+- **Who is signed in.** There is no sign-in page: `DemoAuthenticationHandler` signs every request in as Demo User
+  (10001), and a page reads who made a change from its `User`, as it would behind a real sign-in.
 
 ## License
 

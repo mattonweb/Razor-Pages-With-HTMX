@@ -8,22 +8,26 @@ using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
 /// Stands in for the organization service in page tests: it keeps each request the page sends and answers with an
-/// empty page for a list, and with the one organization it was given for a lookup, so a test sees what the page asked
-/// for without a database.
+/// empty page for a list, with the one organization it was given for a lookup, and with the outcome it was given for a
+/// change, so a test sees what the page asked for without a database.
 /// </summary>
 internal sealed class StubOrganizationService : IOrganizationService
 {
     private readonly List<OrganizationCollectionRequest> _received = [];
     private readonly List<OrganizationId> _looked = [];
+    private readonly List<OrganizationUpdateRequest> _updates = [];
     private readonly OrganizationSingleResponse? _found;
+    private readonly UpdateOutcome _outcome;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StubOrganizationService"/> class.
     /// </summary>
     /// <param name="found">The organization a lookup answers with, or <see langword="null"/> for none.</param>
-    public StubOrganizationService(OrganizationSingleResponse? found = null)
+    /// <param name="outcome">What a change is answered with.</param>
+    public StubOrganizationService(OrganizationSingleResponse? found = null, UpdateOutcome outcome = UpdateOutcome.Saved)
     {
         this._found = found;
+        this._outcome = outcome;
     }
 
     /// <summary>
@@ -42,6 +46,15 @@ internal sealed class StubOrganizationService : IOrganizationService
     public OrganizationId? LastLookup()
     {
         return this._looked.Count == 0 ? null : this._looked[^1];
+    }
+
+    /// <summary>
+    /// Gives the last change the page sent.
+    /// </summary>
+    /// <returns>The change, or <see langword="null"/> before the page sends one.</returns>
+    public OrganizationUpdateRequest? LastUpdate()
+    {
+        return this._updates.LastOrDefault();
     }
 
     /// <inheritdoc/>
@@ -69,5 +82,14 @@ internal sealed class StubOrganizationService : IOrganizationService
     {
         this._looked.Add(id);
         return Task.FromResult(this._found);
+    }
+
+    /// <inheritdoc/>
+    public Task<UpdateOutcome> UpdateAsync(
+        OrganizationUpdateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        this._updates.Add(request);
+        return Task.FromResult(this._outcome);
     }
 }

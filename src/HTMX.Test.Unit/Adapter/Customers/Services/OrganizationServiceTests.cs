@@ -5,7 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data.Seed;
+using HTMX.Adapter.Customers.Entities;
 using HTMX.Adapter.Customers.Services;
+using HTMX.Test.Unit.Adapter.Customers.Data;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
@@ -438,6 +440,169 @@ public sealed class OrganizationServiceTests
             "No organization has the identifier 99999.");
     }
 
+    /// <summary>
+    /// Unit test to verify that a change from the current version is saved as the next one: the organization takes its
+    /// values, says who changed it and when, and its history gains an Edited version holding the same values.
+    /// </summary>
+    [TestMethod]
+    public async Task UpdateAsync_NewValuesFromTheCurrentVersion_SavesTheNextVersion()
+    {
+        // Arrange (Given)
+        OrganizationId id = OrganizationSeed.PlaceholderLogistics;
+        OrganizationUpdateRequest request =
+            CreateUpdate(id, 2, "Placeholder Logistics Group", Industry.Technology, website: null);
+
+        // Act (When)
+        (UpdateOutcome[] outcomes, OrganizationSingleResponse? after, OrganizationVersion[] history) =
+            await OrganizationServiceCalls.UpdateInTurnAsync(id, request).ConfigureAwait(false);
+        OrganizationVersion latest = history[^1];
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.Saved,
+            outcomes[0],
+            "A change from the current version should be saved.");
+        Assert.IsNotNull(
+            after,
+            "Placeholder Logistics should still be found.");
+        Assert.AreEqual(
+            "Placeholder Logistics Group",
+            after.Name.Value,
+            "The organization should take the new name.");
+        Assert.AreEqual(
+            Industry.Technology,
+            after.Industry,
+            "The organization should take the new industry.");
+        Assert.IsNull(
+            after.Website,
+            "A website left empty should leave none on record.");
+        Assert.AreEqual(
+            new VersionNumber(3),
+            after.Version,
+            "The organization should move from version 2 to version 3.");
+        Assert.AreEqual(
+            TestDatabase.StartedOn,
+            after.LastModified.On,
+            "The change should be dated by the clock.");
+        Assert.AreEqual(
+            UserSeed.DemoUser,
+            after.LastModified.By.Id,
+            "The change should name who saved it.");
+        Assert.HasCount(
+            3,
+            history,
+            "The change should add one version to the two the seed wrote.");
+        Assert.AreEqual(
+            ChangeKind.Edited,
+            latest.Change,
+            "The new version should record an edit.");
+        Assert.AreEqual(
+            after.Name,
+            latest.Name,
+            "The new version should hold the values the organization now has.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a change the rules refuse, or that changes nothing, saves nothing: the organization
+    /// keeps its version and its history gains no version. The rules run in order, so each row breaks only one.
+    /// </summary>
+    /// <param name="id">The organization the change is for.</param>
+    /// <param name="version">The version the change starts from.</param>
+    /// <param name="name">The name the change gives.</param>
+    /// <param name="expected">What should become of the change.</param>
+    [TestMethod]
+    [DataRow(10003L, 2, "Placeholder Logistics", UpdateOutcome.Unchanged, DisplayName = "The values it already holds")]
+    [DataRow(10003L, 1, "Placeholder Logistics Group", UpdateOutcome.Overtaken, DisplayName = "From an older version")]
+    [DataRow(10003L, 2, "SAMPLE & SONS", UpdateOutcome.NameTaken, DisplayName = "Another's name in capitals")]
+    [DataRow(10009L, 2, "Mockup Media Group", UpdateOutcome.Archived, DisplayName = "An archived organization")]
+    [DataRow(99999L, 1, "Nobody Holdings", UpdateOutcome.NotFound, DisplayName = "An unknown identifier")]
+    public async Task UpdateAsync_RefusedOrUnchanged_SavesNothing(
+        long id,
+        int version,
+        string name,
+        UpdateOutcome expected)
+    {
+        // Arrange (Given)
+        OrganizationId organizationId = new OrganizationId(id);
+        OrganizationUpdateRequest request = CreateUpdate(organizationId, version, name);
+        OrganizationSingleResponse? before = await OrganizationServiceCalls.FindAsync(organizationId).ConfigureAwait(false);
+
+        // Act (When)
+        (UpdateOutcome[] outcomes, OrganizationSingleResponse? after, OrganizationVersion[] history) =
+            await OrganizationServiceCalls.UpdateInTurnAsync(organizationId, request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            outcomes[0],
+            $"The change should be answered {expected}.");
+        Assert.AreEqual(
+            before?.Version,
+            after?.Version,
+            "The organization should keep its version.");
+        Assert.HasCount(
+            before is null ? 0 : before.Version.Value,
+            history,
+            "The history should gain no version.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an organization can be renamed to its own name in other capitals: a name counts as
+    /// taken only when another organization has it.
+    /// </summary>
+    [TestMethod]
+    public async Task UpdateAsync_OwnNameInCapitals_SavesIt()
+    {
+        // Arrange (Given)
+        OrganizationId id = OrganizationSeed.PlaceholderLogistics;
+        OrganizationUpdateRequest request = CreateUpdate(id, 2, "PLACEHOLDER LOGISTICS");
+
+        // Act (When)
+        (UpdateOutcome[] outcomes, OrganizationSingleResponse? after, _) =
+            await OrganizationServiceCalls.UpdateInTurnAsync(id, request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.Saved,
+            outcomes[0],
+            "The organization's own name in capitals should not count as taken.");
+        Assert.AreEqual(
+            "PLACEHOLDER LOGISTICS",
+            after?.Name.Value,
+            "The organization should take the new capitals.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that of two changes started from the same version, as from two browser tabs, the first is
+    /// saved and the second is answered Overtaken rather than saved over it.
+    /// </summary>
+    [TestMethod]
+    public async Task UpdateAsync_SecondChangeFromTheSameVersion_IsOvertaken()
+    {
+        // Arrange (Given)
+        OrganizationId id = OrganizationSeed.PlaceholderLogistics;
+        OrganizationUpdateRequest first = CreateUpdate(id, 2, "Placeholder Logistics Group");
+        OrganizationUpdateRequest second = CreateUpdate(id, 2, "Placeholder Logistics Limited");
+
+        // Act (When)
+        (UpdateOutcome[] outcomes, OrganizationSingleResponse? after, OrganizationVersion[] history) =
+            await OrganizationServiceCalls.UpdateInTurnAsync(id, first, second).ConfigureAwait(false);
+
+        // Assert (Then)
+        CollectionAssert.AreEqual(
+            new[] { UpdateOutcome.Saved, UpdateOutcome.Overtaken },
+            outcomes,
+            "The first change should be saved and the second refused.");
+        Assert.AreEqual(
+            "Placeholder Logistics Group",
+            after?.Name.Value,
+            "The organization should keep the first change.");
+        Assert.HasCount(
+            3,
+            history,
+            "Only the first change should add a version.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -467,6 +632,34 @@ public sealed class OrganizationServiceTests
             Sort = sort,
             Direction = direction,
             PageSize = new PageSize(size),
+        };
+    }
+
+    /// <summary>
+    /// Creates a change as Demo User would send it from the edit form. The industry and website default to Placeholder
+    /// Logistics' own, so a change that gives its name too changes nothing.
+    /// </summary>
+    /// <param name="id">The organization to change.</param>
+    /// <param name="version">The version the form was filled from.</param>
+    /// <param name="name">The name to save.</param>
+    /// <param name="industry">The industry to save.</param>
+    /// <param name="website">The website to save, if any.</param>
+    /// <returns>The change.</returns>
+    private static OrganizationUpdateRequest CreateUpdate(
+        OrganizationId id,
+        int version,
+        string name,
+        Industry industry = Industry.Shipping,
+        string? website = "https://placeholder.example")
+    {
+        return new OrganizationUpdateRequest
+        {
+            Id = id,
+            Version = new VersionNumber(version),
+            Name = new OrganizationName(name),
+            Industry = industry,
+            Website = website is null ? null : new WebAddress(website),
+            ChangedBy = UserSeed.DemoUser,
         };
     }
 

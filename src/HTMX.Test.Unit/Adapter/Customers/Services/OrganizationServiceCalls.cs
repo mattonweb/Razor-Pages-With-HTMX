@@ -1,13 +1,17 @@
 namespace HTMX.Test.Unit.Adapter.Customers.Services;
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
+using HTMX.Adapter.Customers.Data;
+using HTMX.Adapter.Customers.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Calls <see cref="IOrganizationService"/> as the pages do, over a seeded database of its own: one page, one
-/// organization, or a page and then the pages its Previous and Next lead to.
+/// organization, a page and then the pages its Previous and Next lead to, or changes sent one after another.
 /// </summary>
 internal static class OrganizationServiceCalls
 {
@@ -55,11 +59,61 @@ internal static class OrganizationServiceCalls
     {
         using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
         {
-            using (IServiceScope scope = services.CreateScope())
-            {
-                IOrganizationService organizations = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
-                return await organizations.FindAsync(id).ConfigureAwait(false);
-            }
+            return await FindAsync(services, id).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Sends changes to one organization one after another, each in a request of its own as two browser tabs would,
+    /// then reads the organization and every version of it.
+    /// </summary>
+    /// <param name="id">The organization the changes are for.</param>
+    /// <param name="requests">The changes, in the order they are sent.</param>
+    /// <returns>What became of each change, the organization afterwards, and its versions, oldest first.</returns>
+    internal static async Task<(UpdateOutcome[] Outcomes, OrganizationSingleResponse? After, OrganizationVersion[] History)>
+        UpdateInTurnAsync(OrganizationId id, params OrganizationUpdateRequest[] requests)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            UpdateOutcome[] outcomes = await UpdateEachAsync(services, requests).ConfigureAwait(false);
+            OrganizationSingleResponse? after = await FindAsync(services, id).ConfigureAwait(false);
+            OrganizationVersion[] history = await ReadHistoryAsync(services, id).ConfigureAwait(false);
+            return (outcomes, after, history);
+        }
+    }
+
+    /// <summary>
+    /// Reads every version of one organization, oldest first, straight from the database.
+    /// </summary>
+    /// <param name="services">The started services.</param>
+    /// <param name="id">The organization's identifier.</param>
+    /// <returns>The versions.</returns>
+    internal static async Task<OrganizationVersion[]> ReadHistoryAsync(ServiceProvider services, OrganizationId id)
+    {
+        using (IServiceScope scope = services.CreateScope())
+        {
+            CustomersDatabaseContext context = scope.ServiceProvider.GetRequiredService<CustomersDatabaseContext>();
+            IQueryable<OrganizationVersion> all = context.Set<OrganizationVersion>();
+            OrganizationVersion[] versions = await all
+                .Where(version => version.OrganizationId == id)
+                .ToArrayAsync()
+                .ConfigureAwait(false);
+            return [.. versions.OrderBy(static version => version.Version.Value)];
+        }
+    }
+
+    /// <summary>
+    /// Sends one change through the service, in a scope of its own as one request would.
+    /// </summary>
+    /// <param name="services">The started services.</param>
+    /// <param name="request">The change.</param>
+    /// <returns>What became of it.</returns>
+    internal static async Task<UpdateOutcome> UpdateAsync(ServiceProvider services, OrganizationUpdateRequest request)
+    {
+        using (IServiceScope scope = services.CreateScope())
+        {
+            IOrganizationService organizations = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
+            return await organizations.UpdateAsync(request).ConfigureAwait(false);
         }
     }
 
@@ -136,6 +190,41 @@ internal static class OrganizationServiceCalls
         }
 
         return [.. pages];
+    }
+
+    /// <summary>
+    /// Sends changes through the service one after another, each in a scope of its own as one request would.
+    /// </summary>
+    /// <param name="services">The started services.</param>
+    /// <param name="requests">The changes, in the order they are sent.</param>
+    /// <returns>What became of each change.</returns>
+    private static async Task<UpdateOutcome[]> UpdateEachAsync(
+        ServiceProvider services,
+        OrganizationUpdateRequest[] requests)
+    {
+        List<UpdateOutcome> outcomes = [];
+        foreach (OrganizationUpdateRequest request in requests)
+        {
+            UpdateOutcome outcome = await UpdateAsync(services, request).ConfigureAwait(false);
+            outcomes.Add(outcome);
+        }
+
+        return [.. outcomes];
+    }
+
+    /// <summary>
+    /// Reads one organization through the service, in a scope of its own as one request would.
+    /// </summary>
+    /// <param name="services">The started services.</param>
+    /// <param name="id">The organization's identifier.</param>
+    /// <returns>The organization, or <see langword="null"/> when there is none.</returns>
+    private static async Task<OrganizationSingleResponse?> FindAsync(ServiceProvider services, OrganizationId id)
+    {
+        using (IServiceScope scope = services.CreateScope())
+        {
+            IOrganizationService organizations = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
+            return await organizations.FindAsync(id).ConfigureAwait(false);
+        }
     }
 
     /// <summary>

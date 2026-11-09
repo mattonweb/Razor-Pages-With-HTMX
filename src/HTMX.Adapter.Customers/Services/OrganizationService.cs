@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.DTOs;
+using HTMX.Adapter.Customers.Entities;
 using HTMX.Adapter.Customers.Providers;
 
 /// <summary>
@@ -14,15 +15,19 @@ using HTMX.Adapter.Customers.Providers;
 internal sealed class OrganizationService : IOrganizationService
 {
     private readonly OrganizationProvider _provider;
+    private readonly TimeProvider _clock;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OrganizationService"/> class.
     /// </summary>
     /// <param name="provider">Runs the queries.</param>
-    public OrganizationService(OrganizationProvider provider)
+    /// <param name="clock">Says when a change is made.</param>
+    public OrganizationService(OrganizationProvider provider, TimeProvider clock)
     {
         ArgumentNullException.ThrowIfNull(provider);
+        ArgumentNullException.ThrowIfNull(clock);
         this._provider = provider;
+        this._clock = clock;
     }
 
     /// <inheritdoc/>
@@ -61,6 +66,119 @@ internal sealed class OrganizationService : IOrganizationService
         CancellationToken cancellationToken = default)
     {
         return this._provider.FindAsync(id, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// The rules run in order, and the first that applies is the answer: the organization must exist, be active, still
+    /// be at the version the form was filled from, hold some value other than the ones sent, and keep a name no other
+    /// organization has. A change that passes is saved as the next version, and the row takes that version's values,
+    /// as the seed builds every row from its latest version.
+    /// </remarks>
+    public async Task<UpdateOutcome> UpdateAsync(
+        OrganizationUpdateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        Organization? current = await this._provider
+            .FindForChangeAsync(request.Id, cancellationToken)
+            .ConfigureAwait(false);
+        if (current is null)
+        {
+            return UpdateOutcome.NotFound;
+        }
+
+        if (OutcomeWithoutSaving(current, request) is UpdateOutcome settled)
+        {
+            return settled;
+        }
+
+        bool taken = await this._provider
+            .IsNameTakenAsync(request.Name, request.Id, cancellationToken)
+            .ConfigureAwait(false);
+        if (taken)
+        {
+            return UpdateOutcome.NameTaken;
+        }
+
+        OrganizationVersion version = Record(current, request, this._clock.GetUtcNow().UtcDateTime);
+        Organization changed = Apply(current, version);
+        bool saved = await this._provider
+            .SaveChangeAsync(current, changed, version, cancellationToken)
+            .ConfigureAwait(false);
+        return saved ? UpdateOutcome.Saved : UpdateOutcome.Overtaken;
+    }
+
+    /// <summary>
+    /// Gives the outcome a change has before anything is saved: refused because the organization is archived or has
+    /// moved on since the form was filled, or done already because it holds the values sent.
+    /// </summary>
+    /// <param name="current">The organization as it is now.</param>
+    /// <param name="request">The change.</param>
+    /// <returns>The outcome, or <see langword="null"/> when the change can go on to be saved.</returns>
+    private static UpdateOutcome? OutcomeWithoutSaving(Organization current, OrganizationUpdateRequest request)
+    {
+        if (current.ArchivedOn is not null)
+        {
+            return UpdateOutcome.Archived;
+        }
+
+        if (current.Version != request.Version)
+        {
+            return UpdateOutcome.Overtaken;
+        }
+
+        bool same = current.Name == request.Name
+            && current.Industry == request.Industry
+            && current.Website == request.Website;
+        return same ? UpdateOutcome.Unchanged : null;
+    }
+
+    /// <summary>
+    /// Makes the version that records a change: the next number, the values sent, and who saved them and when.
+    /// </summary>
+    /// <param name="current">The organization as it is now, which is active.</param>
+    /// <param name="request">The change.</param>
+    /// <param name="now">When the change is saved, in UTC.</param>
+    /// <returns>The version.</returns>
+    private static OrganizationVersion Record(Organization current, OrganizationUpdateRequest request, DateTime now)
+    {
+        return new OrganizationVersion
+        {
+            OrganizationId = current.Id,
+            Version = new VersionNumber(current.Version.Value + 1),
+            Change = ChangeKind.Edited,
+            ChangedOn = now,
+            ChangedBy = request.ChangedBy,
+            Name = request.Name,
+            Industry = request.Industry,
+            Website = request.Website,
+        };
+    }
+
+    /// <summary>
+    /// Gives an organization's row the values of its newest version, keeping who created it and when.
+    /// </summary>
+    /// <param name="current">The row as it is now.</param>
+    /// <param name="version">The newest version.</param>
+    /// <returns>The row's new values.</returns>
+    private static Organization Apply(Organization current, OrganizationVersion version)
+    {
+        // Written out rather than with a with expression, which StyleCop 1.1.118 misreads in an instance class (SA1101).
+        return new Organization
+        {
+            Id = current.Id,
+            Name = version.Name,
+            Industry = version.Industry,
+            Website = version.Website,
+            CreatedOn = current.CreatedOn,
+            CreatedBy = current.CreatedBy,
+            LastModifiedOn = version.ChangedOn,
+            LastModifiedBy = version.ChangedBy,
+            ArchivedOn = version.ArchivedOn,
+            ArchivedBy = version.ArchivedBy,
+            Version = version.Version,
+        };
     }
 
     /// <summary>

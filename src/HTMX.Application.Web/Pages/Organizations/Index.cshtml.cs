@@ -56,11 +56,6 @@ public sealed class IndexModel : PageModel
     private const int DefaultPageSize = 10;
     private const string ListPartial = "_OrganizationList";
 
-    // HTMX 4 says on every request whether it will swap part of the page ("partial") or the whole body ("full"), as
-    // when the back button restores a page.
-    private const string HtmxRequestTypeHeader = "HX-Request-Type";
-    private const string PartialRequestType = "partial";
-
     private static readonly int[] PageSizes = [DefaultPageSize, 25, 50, PageSize.Largest];
 
     // What the page shows before OnGetAsync has read the list: nothing, as the defaults would ask for it.
@@ -126,9 +121,8 @@ public sealed class IndexModel : PageModel
         this.Organizations = await this._organizations.ListAsync(request, cancellationToken).ConfigureAwait(false);
 
         // One URL answers with two different bodies, so a cache must keep them apart by the header that chooses.
-        IHeaderDictionary responseHeaders = this.Response.Headers;
-        responseHeaders.Vary = HtmxRequestTypeHeader;
-        if (IsHtmxSwap(this.Request))
+        HtmxHeaders.VaryByRequestType(this.Response);
+        if (HtmxHeaders.IsPartialRequest(this.Request))
         {
             return this.Partial(ListPartial, this);
         }
@@ -194,17 +188,6 @@ public sealed class IndexModel : PageModel
     {
         OrganizationCollectionRequest current = this.Organizations.Request;
         return column == current.Sort ? Name(current.Direction) : null;
-    }
-
-    /// <summary>
-    /// Says whether a request came from HTMX to swap part of a page, rather than to load a whole one.
-    /// </summary>
-    /// <param name="request">The request.</param>
-    /// <returns><see langword="true"/> when HTMX will swap the response into part of the page.</returns>
-    private static bool IsHtmxSwap(HttpRequest request)
-    {
-        IHeaderDictionary headers = request.Headers;
-        return headers[HtmxRequestTypeHeader] == PartialRequestType;
     }
 
     /// <summary>

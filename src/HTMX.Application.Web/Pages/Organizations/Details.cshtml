@@ -11,21 +11,7 @@
 
 @if (organization is null)
 {
-    <header class="page-header">
-        <nav class="breadcrumbs" aria-label="Breadcrumb">
-            <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Organizations</a></li><li><span aria-current="page">Not found</span></li></ol>
-        </nav>
-        <div class="title-row"><h1>Organization not found</h1></div>
-    </header>
-
-    <div class="card">
-        <div class="empty">
-            <svg class="icon" aria-hidden="true"><use href="/icons.svg#building"></use></svg>
-            <h3>No organization has the identifier @Model.Input.Id</h3>
-            <p>It may have been deleted, or the link may be mistyped.</p>
-            <a class="btn" asp-page="./Index">Back to organizations</a>
-        </div>
-    </div>
+    <partial name="_OrganizationNotFound" model="Model.Input.Id" />
 }
 else
 {
@@ -49,6 +35,11 @@ else
                 }
                 <span class="version current">v@(organization.Version.Value)</span>
             </div>
+            @* An archived organization is closed to edits until it is restored, so it offers no Edit. *@
+            @if (organization.Archived is null)
+            {
+                <a class="btn primary" asp-page="./Edit" asp-route-id="@organization.Id.Value"><svg class="icon" aria-hidden="true"><use href="/icons.svg#edit"></use></svg>Edit</a>
+            }
         </div>
         @* Users have no page of their own yet, so who changed the organization is a name, not a link. *@
         <p class="muted">Updated <partial name="_Moment" model="lastChange.On" /> by @lastChange.By.Name.Value</p>

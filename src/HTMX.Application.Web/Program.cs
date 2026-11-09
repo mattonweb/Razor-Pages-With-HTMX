@@ -2,6 +2,8 @@ namespace HTMX.Application.Web;
 
 using HTMX.Adapter.Customers;
 using HTMX.Adapter.Customers.Configuration;
+using HTMX.Application.Web.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -31,8 +33,8 @@ public static class Program
     }
 
     /// <summary>
-    /// Registers Razor Pages, with every URL they write in lower case, and the customers adapter, which owns the
-    /// database.
+    /// Registers Razor Pages, with every URL they write in lower case, the sign-in scheme, and the customers adapter,
+    /// which owns the database.
     /// </summary>
     /// <param name="services">The application's service collection.</param>
     private static void AddServices(IServiceCollection services)
@@ -43,6 +45,13 @@ public static class Program
         // Query string values keep their case (LowercaseQueryStrings stays off), so a filter keeps its capitals.
         services.AddRouting(static options => options.LowercaseUrls = true);
 
+        // Every request is signed in as Demo User, so a page reads who made a change from its User, as it would behind
+        // a real sign-in.
+        AuthenticationBuilder authentication = services.AddAuthentication(DemoAuthenticationHandler.SchemeName);
+        authentication.AddScheme<AuthenticationSchemeOptions, DemoAuthenticationHandler>(
+            DemoAuthenticationHandler.SchemeName,
+            configureOptions: null);
+
         CustomersOptions customers = new CustomersOptions
         {
             DatabaseName = CustomersDatabaseName,
@@ -51,7 +60,7 @@ public static class Program
     }
 
     /// <summary>
-    /// Builds the request pipeline: error handling, HTTPS, static files and the Razor Pages.
+    /// Builds the request pipeline: error handling, HTTPS, static files, sign-in and the Razor Pages.
     /// </summary>
     /// <param name="application">The application being built.</param>
     private static void UsePipeline(WebApplication application)
@@ -64,6 +73,7 @@ public static class Program
 
         application.UseHttpsRedirection();
         application.MapStaticAssets();
+        application.UseAuthentication();
 
         PageActionEndpointConventionBuilder pages = application.MapRazorPages();
         pages.WithStaticAssets();
