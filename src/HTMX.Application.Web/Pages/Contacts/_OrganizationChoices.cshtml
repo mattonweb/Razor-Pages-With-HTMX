@@ -1,0 +1,56 @@
+@model HTMX.Application.Web.Pages.Contacts.OrganizationPicker
+@using System.Globalization
+@using HTMX.Adapter.Customers.Contracts
+@using HTMX.Application.Web.Pages.Organizations
+@*
+    The picker's list: the first active organizations whose names contain the filter, by name, each a radio whose label
+    is the organization's name, so a click on the name chooses the row. The organization chosen now is checked when it
+    is listed. The filter answers with this list alone, which replaces #organization-choices. It has no pager: there
+    are too many organizations to page through, and the filter finds the one wanted.
+*@
+@{
+    OrganizationCollectionResponse choices = Model.Choices;
+    string? filter = choices.Request.Filter?.Value;
+}
+<div id="organization-choices">
+    @if (choices.Items.Length == 0)
+    {
+        <div class="empty">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#filter"></use></svg>
+            <h3>No organizations match “@filter”</h3>
+            <p>Check the spelling, or filter by another word. Only active organizations can be chosen.</p>
+        </div>
+    }
+    else
+    {
+        <div class="grid-wrap">
+            <table class="grid">
+                <caption class="visually-hidden">Active organizations, sorted by name</caption>
+                <thead>
+                    <tr>
+                        <th class="select" scope="col"><span class="visually-hidden">Choose</span></th>
+                        <th scope="col">Organization</th>
+                        <th scope="col">Industry</th>
+                        <th scope="col" class="num">Contacts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (OrganizationSummary organization in choices.Items)
+                    {
+                        string choiceId = $"choice-{organization.Id.Value}";
+                        <tr>
+                            <td class="select"><input type="radio" name="organization" id="@choiceId" value="@organization.Id.Value" required checked="@(organization.Id == Model.Chosen)"></td>
+                            <td class="title"><label for="@choiceId">@organization.Name.Value</label></td>
+                            <td>@IndustryNames.Of(organization.Industry)</td>
+                            <td class="num">@organization.Contacts.Value.ToString("N0", CultureInfo.CurrentCulture)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @* Only when some matches are not listed does the summary say how to reach them. *@
+        <footer class="pager">
+            <p class="summary">Showing <strong>@choices.Items.Length.ToString("N0", CultureInfo.CurrentCulture)</strong> of <strong>@choices.Matching.Value.ToString("N0", CultureInfo.CurrentCulture)</strong>@(choices.Matching.Value > choices.Items.Length ? ". Filter to find another." : null)</p>
+        </footer>
+    }
+</div>

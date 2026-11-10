@@ -1,0 +1,38 @@
+@model HTMX.Application.Web.Pages.Contacts.OrganizationPicker
+@*
+    The organization picker: the brand's picker dialog, a filter box above a grid whose selection column holds radios,
+    listing only organizations a contact can belong to. The relation field's button opens it with commandfor and
+    command. It exists only with HTMX, so its form says hx-get alone.
+
+    Typing in the filter sends it, 300 ms after the last key, with the radio that is checked, and the answer replaces
+    the list alone. Choose sends the form: the radio checked, which the browser insists on (the radios are required, and
+    HTMX 4 checks a form before it sends it), and choose=true, the button's own name and value. The answer replaces the
+    relation field, and this dialog with a new one, which closes the open one. Enter in the filter chooses too, as in
+    the brand's picker: the list has kept up with the typing.
+*@
+<dialog class="dialog" id="organization-picker" aria-labelledby="organization-picker-title">
+    <form hx-get="@Model.FieldAction" hx-target="#organization-field" hx-swap="outerHTML">
+        <header class="dialog-header">
+            <h2 id="organization-picker-title">Choose an organization</h2>
+            <button class="btn ghost icon-only" type="button" commandfor="organization-picker" command="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button>
+        </header>
+        <div class="dialog-body">
+            <div class="card">
+                <div class="toolbar">
+                    <div class="filter-box" role="search">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#filter"></use></svg>
+                        <input type="search" id="organization-filter" name="filter" autofocus
+                               placeholder="Filter organizations" aria-label="Filter organizations"
+                               hx-get="@Model.ChoicesAction" hx-trigger="input changed delay:300ms"
+                               hx-target="#organization-choices" hx-swap="outerHTML" hx-include="#organization-choices">
+                    </div>
+                </div>
+                <partial name="_OrganizationChoices" model="Model" />
+            </div>
+        </div>
+        <footer class="dialog-footer">
+            <button class="btn" type="button" commandfor="organization-picker" command="close">Cancel</button>
+            <button class="btn primary" type="submit" name="choose" value="true">Choose organization</button>
+        </footer>
+    </form>
+</dialog>

@@ -48,8 +48,16 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
 - **`/contacts/{id}`** — one contact: their name, status and version, who changed them last, the organization they
   belong to, as a link to it, and every value they hold, read in one query that joins the organization and the users.
   The breadcrumbs lead back through the organization's Contacts tab. **Archive** and **Restore** work as an
-  organization's do, with Undo. While the organization is archived the contact can be seen but not changed, and the
-  page says why. An identifier that names no contact gets the page saying so, with 404.
+  organization's do, with Undo, and **Edit** goes to the edit form. While the organization is archived the contact can
+  be seen but not changed, and the page says why. An identifier that names no contact gets the page saying so, with
+  404.
+- **`/contacts/{id}/edit`** — the contact's edit form: name, organization, job title, email, phone and notes, saved as
+  the next version, with the same answers as an organization's edit form (422, 409 with the saved values beside the
+  edited ones, and a 204 with `HX-Location` after a save). The organization starts as a select of every active
+  organization, which works without HTMX. As the page loads, HTMX swaps it (`hx-trigger="load"`) for the brand's
+  relation field, whose **Change** opens a picker that filters the organizations as you type, ten at a time; a refused
+  save that HTMX sent draws the relation field straight away. An organization archived while the form was open is
+  refused with 422, under its field.
 - **`/contacts/{id}/history`** — the contact's History tab, in the same timeline as an organization's. A roll-back saves
   an earlier version's values, the organization among them: rolling Ainsley Archetype back to version 2 moves them back
   to Fictional Freight. A version whose organization has since been archived or deleted can't be rolled back to, and

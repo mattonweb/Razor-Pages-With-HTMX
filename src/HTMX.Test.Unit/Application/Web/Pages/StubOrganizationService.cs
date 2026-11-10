@@ -8,7 +8,8 @@ using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
 /// Stands in for the organization service in page tests: it keeps each request the page sends and answers with an
-/// empty page for a list, with the one organization and the versions it was given for a lookup, and with the outcomes
+/// empty page for a list, with the one organization, the versions and the choices it was given for a lookup, and with
+/// the outcomes
 /// it was given for a change, an archive or restore, a roll-back and a new organization, so a test sees what the page
 /// asked for without a database.
 /// </summary>
@@ -24,6 +25,7 @@ internal sealed class StubOrganizationService : IOrganizationService
     private readonly UpdateOutcome _outcome;
     private readonly CreateOutcome _creation;
     private readonly OrganizationVersionResponse[] _versions;
+    private readonly OrganizationReference[] _choices;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StubOrganizationService"/> class.
@@ -33,16 +35,19 @@ internal sealed class StubOrganizationService : IOrganizationService
     /// <param name="creation">What a new organization is answered with; one that is created gets the identifier
     /// 11001, as the first after the seed would.</param>
     /// <param name="versions">The versions a lookup of the history answers with, newest first.</param>
+    /// <param name="choices">The organizations a list of choices answers with.</param>
     public StubOrganizationService(
         OrganizationSingleResponse? found = null,
         UpdateOutcome outcome = UpdateOutcome.Saved,
         CreateOutcome creation = CreateOutcome.Created,
-        OrganizationVersionResponse[]? versions = null)
+        OrganizationVersionResponse[]? versions = null,
+        OrganizationReference[]? choices = null)
     {
         this._found = found;
         this._outcome = outcome;
         this._creation = creation;
         this._versions = versions ?? [];
+        this._choices = choices ?? [];
     }
 
     /// <summary>
@@ -116,6 +121,12 @@ internal sealed class StubOrganizationService : IOrganizationService
             All = new RecordCount(0),
         };
         return Task.FromResult(response);
+    }
+
+    /// <inheritdoc/>
+    public Task<OrganizationReference[]> ListChoicesAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(this._choices);
     }
 
     /// <inheritdoc/>

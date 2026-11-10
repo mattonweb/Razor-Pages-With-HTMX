@@ -1,0 +1,95 @@
+@model HTMX.Application.Web.Pages.Contacts.ContactFields
+@using HTMX.Adapter.Customers.Contracts
+@*
+    A contact's fields, in the order the Details tab lists them. Each field's name is Input.Name and so on, as the page
+    binds them, so the messages in ModelState find their fields. When another save overtook this one (Saved is set),
+    each field whose saved value differs from the one being edited shows the saved value under it.
+
+    The organization is a select of every active organization, which works without HTMX. As the page loads, HTMX
+    replaces it with the relation field and its picker (hx-trigger="load"), sending the organization the select holds
+    in the address. When HTMX sent the request this page answers, Relation is set and the relation field is drawn at
+    once, with no second request.
+*@
+@{
+    ContactInput input = Model.Input;
+    ContactSingleResponse? saved = Model.Saved;
+    string? savedName = saved is null ? null : SavedValue.Hint(saved.Name.Value, input.Name, "no name");
+    string? savedJobTitle = saved is null ? null : SavedValue.Hint(saved.JobTitle?.Value, input.JobTitle, "no job title");
+    string? savedEmail = saved is null ? null : SavedValue.Hint(saved.Email?.Value, input.Email, "no email address");
+    string? savedPhone = saved is null ? null : SavedValue.Hint(saved.Phone?.Value, input.Phone, "no telephone number");
+    string? savedNotes = saved is null ? null : SavedValue.Hint(saved.Notes?.Value, input.Notes, "no notes");
+    string? savedOrganization = saved is not null && saved.Organization.Id.Value != input.OrganizationId
+        ? saved.Organization.Name.Value
+        : null;
+}
+<section class="card" aria-labelledby="details-heading">
+    <header class="card-header"><h2 id="details-heading">Details</h2></header>
+    <div class="card-body fields">
+        <div class="field">
+            <label asp-for="Input.Name"></label>
+            <input asp-for="Input.Name" aria-describedby="@(savedName is null ? null : "name-saved")" />
+            @if (savedName is not null)
+            {
+                <p class="hint" id="name-saved">Saved as @savedName</p>
+            }
+            <span asp-validation-for="Input.Name"></span>
+        </div>
+
+        @if (Model.Relation is OrganizationField relation)
+        {
+            <partial name="_OrganizationField" model="relation" />
+        }
+        else
+        {
+            <div class="field" id="organization-field" hx-get="@Model.EnhanceAction" hx-trigger="load" hx-swap="outerHTML">
+                <label asp-for="Input.OrganizationId"></label>
+                <select asp-for="Input.OrganizationId" asp-items="Model.OrganizationOptions"
+                        aria-describedby="@(savedOrganization is null ? null : "organization-saved")">
+                    <option value="">Choose an organization</option>
+                </select>
+                @if (savedOrganization is not null)
+                {
+                    <p class="hint" id="organization-saved">Saved as @savedOrganization</p>
+                }
+                <span asp-validation-for="Input.OrganizationId"></span>
+            </div>
+        }
+
+        <div class="field">
+            <label asp-for="Input.JobTitle"></label>
+            <input asp-for="Input.JobTitle" aria-describedby="@(savedJobTitle is null ? null : "job-title-saved")" />
+            @if (savedJobTitle is not null)
+            {
+                <p class="hint" id="job-title-saved">Saved as @savedJobTitle</p>
+            }
+            <span asp-validation-for="Input.JobTitle"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Email"></label>
+            <input asp-for="Input.Email" aria-describedby="@(savedEmail is null ? null : "email-saved")" />
+            @if (savedEmail is not null)
+            {
+                <p class="hint" id="email-saved">Saved as @savedEmail</p>
+            }
+            <span asp-validation-for="Input.Email"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Phone"></label>
+            <input asp-for="Input.Phone" aria-describedby="@(savedPhone is null ? null : "phone-saved")" />
+            @if (savedPhone is not null)
+            {
+                <p class="hint" id="phone-saved">Saved as @savedPhone</p>
+            }
+            <span asp-validation-for="Input.Phone"></span>
+        </div>
+        <div class="field wide">
+            <label asp-for="Input.Notes"></label>
+            <textarea asp-for="Input.Notes" rows="4" aria-describedby="@(savedNotes is null ? null : "notes-saved")"></textarea>
+            @if (savedNotes is not null)
+            {
+                <p class="hint" id="notes-saved">Saved as @savedNotes</p>
+            }
+            <span asp-validation-for="Input.Notes"></span>
+        </div>
+    </div>
+</section>

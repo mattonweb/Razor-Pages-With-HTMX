@@ -92,6 +92,30 @@ internal static class ContactServiceCalls
     }
 
     /// <summary>
+    /// Sends a change to a contact through the service, then reads their row, and every version of them, straight from
+    /// the database as they are afterwards.
+    /// </summary>
+    /// <param name="request">The change.</param>
+    /// <returns>What became of the change, the contact afterwards, and their versions, oldest first.</returns>
+    internal static async Task<(UpdateOutcome Outcome, Contact? After, ContactVersion[] History)> UpdateAsync(
+        ContactUpdateRequest request)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            UpdateOutcome outcome;
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IContactService contacts = scope.ServiceProvider.GetRequiredService<IContactService>();
+                outcome = await contacts.UpdateAsync(request).ConfigureAwait(false);
+            }
+
+            (Contact? after, ContactVersion[] history) =
+                await ReadBackAsync(services, request.Id).ConfigureAwait(false);
+            return (outcome, after, history);
+        }
+    }
+
+    /// <summary>
     /// Rolls a contact back through the service, after archiving an organization first if asked, then reads their row,
     /// and every version of them, straight from the database as they are afterwards.
     /// </summary>

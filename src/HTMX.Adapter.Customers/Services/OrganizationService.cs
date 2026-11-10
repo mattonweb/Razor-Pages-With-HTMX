@@ -68,6 +68,12 @@ internal sealed class OrganizationService : IOrganizationService
     }
 
     /// <inheritdoc/>
+    public Task<OrganizationReference[]> ListChoicesAsync(CancellationToken cancellationToken = default)
+    {
+        return this._provider.ListChoicesAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public Task<OrganizationSingleResponse?> FindAsync(
         OrganizationId id,
         CancellationToken cancellationToken = default)

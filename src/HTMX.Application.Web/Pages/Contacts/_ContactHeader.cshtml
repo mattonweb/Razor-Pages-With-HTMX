@@ -5,8 +5,9 @@
     the tabs. The breadcrumbs lead back through the contact's organization to its Contacts tab. Archive and Restore
     post to the current tab's own handlers, with HTMX or without it, so the answer is that tab again; their buttons
     share the id status-action, so that HTMX puts the focus back on whichever the new content holds, and neither says
-    hx-disable, which would lose it. While the contact's organization is archived, the contact can't be changed, so the
-    page offers neither.
+    hx-disable, which would lose it. Edit goes to the contact's edit form. An archived contact offers Restore in the
+    alert and no Edit; while the contact's organization is archived, the contact can't be changed, so the page offers
+    none of them.
 *@
 @{
     ContactSingleResponse contact = Model.Contact
@@ -50,6 +51,7 @@
                       hx-indicator="find button">
                     <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>Archive</button>
                 </form>
+                <a class="btn primary" asp-page="./Edit" asp-route-id="@id"><svg class="icon" aria-hidden="true"><use href="/icons.svg#edit"></use></svg>Edit</a>
             </div>
         }
     </div>
@@ -71,7 +73,7 @@ else if (contact.Archived is not null)
 {
     <div class="alert" role="status">
         <svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>
-        <div class="content"><p><strong>This contact is archived.</strong> They stay on the Contacts tab of @organization.Name.Value, muted, and can't be rolled back until they are restored.</p></div>
+        <div class="content"><p><strong>This contact is archived.</strong> They stay on the Contacts tab of @organization.Name.Value, muted, and can't be edited or rolled back until they are restored.</p></div>
         <div class="actions">
             <form method="post" action="@restoreAction" asp-antiforgery="true"
                   hx-post="@restoreAction" hx-target="#contact" hx-swap="outerHTML"

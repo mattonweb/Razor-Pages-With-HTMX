@@ -1,0 +1,91 @@
+@model HTMX.Application.Web.Pages.Contacts.EditModel
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The edit page's content: the page header and the form or, for a contact who can't be changed, the alert that says
+    why. HTMX replaces #contact-edit whole (outerHTML) with it when a save it sent is refused, with 422 or 409, as the
+    organization's edit form does; a save that succeeds answers 204 with HX-Location to the contact's page.
+
+    The organization picker sits after the form, not in it: it has a form of its own, and a form inside another is not
+    HTML. Until HTMX loads the relation field it is an empty placeholder, which the field's answer replaces with the
+    picker's dialog.
+*@
+@{
+    ContactSingleResponse contact = Model.Contact
+        ?? throw new InvalidOperationException("The edit form needs the contact it edits.");
+    OrganizationReference organization = contact.Organization;
+    RecordChange lastChange = contact.LastModified;
+    long id = contact.Id.Value;
+    long organizationId = organization.Id.Value;
+    string? action = Url.Page("./Edit", new { id });
+}
+<div id="contact-edit">
+    <header class="page-header">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <ol>
+                <li><a asp-page="/Index">Home</a></li>
+                <li><a asp-page="/Organizations/Index">Organizations</a></li>
+                <li><a asp-page="/Organizations/Details" asp-route-id="@organizationId">@organization.Name.Value</a></li>
+                <li><a asp-page="/Organizations/Contacts" asp-route-id="@organizationId">Contacts</a></li>
+                <li><a asp-page="./Details" asp-route-id="@id">@contact.Name.Value</a></li>
+                <li><span aria-current="page">Edit</span></li>
+            </ol>
+        </nav>
+        <div class="title-row">
+            <div class="title">
+                <h1>Edit @contact.Name.Value</h1>
+                <span class="version current">v@(contact.Version.Value)</span>
+            </div>
+        </div>
+        <p class="muted">Updated <partial name="_Moment" model="lastChange.On" /> by @lastChange.By.Name.Value</p>
+    </header>
+
+    @if (organization.ArchivedOn is not null)
+    {
+        <div class="alert warning" role="status">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#alert"></use></svg>
+            <div class="content">
+                <strong>@organization.Name.Value is archived</strong>
+                <span>Its contacts can't be edited until it is restored.</span>
+            </div>
+            <div class="actions"><a class="btn" asp-page="./Details" asp-route-id="@id">Back to the contact</a></div>
+        </div>
+    }
+    else if (contact.Archived is not null)
+    {
+        <div class="alert warning" role="status">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#alert"></use></svg>
+            <div class="content">
+                <strong>@contact.Name.Value is archived</strong>
+                <span>An archived contact can't be edited until they are restored.</span>
+            </div>
+            <div class="actions"><a class="btn" asp-page="./Details" asp-route-id="@id">Back to the contact</a></div>
+        </div>
+    }
+    else if (Model.Fields is ContactFields fields)
+    {
+        <form method="post" action="@action" asp-antiforgery="true" novalidate
+              hx-post="@action" hx-target="#contact-edit" hx-swap="outerHTML"
+              hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+            <div asp-validation-summary="ModelOnly" role="alert"></div>
+            <input type="hidden" asp-for="Input.Version" />
+
+            <partial name="_ContactFields" model="fields" />
+
+            <div class="form-actions">
+                <div class="end">
+                    <a class="btn" asp-page="./Details" asp-route-id="@id">Cancel</a>
+                    <button class="btn primary" type="submit">Save changes</button>
+                </div>
+            </div>
+        </form>
+
+        @if (Model.Picker is OrganizationPicker picker)
+        {
+            <partial name="_OrganizationPicker" model="picker" />
+        }
+        else
+        {
+            <div id="organization-picker" hidden></div>
+        }
+    }
+</div>

@@ -9,14 +9,15 @@ using HTMX.Adapter.Customers.Contracts;
 /// <summary>
 /// Stands in for the contact service in page tests: it keeps each request the page sends, answers a page of contacts
 /// with the contacts it was given as the page the request asked for, a lookup with the one contact and the versions it
-/// was given, and an archive, a restore or a roll-back with the outcome it was given, so a test sees what the page
-/// asked for without a database.
+/// was given, and a change, an archive, a restore or a roll-back with the outcome it was given, so a test sees what
+/// the page asked for without a database.
 /// </summary>
 internal sealed class StubContactService : IContactService
 {
     private readonly List<ContactCollectionRequest> _received = [];
     private readonly List<(ChangeKind Change, ContactStatusRequest Request)> _statusChanges = [];
     private readonly List<ContactRollBackRequest> _rollBacks = [];
+    private readonly List<ContactUpdateRequest> _updates = [];
     private readonly ContactSummary[] _contacts;
     private readonly UpdateOutcome _outcome;
     private readonly ContactSingleResponse? _found;
@@ -26,7 +27,7 @@ internal sealed class StubContactService : IContactService
     /// Initializes a new instance of the <see cref="StubContactService"/> class.
     /// </summary>
     /// <param name="contacts">The contacts every page holds.</param>
-    /// <param name="outcome">What an archive, a restore and a roll-back are answered with.</param>
+    /// <param name="outcome">What a change, an archive, a restore and a roll-back are answered with.</param>
     /// <param name="found">The contact a lookup answers with, or <see langword="null"/> for none.</param>
     /// <param name="versions">The versions a lookup of the history answers with, newest first.</param>
     public StubContactService(
@@ -58,6 +59,15 @@ internal sealed class StubContactService : IContactService
     public (ChangeKind Change, ContactStatusRequest Request)? LastStatusChange()
     {
         return this._statusChanges.Count == 0 ? null : this._statusChanges[^1];
+    }
+
+    /// <summary>
+    /// Gives the last change the page sent.
+    /// </summary>
+    /// <returns>The change, or <see langword="null"/> before the page sends one.</returns>
+    public ContactUpdateRequest? LastUpdate()
+    {
+        return this._updates.LastOrDefault();
     }
 
     /// <summary>
@@ -96,6 +106,15 @@ internal sealed class StubContactService : IContactService
         CancellationToken cancellationToken = default)
     {
         return Task.FromResult(this._versions);
+    }
+
+    /// <inheritdoc/>
+    public Task<UpdateOutcome> UpdateAsync(
+        ContactUpdateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        this._updates.Add(request);
+        return Task.FromResult(this._outcome);
     }
 
     /// <inheritdoc/>

@@ -125,6 +125,25 @@ internal sealed class OrganizationProvider
     }
 
     /// <summary>
+    /// Reads every active organization, in name order, as another record names it.
+    /// </summary>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the organizations.</param>
+    /// <returns>The organizations.</returns>
+    public Task<OrganizationReference[]> ListChoicesAsync(CancellationToken cancellationToken = default)
+    {
+        IQueryable<Organization> active = this.Match(filter: null, RecordStatus.Active);
+        return active
+            .OrderBy(static organization => organization.Name)
+            .ThenBy(static organization => organization.Id)
+            .Select(static organization => new OrganizationReference
+            {
+                Id = organization.Id,
+                Name = organization.Name,
+            })
+            .ToArrayAsync(cancellationToken);
+    }
+
+    /// <summary>
     /// Reads how the list sorts the organization a cursor names: its value in every sortable column.
     /// </summary>
     /// <param name="id">The organization's identifier.</param>

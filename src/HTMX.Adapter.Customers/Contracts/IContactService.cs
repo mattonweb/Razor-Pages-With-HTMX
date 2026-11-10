@@ -36,9 +36,20 @@ public interface IContactService
     Task<ContactVersionResponse[]> ListVersionsAsync(ContactId id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Saves an earlier version's values again, as the contact's next version: the contact and their organization
-    /// must be active, the contact still at the version the request names, holding some value other than the earlier
-    /// version's, and the organization the earlier version names, when it is another, must still take people in.
+    /// Saves a change to one contact's values as their next version, unless the contact or their organization is
+    /// archived, the contact has moved on since the form was filled, or the organization the change names, when it is
+    /// another, takes no one in.
+    /// </summary>
+    /// <param name="request">The values to save, the version they started from, and who is saving them.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Whether the change was saved and, if not, why.</returns>
+    Task<UpdateOutcome> UpdateAsync(ContactUpdateRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Saves an earlier version's values again, as the contact's next version, under the same rules as a change: the
+    /// contact and their organization must be active, the contact still at the version the request names, holding
+    /// some value other than the earlier version's, and the organization the earlier version names, when it is
+    /// another, must still take people in.
     /// </summary>
     /// <param name="request">Which contact, the version they are at, the version to roll back to, and who asks.</param>
     /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>

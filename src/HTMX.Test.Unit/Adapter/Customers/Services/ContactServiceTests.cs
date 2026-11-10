@@ -11,7 +11,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Contains unit tests for verifying the behavior of the contact service behind <see cref="IContactService"/>, over a
-/// seeded in-memory database: the pages of an organization's contacts, one contact and their versions, and
+/// seeded in-memory database: the pages of an organization's contacts, one contact and their versions, and changing,
 /// archiving, restoring and rolling back a contact.
 /// </summary>
 [TestClass]
@@ -397,6 +397,74 @@ public sealed class ContactServiceTests
             "No version should have been saved.");
     }
 
+    /// <summary>
+    /// Unit test to verify that a change to a contact's values and organization is saved as an Edited version, and the
+    /// contact takes its values.
+    /// </summary>
+    [TestMethod]
+    public async Task UpdateAsync_NewValuesAndOrganization_SavesTheNextVersion()
+    {
+        // Arrange (Given)
+        ContactUpdateRequest request = CreateUpdate(10001, version: 4, organization: 10002, "Head of Samples");
+
+        // Act (When)
+        (UpdateOutcome outcome, Contact? after, ContactVersion[] history) =
+            await ContactServiceCalls.UpdateAsync(request).ConfigureAwait(false);
+        ContactVersion latest = history[^1];
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.Saved,
+            outcome,
+            "The change should be saved.");
+        Assert.AreEqual(
+            (new OrganizationId(10002), "Head of Samples", new VersionNumber(5)),
+            (after?.OrganizationId, after?.JobTitle?.Value, after?.Version),
+            "Ainsley Archetype should be at Fictional Freight as Head of Samples, at version 5.");
+        Assert.AreEqual(
+            (ChangeKind.Edited, (VersionNumber?)null, UserSeed.DemoUser),
+            (latest.Change, latest.RolledBackTo, latest.ChangedBy),
+            "The new version should record an edit by Demo User.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a change that is refused, or that sends the values the contact already holds, saves
+    /// nothing and says why.
+    /// </summary>
+    /// <param name="contact">The contact's identifier.</param>
+    /// <param name="version">The version the change started from.</param>
+    /// <param name="organization">The organization the change names.</param>
+    /// <param name="expected">What should become of it.</param>
+    [TestMethod]
+    [DataRow(10001L, 3, 10003L, UpdateOutcome.Overtaken, DisplayName = "From a version moved on from")]
+    [DataRow(10001L, 4, 10003L, UpdateOutcome.Unchanged, DisplayName = "The values they hold")]
+    [DataRow(10001L, 4, 10009L, UpdateOutcome.OrganizationUnavailable, DisplayName = "Into an archived organization")]
+    [DataRow(10004L, 2, 10005L, UpdateOutcome.Archived, DisplayName = "An archived contact")]
+    [DataRow(10002L, 1, 10009L, UpdateOutcome.Archived, DisplayName = "Organization archived")]
+    [DataRow(99999L, 1, 10003L, UpdateOutcome.NotFound, DisplayName = "An unknown identifier")]
+    public async Task UpdateAsync_RefusedOrUnchanged_SavesNothing(
+        long contact,
+        int version,
+        long organization,
+        UpdateOutcome expected)
+    {
+        // Arrange (Given)
+        ContactUpdateRequest request = CreateUpdate(contact, version, organization, "Head of Examples");
+
+        // Act (When)
+        (UpdateOutcome outcome, Contact? _, ContactVersion[] history) =
+            await ContactServiceCalls.UpdateAsync(request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            outcome,
+            "The change should be answered with why nothing was saved.");
+        Assert.IsFalse(
+            history.Any(static saved => saved.ChangedOn == TestDatabase.StartedOn),
+            "No version should have been saved.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -431,6 +499,31 @@ public sealed class ContactServiceTests
             Id = contact,
             Version = new VersionNumber(version),
             To = new VersionNumber(to),
+            ChangedBy = UserSeed.DemoUser,
+        };
+    }
+
+    /// <summary>
+    /// Creates a change from Demo User that sends Ainsley Archetype's seeded values, with the job title and the
+    /// organization given.
+    /// </summary>
+    /// <param name="contact">The contact the change is for.</param>
+    /// <param name="version">The version the change started from.</param>
+    /// <param name="organization">The organization the change names.</param>
+    /// <param name="jobTitle">The job title the change sends.</param>
+    /// <returns>The change.</returns>
+    private static ContactUpdateRequest CreateUpdate(long contact, int version, long organization, string jobTitle)
+    {
+        return new ContactUpdateRequest
+        {
+            Id = new ContactId(contact),
+            Version = new VersionNumber(version),
+            Name = new DisplayName("Ainsley Archetype"),
+            JobTitle = new JobTitle(jobTitle),
+            Email = new EmailAddress("ainsley.archetype@placeholder.example"),
+            Phone = new PhoneNumber("+1 555-0142"),
+            Notes = new Notes("Prefers email to phone. Follow up in January about the placeholder order."),
+            Organization = new OrganizationId(organization),
             ChangedBy = UserSeed.DemoUser,
         };
     }

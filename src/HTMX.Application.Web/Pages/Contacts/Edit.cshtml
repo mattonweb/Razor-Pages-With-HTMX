@@ -1,0 +1,16 @@
+@page "/contacts/{id:long}/edit"
+@model HTMX.Application.Web.Pages.Contacts.EditModel
+@{
+    ViewData["Title"] = Model.Contact is null ? "Contact not found" : $"Edit {Model.Contact.Name.Value}";
+    ViewData["Section"] = "Organizations";
+}
+@* The page's content is a partial: the page renders it here, and a refused save that HTMX sent gets it alone. *@
+
+@if (Model.Contact is null)
+{
+    <partial name="_ContactNotFound" model="Model.Id" />
+}
+else
+{
+    <partial name="_ContactEdit" model="Model" />
+}

@@ -1,0 +1,10 @@
+@model HTMX.Application.Web.Pages.Contacts.OrganizationFieldAnswer
+@*
+    What HTMX gets for the organization field: the relation field, which replaces #organization-field, and the picker,
+    which replaces #organization-picker. As the page loads that is the select and the empty placeholder; after a choice
+    it is the field and the open dialog, which closes as the new one replaces it.
+*@
+<partial name="_OrganizationField" model="Model.Field" />
+<hx-partial hx-target="#organization-picker" hx-swap="outerHTML">
+    <partial name="_OrganizationPicker" model="Model.Picker" />
+</hx-partial>

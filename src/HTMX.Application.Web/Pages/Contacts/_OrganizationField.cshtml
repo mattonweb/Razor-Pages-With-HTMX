@@ -1,0 +1,40 @@
+@model HTMX.Application.Web.Pages.Contacts.OrganizationField
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The brand's relation field for a contact's organization: a hidden input that the form posts, the chosen
+    organization as a related-record link, and a button that opens the picker (commandfor and command, no script).
+    It replaces the select that HTMX enhances, keeping its id, so a choice in the picker replaces it in turn. After a
+    choice, Change says autofocus: once the swap is done, HTMX focuses it, where the keyboard was before the picker
+    opened. An organization archived since it was chosen is muted and followed by a chip, as the brand shows a link to
+    an archived record; saving refuses it.
+*@
+@{
+    string? describedBy = Model.Saved is null ? null : "organization-saved";
+}
+<fieldset class="field" id="organization-field">
+    <legend>Organization</legend>
+    <div class="relation">
+        <input type="hidden" asp-for="Input.OrganizationId" />
+        @if (Model.Chosen is OrganizationReference chosen)
+        {
+            <a class="related @(chosen.ArchivedOn is null ? null : "archived")" asp-page="/Organizations/Details" asp-route-id="@chosen.Id.Value"><svg class="icon" aria-hidden="true"><use href="/icons.svg#building"></use></svg>@chosen.Name.Value</a>
+            @if (chosen.ArchivedOn is not null)
+            {
+                <span class="chip">Archived</span>
+            }
+            <button class="btn" type="button" commandfor="organization-picker" command="show-modal"
+                    aria-label="Change organization" aria-describedby="@describedBy" autofocus="@Model.Focus">Change</button>
+        }
+        else
+        {
+            <span class="unset">No organization</span>
+            <button class="btn" type="button" commandfor="organization-picker" command="show-modal"
+                    aria-label="Choose an organization" aria-describedby="@describedBy" autofocus="@Model.Focus">Choose</button>
+        }
+    </div>
+    @if (Model.Saved is string saved)
+    {
+        <p class="hint" id="organization-saved">Saved as @saved</p>
+    }
+    <span asp-validation-for="Input.OrganizationId"></span>
+</fieldset>
