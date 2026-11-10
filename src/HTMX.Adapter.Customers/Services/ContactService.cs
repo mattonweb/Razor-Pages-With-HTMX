@@ -75,6 +75,32 @@ internal sealed class ContactService : IContactService
 
     /// <inheritdoc/>
     /// <remarks>
+    /// The new contact is at version 1, created and last changed by the same user at the same moment, and their first
+    /// version, a Created one, holds the same values. Their identifier carries on from the highest the database has
+    /// ever given.
+    /// </remarks>
+    public async Task<ContactCreateResponse> CreateAsync(
+        ContactCreateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        bool welcome = await this._provider
+            .IsOrganizationActiveAsync(request.Organization, cancellationToken)
+            .ConfigureAwait(false);
+        if (!welcome)
+        {
+            return new ContactCreateResponse { Outcome = CreateOutcome.OrganizationUnavailable };
+        }
+
+        Contact contact = Start(request, this._clock.GetUtcNow().UtcDateTime);
+        ContactId id = await this._provider
+            .AddAsync(contact, RecordCreation, cancellationToken)
+            .ConfigureAwait(false);
+        return new ContactCreateResponse { Outcome = CreateOutcome.Created, Id = id };
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
     /// The rules run in order, and the first that applies is the answer: the contact must exist, they and their
     /// organization must be active, they must still be at the version the form was filled from, hold some value other
     /// than the ones sent, and the organization the change names, when it is another, must take people in. A change
@@ -136,6 +162,54 @@ internal sealed class ContactService : IContactService
         CancellationToken cancellationToken = default)
     {
         return this.ChangeStatusAsync(request, ChangeKind.Restored, cancellationToken);
+    }
+
+    /// <summary>
+    /// Makes a new contact's row: the values sent, active, at version 1, created and last changed now by whoever sent
+    /// them. The database gives the identifier as the row is saved.
+    /// </summary>
+    /// <param name="request">The new contact.</param>
+    /// <param name="now">When they are created, in UTC.</param>
+    /// <returns>The row, without an identifier.</returns>
+    private static Contact Start(ContactCreateRequest request, DateTime now)
+    {
+        return new Contact
+        {
+            Name = request.Name,
+            Email = request.Email,
+            Phone = request.Phone,
+            JobTitle = request.JobTitle,
+            OrganizationId = request.Organization,
+            Notes = request.Notes,
+            CreatedOn = now,
+            CreatedBy = request.CreatedBy,
+            LastModifiedOn = now,
+            LastModifiedBy = request.CreatedBy,
+            Version = new VersionNumber(1),
+        };
+    }
+
+    /// <summary>
+    /// Makes a new contact's first version from their row as saved: a Created version holding the same values.
+    /// </summary>
+    /// <param name="contact">The row, with the identifier the database gave it.</param>
+    /// <returns>The version.</returns>
+    private static ContactVersion RecordCreation(Contact contact)
+    {
+        return new ContactVersion
+        {
+            ContactId = contact.Id,
+            Version = contact.Version,
+            Change = ChangeKind.Created,
+            ChangedOn = contact.CreatedOn,
+            ChangedBy = contact.CreatedBy,
+            Name = contact.Name,
+            Email = contact.Email,
+            Phone = contact.Phone,
+            JobTitle = contact.JobTitle,
+            OrganizationId = contact.OrganizationId,
+            Notes = contact.Notes,
+        };
     }
 
     /// <summary>

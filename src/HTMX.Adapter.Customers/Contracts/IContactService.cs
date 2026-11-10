@@ -36,6 +36,17 @@ public interface IContactService
     Task<ContactVersionResponse[]> ListVersionsAsync(ContactId id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Creates a contact, with their first version, unless the organization they would belong to is archived or does
+    /// not exist.
+    /// </summary>
+    /// <param name="request">The new contact's values, their organization, and who is creating them.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Whether the contact was created and, if they were, their identifier.</returns>
+    Task<ContactCreateResponse> CreateAsync(
+        ContactCreateRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Saves a change to one contact's values as their next version, unless the contact or their organization is
     /// archived, the contact has moved on since the form was filled, or the organization the change names, when it is
     /// another, takes no one in.

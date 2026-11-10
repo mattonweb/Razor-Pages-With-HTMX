@@ -226,6 +226,39 @@ internal sealed class ContactProvider
     }
 
     /// <summary>
+    /// Saves a new contact: their row, then their first version, in one transaction.
+    /// </summary>
+    /// <remarks>
+    /// As for an organization, the database gives the row its identifier as it is saved, and the version is keyed by
+    /// that identifier, so the caller says how to make the version from the saved row.
+    /// </remarks>
+    /// <param name="contact">The new row, without an identifier.</param>
+    /// <param name="record">Makes the first version from the row as saved, its identifier included.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>The identifier the database gave the contact.</returns>
+    public async Task<ContactId> AddAsync(
+        Contact contact,
+        Func<Contact, ContactVersion> record,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(contact);
+        ArgumentNullException.ThrowIfNull(record);
+        DatabaseFacade database = this._context.Database;
+        IDbContextTransaction transaction = await database
+            .BeginTransactionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using (transaction.ConfigureAwait(false))
+        {
+            this._context.Add(contact);
+            await this._context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            this._context.Add(record(contact));
+            await this._context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return contact.Id;
+        }
+    }
+
+    /// <summary>
     /// Saves a change to a contact: their row's new values, then the version that records them, in one transaction.
     /// </summary>
     /// <remarks>

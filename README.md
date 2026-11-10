@@ -39,12 +39,17 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   the answer is the same page of the list: with HTMX the list's card alone, with the keyboard back on that row's menu
   button; without it, a redirect to the same page. Previous and Next redraw the whole tab, header included, because
   the header's Archive and Restore post to the page's address too. An archived organization's contacts can be seen
-  but not changed until it is restored. Each name links to the contact's own page.
+  but not changed until it is restored, and offers no **New contact**. Each name links to the contact's own page.
 - **`/organizations/{id}/history`** — the History tab: every version, newest first, in a timeline, each with the fields
   it changed. An earlier version whose values differ from now offers **Roll back**, previewed in a dialog with the
   change from now; rolling back saves those values as a new version, under the same rules as an edit, and its toast's
   Undo rolls back again. The page's tabs share one base page model, so Archive and Restore work on any of them and
   answer with the tab they were pressed on.
+- **`/contacts/create`** — a new contact: the edit form's fields, organization field and answers, saved at version 1
+  with a Created version, at the next identifier (11501 on a fresh start); the save goes to their page. The Contacts
+  tab's **New contact** opens it as `/contacts/create?organization=10003`, with that organization chosen and the
+  breadcrumbs and Cancel leading back to its tab; an archived organization is not chosen. The organization field's
+  handlers are the edit form's, on a base page model both share; on this page their addresses name no contact.
 - **`/contacts/{id}`** — one contact: their name, status and version, who changed them last, the organization they
   belong to, as a link to it, and every value they hold, read in one query that joins the organization and the users.
   The breadcrumbs lead back through the organization's Contacts tab. **Archive** and **Restore** work as an

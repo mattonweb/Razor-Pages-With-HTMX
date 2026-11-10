@@ -7,9 +7,10 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 
 /// <summary>
-/// Stands in for routing in page tests: a page's address comes back as the page's name and the identifier, then the
-/// handler and any other values, such as <c>/Organizations/History/10003?handler=RollBack&amp;to=2&amp;version=3</c>, so
-/// a test sees which page, record, handler and values a page model asked for without the application's routes.
+/// Stands in for routing in page tests: a page's address comes back as the page's name and the identifier, when there
+/// is one, then the handler and any other values, such as
+/// <c>/Organizations/History/10003?handler=RollBack&amp;to=2&amp;version=3</c>, so a test sees which page, record,
+/// handler and values a page model asked for without the application's routes.
 /// </summary>
 internal sealed class StubUrlHelper : IUrlHelper
 {
@@ -54,7 +55,8 @@ internal sealed class StubUrlHelper : IUrlHelper
     {
         ArgumentNullException.ThrowIfNull(routeContext);
         RouteValueDictionary values = new RouteValueDictionary(routeContext.Values);
-        string address = $"{values["page"]}/{values["id"]}";
+        object? id = values["id"];
+        string address = id is null ? $"{values["page"]}" : $"{values["page"]}/{id}";
         string[] query =
         [
             .. values

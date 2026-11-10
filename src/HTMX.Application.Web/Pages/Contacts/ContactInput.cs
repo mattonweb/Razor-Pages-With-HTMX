@@ -3,7 +3,7 @@ namespace HTMX.Application.Web.Pages.Contacts;
 using System.ComponentModel.DataAnnotations;
 
 /// <summary>
-/// A contact's values as a form posts them, and the rules each must pass, ready to be shared with a form that creates
+/// A contact's values as a form posts them, and the rules each must pass, shared by the forms that create and edit
 /// contacts so that both ask the same of every value.
 /// </summary>
 public class ContactInput

@@ -8,6 +8,9 @@
     #organization: the header's Archive and Restore post to the URL's values, so they must be drawn again whenever the
     URL changes. A row's form leaves the URL as it is and replaces only this card; it says hx-post, which HTMX sets up
     before it boosts anything, so the post is not boosted. Without HTMX they are plain links and forms that post.
+
+    New contact, the card's one action, opens the create form with this organization chosen. It leaves the list, so it
+    is a normal link, not a swap, and an archived organization, which takes no one in, does not offer it.
 *@
 @{
     OrganizationSingleResponse organization = Model.Organization
@@ -22,7 +25,13 @@
 <section class="card" id="contact-list" aria-labelledby="contacts-heading"
          hx-boost:inherited="true" hx-target:inherited="#organization" hx-swap:inherited="outerHTML"
          hx-indicator:inherited="#contact-list">
-    <header class="card-header"><h2 id="contacts-heading">Contacts</h2></header>
+    <header class="card-header">
+        <h2 id="contacts-heading">Contacts</h2>
+        @if (changeable)
+        {
+            <a class="btn ghost" asp-page="/Contacts/Create" asp-route-organization="@organization.Id.Value" hx-boost="false"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>New contact</a>
+        }
+    </header>
     <div class="busy-bar"></div>
 
     @if (list.Total.Value == 0)

@@ -19,8 +19,7 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
     private const string EditPartial = "_ContactEdit";
     private const string DetailsPage = "./Details";
 
-    // The form's names for its fields, as ModelState keys them.
-    private const string OrganizationKey = nameof(Input) + "." + nameof(InputModel.OrganizationId);
+    // The form's name for the version it was filled from, as ModelState keys it.
     private const string VersionKey = nameof(Input) + "." + nameof(InputModel.Version);
 
     private readonly IContactService _contacts;
@@ -134,17 +133,6 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
     }
 
     /// <summary>
-    /// Reads a value the form may leave empty: trimmed, and an empty value as none.
-    /// </summary>
-    /// <param name="text">The value as posted.</param>
-    /// <returns>The value, or <see langword="null"/> when it is empty.</returns>
-    private static string? Optional(string? text)
-    {
-        string? trimmed = text?.Trim();
-        return string.IsNullOrEmpty(trimmed) ? null : trimmed;
-    }
-
-    /// <summary>
     /// Turns the form into a change, once it has passed validation: the values trimmed, an empty value as none, and
     /// the signed-in user as who made it.
     /// </summary>
@@ -211,9 +199,7 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
     /// <returns>The form, with the status 422.</returns>
     private Task<IActionResult> RefuseOrganizationAsync(long id, CancellationToken cancellationToken)
     {
-        this.ModelState.AddModelError(
-            OrganizationKey,
-            "That organization is archived or no longer exists. Choose an active one.");
+        this.MarkOrganizationUnavailable();
         return this.RefuseAsync(id, StatusCodes.Status422UnprocessableEntity, cancellationToken);
     }
 

@@ -12,7 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Calls <see cref="IContactService"/> as the pages do, over a seeded database of its own: a page and then the pages
-/// its Previous and Next lead to, one contact or their versions, or an archive, a restore or a roll-back.
+/// its Previous and Next lead to, one contact or their versions, or a new contact, an archive, a restore or a
+/// roll-back.
 /// </summary>
 internal static class ContactServiceCalls
 {
@@ -88,6 +89,37 @@ internal static class ContactServiceCalls
                 IContactService contacts = scope.ServiceProvider.GetRequiredService<IContactService>();
                 return await contacts.ListVersionsAsync(id).ConfigureAwait(false);
             }
+        }
+    }
+
+    /// <summary>
+    /// Creates a contact through the service, then reads their row, and every version of them, straight from the
+    /// database, and counts the contacts the database gained.
+    /// </summary>
+    /// <param name="request">The new contact.</param>
+    /// <returns>What became of the request, the new contact and their versions, oldest first, or none and no versions
+    /// when nothing was created, and how many contacts were added.</returns>
+    internal static async Task<(ContactCreateResponse Response, Contact? After, ContactVersion[] History, int Added)>
+        CreateAsync(ContactCreateRequest request)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            int before = await CountAsync(services).ConfigureAwait(false);
+            ContactCreateResponse response;
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IContactService contacts = scope.ServiceProvider.GetRequiredService<IContactService>();
+                response = await contacts.CreateAsync(request).ConfigureAwait(false);
+            }
+
+            int added = await CountAsync(services).ConfigureAwait(false) - before;
+            if (response.Id is not ContactId id)
+            {
+                return (response, null, [], added);
+            }
+
+            (Contact? after, ContactVersion[] history) = await ReadBackAsync(services, id).ConfigureAwait(false);
+            return (response, after, history, added);
         }
     }
 
@@ -192,6 +224,20 @@ internal static class ContactServiceCalls
                 ChangedBy = UserSeed.DemoUser,
             };
             await organizations.ArchiveAsync(request).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Counts every contact, archived ones among them, straight from the database.
+    /// </summary>
+    /// <param name="services">The started services.</param>
+    /// <returns>How many contacts the database holds.</returns>
+    private static async Task<int> CountAsync(ServiceProvider services)
+    {
+        using (IServiceScope scope = services.CreateScope())
+        {
+            CustomersDatabaseContext context = scope.ServiceProvider.GetRequiredService<CustomersDatabaseContext>();
+            return await context.Set<Contact>().CountAsync().ConfigureAwait(false);
         }
     }
 

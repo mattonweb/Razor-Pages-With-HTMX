@@ -11,8 +11,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Contains unit tests for verifying the behavior of the contact service behind <see cref="IContactService"/>, over a
-/// seeded in-memory database: the pages of an organization's contacts, one contact and their versions, and changing,
-/// archiving, restoring and rolling back a contact.
+/// seeded in-memory database: the pages of an organization's contacts, one contact and their versions, and creating,
+/// changing, archiving, restoring and rolling back a contact.
 /// </summary>
 [TestClass]
 public sealed class ContactServiceTests
@@ -398,6 +398,66 @@ public sealed class ContactServiceTests
     }
 
     /// <summary>
+    /// Unit test to verify that a new contact at an active organization is created at version 1, created and last
+    /// changed by whoever sent them, with one Created version holding their values.
+    /// </summary>
+    [TestMethod]
+    public async Task CreateAsync_ActiveOrganization_CreatesThemWithTheirFirstVersion()
+    {
+        // Arrange (Given)
+        ContactCreateRequest request = CreateNew(10002);
+
+        // Act (When)
+        (ContactCreateResponse response, Contact? after, ContactVersion[] history, int added) =
+            await ContactServiceCalls.CreateAsync(request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (CreateOutcome.Created, 1),
+            (response.Outcome, added),
+            "One contact should be created.");
+        Assert.AreEqual(
+            ("Quinn Quickstart", new OrganizationId(10002), new VersionNumber(1)),
+            (after?.Name.Value, after?.OrganizationId, after?.Version),
+            "Quinn Quickstart should be at Fictional Freight, at version 1.");
+        Assert.AreEqual(
+            (UserSeed.DemoUser, TestDatabase.StartedOn, TestDatabase.StartedOn, (DateTime?)null),
+            (after?.CreatedBy, after?.CreatedOn, after?.LastModifiedOn, after?.ArchivedOn),
+            "The contact should be active, created and last changed by Demo User when they were created.");
+        Assert.HasCount(
+            1,
+            history,
+            "A new contact should have one version.");
+        Assert.AreEqual(
+            (ChangeKind.Created, "Quinn Quickstart", "Head of Onboarding", new OrganizationId(10002)),
+            (history[0].Change, history[0].Name.Value, history[0].JobTitle?.Value, history[0].OrganizationId),
+            "The first version should be a Created one holding the contact's values.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a new contact at an organization that takes no one in is not created.
+    /// </summary>
+    /// <param name="organization">The organization the new contact names.</param>
+    [TestMethod]
+    [DataRow(10009L, DisplayName = "An archived organization")]
+    [DataRow(99999L, DisplayName = "An unknown organization")]
+    public async Task CreateAsync_OrganizationUnavailable_CreatesNothing(long organization)
+    {
+        // Arrange (Given)
+        ContactCreateRequest request = CreateNew(organization);
+
+        // Act (When)
+        (ContactCreateResponse response, Contact? _, ContactVersion[] _, int added) =
+            await ContactServiceCalls.CreateAsync(request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (CreateOutcome.OrganizationUnavailable, (ContactId?)null, 0),
+            (response.Outcome, response.Id, added),
+            "The contact should be refused, with no identifier, and nothing saved.");
+    }
+
+    /// <summary>
     /// Unit test to verify that a change to a contact's values and organization is saved as an Edited version, and the
     /// contact takes its values.
     /// </summary>
@@ -468,6 +528,23 @@ public sealed class ContactServiceTests
     #endregion Public Methods
 
     #region Private Methods
+
+    /// <summary>
+    /// Creates a new contact from Demo User, Quinn Quickstart, with invented values, at the organization given.
+    /// </summary>
+    /// <param name="organization">The organization they would belong to.</param>
+    /// <returns>The new contact.</returns>
+    private static ContactCreateRequest CreateNew(long organization)
+    {
+        return new ContactCreateRequest
+        {
+            Name = new DisplayName("Quinn Quickstart"),
+            JobTitle = new JobTitle("Head of Onboarding"),
+            Email = new EmailAddress("quinn.quickstart@freight.example"),
+            Organization = new OrganizationId(organization),
+            CreatedBy = UserSeed.DemoUser,
+        };
+    }
 
     /// <summary>
     /// Creates a request from Demo User to archive or restore a contact.

@@ -1,0 +1,47 @@
+@model HTMX.Application.Web.Pages.Contacts.CreateModel
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The create form, and the organization picker after it. HTMX replaces #contact-create whole (outerHTML) with it
+    when a save it sent is refused: CreateModel.OnPostAsync answers with it, with 422, and draws the relation field at
+    once. Nothing above the form changes. A save that succeeds answers 204 with HX-Location to the new contact's page.
+
+    The form's address keeps the organization it was opened from, so a refused save still leads back to that
+    organization's Contacts tab; the organization chosen is a field of its own. As on the edit form, the picker sits
+    after the form, not in it, and is an empty placeholder until HTMX loads the relation field.
+*@
+@{
+    ContactFields fields = Model.Fields
+        ?? throw new InvalidOperationException("The create form needs its fields.");
+    OrganizationSingleResponse? from = Model.OpenedFrom;
+    string? action = Url.Page("./Create", new { organization = from?.Id.Value });
+}
+<div id="contact-create">
+    <form method="post" action="@action" asp-antiforgery="true" novalidate
+          hx-post="@action" hx-target="#contact-create" hx-swap="outerHTML"
+          hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+        <partial name="_ContactFields" model="fields" />
+
+        <div class="form-actions">
+            <div class="end">
+                @if (from is not null)
+                {
+                    <a class="btn" asp-page="/Organizations/Contacts" asp-route-id="@from.Id.Value">Cancel</a>
+                }
+                else
+                {
+                    <a class="btn" asp-page="/Organizations/Index">Cancel</a>
+                }
+                <button class="btn primary" type="submit">Create contact</button>
+            </div>
+        </div>
+    </form>
+
+    @if (Model.Picker is OrganizationPicker picker)
+    {
+        <partial name="_OrganizationPicker" model="picker" />
+    }
+    else
+    {
+        <div id="organization-picker" hidden></div>
+    }
+</div>

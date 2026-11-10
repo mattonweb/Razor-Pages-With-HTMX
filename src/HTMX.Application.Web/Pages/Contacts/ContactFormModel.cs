@@ -18,7 +18,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 /// <remarks>
 /// The select works without HTMX. With HTMX it loads the relation field in its place, whose picker filters the
 /// organizations as you type: two GET handlers here answer it, one with the field and the picker, one with the picker's
-/// list alone. Razor Pages finds them on each form that inherits them.
+/// list alone. Razor Pages finds them on each form that inherits them: the form that edits a contact, whose addresses
+/// carry the contact's identifier, and the form that creates one, whose addresses carry none.
 /// </remarks>
 /// <typeparam name="TInput">The form's values: a contact's values, and whatever else the form carries.</typeparam>
 public abstract class ContactFormModel<TInput> : PageModel
@@ -31,6 +32,9 @@ public abstract class ContactFormModel<TInput> : PageModel
 
     // How many organizations the picker lists at once; a filter narrows them to the one wanted.
     private const int ChoicesShown = 10;
+
+    // The form's name for the organization field, as ModelState keys it.
+    private const string OrganizationKey = nameof(Input) + "." + nameof(ContactInput.OrganizationId);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ContactFormModel{TInput}"/> class.
@@ -49,9 +53,10 @@ public abstract class ContactFormModel<TInput> : PageModel
     public TInput Input { get; set; } = new TInput();
 
     /// <summary>
-    /// Gets or sets the identifier the route names.
+    /// Gets or sets the identifier of the contact the form saves, which the route names, or <see langword="null"/> on a
+    /// form that creates one. The field's addresses carry it, so that they answer to the page that drew the field.
     /// </summary>
-    public long Id { get; protected set; }
+    public long? Id { get; protected set; }
 
     /// <summary>
     /// Gets the organization field the field handler answers with, or that an answer to HTMX draws at once.
@@ -78,13 +83,14 @@ public abstract class ContactFormModel<TInput> : PageModel
     /// Answers HTMX with the relation field for an organization, and the picker beside it: as the page loads, in place
     /// of the select, and after a choice in the picker, which the new picker closes by replacing it.
     /// </summary>
-    /// <param name="id">The contact's identifier, from the route.</param>
+    /// <param name="id">The contact's identifier, from the route, or <see langword="null"/> on a form that creates
+    /// one.</param>
     /// <param name="organization">The organization chosen, if any.</param>
     /// <param name="choose">Whether the picker's Choose sent it, so the field's button takes the focus back.</param>
     /// <param name="cancellationToken">Signals that the browser has gone away.</param>
     /// <returns>The field, and the picker for the layout to put in its place.</returns>
     public async Task<IActionResult> OnGetOrganizationFieldAsync(
-        long id,
+        long? id,
         long? organization,
         bool choose,
         CancellationToken cancellationToken)
@@ -103,13 +109,14 @@ public abstract class ContactFormModel<TInput> : PageModel
     /// <summary>
     /// Answers HTMX with the picker's list for a filter, the chosen organization's radio checked when it is listed.
     /// </summary>
-    /// <param name="id">The contact's identifier, from the route.</param>
+    /// <param name="id">The contact's identifier, from the route, or <see langword="null"/> on a form that creates
+    /// one.</param>
     /// <param name="filter">The text the names must contain, as typed.</param>
     /// <param name="organization">The organization whose radio was checked, if any.</param>
     /// <param name="cancellationToken">Signals that the browser has gone away.</param>
     /// <returns>The list.</returns>
     public async Task<IActionResult> OnGetOrganizationChoicesAsync(
-        long id,
+        long? id,
         string? filter,
         long? organization,
         CancellationToken cancellationToken)
@@ -118,6 +125,17 @@ public abstract class ContactFormModel<TInput> : PageModel
         this.Input = new TInput { OrganizationId = organization };
         OrganizationPicker picker = await this.CreatePickerAsync(filter, cancellationToken).ConfigureAwait(false);
         return this.Partial(ChoicesPartial, picker);
+    }
+
+    /// <summary>
+    /// Reads a value the form may leave empty: trimmed, and an empty value as none.
+    /// </summary>
+    /// <param name="text">The value as posted.</param>
+    /// <returns>The value, or <see langword="null"/> when it is empty.</returns>
+    protected static string? Optional(string? text)
+    {
+        string? trimmed = text?.Trim();
+        return string.IsNullOrEmpty(trimmed) ? null : trimmed;
     }
 
     /// <summary>
@@ -167,6 +185,17 @@ public abstract class ContactFormModel<TInput> : PageModel
     {
         return this.Url.Page(this.PageName, handler, values)
             ?? throw new InvalidOperationException($"The handler {handler} has no address.");
+    }
+
+    /// <summary>
+    /// Marks the organization field with why a save was refused: the organization chosen is archived, and so takes no
+    /// one in, or no longer exists.
+    /// </summary>
+    protected void MarkOrganizationUnavailable()
+    {
+        this.ModelState.AddModelError(
+            OrganizationKey,
+            "That organization is archived or no longer exists. Choose an active one.");
     }
 
     /// <summary>
