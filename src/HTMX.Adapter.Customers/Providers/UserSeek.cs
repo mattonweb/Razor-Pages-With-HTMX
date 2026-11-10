@@ -4,7 +4,6 @@ using System;
 using System.Linq.Expressions;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data.Conversions;
-using HTMX.Adapter.Customers.DTOs;
 using HTMX.Adapter.Customers.Entities;
 
 /// <summary>

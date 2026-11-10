@@ -1,4 +1,4 @@
-namespace HTMX.Adapter.Customers.DTOs;
+namespace HTMX.Adapter.Customers.Entities;
 
 using HTMX.Adapter.Customers.Contracts;
 
@@ -6,6 +6,9 @@ using HTMX.Adapter.Customers.Contracts;
 /// The contact a cursor names, as an organization's list of contacts sorts them: their name, and their identifier,
 /// which settles a tie. The next page starts just past these values.
 /// </summary>
+/// <remarks>
+/// Unlike the other entities, it has no table: a query reads it from the contact's row, and nothing saves it.
+/// </remarks>
 internal sealed record ContactSortKey
 {
     /// <summary>

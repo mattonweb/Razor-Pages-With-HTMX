@@ -4,7 +4,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
-using HTMX.Adapter.Customers.DTOs;
 using HTMX.Adapter.Customers.Entities;
 using HTMX.Adapter.Customers.Providers;
 
