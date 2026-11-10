@@ -1,8 +1,8 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, and the patterns still open (fields checked as you type, confirmation, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, and the patterns still open (fields checked as you type, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
 owner: Matt
-version: 0.7.0
+version: 0.8.0
 visibility: public
 ---
 
@@ -21,7 +21,7 @@ page looks (the repository's brand skill, if it has one).
 post. HTMX only narrows what a response replaces and keeps the address bar in step. A page that cannot be built that
 way is a decision to make out loud, never a default.
 
-## Status: draft 0.7.0, HTMX 4.0.1
+## Status: draft 0.8.0, HTMX 4.0.1
 
 | Section | State |
 |---|---|
@@ -35,7 +35,8 @@ way is a decision to make out loud, never a default.
 | 8. More than one target | Proven |
 | 9. Actions on a row | Proven |
 | 10. A field HTMX enhances | Proven |
-| 11. Still open | Open |
+| 11. An action that cannot be undone | Proven |
+| 12. Still open | Open |
 
 - **Proven:** built in a Razor Pages application on HTMX 4.0.1, and shown working by a unit test or in the browser.
 - **Checked:** read in the 4.0.1 source and the reference, and true of that version, but not yet built.
@@ -54,7 +55,7 @@ A section moves up only when that is true of it, in a session Matt attends.
   Its unminified source is `https://unpkg.com/htmx.org@<version>/dist/htmx.js`; citations below to "4.0.1 source"
   name a method in that file.
 - **Chris Woodruff's [htmx Razor Pages workshop](https://github.com/cwoodruff/htmx-razor-workshop)**, MIT. Good on the
-  Razor Pages side, and sections 3, 6 to 9 and 11 take several ideas from it, each credited by chapter: a comment that
+  Razor Pages side, and sections 3, 6 to 9 and 12 take several ideas from it, each credited by chapter: a comment that
   states each partial's contract, what each request gets back, handlers named for what they do, a row action that
   draws the list again, checking a field as you type, form rows added by the server, polling the server stops, and
   what to look for in the network panel. It is written for htmx 1.9.12, and some of its central code does not carry
@@ -429,7 +430,45 @@ brand's relation field, whose picker filters the choices as you type.
 - **Enter in the picker's filter sends the picker's form**, because the filter is one of its fields. By then the list
   has kept up with the typing, so Enter chooses the checked radio, and with none checked the browser asks for one.
 
-## 11. Still open (open)
+## 11. An action that cannot be undone (proven)
+
+Built as Delete permanently on an archived record's page: a confirm dialog when the record can go, a dialog that says
+why when it cannot, and the list afterwards, with a toast.
+
+- **Ask first in a `<dialog>` with its own form, not with `hx-confirm`.** An action that can be undone runs at once
+  and offers Undo (section 8); only one that cannot asks first. `hx-confirm` asks with the browser's `confirm()`
+  ([hx-confirm](https://four.htmx.org/reference/attributes/hx-confirm)), after a cancelable `htmx:confirm` event,
+  and only when HTMX sends the request (4.0.1 source, `#issueRequest`), so without HTMX the form posts unasked. A
+  `<dialog>` opened by a `type="button"` with `commandfor` and `command="show-modal"` asks with HTMX and without it,
+  and its form posts like any other (section 7). The safe choice says `autofocus`, which a modal dialog focuses as it
+  opens (HTML's
+  [dialog focusing steps](https://html.spec.whatwg.org/multipage/interactive-elements.html#dialog-focusing-steps)),
+  so a key pressed at once does no harm.
+- **The dialog's form carries the version it shows.** The handler refuses a request from an out-of-date dialog, as it
+  refuses a save from an out-of-date form (section 7), so a confirmation never removes a record that has changed
+  since it was asked for.
+- **The page knows before it asks whether the action is allowed.** When the record cannot go, as when other records
+  still name it, the page draws the same button with a different dialog: one that says why and what to do instead,
+  closes with `<form method="dialog">`, and posts nothing. The handler checks again when the action is sent, since the
+  page may be out of date, and answers a refusal as Archive does, with the page's content and a toast that says why
+  (section 8). The answer replaces the element that holds the dialog, which closes it (section 7).
+- **Success leaves the page, so the toast waits in `TempData`, with HTMX too.** The record's page is gone, so the
+  handler answers as a save does (section 7): a redirect without HTMX, and 204 with `HX-Location` naming the list with
+  it. Either way it leaves its toast in `TempData`, with no Undo. `HX-Location` makes HTMX GET the list with
+  `HX-Request-Type: full` (4.0.1 source, `#handleHeadersAndMaybeReturnEarly`), and that `fetch` sends the
+  application's cookies (`credentials: "same-origin"`, `#createRequestContext`), the `TempData` cookie among them
+  ([TempData](https://learn.microsoft.com/aspnet/core/fundamentals/app-state#tempdata)), so the list's whole page
+  shows the toast.
+- **The list takes the toast only for its whole page.** A partial answer has no toast region to put it in, so the
+  list's GET handler reads `TempData` after it has decided to answer with the page (section 3), and a swap of the
+  list's card never spends a toast it cannot show. Leaving a toast and taking it belong in one small class that the
+  record's pages and the list share, so the keys are written once.
+- **Testing.** A test of the delete that HTMX sent asserts 204, `HX-Location` naming the list, and the message in
+  `TempData`; the list's test leaves a message in `TempData` and expects it shown for a request with no HTMX headers
+  and for a history restore, and not for a partial one. A page model that reads or writes `TempData` gets a
+  `TempDataDictionary` over a stand-in `ITempDataProvider` in its test, as the framework would give it one.
+
+## 12. Still open (open)
 
 Nothing in this section is built yet. What is known, to start from; an idea taken from the workshop names its
 chapter.
@@ -440,10 +479,10 @@ chapter.
   as you type, sends only its own value unless it says `hx-include="closest form"` (workshop, "Checkpoint:
   Troubleshooting + Pattern Review").
 - **An action that takes its row out of the list.** Section 9's rows stay, an archived one shown among the rest, so
-  the page read again holds the same rows. Where the action removes the row, as a delete or a list of active records
-  only would, the page read again from the same cursor is one row short, and when that row was the last on its page
-  the page is empty. The workshop shows the page before (Lab 4); with key-based paging the list's own rule for a
-  cursor that leaves nothing to show decides.
+  the page read again holds the same rows. Where the action removes the row, as a delete from the list itself
+  (section 11 deletes from the record's own page) or a list of active records only would, the page read again from
+  the same cursor is one row short, and when that row was the last on its page the page is empty. The workshop shows
+  the page before (Lab 4); with key-based paging the list's own rule for a cursor that leaves nothing to show decides.
 - **Check one field as you type.** The input posts on its own to a handler of its own: `hx-post="?handler=CheckName"`,
   `hx-trigger="input changed delay:500ms"`, `hx-include="closest form"` for the token and the other fields, and the
   field's message element as its `hx-target`. The handler validates what was bound and returns only that field's
@@ -460,9 +499,6 @@ chapter.
   message after a save (Lab 3). It costs a second request for each message, where section 8's `<hx-partial>` arrives
   with the first; it suits an element that reloads itself for reasons of its own. In HTMX 4 a `from:` selector that
   holds a space needs single quotes (section 1); `from:body` does not.
-- **Confirmation, for an action that cannot be undone.** An action that can be undone runs at once and offers Undo
-  (section 8). `hx-confirm` uses the browser's `confirm()` and needs HTMX; a confirm page, or a `<dialog>` with its own
-  form, works without it. Choose when the first such action, such as Delete, is built.
 - **A long job reports its progress by polling.** While the job runs, its status element carries `hx-get` and
   `hx-trigger="every 1s"`, and each answer replaces the element. The answer for a finished job leaves the trigger out,
   and the polling stops (workshop, Lab 5). HTMX 4 still reads `every` (4.0.1 source, `#parseTriggerSpecs`). Without
