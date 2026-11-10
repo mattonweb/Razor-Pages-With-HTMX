@@ -2,6 +2,10 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-10 (attended session with Matt): one Adapter per data store it owns, not per database.** What groups a
+  set of tables depends on the engine, a database in some and a schema in others, so the solution-architecture
+  paragraph now says data store. Nothing in the solution changes: `HTMX.Adapter.Customers` still owns the one
+  database.
 - **2026-11-08, later (attended session with Matt): the `code-htmx-pages` skill was started.** It is the
   second real folder under `.claude/skills/`: how Razor Pages and HTMX 4 work together, drafted here beside the
   application that proves each pattern, and written to be copied into other repositories. Read its status table before
@@ -113,9 +117,10 @@ here, with its line count and a reason, in the same session that creates it.
 
 **Solution architecture (`dotnet-solution-architecture` section 7): adoption state `conforming`.** The solution holds
 one Application (`HTMX.Application.Web`), one Adapter (`HTMX.Adapter.Customers`) and one optional test project
-(`HTMX.Test.Unit`). **One Adapter per database:** `HTMX.Adapter.Customers` owns the in-memory `Customers` database
-and every entity in it (organizations, their contacts, and the internal users who manage them), with each entity's
-provider (its Entity Framework queries) and service (its rules) beside it; a new entity type joins this Adapter,
+(`HTMX.Test.Unit`). **One Adapter per data store it owns:** a database, or a schema where the engine groups tables
+that way. `HTMX.Adapter.Customers` owns the in-memory `Customers` database and every entity in it (organizations,
+their contacts, and the internal users who manage them), with each entity's provider (its Entity Framework queries)
+and service (its rules) beside it; a new entity type joins this Adapter,
 never a new one. A data source or an external system that earns its own
 project is an `HTMX.Adapter.<Name>` exposing only `Configuration/`, `Contracts/` and
 `ServiceCollectionExtensions`; a workflow across capabilities is an
