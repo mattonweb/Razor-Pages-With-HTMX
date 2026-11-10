@@ -60,7 +60,7 @@ public sealed class IndexModel : PageModel
 
     /// <summary>
     /// Gets a value indicating whether the page's heading takes the focus: when HTMX asked for the whole page, as
-    /// Previous and Next do to take its main content, rather than the browser loading it on its own.
+    /// Previous, Next and Rows per page do to take its main content, rather than the browser loading it on its own.
     /// </summary>
     public bool HeadingFocused { get; private set; }
 
