@@ -1,7 +1,9 @@
 namespace HTMX.Application.Web;
 
+using System.Threading.Tasks;
 using HTMX.Adapter.Customers;
 using HTMX.Adapter.Customers.Configuration;
+using HTMX.Adapter.Customers.Contracts;
 using HTMX.Application.Web.Authentication;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -9,7 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 /// <summary>
-/// The application's entry point and composition root: it registers the services and builds the request pipeline.
+/// The application's entry point and composition root: it registers the services, builds the request pipeline, and
+/// decides what runs before the first request.
 /// </summary>
 public static class Program
 {
@@ -19,17 +22,23 @@ public static class Program
     private static readonly DatabaseName CustomersDatabaseName = new DatabaseName("Customers");
 
     /// <summary>
-    /// Starts the application and runs it until it is stopped.
+    /// Builds the application, creates the customer database, and runs the application until it is stopped.
     /// </summary>
     /// <param name="args">The command-line arguments.</param>
-    public static void Main(string[] args)
+    /// <returns>A task that completes when the application has stopped.</returns>
+    public static async Task Main(string[] args)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         AddServices(builder.Services);
 
         WebApplication application = builder.Build();
         UsePipeline(application);
-        application.Run();
+
+        // The host is the application's, so it decides when the adapter's database is made: here, once, before the
+        // application runs and so before the first request can arrive.
+        ICustomersDatabase customersDatabase = application.Services.GetRequiredService<ICustomersDatabase>();
+        await customersDatabase.CreateAsync().ConfigureAwait(false);
+        await application.RunAsync().ConfigureAwait(false);
     }
 
     /// <summary>

@@ -17,8 +17,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers the in-memory database, the context that reads and writes it, the service that creates its tables
-    /// and writes the seed when the application starts, and the services behind the contracts.
+    /// Registers the in-memory database, the context that reads and writes it, and the services behind the contracts,
+    /// among them <see cref="ICustomersDatabase"/>, which creates the tables and writes the seed when the application
+    /// calls it. Registering starts nothing: the host is the application's.
     /// </summary>
     /// <param name="services">The host's service collection.</param>
     /// <param name="options">What the host supplies: the database's name.</param>
@@ -35,7 +36,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(_ => new InMemoryDatabase(options.DatabaseName));
         services.AddDbContext<CustomersDatabaseContext>(ConfigureContext);
         services.AddSingleton<SeedWriter>();
-        services.AddHostedService<DatabaseCreator>();
+        services.AddSingleton<ICustomersDatabase, DatabaseCreator>();
 
         // One of each per request, like the context they read through.
         services.AddScoped<OrganizationProvider>();

@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers;
 using HTMX.Adapter.Customers.Configuration;
+using HTMX.Adapter.Customers.Contracts;
 using HTMX.Test.Unit.Adapter.Customers.Data;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 /// <summary>
 /// Builds the adapter's services as the application registers them, over a seeded database no other test uses, so a
@@ -16,8 +16,8 @@ using Microsoft.Extensions.Hosting;
 internal static class TestServices
 {
     /// <summary>
-    /// Registers the adapter, with the clock stopped at the tests' start time, and starts it, which creates and seeds
-    /// the database.
+    /// Registers the adapter, with the clock stopped at the tests' start time, and creates and seeds its database, as
+    /// the application does before it runs.
     /// </summary>
     /// <returns>The services, which the caller disposes, and the database with them.</returns>
     internal static async Task<ServiceProvider> CreateStartedAsync()
@@ -30,8 +30,8 @@ internal static class TestServices
         };
         services.AddCustomersAdapter(options);
         ServiceProvider provider = services.BuildServiceProvider();
-        IHostedService creator = provider.GetRequiredService<IHostedService>();
-        await creator.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        ICustomersDatabase database = provider.GetRequiredService<ICustomersDatabase>();
+        await database.CreateAsync(CancellationToken.None).ConfigureAwait(false);
         return provider;
     }
 }

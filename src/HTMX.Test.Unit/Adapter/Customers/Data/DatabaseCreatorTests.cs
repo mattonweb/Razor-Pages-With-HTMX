@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers;
 using HTMX.Adapter.Customers.Configuration;
+using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data;
 using HTMX.Adapter.Customers.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Contains unit tests for verifying the behavior of the <see cref="DatabaseCreator"/> class, registered as the
-/// application registers it, through <see cref="ServiceCollectionExtensions.AddCustomersAdapter"/>.
+/// application registers it, through <see cref="ServiceCollectionExtensions.AddCustomersAdapter"/>, and reached as the
+/// application reaches it, through <see cref="ICustomersDatabase"/>.
 /// </summary>
 [TestClass]
 public sealed class DatabaseCreatorTests
@@ -22,11 +24,11 @@ public sealed class DatabaseCreatorTests
     #region Public Methods
 
     /// <summary>
-    /// Unit test to verify that starting the adapter creates the tables and writes the seed, as the application does
-    /// before its first request.
+    /// Unit test to verify that creating the database makes the tables and writes the seed, as the application does
+    /// before it runs.
     /// </summary>
     [TestMethod]
-    public async Task StartAsync_NewDatabase_WritesTheSeed()
+    public async Task CreateAsync_NewDatabase_WritesTheSeed()
     {
         // Arrange (Given)
         int users;
@@ -34,8 +36,8 @@ public sealed class DatabaseCreatorTests
         // Act (When)
         using (ServiceProvider services = CreateServices())
         {
-            IHostedService creator = services.GetRequiredService<IHostedService>();
-            await creator.StartAsync(CancellationToken.None).ConfigureAwait(false);
+            ICustomersDatabase database = services.GetRequiredService<ICustomersDatabase>();
+            await database.CreateAsync(CancellationToken.None).ConfigureAwait(false);
             users = await CountUsersAsync(services).ConfigureAwait(false);
         }
 
@@ -43,15 +45,15 @@ public sealed class DatabaseCreatorTests
         Assert.AreEqual(
             49,
             users,
-            "Starting the adapter should leave the 49 seed users in the database.");
+            "Creating the database should leave the 49 seed users in it.");
     }
 
     /// <summary>
-    /// Unit test to verify that starting the adapter again leaves the database as it is, rather than failing on seed
-    /// users that already exist.
+    /// Unit test to verify that creating the database again leaves it as it is, rather than failing on seed users that
+    /// already exist.
     /// </summary>
     [TestMethod]
-    public async Task StartAsync_CalledTwice_WritesTheSeedOnce()
+    public async Task CreateAsync_CalledTwice_WritesTheSeedOnce()
     {
         // Arrange (Given)
         int users;
@@ -59,9 +61,9 @@ public sealed class DatabaseCreatorTests
         // Act (When)
         using (ServiceProvider services = CreateServices())
         {
-            IHostedService creator = services.GetRequiredService<IHostedService>();
-            await creator.StartAsync(CancellationToken.None).ConfigureAwait(false);
-            await creator.StartAsync(CancellationToken.None).ConfigureAwait(false);
+            ICustomersDatabase database = services.GetRequiredService<ICustomersDatabase>();
+            await database.CreateAsync(CancellationToken.None).ConfigureAwait(false);
+            await database.CreateAsync(CancellationToken.None).ConfigureAwait(false);
             users = await CountUsersAsync(services).ConfigureAwait(false);
         }
 
@@ -69,7 +71,29 @@ public sealed class DatabaseCreatorTests
         Assert.AreEqual(
             49,
             users,
-            "A second start should leave the 49 seed users as they were.");
+            "A second call should leave the 49 seed users as they were.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that registering the adapter starts nothing: no hosted service is added to the host, so
+    /// what runs before the first request is the application's to decide.
+    /// </summary>
+    [TestMethod]
+    public void AddCustomersAdapter_Registered_AddsNoHostedService()
+    {
+        // Arrange (Given)
+        IHostedService[] hosted;
+
+        // Act (When)
+        using (ServiceProvider services = CreateServices())
+        {
+            hosted = [.. services.GetServices<IHostedService>()];
+        }
+
+        // Assert (Then)
+        Assert.IsEmpty(
+            hosted,
+            "The adapter should add nothing for the host to start.");
     }
 
     #endregion Public Methods
