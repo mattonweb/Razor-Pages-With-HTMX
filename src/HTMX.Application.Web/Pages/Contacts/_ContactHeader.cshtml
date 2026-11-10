@@ -40,7 +40,7 @@
     </nav>
     <div class="title-row">
         <div class="title">
-            <h1>@contact.Name.Value</h1>
+            <h1 tabindex="-1" autofocus="@Model.HeadingFocused">@contact.Name.Value</h1>
             @if (contact.Archived is null)
             {
                 <span class="chip success">Active</span>

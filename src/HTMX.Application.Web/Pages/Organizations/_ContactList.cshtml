@@ -33,7 +33,7 @@
          hx-boost:inherited="true" hx-target:inherited="#organization" hx-swap:inherited="outerHTML"
          hx-indicator:inherited="#contact-list">
     <header class="card-header">
-        <h2 id="contacts-heading" tabindex="-1" autofocus="@Model.HeadingFocused">Contacts</h2>
+        <h2 id="contacts-heading" tabindex="-1" autofocus="@Model.ListHeadingFocused">Contacts</h2>
         @if (changeable)
         {
             <a class="btn ghost" asp-page="/Contacts/Create" asp-route-organization="@organization.Id.Value" hx-boost="false"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>New contact</a>

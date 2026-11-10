@@ -305,7 +305,7 @@ public sealed class ContactsModelTests
         // Assert (Then)
         Assert.AreEqual(
             ((ContactId?)new ContactId(focused), false),
-            (page.Focused, page.HeadingFocused),
+            (page.Focused, page.ListHeadingFocused),
             "The row now in the deleted one's place should take the focus.");
     }
 
@@ -325,7 +325,7 @@ public sealed class ContactsModelTests
         // Assert (Then)
         Assert.AreEqual(
             ((ContactId?)null, true),
-            (page.Focused, page.HeadingFocused),
+            (page.Focused, page.ListHeadingFocused),
             "With no row left, the list's heading should take the focus.");
     }
 
@@ -424,6 +424,49 @@ public sealed class ContactsModelTests
         Assert.IsNull(
             contacts.LastDeletion(),
             "Nothing should be deleted.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that another page of the list that HTMX asks for puts the keyboard on the page's heading,
+    /// which the tab's content holds, and that a page the browser loads on its own leaves the focus where it starts.
+    /// </summary>
+    /// <param name="kind">What sent the request, by its name in <see cref="HtmxRequest"/>.</param>
+    /// <param name="focused">Whether the heading should take the focus.</param>
+    [TestMethod]
+    [DataRow(nameof(HtmxRequest.Partial), true, DisplayName = "Another page, asked for by HTMX")]
+    [DataRow(nameof(HtmxRequest.None), false, DisplayName = "The whole page, loaded by the browser")]
+    public async Task OnGetAsync_PageForHtmx_FocusesTheHeading(string kind, bool focused)
+    {
+        // Arrange (Given)
+        ContactsModel page = CreatePage(new StubContactService(CreateContacts()), Enum.Parse<HtmxRequest>(kind));
+
+        // Act (When)
+        await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            focused,
+            page.HeadingFocused,
+            "Only a page that HTMX asked for should put the keyboard on its heading.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an action on a row leaves the page's heading alone: its answer puts the keyboard back
+    /// on the row.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostArchiveContactAsync_ByHtmx_LeavesTheHeadingAlone()
+    {
+        // Arrange (Given)
+        ContactsModel page = CreatePage(new StubContactService(CreateContacts()), HtmxRequest.Partial);
+
+        // Act (When)
+        await page.OnPostArchiveContactAsync(10018, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsFalse(
+            page.HeadingFocused,
+            "An action on a row should not move the keyboard to the page's heading.");
     }
 
     #endregion Public Methods

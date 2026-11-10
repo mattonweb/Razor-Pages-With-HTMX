@@ -59,6 +59,12 @@ public sealed class IndexModel : PageModel
     public Toast? Toast { get; private set; }
 
     /// <summary>
+    /// Gets a value indicating whether the page's heading takes the focus: when HTMX asked for the whole page, as
+    /// Previous and Next do to take its main content, rather than the browser loading it on its own.
+    /// </summary>
+    public bool HeadingFocused { get; private set; }
+
+    /// <summary>
     /// Gives the part of a website's address a list shows under the name, such as placeholder.example.
     /// </summary>
     /// <param name="website">The website.</param>
@@ -91,6 +97,7 @@ public sealed class IndexModel : PageModel
         // A toast waits for the whole page, which a deleted organization's page loads, and is not spent on a swap of
         // the card.
         this.Toast = TempDataToasts.Take(this.TempData, "#organization-list");
+        this.HeadingFocused = HtmxHeaders.IsHtmxRequest(this.Request);
         return this.Page();
     }
 

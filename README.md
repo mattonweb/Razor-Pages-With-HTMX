@@ -163,7 +163,11 @@ The seed is written without logging its SQL, so the console shows only the SQL e
 - **HTMX 4.0.1**, pinned: `wwwroot/js/htmx.min.js`, downloaded from <https://unpkg.com/htmx.org@4.0.1/dist/htmx.min.js>.
   Every page still works without it, as plain Razor Pages of links and forms that GET. With it, a list's links and
   forms swap only the list's card: HTMX 4 sends `HX-Request-Type: partial` when it will swap part of the page, and the
-  page handler then returns the card's partial view instead of the whole page. Two HTMX 4 rules shape the markup: an
+  page handler then returns the card's partial view instead of the whole page. Previous and Next are the exception:
+  they take the page's `<main>` from the whole page (`hx-select="#main"`), and a page that HTMX asked for marks its
+  `<h1>` `autofocus`, so after a page change the keyboard starts on the heading, as it would after a page loaded
+  without HTMX, instead of on nothing at the bottom of the grid. A record's page does the same when HTMX loads it, as
+  after a save or for another page of its Contacts tab. Two HTMX 4 rules shape the markup: an
   attribute reaches an element's descendants only when written with `:inherited` (`hx-boost:inherited="true"`), and the
   scripts load in `<head>`, because the back button swaps in a whole new body.
 - **Paging is key-based** (also called keyset or seek paging), the pattern that stays fast however deep a list goes.

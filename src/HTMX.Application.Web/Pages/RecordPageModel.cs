@@ -39,6 +39,13 @@ public abstract class RecordPageModel : PageModel
     public Toast? Toast { get; private set; }
 
     /// <summary>
+    /// Gets a value indicating whether the page's heading takes the focus: when HTMX asked for the tab, as a list's
+    /// Previous and Next do, or for the whole page, as after a save, rather than the browser loading it on its own. An
+    /// action leaves it alone: its answer puts the focus back where the action was.
+    /// </summary>
+    public bool HeadingFocused { get; private set; }
+
+    /// <summary>
     /// Gets the tab's page, such as <c>./Details</c>, which its forms post to and its tab link marks as current.
     /// </summary>
     public abstract string PageName { get; }
@@ -73,6 +80,7 @@ public abstract class RecordPageModel : PageModel
         }
 
         this.Toast = TempDataToasts.Take(this.TempData, this.ContentTarget);
+        this.HeadingFocused = HtmxHeaders.IsHtmxRequest(this.Request);
         return HtmxAnswers.PartOrPage(this, this.ContentPartial);
     }
 

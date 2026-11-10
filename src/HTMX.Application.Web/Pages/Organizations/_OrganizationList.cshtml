@@ -101,13 +101,18 @@
         </div>
 
         @* Key-based paging knows the total and whether there is a page either side, not where in the list this page
-           starts, so the summary gives the count shown and the total. *@
+           starts, so the summary gives the count shown and the total.
+
+           Previous and Next take the page's main content, heading and all, from the whole page instead of replacing
+           this card alone: hx-select makes HTMX ask for the whole page, and the page marks its heading autofocus when
+           HTMX asked for it, so the keyboard and the window start the new page at its top, as a page loaded without
+           HTMX would. Every other link and form in the card still replaces the card alone. *@
         <footer class="pager">
             <p class="summary">Showing <strong>@list.Items.Length.ToString("N0", CultureInfo.CurrentCulture)</strong> of <strong>@list.Matching.Value.ToString("N0", CultureInfo.CurrentCulture)</strong></p>
             <nav class="pages" aria-label="Pages">
                 @if (list.Previous is OrganizationCursor previous)
                 {
-                    <a class="btn" rel="prev" asp-page="./Index" asp-all-route-data="Model.RouteValues(cursor: previous)"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-left"></use></svg>Previous</a>
+                    <a class="btn" rel="prev" asp-page="./Index" asp-all-route-data="Model.RouteValues(cursor: previous)" hx-target="#main" hx-select="#main"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-left"></use></svg>Previous</a>
                 }
                 else
                 {
@@ -115,7 +120,7 @@
                 }
                 @if (list.Next is OrganizationCursor next)
                 {
-                    <a class="btn" rel="next" asp-page="./Index" asp-all-route-data="Model.RouteValues(cursor: next)">Next<svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-right"></use></svg></a>
+                    <a class="btn" rel="next" asp-page="./Index" asp-all-route-data="Model.RouteValues(cursor: next)" hx-target="#main" hx-select="#main">Next<svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-right"></use></svg></a>
                 }
                 else
                 {

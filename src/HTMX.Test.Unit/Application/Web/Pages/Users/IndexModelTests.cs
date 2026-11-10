@@ -208,6 +208,31 @@ public sealed class IndexModelTests
             "A delete cannot be undone, so the toast should offer no Undo.");
     }
 
+    /// <summary>
+    /// Unit test to verify that the page's heading takes the focus when HTMX asked for the whole page, as Previous and
+    /// Next do to take its main content, and not when the browser loaded it on its own or HTMX asked for the card.
+    /// </summary>
+    /// <param name="kind">What sent the request, by its name in <see cref="HtmxRequest"/>.</param>
+    /// <param name="focused">Whether the heading should take the focus.</param>
+    [TestMethod]
+    [DataRow(nameof(HtmxRequest.None), false, DisplayName = "The whole page, loaded by the browser")]
+    [DataRow(nameof(HtmxRequest.HistoryRestore), true, DisplayName = "The whole page, asked for by HTMX")]
+    [DataRow(nameof(HtmxRequest.Partial), false, DisplayName = "A swap of the card")]
+    public async Task OnGetAsync_WholePageForHtmx_FocusesTheHeading(string kind, bool focused)
+    {
+        // Arrange (Given)
+        IndexModel page = CreatePage(new StubUserService(), Enum.Parse<HtmxRequest>(kind));
+
+        // Act (When)
+        await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            focused,
+            page.HeadingFocused,
+            "Only a whole page that HTMX asked for should put the keyboard on its heading.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods

@@ -31,7 +31,7 @@
     </nav>
     <div class="title-row">
         <div class="title">
-            <h1>@organization.Name.Value</h1>
+            <h1 tabindex="-1" autofocus="@Model.HeadingFocused">@organization.Name.Value</h1>
             @if (organization.Archived is null)
             {
                 <span class="chip success">Active</span>

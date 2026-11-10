@@ -96,7 +96,7 @@ public sealed class ContactsModel : OrganizationPageModel
     /// Gets a value indicating whether the list's heading takes the focus when the list is drawn again, as it does
     /// after a delete that left no row to take it.
     /// </summary>
-    public bool HeadingFocused { get; private set; }
+    public bool ListHeadingFocused { get; private set; }
 
     /// <summary>
     /// Archives one of the organization's contacts, and says so in a toast whose Undo restores them.
@@ -173,7 +173,7 @@ public sealed class ContactsModel : OrganizationPageModel
         // A refused delete leaves the row, and the keyboard goes back to its menu button. A delete takes the row away,
         // so the keyboard goes to the row now in its place, or to the list's heading when no row is left.
         this.Focused = outcome == DeleteOutcome.Deleted ? this.RowAt(place) : id;
-        this.HeadingFocused = this.Focused is null;
+        this.ListHeadingFocused = this.Focused is null;
         string message = ContactMessages.Delete(outcome, name, organization.Name);
         return this.Answer(message, undoAction: null);
     }

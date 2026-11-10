@@ -10,7 +10,7 @@
         <ol><li><a asp-page="/Index">Home</a></li><li><span aria-current="page">Users</span></li></ol>
     </nav>
     <div class="title-row">
-        <h1>Users</h1>
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Users</h1>
         <a class="btn primary" asp-page="./Create"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>New user</a>
     </div>
 </header>

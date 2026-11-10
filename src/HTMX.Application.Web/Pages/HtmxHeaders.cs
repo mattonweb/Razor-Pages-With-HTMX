@@ -4,19 +4,35 @@ using System;
 using Microsoft.AspNetCore.Http;
 
 /// <summary>
-/// The HTMX 4 headers the pages read and write: whether a request will swap part of the page, and how to send the
-/// browser to another page after a save.
+/// The HTMX 4 headers the pages read and write: whether HTMX sent a request, whether it will swap part of the page,
+/// and how to send the browser to another page after a save.
 /// </summary>
 public static class HtmxHeaders
 {
+    // HTMX sends this, set to "true", on every request it makes; a browser loading a page on its own does not.
+    private const string Request = "HX-Request";
+
     // HTMX 4 says on every request whether it will swap part of the page ("partial") or the whole body ("full"), as
-    // when the back button restores a page.
+    // when the back button restores a page, or a page's part that hx-select picks from it.
     private const string RequestType = "HX-Request-Type";
     private const string PartialRequestType = "partial";
 
     // Asks HTMX to load another page as a boosted link would: a GET whose answer replaces the body, with its URL
     // pushed into the history.
     private const string Location = "HX-Location";
+
+    /// <summary>
+    /// Says whether HTMX sent a request, for part of a page or for the whole of one, rather than the browser on its
+    /// own.
+    /// </summary>
+    /// <param name="request">The request.</param>
+    /// <returns><see langword="true"/> when HTMX sent it.</returns>
+    public static bool IsHtmxRequest(HttpRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        IHeaderDictionary headers = request.Headers;
+        return headers[Request] == "true";
+    }
 
     /// <summary>
     /// Says whether a request came from HTMX to swap part of a page, rather than to load a whole one.
