@@ -1,8 +1,8 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, and the patterns still open (fields checked as you type, confirmation, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, and the patterns still open (fields checked as you type, confirmation, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
 owner: Matt
-version: 0.6.0
+version: 0.7.0
 visibility: public
 ---
 
@@ -21,7 +21,7 @@ page looks (the repository's brand skill, if it has one).
 post. HTMX only narrows what a response replaces and keeps the address bar in step. A page that cannot be built that
 way is a decision to make out loud, never a default.
 
-## Status: draft 0.6.0, HTMX 4.0.1
+## Status: draft 0.7.0, HTMX 4.0.1
 
 | Section | State |
 |---|---|
@@ -34,7 +34,8 @@ way is a decision to make out loud, never a default.
 | 7. Forms that post | Proven |
 | 8. More than one target | Proven |
 | 9. Actions on a row | Proven |
-| 10. Still open | Open |
+| 10. A field HTMX enhances | Proven |
+| 11. Still open | Open |
 
 - **Proven:** built in a Razor Pages application on HTMX 4.0.1, and shown working by a unit test or in the browser.
 - **Checked:** read in the 4.0.1 source and the reference, and true of that version, but not yet built.
@@ -53,7 +54,7 @@ A section moves up only when that is true of it, in a session Matt attends.
   Its unminified source is `https://unpkg.com/htmx.org@<version>/dist/htmx.js`; citations below to "4.0.1 source"
   name a method in that file.
 - **Chris Woodruff's [htmx Razor Pages workshop](https://github.com/cwoodruff/htmx-razor-workshop)**, MIT. Good on the
-  Razor Pages side, and sections 3 and 6 to 10 take several ideas from it, each credited by chapter: a comment that
+  Razor Pages side, and sections 3, 6 to 9 and 11 take several ideas from it, each credited by chapter: a comment that
   states each partial's contract, what each request gets back, handlers named for what they do, a row action that
   draws the list again, checking a field as you type, form rows added by the server, polling the server stops, and
   what to look for in the network panel. It is written for htmx 1.9.12, and some of its central code does not carry
@@ -400,7 +401,35 @@ actions post to the page's address.
   `#handleAutoFocus`), and it does so after putting focus back by `id` (`#insertContent`), so the row's button takes
   the focus even when the toast's Undo sent the request.
 
-## 10. Still open (open)
+## 10. A field HTMX enhances (proven)
+
+Built as the organization a contact belongs to, one of about a thousand: a select without HTMX, and with it the
+brand's relation field, whose picker filters the choices as you type.
+
+- **The plain control comes first, and HTMX swaps it as the page loads.** The page draws a control that works
+  without script, such as a select of every choice, in an element that says `hx-get`, `hx-trigger="load"` and
+  `hx-swap="outerHTML"`. HTMX asks for the enhanced field as soon as it processes the page, and the answer replaces
+  the plain one, keeping its `id`. Both post the value under the same name, so the handler binds it the same way. The
+  load's address carries the value the control holds, since a GET sends nothing from the form around it (4.0.1
+  source, `#handleTriggerEvent`).
+- **An answer to HTMX can draw the enhanced field at once.** When HTMX sent the request, as for a refused save, it is
+  known to be there, so the answer draws the enhanced field straight away and the page makes no second request.
+- **A picker with a form of its own sits outside the form it fills.** A form inside another is not HTML, so the
+  picker's dialog follows the edit form, and the field inside the edit form keeps the value in a hidden input. The
+  picker's form answers with the field, as the main content, and a new dialog in an `<hx-partial>` (section 8); the new
+  dialog replaces the open one, which closes it (section 7).
+- **`hx-include` of a container sends the named controls inside it**, a radio or a checkbox only when it is checked
+  (4.0.1 source, `#collectFormData` and `#addInputValues`). The filter's input sends its own value, and
+  `hx-include` naming the list sends the radio that is checked, so the list comes back with it still checked.
+- **HTMX 4 checks a form with the browser's own validation before sending it**, unless the form says `novalidate`
+  (4.0.1 source, `#createRequestContext` and `#collectFormData`). Radios marked `required` stop an empty choice with
+  the browser's message, and nothing is sent. The button that sent the form adds its own name and value, so
+  `name="choose" value="true"` tells the handler a choice was made, and its answer marks the field's button
+  `autofocus` to put the keyboard back there (section 9).
+- **Enter in the picker's filter sends the picker's form**, because the filter is one of its fields. By then the list
+  has kept up with the typing, so Enter chooses the checked radio, and with none checked the browser asks for one.
+
+## 11. Still open (open)
 
 Nothing in this section is built yet. What is known, to start from; an idea taken from the workshop names its
 chapter.
