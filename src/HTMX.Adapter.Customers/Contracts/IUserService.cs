@@ -85,4 +85,23 @@ public interface IUserService
     /// <returns>Saved when they were restored; Unchanged when they were already active; otherwise NotFound or
     /// Overtaken, as for <see cref="ArchiveAsync"/>.</returns>
     Task<UpdateOutcome> RestoreAsync(UserStatusRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Says whether any record's history names the user as who made a change or archived it, their own history
+    /// included. A user who is named cannot be deleted, because those records would be left naming nothing.
+    /// </summary>
+    /// <param name="id">The user's identifier.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns><see langword="true"/> when some version names them.</returns>
+    Task<bool> IsInUseAsync(UserId id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a user permanently, with their history, when they are archived, still at the version the request
+    /// names, and named by no record. It cannot be undone.
+    /// </summary>
+    /// <param name="request">Which user, and the version the page showed them at.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Deleted when they were; otherwise NotFound, Active, Overtaken or InUse, the first that applies, in
+    /// that order.</returns>
+    Task<DeleteOutcome> DeleteAsync(UserDeleteRequest request, CancellationToken cancellationToken = default);
 }

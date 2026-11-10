@@ -17,3 +17,11 @@
 
 @* The list's card is a partial: the page renders it here, and the handler sends it alone to an HTMX request. *@
 <partial name="_UserList" model="Model" />
+
+@* After a user is deleted, their page comes here, by a redirect or by HX-Location, and the toast it left shows. *@
+@section Toasts {
+    @if (Model.Toast is Toast toast)
+    {
+        <partial name="_Toast" model="toast" />
+    }
+}

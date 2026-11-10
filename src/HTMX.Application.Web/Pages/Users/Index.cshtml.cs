@@ -53,6 +53,12 @@ public sealed class IndexModel : PageModel
     public UserCollectionResponse Users { get; private set; } = NotYetRead;
 
     /// <summary>
+    /// Gets the toast another page left for this one, such as a deleted user's, or <see langword="null"/> when none
+    /// was left.
+    /// </summary>
+    public Toast? Toast { get; private set; }
+
+    /// <summary>
     /// Reads the page of users the query string asks for. A value the page does not recognize falls back to its
     /// default, so a mistyped URL still shows a list.
     /// </summary>
@@ -71,6 +77,8 @@ public sealed class IndexModel : PageModel
             return this.Partial(ListPartial, this);
         }
 
+        // A toast waits for the whole page, which a deleted user's page loads, and is not spent on a swap of the card.
+        this.Toast = TempDataToasts.Take(this.TempData, "#user-list");
         return this.Page();
     }
 

@@ -102,8 +102,8 @@ internal sealed class UserService : IUserService
             return new UserCreateResponse { Outcome = CreateOutcome.EmailTaken };
         }
 
-        User user = Start(request, this._clock.GetUtcNow().UtcDateTime);
-        UserId id = await this._provider.AddAsync(user, RecordCreation, cancellationToken).ConfigureAwait(false);
+        User user = UserHistory.Start(request, this._clock.GetUtcNow().UtcDateTime);
+        UserId id = await this._provider.AddAsync(user, UserHistory.RecordCreation, cancellationToken).ConfigureAwait(false);
         return new UserCreateResponse { Outcome = CreateOutcome.Created, Id = id };
     }
 
@@ -162,6 +162,48 @@ internal sealed class UserService : IUserService
         return this.ChangeStatusAsync(request, ChangeKind.Restored, cancellationToken);
     }
 
+    /// <inheritdoc/>
+    public Task<bool> IsInUseAsync(UserId id, CancellationToken cancellationToken = default)
+    {
+        return this._versions.IsNamedAsync(id, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Only an archived user can be deleted, so that a user is never deleted in one step, and only one whom no record
+    /// names. The signed-in user cannot archive themselves, so they can never be deleted either.
+    /// </remarks>
+    public async Task<DeleteOutcome> DeleteAsync(
+        UserDeleteRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        User? current = await this._provider.FindForChangeAsync(request.Id, cancellationToken).ConfigureAwait(false);
+        if (current is null)
+        {
+            return DeleteOutcome.NotFound;
+        }
+
+        if (current.ArchivedOn is null)
+        {
+            return DeleteOutcome.Active;
+        }
+
+        if (current.Version != request.Version)
+        {
+            return DeleteOutcome.Overtaken;
+        }
+
+        bool named = await this._versions.IsNamedAsync(request.Id, cancellationToken).ConfigureAwait(false);
+        if (named)
+        {
+            return DeleteOutcome.InUse;
+        }
+
+        bool deleted = await this._provider.DeleteAsync(current, cancellationToken).ConfigureAwait(false);
+        return deleted ? DeleteOutcome.Deleted : DeleteOutcome.Overtaken;
+    }
+
     /// <summary>
     /// Gives the outcome a change has before anything is saved: refused because the user is archived or has moved on
     /// since the form was filled, or done already because they hold the values sent.
@@ -185,128 +227,6 @@ internal sealed class UserService : IUserService
             && current.Username == request.Username
             && current.Email == request.Email;
         return same ? UpdateOutcome.Unchanged : null;
-    }
-
-    /// <summary>
-    /// Makes a new user's row: the values sent, at version 1, created and last changed by whoever sent them.
-    /// </summary>
-    /// <param name="request">The new user.</param>
-    /// <param name="now">When they are created, in UTC.</param>
-    /// <returns>The row, without an identifier until the database gives it one.</returns>
-    private static User Start(UserCreateRequest request, DateTime now)
-    {
-        return new User
-        {
-            Username = request.Username,
-            Email = request.Email,
-            DisplayName = request.DisplayName,
-            CreatedOn = now,
-            CreatedBy = request.CreatedBy,
-            LastModifiedOn = now,
-            LastModifiedBy = request.CreatedBy,
-            Version = new VersionNumber(1),
-        };
-    }
-
-    /// <summary>
-    /// Makes the first version of a new user from their row as saved: a Created version holding the same values.
-    /// </summary>
-    /// <param name="user">The row, with the identifier the database gave it.</param>
-    /// <returns>The version.</returns>
-    private static UserVersion RecordCreation(User user)
-    {
-        return new UserVersion
-        {
-            UserId = user.Id,
-            Version = user.Version,
-            Change = ChangeKind.Created,
-            ChangedOn = user.CreatedOn,
-            ChangedBy = user.CreatedBy,
-            Username = user.Username,
-            Email = user.Email,
-            DisplayName = user.DisplayName,
-        };
-    }
-
-    /// <summary>
-    /// Makes the version that records a change: the next number, the values sent, and who saved them and when.
-    /// </summary>
-    /// <param name="current">The user as they are now, who is active.</param>
-    /// <param name="request">The change.</param>
-    /// <param name="rolledBackTo">The earlier version the values came from, or <see langword="null"/> for an
-    /// edit.</param>
-    /// <param name="now">When the change is saved, in UTC.</param>
-    /// <returns>The version.</returns>
-    private static UserVersion Record(
-        User current,
-        UserUpdateRequest request,
-        VersionNumber? rolledBackTo,
-        DateTime now)
-    {
-        return new UserVersion
-        {
-            UserId = current.Id,
-            Version = new VersionNumber(current.Version.Value + 1),
-            Change = rolledBackTo is null ? ChangeKind.Edited : ChangeKind.RolledBack,
-            RolledBackTo = rolledBackTo,
-            ChangedOn = now,
-            ChangedBy = request.ChangedBy,
-            Username = request.Username,
-            Email = request.Email,
-            DisplayName = request.DisplayName,
-        };
-    }
-
-    /// <summary>
-    /// Makes the version that records a user being archived or restored: the next number, their values as they are,
-    /// and when and by whom they were archived, or nothing there once they are restored.
-    /// </summary>
-    /// <param name="current">The user as they are now.</param>
-    /// <param name="change">Archived or Restored.</param>
-    /// <param name="by">Who is archiving or restoring them.</param>
-    /// <param name="now">When, in UTC.</param>
-    /// <returns>The version.</returns>
-    private static UserVersion RecordStatusChange(User current, ChangeKind change, UserId by, DateTime now)
-    {
-        bool archiving = change == ChangeKind.Archived;
-        return new UserVersion
-        {
-            UserId = current.Id,
-            Version = new VersionNumber(current.Version.Value + 1),
-            Change = change,
-            ChangedOn = now,
-            ChangedBy = by,
-            Username = current.Username,
-            Email = current.Email,
-            DisplayName = current.DisplayName,
-            ArchivedOn = archiving ? now : null,
-            ArchivedBy = archiving ? by : null,
-        };
-    }
-
-    /// <summary>
-    /// Gives a user's row the values of their newest version, keeping who created them and when.
-    /// </summary>
-    /// <param name="current">The row as it is now.</param>
-    /// <param name="version">The newest version.</param>
-    /// <returns>The row's new values.</returns>
-    private static User Apply(User current, UserVersion version)
-    {
-        // Written out rather than with a with expression, which StyleCop 1.1.118 misreads in an instance class (SA1101).
-        return new User
-        {
-            Id = current.Id,
-            Username = version.Username,
-            Email = version.Email,
-            DisplayName = version.DisplayName,
-            CreatedOn = current.CreatedOn,
-            CreatedBy = current.CreatedBy,
-            LastModifiedOn = version.ChangedOn,
-            LastModifiedBy = version.ChangedBy,
-            ArchivedOn = version.ArchivedOn,
-            ArchivedBy = version.ArchivedBy,
-            Version = version.Version,
-        };
     }
 
     /// <summary>
@@ -397,8 +317,8 @@ internal sealed class UserService : IUserService
         }
 
         DateTime now = this._clock.GetUtcNow().UtcDateTime;
-        UserVersion version = RecordStatusChange(current, change, request.ChangedBy, now);
-        User changed = Apply(current, version);
+        UserVersion version = UserHistory.RecordStatusChange(current, change, request.ChangedBy, now);
+        User changed = UserHistory.Apply(current, version);
         bool saved = await this._provider
             .SaveChangeAsync(current, changed, version, cancellationToken)
             .ConfigureAwait(false);
@@ -438,8 +358,8 @@ internal sealed class UserService : IUserService
             return clash;
         }
 
-        UserVersion version = Record(current, request, rolledBackTo, this._clock.GetUtcNow().UtcDateTime);
-        User changed = Apply(current, version);
+        UserVersion version = UserHistory.Record(current, request, rolledBackTo, this._clock.GetUtcNow().UtcDateTime);
+        User changed = UserHistory.Apply(current, version);
         bool saved = await this._provider
             .SaveChangeAsync(current, changed, version, cancellationToken)
             .ConfigureAwait(false);

@@ -14,12 +14,16 @@ using Microsoft.AspNetCore.Mvc;
 /// <remarks>
 /// A page model's own <c>User</c> is whoever is signed in, so the user the page shows is its <see cref="Account"/>.
 /// Nobody may archive themselves, since they would be shut out: the signed-in user's own page offers no Archive, and
-/// the service refuses one sent anyway.
+/// the service refuses one sent anyway. An archived user can be deleted permanently, after a confirm dialog, unless
+/// other records name them; then the dialog says why not.
 /// </remarks>
 public abstract class UserPageModel : RecordPageModel
 {
     private const string ArchiveHandler = "Archive";
     private const string RestoreHandler = "Restore";
+
+    // Where a deleted user's page goes: the list, which shows the toast the delete left.
+    private const string ListPage = "./Index";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UserPageModel"/> class.
@@ -40,6 +44,12 @@ public abstract class UserPageModel : RecordPageModel
     /// Gets a value indicating whether the page shows the signed-in user, who may not archive themselves.
     /// </summary>
     public bool IsSignedInUser => this.Account is UserSingleResponse account && account.Id == SignedInUser.Of(this.User);
+
+    /// <summary>
+    /// Gets a value indicating whether other records name the user, which keeps them from being deleted. It is read
+    /// only for an archived user, the only kind that can be deleted, and is <see langword="false"/> otherwise.
+    /// </summary>
+    public bool InUse { get; private set; }
 
     /// <summary>
     /// Gets the service the tab reads and changes the user through.
@@ -69,6 +79,46 @@ public abstract class UserPageModel : RecordPageModel
         return this.ChangeStatusAsync(ChangeKind.Restored, cancellationToken);
     }
 
+    /// <summary>
+    /// Deletes the user permanently, with their history, from the version the confirm dialog showed them at, and goes
+    /// to the users list, which says so in a toast with no Undo. A delete the service refuses answers as Archive does,
+    /// with the tab's content and a toast that says why.
+    /// </summary>
+    /// <param name="version">The version the page showed the user at, from the confirm dialog's form.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The list, by a redirect or by asking HTMX to load it; the tab's content and a toast for a refusal; 400
+    /// for a version number that cannot be one.</returns>
+    public async Task<IActionResult> OnPostDeleteAsync(int version, CancellationToken cancellationToken)
+    {
+        if (version < 1)
+        {
+            return this.BadRequest();
+        }
+
+        // Read first, for the name the toast gives: once the user is deleted, nothing holds it.
+        UserSingleResponse? before = await this.ReadAsync(cancellationToken).ConfigureAwait(false);
+        if (before is null)
+        {
+            return this.ShowGone();
+        }
+
+        UserDeleteRequest request = new UserDeleteRequest { Id = before.Id, Version = new VersionNumber(version) };
+        DeleteOutcome outcome = await this.Users.DeleteAsync(request, cancellationToken).ConfigureAwait(false);
+        if (outcome == DeleteOutcome.Deleted)
+        {
+            TempDataToasts.Leave(this.TempData, new Toast { Message = $"{before.DisplayName.Value} deleted." });
+            return HtmxAnswers.NextPage(this, ListPage, new { });
+        }
+
+        UserSingleResponse? account = await this.ReadAsync(cancellationToken).ConfigureAwait(false);
+        if (account is null)
+        {
+            return this.ShowGone();
+        }
+
+        return this.Answer(DeleteMessage(outcome, account.DisplayName), undoAction: null);
+    }
+
     /// <inheritdoc/>
     protected override async Task<bool> FindRecordAsync(CancellationToken cancellationToken)
     {
@@ -96,11 +146,15 @@ public abstract class UserPageModel : RecordPageModel
     {
         UserId id = new UserId(this.Input.Id);
         this.Account = await this.Users.FindAsync(id, cancellationToken).ConfigureAwait(false);
-        if (this.Account is not null)
+        if (this.Account is null)
         {
-            await this.ReadMoreAsync(id, cancellationToken).ConfigureAwait(false);
+            return null;
         }
 
+        // Only an archived user can be deleted, so only their page asks whether other records name them.
+        this.InUse = this.Account.Archived is not null
+            && await this.Users.IsInUseAsync(id, cancellationToken).ConfigureAwait(false);
+        await this.ReadMoreAsync(id, cancellationToken).ConfigureAwait(false);
         return this.Account;
     }
 
@@ -133,6 +187,25 @@ public abstract class UserPageModel : RecordPageModel
                 "You can't archive yourself. Another user can.",
             _ =>
                 $"{name.Value} was changed by someone else at the same moment. Try again.",
+        };
+    }
+
+    /// <summary>
+    /// Writes the toast's message for a delete that was refused.
+    /// </summary>
+    /// <param name="outcome">Why it was refused.</param>
+    /// <param name="name">The user's name.</param>
+    /// <returns>The message.</returns>
+    private static string DeleteMessage(DeleteOutcome outcome, DisplayName name)
+    {
+        return outcome switch
+        {
+            DeleteOutcome.Active =>
+                $"{name.Value} is active again, so they can't be deleted.",
+            DeleteOutcome.InUse =>
+                $"Other records now name {name.Value}, so they can't be deleted.",
+            _ =>
+                $"{name.Value} has changed since the page was shown, so they weren't deleted. Check them, then try again.",
         };
     }
 

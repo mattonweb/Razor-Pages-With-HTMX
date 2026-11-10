@@ -8,9 +8,9 @@ using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
 /// Stands in for the user service in page tests: it keeps each request the page sends and answers with an empty page
-/// for a list, with the one user and the versions it was given for a lookup, and with the outcomes it was given for a
-/// change, an archive, a restore, a roll-back and a new user, so a test sees what the page asked for without a
-/// database.
+/// for a list, with the one user and the versions it was given for a lookup, whether they are in use, and with the
+/// outcomes it was given for a change, an archive, a restore, a roll-back, a new user and a delete, so a test sees
+/// what the page asked for without a database.
 /// </summary>
 internal sealed class StubUserService : IUserService
 {
@@ -20,10 +20,14 @@ internal sealed class StubUserService : IUserService
     private readonly List<UserCreateRequest> _creations = [];
     private readonly List<(ChangeKind Change, UserStatusRequest Request)> _statusChanges = [];
     private readonly List<UserRollBackRequest> _rollBacks = [];
+    private readonly List<UserDeleteRequest> _deletions = [];
+    private readonly List<UserId> _inUseChecks = [];
     private readonly UserSingleResponse? _found;
     private readonly UpdateOutcome _outcome;
     private readonly UserVersionResponse[] _versions;
     private readonly CreateOutcome _creation;
+    private readonly bool _inUse;
+    private readonly DeleteOutcome _deletion;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StubUserService"/> class.
@@ -33,17 +37,28 @@ internal sealed class StubUserService : IUserService
     /// <param name="versions">The versions a lookup of the history answers with, newest first.</param>
     /// <param name="creation">What a new user is answered with; one who is created gets the identifier 10050, as the
     /// first after the seed would.</param>
+    /// <param name="inUse">Whether other records name the user.</param>
+    /// <param name="deletion">What a delete is answered with.</param>
     public StubUserService(
         UserSingleResponse? found = null,
         UpdateOutcome outcome = UpdateOutcome.Saved,
         UserVersionResponse[]? versions = null,
-        CreateOutcome creation = CreateOutcome.Created)
+        CreateOutcome creation = CreateOutcome.Created,
+        bool inUse = false,
+        DeleteOutcome deletion = DeleteOutcome.Deleted)
     {
         this._found = found;
         this._outcome = outcome;
         this._versions = versions ?? [];
         this._creation = creation;
+        this._inUse = inUse;
+        this._deletion = deletion;
     }
+
+    /// <summary>
+    /// Gets how many times the page asked whether a user is in use.
+    /// </summary>
+    public int InUseChecks => this._inUseChecks.Count;
 
     /// <summary>
     /// Gives the last request the page sent.
@@ -61,6 +76,15 @@ internal sealed class StubUserService : IUserService
     public UserId? LastLookup()
     {
         return this._looked.Count == 0 ? null : this._looked[^1];
+    }
+
+    /// <summary>
+    /// Gives the last delete the page asked for.
+    /// </summary>
+    /// <returns>The delete, or <see langword="null"/> before the page asks for one.</returns>
+    public UserDeleteRequest? LastDeletion()
+    {
+        return this._deletions.LastOrDefault();
     }
 
     /// <summary>
@@ -129,6 +153,20 @@ internal sealed class StubUserService : IUserService
     public Task<UserVersionResponse[]> ListVersionsAsync(UserId id, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(this._versions);
+    }
+
+    /// <inheritdoc/>
+    public Task<bool> IsInUseAsync(UserId id, CancellationToken cancellationToken = default)
+    {
+        this._inUseChecks.Add(id);
+        return Task.FromResult(this._inUse);
+    }
+
+    /// <inheritdoc/>
+    public Task<DeleteOutcome> DeleteAsync(UserDeleteRequest request, CancellationToken cancellationToken = default)
+    {
+        this._deletions.Add(request);
+        return Task.FromResult(this._deletion);
     }
 
     /// <inheritdoc/>

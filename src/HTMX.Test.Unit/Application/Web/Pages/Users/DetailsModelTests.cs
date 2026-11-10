@@ -15,8 +15,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Contains unit tests for verifying the behavior of the users' <see cref="DetailsModel"/> class: which user the page
-/// asks for, what it answers when there is none, whether it shows the signed-in user, and what Archive and Restore
-/// answer, with HTMX and without it.
+/// asks for, what it answers when there is none, whether it shows the signed-in user, and what Archive, Restore and
+/// Delete permanently answer, with HTMX and without it.
 /// </summary>
 [TestClass]
 public sealed class DetailsModelTests
@@ -231,6 +231,140 @@ public sealed class DetailsModelTests
             "HX-Location should name the user's page.");
     }
 
+    /// <summary>
+    /// Unit test to verify that only an archived user's page asks whether other records name them, since only an
+    /// archived user can be deleted.
+    /// </summary>
+    /// <param name="archived">Whether the user is archived.</param>
+    /// <param name="checks">How many times the page should ask.</param>
+    [TestMethod]
+    [DataRow(true, 1, DisplayName = "An archived user")]
+    [DataRow(false, 0, DisplayName = "An active user")]
+    public async Task OnGetAsync_EachStatus_AsksWhetherInUseOnlyWhenArchived(bool archived, int checks)
+    {
+        // Arrange (Given)
+        StubUserService service = new StubUserService(CreateUser(10002, archived), inUse: true);
+        DetailsModel page = CreatePage(service, 10002);
+
+        // Act (When)
+        await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (checks, archived),
+            (service.InUseChecks, page.InUse),
+            "Only an archived user's page should ask, and say they are in use.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete HTMX sent asks for the user and version the dialog showed, and loads the users
+    /// list, leaving it a toast with no Undo.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostDeleteAsync_DeletedByHtmx_LoadsTheListWithAToast()
+    {
+        // Arrange (Given)
+        StubUserService service = new StubUserService(CreateUser(10002, archived: true));
+        DetailsModel page = CreatePage(service, 10002, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page.OnPostDeleteAsync(2, CancellationToken.None).ConfigureAwait(false);
+        UserDeleteRequest? sent = service.LastDeletion();
+
+        // Assert (Then)
+        StatusCodeResult status = Assert.IsInstanceOfType<StatusCodeResult>(
+            result,
+            "HTMX should be asked to load the list.");
+        Assert.AreEqual(
+            (StatusCodes.Status204NoContent, "/Users/Index"),
+            (status.StatusCode, page.Response.Headers["HX-Location"].ToString()),
+            "The answer should have no content to swap, and HX-Location should name the users list.");
+        Assert.AreEqual(
+            (new UserId(10002), new VersionNumber(2)),
+            (sent?.Id, sent?.Version),
+            "The page should delete the user the route names, at the version the dialog showed.");
+        Assert.AreEqual(
+            ("Pat Example deleted.", null),
+            (page.TempData["ToastMessage"], page.TempData["ToastUndo"]),
+            "The list should be left a toast that says so, with no Undo.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete sent without HTMX is redirected to the users list.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostDeleteAsync_DeletedWithoutHtmx_RedirectsToTheList()
+    {
+        // Arrange (Given)
+        DetailsModel page = CreatePage(new StubUserService(CreateUser(10002, archived: true)), 10002);
+
+        // Act (When)
+        IActionResult result = await page.OnPostDeleteAsync(2, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        RedirectToPageResult redirect = Assert.IsInstanceOfType<RedirectToPageResult>(
+            result,
+            "A delete without HTMX should be redirected.");
+        Assert.AreEqual(
+            "./Index",
+            redirect.PageName,
+            "The redirect should go to the users list.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete the service refuses answers with the page's content and a toast that says
+    /// why, with no Undo, as an archive does.
+    /// </summary>
+    /// <param name="outcome">What the service answers.</param>
+    /// <param name="message">What the toast should say.</param>
+    [TestMethod]
+    [DataRow(DeleteOutcome.Active, "Pat Example is active again, so they can't be deleted.", DisplayName = "Active")]
+    [DataRow(DeleteOutcome.InUse, "Other records now name Pat Example, so they can't be deleted.", DisplayName = "In use")]
+    [DataRow(
+        DeleteOutcome.Overtaken,
+        "Pat Example has changed since the page was shown, so they weren't deleted. Check them, then try again.",
+        DisplayName = "Overtaken")]
+    public async Task OnPostDeleteAsync_Refused_SaysWhyWithoutUndo(DeleteOutcome outcome, string message)
+    {
+        // Arrange (Given)
+        StubUserService service = new StubUserService(CreateUser(10002, archived: true), deletion: outcome);
+        DetailsModel page = CreatePage(service, 10002, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page.OnPostDeleteAsync(2, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        PartialViewResult partial = Assert.IsInstanceOfType<PartialViewResult>(
+            result,
+            "HTMX should get the page's content to swap in place.");
+        Assert.AreEqual(
+            ("_RecordChanged", message, null),
+            (partial.ViewName, page.Toast?.Message, page.Toast?.UndoAction),
+            "The toast should say why nothing was deleted, with nothing to undo.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a version number that cannot be one is refused with 400, and nothing is deleted.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostDeleteAsync_ImpossibleVersion_AnswersBadRequest()
+    {
+        // Arrange (Given)
+        StubUserService service = new StubUserService(CreateUser(10002, archived: true));
+        DetailsModel page = CreatePage(service, 10002, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page.OnPostDeleteAsync(0, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsInstanceOfType<BadRequestResult>(
+            result,
+            "A version number below 1 should be refused.");
+        Assert.IsNull(
+            service.LastDeletion(),
+            "Nothing should be deleted.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -239,8 +373,9 @@ public sealed class DetailsModelTests
     /// Creates a user as the service would answer with them, with invented values.
     /// </summary>
     /// <param name="id">The user's identifier.</param>
+    /// <param name="archived">Whether they are archived.</param>
     /// <returns>The user.</returns>
-    private static UserSingleResponse CreateUser(long id)
+    private static UserSingleResponse CreateUser(long id, bool archived = false)
     {
         RecordChange change = new RecordChange
         {
@@ -253,9 +388,10 @@ public sealed class DetailsModelTests
             DisplayName = new DisplayName("Pat Example"),
             Username = new Username("pat.example"),
             Email = new EmailAddress("pat@example.com"),
-            Version = new VersionNumber(1),
+            Version = new VersionNumber(archived ? 2 : 1),
             Created = change,
             LastModified = change,
+            Archived = archived ? change : null,
         };
     }
 

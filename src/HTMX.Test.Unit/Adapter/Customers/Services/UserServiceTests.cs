@@ -14,8 +14,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 /// <summary>
 /// Contains unit tests for verifying the behavior of the user service behind <see cref="IUserService"/>, over a seeded
 /// in-memory database: the pages of the users list, filtered, narrowed by status, sorted by each column either way,
-/// and paged by key; one user and their versions; and creating, changing, archiving, restoring and rolling back a
-/// user.
+/// and paged by key; one user and their versions; and creating, changing, archiving, restoring, rolling back and
+/// deleting a user.
 /// </summary>
 [TestClass]
 public sealed class UserServiceTests
@@ -699,6 +699,99 @@ public sealed class UserServiceTests
             "Pat should keep their version and their username.");
     }
 
+    /// <summary>
+    /// Unit test to verify that a user is in use while any version of any record names them, and not otherwise.
+    /// </summary>
+    /// <param name="id">The user's identifier.</param>
+    /// <param name="expected">Whether they should be in use.</param>
+    [TestMethod]
+    [DataRow(10002L, false, DisplayName = "Casey Mockup, who has changed nothing")]
+    [DataRow(10009L, true, DisplayName = "Sam Sample, who archived Pat")]
+    [DataRow(10007L, true, DisplayName = "Pat Example, who changed Taylor")]
+    [DataRow(10001L, true, DisplayName = "Demo User, who made most changes")]
+    public async Task IsInUseAsync_EachUser_SaysWhetherAnyVersionNamesThem(long id, bool expected)
+    {
+        // Arrange (Given)
+        UserId userId = new UserId(id);
+
+        // Act (When)
+        bool inUse = await UserServiceCalls.IsInUseAsync(userId).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            inUse,
+            "A user should be in use exactly when some version names them.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an archived user whom nothing names is deleted, with their history, at the version
+    /// the page showed.
+    /// </summary>
+    [TestMethod]
+    public async Task DeleteAsync_CaseyMockup_DeletesThemAndTheirHistory()
+    {
+        // Arrange (Given)
+        UserDeleteRequest request = CreateDelete(10002, 2);
+
+        // Act (When)
+        (DeleteOutcome outcome, UserSingleResponse? after, UserVersion[] history, int users) =
+            await UserServiceCalls.DeleteAsync(request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            DeleteOutcome.Deleted,
+            outcome,
+            "Casey Mockup, archived and named by nothing, should be deleted.");
+        Assert.IsNull(
+            after,
+            "Casey should no longer be found.");
+        Assert.IsEmpty(
+            history,
+            "Casey's history should go with them.");
+        Assert.AreEqual(
+            48,
+            users,
+            "One of the 49 users should be gone.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete the rules refuse deletes nothing. The rules run in order, so each row breaks
+    /// only one.
+    /// </summary>
+    /// <param name="id">The user's identifier.</param>
+    /// <param name="version">The version the page showed them at.</param>
+    /// <param name="expected">What should become of the request.</param>
+    [TestMethod]
+    [DataRow(99999L, 1, DeleteOutcome.NotFound, DisplayName = "An unknown identifier")]
+    [DataRow(10007L, 5, DeleteOutcome.Active, DisplayName = "An active user")]
+    [DataRow(10002L, 1, DeleteOutcome.Overtaken, DisplayName = "From a version they have moved on from")]
+    [DataRow(10009L, 2, DeleteOutcome.InUse, DisplayName = "An archived user whom others name")]
+    public async Task DeleteAsync_Refused_DeletesNothing(long id, int version, DeleteOutcome expected)
+    {
+        // Arrange (Given)
+        UserDeleteRequest request = CreateDelete(id, version);
+        UserSingleResponse? before = await UserServiceCalls.FindAsync(request.Id).ConfigureAwait(false);
+
+        // Act (When)
+        (DeleteOutcome outcome, UserSingleResponse? after, UserVersion[] history, int users) =
+            await UserServiceCalls.DeleteAsync(request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            outcome,
+            $"The delete should be answered {expected}.");
+        Assert.AreEqual(
+            (before?.Version, 49),
+            (after?.Version, users),
+            "Every user should still be there, at the version they were.");
+        Assert.HasCount(
+            before is null ? 0 : before.Version.Value,
+            history,
+            "The history should keep every version.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -738,6 +831,21 @@ public sealed class UserServiceTests
         {
             Id = id,
             ChangedBy = UserSeed.DemoUser,
+        };
+    }
+
+    /// <summary>
+    /// Creates a delete as a user's confirm dialog would send it.
+    /// </summary>
+    /// <param name="id">The user to delete.</param>
+    /// <param name="version">The version the dialog showed them at.</param>
+    /// <returns>The delete.</returns>
+    private static UserDeleteRequest CreateDelete(long id, int version)
+    {
+        return new UserDeleteRequest
+        {
+            Id = new UserId(id),
+            Version = new VersionNumber(version),
         };
     }
 

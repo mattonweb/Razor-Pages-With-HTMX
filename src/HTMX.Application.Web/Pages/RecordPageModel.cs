@@ -27,11 +27,6 @@ public abstract class RecordPageModel : PageModel
     // What HTMX gets after an action on the record: the tab's content and the toast.
     private const string ChangedPartial = "_RecordChanged";
 
-    // Where a toast waits in TempData across the redirect that follows an action sent without HTMX.
-    private const string ToastMessageKey = "ToastMessage";
-    private const string ToastUndoKey = "ToastUndo";
-    private const string ToastUndoTargetKey = "ToastUndoTarget";
-
     /// <summary>
     /// Gets or sets the route's values, as the browser sent them. Model binding writes them; the page only reads them.
     /// </summary>
@@ -77,12 +72,7 @@ public abstract class RecordPageModel : PageModel
             return this.Page();
         }
 
-        if (this.TempData[ToastMessageKey] is string message)
-        {
-            string target = this.TempData[ToastUndoTargetKey] as string ?? this.ContentTarget;
-            this.Toast = CreateToast(message, this.TempData[ToastUndoKey] as string, target);
-        }
-
+        this.Toast = TempDataToasts.Take(this.TempData, this.ContentTarget);
         return HtmxAnswers.PartOrPage(this, this.ContentPartial);
     }
 
@@ -142,15 +132,14 @@ public abstract class RecordPageModel : PageModel
     /// <returns>The part and toast, or the redirect.</returns>
     protected IActionResult Answer(string message, string? undoAction, string changedPartial, string undoTarget)
     {
+        Toast toast = CreateToast(message, undoAction, undoTarget);
         if (HtmxHeaders.IsPartialRequest(this.Request))
         {
-            this.Toast = CreateToast(message, undoAction, undoTarget);
+            this.Toast = toast;
             return this.Partial(changedPartial, this);
         }
 
-        this.TempData[ToastMessageKey] = message;
-        this.TempData[ToastUndoKey] = undoAction;
-        this.TempData[ToastUndoTargetKey] = undoTarget;
+        TempDataToasts.Leave(this.TempData, toast);
         return this.RedirectToPage(this.PageName, this.TabValues());
     }
 

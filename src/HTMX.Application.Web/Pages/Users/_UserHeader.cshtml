@@ -7,14 +7,23 @@
     neither says hx-disable, which would lose it. Nobody may archive themselves, so the signed-in user's own page
     offers no Archive and says why; it still offers Edit, since anyone may change their own values. An archived user
     offers Restore in the alert and no Edit.
+
+    Delete permanently, last in the alert, cannot be undone, so it asks first, in the brand's confirm dialog: a native
+    <dialog> that the button opens with commandfor and command, which need no script, holding its own form. The form
+    posts to the tab's Delete handler with HTMX or without it, carrying the version the dialog shows, so it never
+    deletes a user who has changed since. A deleted user's page goes to the list; a refused delete answers like Archive,
+    and the answer replaces #user, the dialog with it. When other records name the user, the same button opens the
+    brand's dialog for an action that is not allowed instead: it says why, and offers no way to force it.
 *@
 @{
     UserSingleResponse account = Model.Account
         ?? throw new InvalidOperationException("The user's header needs the user.");
     RecordChange lastChange = account.LastModified;
     long id = account.Id.Value;
+    string name = account.DisplayName.Value;
     string? archiveAction = Url.Page(Model.PageName, "Archive", Model.TabValues());
     string? restoreAction = Url.Page(Model.PageName, "Restore", Model.TabValues());
+    string? deleteAction = Url.Page(Model.PageName, "Delete", Model.TabValues());
 }
 <header class="page-header">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -66,8 +75,47 @@
                   hx-indicator="find button">
                 <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Restore</button>
             </form>
+            <button class="btn danger" type="button" commandfor="delete-user" command="show-modal"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg>Delete permanently</button>
         </div>
     </div>
+
+    @if (Model.InUse)
+    {
+        <dialog class="dialog sm" id="delete-user" aria-labelledby="delete-user-title" aria-describedby="delete-user-text">
+            <form method="dialog">
+                <header class="dialog-header"><h2 id="delete-user-title">@name can't be deleted</h2></header>
+                <div class="dialog-body confirm">
+                    <span class="dialog-icon warning"><svg class="icon" aria-hidden="true"><use href="/icons.svg#alert"></use></svg></span>
+                    <div class="message" id="delete-user-text">
+                        <p>Other records name @name as who created, changed or archived them, and their histories would be left naming nobody.</p>
+                        <p>Leave them archived instead: they stay hidden from the active list.</p>
+                    </div>
+                </div>
+                <footer class="dialog-footer">
+                    <button class="btn primary" type="button" commandfor="delete-user" command="close" autofocus>OK</button>
+                </footer>
+            </form>
+        </dialog>
+    }
+    else
+    {
+        <dialog class="dialog sm" id="delete-user" aria-labelledby="delete-user-title" aria-describedby="delete-user-text">
+            <form method="post" action="@deleteAction" asp-antiforgery="true"
+                  hx-post="@deleteAction" hx-target="#user" hx-swap="outerHTML"
+                  hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+                <input type="hidden" name="version" value="@account.Version.Value" />
+                <header class="dialog-header"><h2 id="delete-user-title">Delete @name permanently?</h2></header>
+                <div class="dialog-body confirm">
+                    <span class="dialog-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg></span>
+                    <div class="message" id="delete-user-text"><p>This removes @name and their history. It cannot be undone.</p></div>
+                </div>
+                <footer class="dialog-footer">
+                    <button class="btn" type="button" commandfor="delete-user" command="close" autofocus>Cancel</button>
+                    <button class="btn danger" type="submit">Delete permanently</button>
+                </footer>
+            </form>
+        </dialog>
+    }
 }
 
 @* Each tab is a page with its own URL; the count after History is how many versions the user has. *@

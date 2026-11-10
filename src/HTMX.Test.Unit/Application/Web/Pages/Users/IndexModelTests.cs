@@ -10,11 +10,13 @@ using HTMX.Application.Web.Pages.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Contains unit tests for verifying the behavior of the users' <see cref="IndexModel"/> class: which response the
-/// list page sends to which request, how it reads its query string, and the links its headers and status filter write.
+/// list page sends to which request, how it reads its query string, the links its headers and status filter write, and
+/// the toast a deleted user's page leaves for it.
 /// </summary>
 [TestClass]
 public sealed class IndexModelTests
@@ -177,13 +179,42 @@ public sealed class IndexModelTests
             "Active is the default status, so its link should leave it out.");
     }
 
+    /// <summary>
+    /// Unit test to verify that the whole page shows the toast a deleted user's page left in TempData, and that a swap
+    /// of the list's card leaves it waiting.
+    /// </summary>
+    /// <param name="kind">What sent the request, by its name in <see cref="HtmxRequest"/>.</param>
+    /// <param name="shown">Whether the toast should be shown.</param>
+    [TestMethod]
+    [DataRow(nameof(HtmxRequest.None), true, DisplayName = "The whole page, after a redirect")]
+    [DataRow(nameof(HtmxRequest.HistoryRestore), true, DisplayName = "The whole page, loaded by HTMX")]
+    [DataRow(nameof(HtmxRequest.Partial), false, DisplayName = "A swap of the card")]
+    public async Task OnGetAsync_ToastLeftByADelete_ShowsItOnTheWholePage(string kind, bool shown)
+    {
+        // Arrange (Given)
+        IndexModel page = CreatePage(new StubUserService(), Enum.Parse<HtmxRequest>(kind));
+        page.TempData["ToastMessage"] = "Casey Mockup deleted.";
+
+        // Act (When)
+        await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            shown ? "Casey Mockup deleted." : null,
+            page.Toast?.Message,
+            "Only the whole page should show the toast.");
+        Assert.IsNull(
+            page.Toast?.UndoAction,
+            "A delete cannot be undone, so the toast should offer no Undo.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
 
     /// <summary>
     /// Creates the page as the framework would for one request: Demo User signed in, the headers HTMX 4 sends for that
-    /// kind of request, and the page named in the route.
+    /// kind of request, the page named in the route, and a stand-in for TempData.
     /// </summary>
     /// <param name="service">The user service the page reads through.</param>
     /// <param name="kind">What sent the request.</param>
@@ -195,6 +226,7 @@ public sealed class IndexModelTests
         {
             PageContext = context,
             MetadataProvider = new EmptyModelMetadataProvider(),
+            TempData = new TempDataDictionary(context.HttpContext, new StubTempDataProvider()),
         };
     }
 

@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// Calls <see cref="IUserService"/> as the users' pages do, over a seeded database of its own: one page, a page and
 /// then the pages its Previous and Next lead to, every page from the first to the last, one user or their versions, or
-/// a new user, changes, an archive, a restore or a roll-back.
+/// a new user, changes, an archive, a restore, a roll-back or a delete.
 /// </summary>
 internal static class UserServiceCalls
 {
@@ -78,6 +78,48 @@ internal static class UserServiceCalls
                 IUserService users = scope.ServiceProvider.GetRequiredService<IUserService>();
                 return await users.ListVersionsAsync(id).ConfigureAwait(false);
             }
+        }
+    }
+
+    /// <summary>
+    /// Asks the service whether other records name a user.
+    /// </summary>
+    /// <param name="id">The user's identifier.</param>
+    /// <returns><see langword="true"/> when some version names them.</returns>
+    internal static async Task<bool> IsInUseAsync(UserId id)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IUserService users = scope.ServiceProvider.GetRequiredService<IUserService>();
+                return await users.IsInUseAsync(id).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Deletes a user through the service, then reads them, every version of them, and how many users there are, as
+    /// they are afterwards.
+    /// </summary>
+    /// <param name="request">The delete.</param>
+    /// <returns>What became of it, the user afterwards, their versions, oldest first, and every user's count.</returns>
+    internal static async Task<(DeleteOutcome Outcome, UserSingleResponse? After, UserVersion[] History, int Users)>
+        DeleteAsync(UserDeleteRequest request)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            DeleteOutcome outcome;
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IUserService users = scope.ServiceProvider.GetRequiredService<IUserService>();
+                outcome = await users.DeleteAsync(request).ConfigureAwait(false);
+            }
+
+            UserSingleResponse? after = await FindAsync(services, request.Id).ConfigureAwait(false);
+            UserVersion[] history = await ReadHistoryAsync(services, request.Id).ConfigureAwait(false);
+            int count = await CountAsync(services).ConfigureAwait(false);
+            return (outcome, after, history, count);
         }
     }
 
@@ -273,6 +315,20 @@ internal static class UserServiceCalls
                 .ToArrayAsync()
                 .ConfigureAwait(false);
             return [.. versions.OrderBy(static version => version.Version.Value)];
+        }
+    }
+
+    /// <summary>
+    /// Counts every user, archived ones among them, straight from the database.
+    /// </summary>
+    /// <param name="services">The started services.</param>
+    /// <returns>How many users the database holds.</returns>
+    private static async Task<int> CountAsync(ServiceProvider services)
+    {
+        using (IServiceScope scope = services.CreateScope())
+        {
+            CustomersDatabaseContext context = scope.ServiceProvider.GetRequiredService<CustomersDatabaseContext>();
+            return await context.Set<User>().CountAsync().ConfigureAwait(false);
         }
     }
 

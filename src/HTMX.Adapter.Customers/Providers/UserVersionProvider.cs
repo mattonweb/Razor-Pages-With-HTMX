@@ -67,6 +67,32 @@ internal sealed class UserVersionProvider
     }
 
     /// <summary>
+    /// Says whether any version of any record names a user as who made it or who archived the record, in one query
+    /// across the three version tables: users', the user's own included, organizations' and contacts'.
+    /// </summary>
+    /// <remarks>
+    /// Every row's CreatedBy, LastModifiedBy and ArchivedBy are copied from its versions, so the versions are the
+    /// whole of what can name a user. The foreign keys refuse a delete that would leave one naming nothing, so this
+    /// check is what lets the page say so before anyone asks.
+    /// </remarks>
+    /// <param name="id">The user's identifier.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns><see langword="true"/> when some version names the user.</returns>
+    public Task<bool> IsNamedAsync(UserId id, CancellationToken cancellationToken = default)
+    {
+        IQueryable<int> users = this._context.Set<UserVersion>()
+            .Where(version => version.ChangedBy == id || version.ArchivedBy == id)
+            .Select(static version => 1);
+        IQueryable<int> organizations = this._context.Set<OrganizationVersion>()
+            .Where(version => version.ChangedBy == id || version.ArchivedBy == id)
+            .Select(static version => 1);
+        IQueryable<int> contacts = this._context.Set<ContactVersion>()
+            .Where(version => version.ChangedBy == id || version.ArchivedBy == id)
+            .Select(static version => 1);
+        return users.Concat(organizations).Concat(contacts).AnyAsync(cancellationToken);
+    }
+
+    /// <summary>
     /// Reads one version of one user.
     /// </summary>
     /// <param name="id">The user's identifier.</param>

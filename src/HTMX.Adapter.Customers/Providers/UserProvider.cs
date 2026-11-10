@@ -251,6 +251,22 @@ internal sealed class UserProvider
     }
 
     /// <summary>
+    /// Deletes a user's row; the database deletes their versions with it. The row's version number is a concurrency
+    /// token, so the DELETE names the version that was read as well as the identifier, and deletes nothing if another
+    /// request saved the user since.
+    /// </summary>
+    /// <param name="current">The row as <see cref="FindForChangeAsync"/> read it.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns><see langword="true"/> when the user was deleted; <see langword="false"/> when another save overtook
+    /// the delete.</returns>
+    public Task<bool> DeleteAsync(User current, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(current);
+        this._context.Remove(current);
+        return this.TrySaveAsync(cancellationToken);
+    }
+
+    /// <summary>
     /// Reads how the list sorts the user a cursor names: their value in every sortable column.
     /// </summary>
     /// <param name="id">The user's identifier.</param>

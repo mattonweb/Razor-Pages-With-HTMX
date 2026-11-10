@@ -90,6 +90,14 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   record, the name links here, muted and marked Archived once that user is; a timeline entry names them as text,
   because its summary line is the button that opens it. An identifier that names no user gets the page saying so,
   with 404.
+
+  **Delete permanently**, beside Restore on an archived user's page, is the one action that cannot be undone, so it
+  asks first, in the brand's confirm dialog: a `<dialog>` the button opens with `commandfor`, needing no script, that
+  holds its own form. The form posts to the tab's Delete handler with the version it shows, with HTMX or without it.
+  A delete goes to the users list, by `HX-Location` or a redirect, and the list shows the toast it left in TempData,
+  with no Undo; the user's history goes with them. Only an archived user can be deleted, and only one whom no version
+  of any record names as who changed or archived it: Casey Mockup can be, but for Sam Sample the same button opens a
+  dialog that says why not, with no way to force it. A delete from an out-of-date dialog is refused in a toast.
 - **`/users/{id}/history`** — the user's History tab, in the same timeline. Rolling Pat Example back to version 1
   brings back the misspelled name and the old email address. A roll-back to a username or email address another user
   has taken since, however it is capitalized, is refused, and its toast names the one taken.
