@@ -8,14 +8,38 @@ using HTMX.Application.Web.Pages.Contacts;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
-/// Contains unit tests for verifying the behavior of the <see cref="ContactChanges"/> class: which fields a version or
-/// a roll-back changes, and what each entry of a contact's timeline offers, the organization a version names among
-/// them.
+/// Contains unit tests for verifying the behavior of the <see cref="ContactChanges"/> class: the values a version
+/// holds, the organization among them, and what each entry of a contact's timeline offers, which depends on the
+/// organization a version names.
 /// </summary>
 [TestClass]
 public sealed class ContactChangesTests
 {
     #region Public Methods
+
+    /// <summary>
+    /// Unit test to verify that a version is described by the Details tab's fields, in its order, and that an
+    /// organization since deleted is named by its identifier.
+    /// </summary>
+    [TestMethod]
+    public void Describe_VersionInADeletedOrganization_NamesItByItsIdentifier()
+    {
+        // Arrange (Given)
+        ContactVersionResponse version = CreateHistory(fictionalFreight: null)[1];
+
+        // Act (When)
+        HistoryVersion described = ContactChanges.Describe(version);
+
+        // Assert (Then)
+        CollectionAssert.AreEqual(
+            new[] { "Name", "Organization", "Job title", "Email", "Phone", "Notes" },
+            described.Values.Select(static value => value.Field).ToArray(),
+            "The fields should be the Details tab's, in its order.");
+        Assert.AreEqual(
+            "Deleted organization 10002",
+            described.Values[1].Value,
+            "A deleted organization should be named by its identifier.");
+    }
 
     /// <summary>
     /// Unit test to verify that an earlier version in another, active organization offers a roll-back that moves the

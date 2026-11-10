@@ -8,8 +8,9 @@ using HTMX.Application.Web.Pages.Users;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
-/// Contains unit tests for verifying the behavior of the <see cref="UserChanges"/> class: which fields a version or a
-/// roll-back changes, and what each entry of the timeline offers.
+/// Contains unit tests for verifying the behavior of the <see cref="UserChanges"/> class: the values a version holds,
+/// in the page's order, and what each entry of the timeline offers while the user is active and once they are
+/// archived.
 /// </summary>
 [TestClass]
 public sealed class UserChangesTests
@@ -17,52 +18,31 @@ public sealed class UserChangesTests
     #region Public Methods
 
     /// <summary>
-    /// Unit test to verify that an edit's changes are the fields whose values differ, in the page's order: name,
-    /// username, email.
+    /// Unit test to verify that a version is described by name, username and email address, in the page's order, and
+    /// keeps whether it left the user archived.
     /// </summary>
     [TestMethod]
-    public void Between_EditedNameAndEmail_GivesThoseFieldsInOrder()
+    public void Describe_ArchivedVersion_GivesItsValuesInOrder()
     {
         // Arrange (Given)
-        UserVersionResponse before = CreateVersion(1, "Pat Exampel", "pat@placeholder.example");
-        UserVersionResponse after = CreateVersion(2, "Pat Example", "pat@example.com");
+        UserVersionResponse version = CreateVersion(2, "Pat Example", "pat@example.com", archived: true);
 
         // Act (When)
-        FieldChange[] changes = UserChanges.Between(before, after);
+        HistoryVersion described = UserChanges.Describe(version);
 
         // Assert (Then)
         CollectionAssert.AreEqual(
-            new[] { "Name", "Email" },
-            changes.Select(static change => change.Field).ToArray(),
-            "Only the name and the email address changed, in that order.");
+            new[] { "Name", "Username", "Email" },
+            described.Values.Select(static value => value.Field).ToArray(),
+            "The fields should be the page's, in its order.");
+        CollectionAssert.AreEqual(
+            new[] { "Pat Example", "pat.example", "pat@example.com" },
+            described.Values.Select(static value => value.Value).ToArray(),
+            "Each field should hold the version's value.");
         Assert.AreEqual(
-            ("pat@placeholder.example", "pat@example.com"),
-            (changes[1].Before, changes[1].After),
-            "The email address should show its value before and after.");
-    }
-
-    /// <summary>
-    /// Unit test to verify that archiving changes only the status, and that a roll-back never does.
-    /// </summary>
-    [TestMethod]
-    public void Between_Archived_GivesOnlyTheStatus()
-    {
-        // Arrange (Given)
-        UserVersionResponse active = CreateVersion(1, "Pat Example", "pat@example.com");
-        UserVersionResponse archived = CreateVersion(2, "Pat Example", "pat@example.com", archived: true);
-
-        // Act (When)
-        FieldChange[] archiving = UserChanges.Between(active, archived);
-        FieldChange[] rollingBack = UserChanges.RollBack(archived, active);
-
-        // Assert (Then)
-        Assert.AreEqual(
-            ("Status", "Active", "Archived"),
-            (archiving.Single().Field, archiving.Single().Before, archiving.Single().After),
-            "Archiving should change only the status.");
-        Assert.IsEmpty(
-            rollingBack,
-            "A roll-back saves values, not the status, so there is nothing to change.");
+            (new VersionNumber(2), version.ArchivedOn),
+            (described.Version, described.ArchivedOn),
+            "The description should keep the version's number, and when it left the user archived.");
     }
 
     /// <summary>

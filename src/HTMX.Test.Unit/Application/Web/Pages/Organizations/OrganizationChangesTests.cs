@@ -8,8 +8,9 @@ using HTMX.Application.Web.Pages.Organizations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
-/// Contains unit tests for verifying the behavior of the <see cref="OrganizationChanges"/> class: which fields a
-/// version or a roll-back changes, and what each entry of the timeline offers.
+/// Contains unit tests for verifying the behavior of the <see cref="OrganizationChanges"/> class: the values a version
+/// holds, in the Details tab's order, and what each entry of the timeline offers while the organization is active and
+/// once it is archived.
 /// </summary>
 [TestClass]
 public sealed class OrganizationChangesTests
@@ -17,51 +18,31 @@ public sealed class OrganizationChangesTests
     #region Public Methods
 
     /// <summary>
-    /// Unit test to verify that an edit's changes are the fields whose values differ, in the Details tab's order, with
-    /// a missing website as no value.
+    /// Unit test to verify that a version is described by name, industry and website, in the Details tab's order, with
+    /// a missing website as no value, and keeps whether it left the organization archived.
     /// </summary>
     [TestMethod]
-    public void Between_EditedNameAndWebsite_GivesThoseFieldsInOrder()
+    public void Describe_ArchivedVersionWithoutWebsite_GivesItsValuesInOrder()
     {
         // Arrange (Given)
-        OrganizationVersionResponse before = CreateVersion(1, "Placeholder Freight", "https://placeholder.example");
-        OrganizationVersionResponse after = CreateVersion(2, "Placeholder Logistics", website: null);
+        OrganizationVersionResponse version = CreateVersion(2, "Placeholder Logistics", website: null, archived: true);
 
         // Act (When)
-        FieldChange[] changes = OrganizationChanges.Between(before, after);
+        HistoryVersion described = OrganizationChanges.Describe(version);
 
         // Assert (Then)
         CollectionAssert.AreEqual(
-            new[] { "Name", "Website" },
-            changes.Select(static change => change.Field).ToArray(),
-            "Only the name and the website changed, in that order.");
-        Assert.IsNull(
-            changes[1].After,
-            "A website removed should have no value after.");
-    }
-
-    /// <summary>
-    /// Unit test to verify that archiving changes only the status, and that a roll-back never does.
-    /// </summary>
-    [TestMethod]
-    public void Between_Archived_GivesOnlyTheStatus()
-    {
-        // Arrange (Given)
-        OrganizationVersionResponse active = CreateVersion(1, "Placeholder Logistics");
-        OrganizationVersionResponse archived = CreateVersion(2, "Placeholder Logistics", archived: true);
-
-        // Act (When)
-        FieldChange[] archiving = OrganizationChanges.Between(active, archived);
-        FieldChange[] rollingBack = OrganizationChanges.RollBack(archived, active);
-
-        // Assert (Then)
+            new[] { "Name", "Industry", "Website" },
+            described.Values.Select(static value => value.Field).ToArray(),
+            "The fields should be the Details tab's, in its order.");
+        CollectionAssert.AreEqual(
+            new[] { "Placeholder Logistics", "Shipping", null },
+            described.Values.Select(static value => value.Value).ToArray(),
+            "Each field should hold the version's value as the page shows it, and a missing website none.");
         Assert.AreEqual(
-            ("Status", "Active", "Archived"),
-            (archiving.Single().Field, archiving.Single().Before, archiving.Single().After),
-            "Archiving should change only the status.");
-        Assert.IsEmpty(
-            rollingBack,
-            "A roll-back saves values, not the status, so there is nothing to change.");
+            (new VersionNumber(2), version.ArchivedOn),
+            (described.Version, described.ArchivedOn),
+            "The description should keep the version's number, and when it left the organization archived.");
     }
 
     /// <summary>

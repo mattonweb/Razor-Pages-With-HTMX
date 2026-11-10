@@ -6,8 +6,9 @@ using System.Linq;
 using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
-/// What changed between two versions of a contact, as their History tab shows it: the fields whose values differ, in
-/// the order the Details tab lists them, and the timeline's entries made from them.
+/// A contact's side of their History tab: the values a version holds, in the order the Details tab lists them, the
+/// organization among them, when the contact can be rolled back, and which versions they can't go back to whatever
+/// their values. <see cref="RecordChanges"/> compares the versions, as it does every record's.
 /// </summary>
 public static class ContactChanges
 {
@@ -23,41 +24,44 @@ public static class ContactChanges
     {
         ArgumentNullException.ThrowIfNull(contact);
         ArgumentNullException.ThrowIfNull(versions);
+        if (versions.Count == 0)
+        {
+            return [];
+        }
+
         bool active = contact.Archived is null && contact.Organization.ArchivedOn is null;
+        ContactVersionResponse now = versions[0];
         string name = contact.Name.Value;
-        return [.. versions.Select((version, index) => Entry(versions, index, active, name))];
+        return RecordChanges.Entries([.. versions.Select(version => Describe(version, now, name))], active);
     }
 
     /// <summary>
-    /// Gives the fields a version changed from the one before it, its status included.
+    /// Describes one version for the History tab to compare: the values a person edits, in the Details tab's order,
+    /// and whether it left the contact archived. The organization is named as it is now, or by its identifier once it
+    /// is deleted.
     /// </summary>
-    /// <param name="before">The version before.</param>
-    /// <param name="after">The version that made the change.</param>
-    /// <returns>The fields that changed.</returns>
-    public static FieldChange[] Between(ContactVersionResponse before, ContactVersionResponse after)
+    /// <param name="version">The version.</param>
+    /// <returns>The version as every record's History tab compares it.</returns>
+    public static HistoryVersion Describe(ContactVersionResponse version)
     {
-        ArgumentNullException.ThrowIfNull(before);
-        ArgumentNullException.ThrowIfNull(after);
-        List<FieldChange> changes = [];
-        AddValues(changes, before, after);
-        Add(changes, "Status", StatusOf(before), StatusOf(after));
-        return [.. changes];
-    }
-
-    /// <summary>
-    /// Gives the fields a roll-back would change: the values an earlier version held, against the values now, the
-    /// organization among them. Status is not; a roll-back saves values, and only an active contact is rolled back.
-    /// </summary>
-    /// <param name="now">The current version.</param>
-    /// <param name="earlier">The version to roll back to.</param>
-    /// <returns>The fields that would change, none when the earlier version holds the same values.</returns>
-    public static FieldChange[] RollBack(ContactVersionResponse now, ContactVersionResponse earlier)
-    {
-        ArgumentNullException.ThrowIfNull(now);
-        ArgumentNullException.ThrowIfNull(earlier);
-        List<FieldChange> changes = [];
-        AddValues(changes, now, earlier);
-        return [.. changes];
+        ArgumentNullException.ThrowIfNull(version);
+        return new HistoryVersion
+        {
+            Version = version.Version,
+            Change = version.Change,
+            RolledBackTo = version.RolledBackTo,
+            Changed = version.Changed,
+            ArchivedOn = version.ArchivedOn,
+            Values =
+            [
+                new FieldValue { Field = "Name", Value = version.Name.Value },
+                new FieldValue { Field = "Organization", Value = OrganizationOf(version) },
+                new FieldValue { Field = "Job title", Value = version.JobTitle?.Value },
+                new FieldValue { Field = "Email", Value = version.Email?.Value },
+                new FieldValue { Field = "Phone", Value = version.Phone?.Value },
+                new FieldValue { Field = "Notes", Value = version.Notes?.Value },
+            ],
+        };
     }
 
     /// <summary>
@@ -77,36 +81,15 @@ public static class ContactChanges
     }
 
     /// <summary>
-    /// Makes the timeline's entry for one version: what it changed from the version after it in the list, which is
-    /// the one before it in time, and what rolling back to it would change now, or why it cannot be rolled back to.
+    /// Describes one version, and whether the contact can go back to it from the version they are at now.
     /// </summary>
-    /// <param name="versions">Every version, newest first.</param>
-    /// <param name="index">Which one.</param>
-    /// <param name="active">Whether the contact and their organization are active, so the contact can be rolled
-    /// back.</param>
+    /// <param name="version">The version.</param>
+    /// <param name="now">The version the contact is at now.</param>
     /// <param name="name">The contact's name now.</param>
-    /// <returns>The entry.</returns>
-    private static TimelineEntry Entry(
-        IReadOnlyList<ContactVersionResponse> versions,
-        int index,
-        bool active,
-        string name)
+    /// <returns>The version as every record's History tab compares it.</returns>
+    private static HistoryVersion Describe(ContactVersionResponse version, ContactVersionResponse now, string name)
     {
-        ContactVersionResponse version = versions[index];
-        bool earlier = active && index > 0;
-        string? unwelcome = earlier ? Unwelcome(versions[0], version, name) : null;
-        FieldChange[] rollBack = earlier && unwelcome is null ? RollBack(versions[0], version) : [];
-        bool same = earlier && unwelcome is null && rollBack.Length == 0;
-        return new TimelineEntry
-        {
-            Version = version.Version,
-            Change = version.Change,
-            RolledBackTo = version.RolledBackTo,
-            Changed = version.Changed,
-            Changes = index + 1 < versions.Count ? Between(versions[index + 1], version) : [],
-            RollBack = rollBack,
-            Note = same ? $"Version {version.Version.Value} holds the same values as now." : unwelcome,
-        };
+        return Describe(version) with { RollBackUnavailable = Unwelcome(now, version, name) };
     }
 
     /// <summary>
@@ -124,42 +107,6 @@ public static class ContactChanges
     }
 
     /// <summary>
-    /// Adds the values a person edits that differ between two versions, in the Details tab's order.
-    /// </summary>
-    /// <param name="changes">The changes found so far.</param>
-    /// <param name="before">The values before.</param>
-    /// <param name="after">The values after.</param>
-    private static void AddValues(
-        List<FieldChange> changes,
-        ContactVersionResponse before,
-        ContactVersionResponse after)
-    {
-        Add(changes, "Name", before.Name.Value, after.Name.Value);
-        Add(changes, "Organization", OrganizationOf(before), OrganizationOf(after));
-        Add(changes, "Job title", before.JobTitle?.Value, after.JobTitle?.Value);
-        Add(changes, "Email", before.Email?.Value, after.Email?.Value);
-        Add(changes, "Phone", before.Phone?.Value, after.Phone?.Value);
-        Add(changes, "Notes", before.Notes?.Value, after.Notes?.Value);
-    }
-
-    /// <summary>
-    /// Adds one field, if its value changed.
-    /// </summary>
-    /// <param name="changes">The changes found so far.</param>
-    /// <param name="field">The field's name.</param>
-    /// <param name="before">Its value before, if any.</param>
-    /// <param name="after">Its value after, if any.</param>
-    private static void Add(List<FieldChange> changes, string field, string? before, string? after)
-    {
-        if (string.Equals(before, after, StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        changes.Add(new FieldChange { Field = field, Before = before, After = after });
-    }
-
-    /// <summary>
     /// Names the organization a version names: by its name now, or, once it is deleted, by its identifier.
     /// </summary>
     /// <param name="version">The version.</param>
@@ -167,15 +114,5 @@ public static class ContactChanges
     private static string OrganizationOf(ContactVersionResponse version)
     {
         return version.Organization?.Name.Value ?? $"Deleted organization {version.OrganizationId.Value}";
-    }
-
-    /// <summary>
-    /// Says whether a version left the contact active or archived.
-    /// </summary>
-    /// <param name="version">The version.</param>
-    /// <returns>Active or Archived.</returns>
-    private static string StatusOf(ContactVersionResponse version)
-    {
-        return version.ArchivedOn is null ? "Active" : "Archived";
     }
 }
