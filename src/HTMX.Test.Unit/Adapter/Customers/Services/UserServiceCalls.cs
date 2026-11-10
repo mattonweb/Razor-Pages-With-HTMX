@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// Calls <see cref="IUserService"/> as the users' pages do, over a seeded database of its own: one page, a page and
 /// then the pages its Previous and Next lead to, every page from the first to the last, one user or their versions, or
-/// changes, an archive, a restore or a roll-back.
+/// a new user, changes, an archive, a restore or a roll-back.
 /// </summary>
 internal static class UserServiceCalls
 {
@@ -78,6 +78,31 @@ internal static class UserServiceCalls
                 IUserService users = scope.ServiceProvider.GetRequiredService<IUserService>();
                 return await users.ListVersionsAsync(id).ConfigureAwait(false);
             }
+        }
+    }
+
+    /// <summary>
+    /// Creates a user through the service, then reads the user at an identifier, and every version of them, as they
+    /// are afterwards.
+    /// </summary>
+    /// <param name="request">The new user.</param>
+    /// <param name="readBack">The identifier to read afterwards: the one the user should be given.</param>
+    /// <returns>What became of the request, the user at the identifier, and their versions, oldest first.</returns>
+    internal static async Task<(UserCreateResponse Response, UserSingleResponse? After, UserVersion[] History)>
+        CreateAsync(UserCreateRequest request, UserId readBack)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            UserCreateResponse response;
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IUserService users = scope.ServiceProvider.GetRequiredService<IUserService>();
+                response = await users.CreateAsync(request).ConfigureAwait(false);
+            }
+
+            UserSingleResponse? after = await FindAsync(services, readBack).ConfigureAwait(false);
+            UserVersion[] history = await ReadHistoryAsync(services, readBack).ConfigureAwait(false);
+            return (response, after, history);
         }
     }
 

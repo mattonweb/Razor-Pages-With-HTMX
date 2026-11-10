@@ -1,8 +1,8 @@
 @model HTMX.Application.Web.Pages.Users.UserFields
 @using HTMX.Adapter.Customers.Contracts
 @*
-    A user's fields, in the card the edit form holds. Each field's name is Input.Name and so on, as the page binds
-    them, so the messages in ModelState find their fields. When another save overtook this one (Saved is set), each
+    A user's fields, in the card both the create and the edit form hold. Each field's name is Input.Name and so on,
+    as the pages bind them, so the messages in ModelState find their fields. When another save overtook this one (Saved is set), each
     field whose saved value differs from the one being edited shows the saved value under it. Every value is required,
     so a saved value is never empty.
 *@

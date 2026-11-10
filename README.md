@@ -78,6 +78,10 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   `/organizations`, filtered by name, username or email address, with Active, Archived and All, headers that sort by
   name, username, email or last change, key-based paging and Rows per page. Both lists read and write their query
   string through `ListQuery`, so their URLs take the same names. Each name links to the user's own page.
+- **`/users/create`** — a new user, from **New user** on the list: the edit form's fields, rules and answers, saved at
+  version 1 with a Created version, at the next identifier (10050 on a fresh start), and the save goes to their page.
+  A username or an email address another user has, archived users included, however it is capitalized, is refused
+  with 422 under its own field.
 - **`/users/{id}`** — one user: their name, status and version, who changed them last, their username and email
   address, read in one query that joins the Users table to itself for who created, last changed and archived them.
   **Archive** and **Restore** work as an organization's do, with Undo, except that nobody may archive themselves:

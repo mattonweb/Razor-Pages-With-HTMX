@@ -14,7 +14,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 /// <summary>
 /// Contains unit tests for verifying the behavior of the user service behind <see cref="IUserService"/>, over a seeded
 /// in-memory database: the pages of the users list, filtered, narrowed by status, sorted by each column either way,
-/// and paged by key; one user and their versions; and changing, archiving, restoring and rolling back a user.
+/// and paged by key; one user and their versions; and creating, changing, archiving, restoring and rolling back a
+/// user.
 /// </summary>
 [TestClass]
 public sealed class UserServiceTests
@@ -256,6 +257,75 @@ public sealed class UserServiceTests
         Assert.IsNotNull(
             versions[3].Changed.By.ArchivedOn,
             "Sam has since been archived, and the version should say so.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a new user is created at the next identifier after the seed, at version 1, created and
+    /// last changed by whoever sent them, with one Created version holding their values.
+    /// </summary>
+    [TestMethod]
+    public async Task CreateAsync_NewValues_CreatesThemWithTheirFirstVersion()
+    {
+        // Arrange (Given)
+        UserId expected = new UserId(10050);
+        UserCreateRequest request = CreateNew("newcomer.user", "newcomer@example.com");
+
+        // Act (When)
+        (UserCreateResponse response, UserSingleResponse? after, UserVersion[] history) =
+            await UserServiceCalls.CreateAsync(request, expected).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (CreateOutcome.Created, (UserId?)expected),
+            (response.Outcome, response.Id),
+            "The first user after the seed should be created as 10050.");
+        Assert.AreEqual(
+            ("Newcomer User", "newcomer.user", "newcomer@example.com", new VersionNumber(1)),
+            (after?.DisplayName.Value, after?.Username.Value, after?.Email.Value, after?.Version),
+            "The new user should hold the values sent, at version 1.");
+        Assert.AreEqual(
+            (UserSeed.DemoUser, UserSeed.DemoUser, TestDatabase.StartedOn),
+            (after?.Created.By.Id, after?.LastModified.By.Id, after?.LastModified.On),
+            "The new user should name who created them, and was last changed when they were created.");
+        Assert.AreEqual(
+            (1, ChangeKind.Created),
+            (history.Length, history[0].Change),
+            "A new user should have one version, which records the creation.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a new user with a username or an email address another user has, in other capitals,
+    /// is not created, even when that user is archived. The username is checked first.
+    /// </summary>
+    /// <param name="username">The username sent.</param>
+    /// <param name="email">The email address sent.</param>
+    /// <param name="expected">What should become of the request.</param>
+    [TestMethod]
+    [DataRow("PAT.EXAMPLE", "newcomer@example.com", CreateOutcome.NameTaken, DisplayName = "An active user's username")]
+    [DataRow("SAM.SAMPLE", "newcomer@example.com", CreateOutcome.NameTaken, DisplayName = "An archived user's username")]
+    [DataRow("newcomer.user", "PAT@EXAMPLE.COM", CreateOutcome.EmailTaken, DisplayName = "Another's email address")]
+    [DataRow("PAT.EXAMPLE", "PAT@EXAMPLE.COM", CreateOutcome.NameTaken, DisplayName = "Both, the username first")]
+    public async Task CreateAsync_TakenValue_CreatesNothing(string username, string email, CreateOutcome expected)
+    {
+        // Arrange (Given)
+        UserId next = new UserId(10050);
+        UserCreateRequest request = CreateNew(username, email);
+
+        // Act (When)
+        (UserCreateResponse response, UserSingleResponse? after, UserVersion[] history) =
+            await UserServiceCalls.CreateAsync(request, next).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (expected, (UserId?)null),
+            (response.Outcome, response.Id),
+            $"The request should be answered {expected}, with no identifier given.");
+        Assert.IsNull(
+            after,
+            "No user should be created.");
+        Assert.IsEmpty(
+            history,
+            "No version should be written.");
     }
 
     /// <summary>
@@ -668,6 +738,23 @@ public sealed class UserServiceTests
         {
             Id = id,
             ChangedBy = UserSeed.DemoUser,
+        };
+    }
+
+    /// <summary>
+    /// Creates a new user as Demo User would send them from the create form, named Newcomer User.
+    /// </summary>
+    /// <param name="username">The username to give them.</param>
+    /// <param name="email">The email address to give them.</param>
+    /// <returns>The new user.</returns>
+    private static UserCreateRequest CreateNew(string username, string email)
+    {
+        return new UserCreateRequest
+        {
+            DisplayName = new DisplayName("Newcomer User"),
+            Username = new Username(username),
+            Email = new EmailAddress(email),
+            CreatedBy = UserSeed.DemoUser,
         };
     }
 

@@ -1,0 +1,22 @@
+@model HTMX.Application.Web.Pages.Users.CreateModel
+@*
+    The create form, around the same fields as the edit form. HTMX replaces it whole (outerHTML, hx-target="this")
+    when a save it sent is refused, with 422, as the organization's create form does. Nothing outside the form changes
+    when a save is refused. A save that succeeds answers with no content, and HX-Location loads the new user's page.
+*@
+@{
+    string? action = Url.Page("./Create");
+    UserFields fields = new UserFields { Input = Model.Input };
+}
+<form id="user-create" method="post" action="@action" asp-antiforgery="true" novalidate
+      hx-post="@action" hx-target="this" hx-swap="outerHTML"
+      hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+    <partial name="_UserFields" model="fields" />
+
+    <div class="form-actions">
+        <div class="end">
+            <a class="btn" asp-page="./Index">Cancel</a>
+            <button class="btn primary" type="submit">Create user</button>
+        </div>
+    </div>
+</form>

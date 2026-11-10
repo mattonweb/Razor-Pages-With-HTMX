@@ -133,16 +133,23 @@ internal sealed class UserProvider
     /// capitalized, by the column's NOCASE collation, through its unique index.
     /// </summary>
     /// <param name="username">The username to look for.</param>
-    /// <param name="except">The user whose own username does not count.</param>
+    /// <param name="except">The user whose own username does not count, or <see langword="null"/> when every user's
+    /// does, as for a new one.</param>
     /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
     /// <returns><see langword="true"/> when another user has the username.</returns>
     public Task<bool> IsUsernameTakenAsync(
         Username username,
-        UserId except,
+        UserId? except,
         CancellationToken cancellationToken = default)
     {
         IQueryable<User> users = this._context.Set<User>();
-        return users.AnyAsync(user => user.Username == username && user.Id != except, cancellationToken);
+        IQueryable<User> named = users.Where(user => user.Username == username);
+        if (except is UserId other)
+        {
+            named = named.Where(user => user.Id != other);
+        }
+
+        return named.AnyAsync(cancellationToken);
     }
 
     /// <summary>
@@ -150,16 +157,54 @@ internal sealed class UserProvider
     /// they are capitalized, by the column's NOCASE collation, through its unique index.
     /// </summary>
     /// <param name="email">The email address to look for.</param>
-    /// <param name="except">The user whose own address does not count.</param>
+    /// <param name="except">The user whose own address does not count, or <see langword="null"/> when every user's
+    /// does, as for a new one.</param>
     /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
     /// <returns><see langword="true"/> when another user has the address.</returns>
     public Task<bool> IsEmailTakenAsync(
         EmailAddress email,
-        UserId except,
+        UserId? except,
         CancellationToken cancellationToken = default)
     {
         IQueryable<User> users = this._context.Set<User>();
-        return users.AnyAsync(user => user.Email == email && user.Id != except, cancellationToken);
+        IQueryable<User> addressed = users.Where(user => user.Email == email);
+        if (except is UserId other)
+        {
+            addressed = addressed.Where(user => user.Id != other);
+        }
+
+        return addressed.AnyAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Saves a new user: their row, then their first version, in one transaction.
+    /// </summary>
+    /// <remarks>
+    /// The database gives the row its identifier as it is saved, and the version is keyed by that identifier, so the
+    /// version is made only once the row is saved: the caller says how to make it from the saved row.
+    /// </remarks>
+    /// <param name="user">The new row, without an identifier.</param>
+    /// <param name="record">Makes the first version from the row as saved, its identifier included.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>The identifier the database gave the user.</returns>
+    public async Task<UserId> AddAsync(
+        User user,
+        Func<User, UserVersion> record,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+        ArgumentNullException.ThrowIfNull(record);
+        DatabaseFacade database = this._context.Database;
+        IDbContextTransaction transaction = await database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using (transaction.ConfigureAwait(false))
+        {
+            this._context.Add(user);
+            await this._context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            this._context.Add(record(user));
+            await this._context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return user.Id;
+        }
     }
 
     /// <summary>

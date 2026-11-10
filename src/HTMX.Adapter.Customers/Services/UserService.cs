@@ -77,6 +77,38 @@ internal sealed class UserService : IUserService
 
     /// <inheritdoc/>
     /// <remarks>
+    /// The new user is at version 1, created and last changed by the same user at the same moment, and their first
+    /// version, a Created one, holds the same values. Their identifier carries on from the highest the database has
+    /// ever given. The username is checked before the email address, so a request that takes both is NameTaken.
+    /// </remarks>
+    public async Task<UserCreateResponse> CreateAsync(
+        UserCreateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        bool usernameTaken = await this._provider
+            .IsUsernameTakenAsync(request.Username, except: null, cancellationToken)
+            .ConfigureAwait(false);
+        if (usernameTaken)
+        {
+            return new UserCreateResponse { Outcome = CreateOutcome.NameTaken };
+        }
+
+        bool emailTaken = await this._provider
+            .IsEmailTakenAsync(request.Email, except: null, cancellationToken)
+            .ConfigureAwait(false);
+        if (emailTaken)
+        {
+            return new UserCreateResponse { Outcome = CreateOutcome.EmailTaken };
+        }
+
+        User user = Start(request, this._clock.GetUtcNow().UtcDateTime);
+        UserId id = await this._provider.AddAsync(user, RecordCreation, cancellationToken).ConfigureAwait(false);
+        return new UserCreateResponse { Outcome = CreateOutcome.Created, Id = id };
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
     /// The rules run in order, and the first that applies is the answer: the user must exist, be active, still be at
     /// the version the form was filled from, and hold some value other than the ones sent, and no other user may have
     /// the username or the email address sent, however either is capitalized. A change that passes is saved as the
@@ -153,6 +185,47 @@ internal sealed class UserService : IUserService
             && current.Username == request.Username
             && current.Email == request.Email;
         return same ? UpdateOutcome.Unchanged : null;
+    }
+
+    /// <summary>
+    /// Makes a new user's row: the values sent, at version 1, created and last changed by whoever sent them.
+    /// </summary>
+    /// <param name="request">The new user.</param>
+    /// <param name="now">When they are created, in UTC.</param>
+    /// <returns>The row, without an identifier until the database gives it one.</returns>
+    private static User Start(UserCreateRequest request, DateTime now)
+    {
+        return new User
+        {
+            Username = request.Username,
+            Email = request.Email,
+            DisplayName = request.DisplayName,
+            CreatedOn = now,
+            CreatedBy = request.CreatedBy,
+            LastModifiedOn = now,
+            LastModifiedBy = request.CreatedBy,
+            Version = new VersionNumber(1),
+        };
+    }
+
+    /// <summary>
+    /// Makes the first version of a new user from their row as saved: a Created version holding the same values.
+    /// </summary>
+    /// <param name="user">The row, with the identifier the database gave it.</param>
+    /// <returns>The version.</returns>
+    private static UserVersion RecordCreation(User user)
+    {
+        return new UserVersion
+        {
+            UserId = user.Id,
+            Version = user.Version,
+            Change = ChangeKind.Created,
+            ChangedOn = user.CreatedOn,
+            ChangedBy = user.CreatedBy,
+            Username = user.Username,
+            Email = user.Email,
+            DisplayName = user.DisplayName,
+        };
     }
 
     /// <summary>

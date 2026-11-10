@@ -37,6 +37,16 @@ public interface IUserService
     Task<UserVersionResponse[]> ListVersionsAsync(UserId id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Creates a user, with their first version, unless another user already has the username or the email address
+    /// given, however it is capitalized.
+    /// </summary>
+    /// <param name="request">The new user's values, and who is creating them.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Whether the user was created and, if they were, their identifier; NameTaken for the username,
+    /// EmailTaken for the email address.</returns>
+    Task<UserCreateResponse> CreateAsync(UserCreateRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Saves a change to one user's values as their next version, unless the user is archived, has moved on since the
     /// form was filled, already holds the values sent, or would take a username or an email address another user has.
     /// </summary>

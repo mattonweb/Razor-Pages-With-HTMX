@@ -11,7 +11,8 @@ public enum CreateOutcome
     Created,
 
     /// <summary>
-    /// Another record already has the name given, however it is capitalized, so nothing was created.
+    /// Another record of the same kind already has the name given, however it is capitalized: another organization
+    /// the organization's name, or another user the user's username. Nothing was created.
     /// </summary>
     NameTaken,
 
@@ -20,4 +21,9 @@ public enum CreateOutcome
     /// exist, so nothing was created.
     /// </summary>
     OrganizationUnavailable,
+
+    /// <summary>
+    /// Another user already has the email address given, however it is capitalized, so nothing was created.
+    /// </summary>
+    EmailTaken,
 }

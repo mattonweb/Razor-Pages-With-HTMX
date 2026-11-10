@@ -1,0 +1,16 @@
+@page
+@model HTMX.Application.Web.Pages.Users.CreateModel
+@{
+    ViewData["Title"] = "New user";
+    ViewData["Section"] = "Users";
+}
+
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Users</a></li><li><span aria-current="page">New</span></li></ol>
+    </nav>
+    <div class="title-row"><h1>New user</h1></div>
+</header>
+
+@* The form is a partial: the page renders it here, and a refused save that HTMX sent gets it alone. *@
+<partial name="_UserCreateForm" model="Model" />

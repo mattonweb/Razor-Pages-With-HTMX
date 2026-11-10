@@ -3,8 +3,8 @@ namespace HTMX.Application.Web.Pages.Users;
 using System.ComponentModel.DataAnnotations;
 
 /// <summary>
-/// A user's values as a form posts them, and the rules each must pass, written to be shared with a form that creates
-/// users, so that both ask the same of every value.
+/// A user's values as a form posts them, and the rules each must pass, shared by the create and edit forms so that
+/// both ask the same of every value.
 /// </summary>
 public class UserInput
 {

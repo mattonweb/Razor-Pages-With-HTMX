@@ -8,19 +8,22 @@ using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
 /// Stands in for the user service in page tests: it keeps each request the page sends and answers with an empty page
-/// for a list, with the one user and the versions it was given for a lookup, and with the outcome it was given for a
-/// change, an archive, a restore or a roll-back, so a test sees what the page asked for without a database.
+/// for a list, with the one user and the versions it was given for a lookup, and with the outcomes it was given for a
+/// change, an archive, a restore, a roll-back and a new user, so a test sees what the page asked for without a
+/// database.
 /// </summary>
 internal sealed class StubUserService : IUserService
 {
     private readonly List<UserCollectionRequest> _received = [];
     private readonly List<UserId> _looked = [];
     private readonly List<UserUpdateRequest> _updates = [];
+    private readonly List<UserCreateRequest> _creations = [];
     private readonly List<(ChangeKind Change, UserStatusRequest Request)> _statusChanges = [];
     private readonly List<UserRollBackRequest> _rollBacks = [];
     private readonly UserSingleResponse? _found;
     private readonly UpdateOutcome _outcome;
     private readonly UserVersionResponse[] _versions;
+    private readonly CreateOutcome _creation;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StubUserService"/> class.
@@ -28,14 +31,18 @@ internal sealed class StubUserService : IUserService
     /// <param name="found">The user a lookup answers with, or <see langword="null"/> for none.</param>
     /// <param name="outcome">What a change, an archive, a restore and a roll-back are answered with.</param>
     /// <param name="versions">The versions a lookup of the history answers with, newest first.</param>
+    /// <param name="creation">What a new user is answered with; one who is created gets the identifier 10050, as the
+    /// first after the seed would.</param>
     public StubUserService(
         UserSingleResponse? found = null,
         UpdateOutcome outcome = UpdateOutcome.Saved,
-        UserVersionResponse[]? versions = null)
+        UserVersionResponse[]? versions = null,
+        CreateOutcome creation = CreateOutcome.Created)
     {
         this._found = found;
         this._outcome = outcome;
         this._versions = versions ?? [];
+        this._creation = creation;
     }
 
     /// <summary>
@@ -54,6 +61,15 @@ internal sealed class StubUserService : IUserService
     public UserId? LastLookup()
     {
         return this._looked.Count == 0 ? null : this._looked[^1];
+    }
+
+    /// <summary>
+    /// Gives the last new user the page sent.
+    /// </summary>
+    /// <returns>The new user, or <see langword="null"/> before the page sends one.</returns>
+    public UserCreateRequest? LastCreation()
+    {
+        return this._creations.LastOrDefault();
     }
 
     /// <summary>
@@ -113,6 +129,20 @@ internal sealed class StubUserService : IUserService
     public Task<UserVersionResponse[]> ListVersionsAsync(UserId id, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(this._versions);
+    }
+
+    /// <inheritdoc/>
+    public Task<UserCreateResponse> CreateAsync(
+        UserCreateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        this._creations.Add(request);
+        UserCreateResponse response = new UserCreateResponse
+        {
+            Outcome = this._creation,
+            Id = this._creation == CreateOutcome.Created ? new UserId(10050) : null,
+        };
+        return Task.FromResult(response);
     }
 
     /// <inheritdoc/>
