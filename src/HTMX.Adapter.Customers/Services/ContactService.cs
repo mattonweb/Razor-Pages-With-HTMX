@@ -49,7 +49,7 @@ internal sealed class ContactService : IContactService
         ContactSortKey? key = await this.FindCursorKeyAsync(request, cancellationToken).ConfigureAwait(false);
         ContactCollectionRequest answered = key is null ? ContactPages.FirstPage(request) : request;
         ContactSummary[] read = await this.ReadAsync(answered, key, cancellationToken).ConfigureAwait(false);
-        if (key is not null && ContactPages.IsTooShort(answered, read))
+        if (key is not null && ListPages.IsTooShort(answered.Cursor?.Position, answered.PageSize, read))
         {
             answered = ContactPages.FirstPage(request);
             read = await this.ReadAsync(answered, null, cancellationToken).ConfigureAwait(false);

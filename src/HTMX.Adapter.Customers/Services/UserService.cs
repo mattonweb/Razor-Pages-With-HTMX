@@ -53,7 +53,7 @@ internal sealed class UserService : IUserService
         UserSortKey? key = await this.FindCursorKeyAsync(request.Cursor, cancellationToken).ConfigureAwait(false);
         UserCollectionRequest answered = key is null ? UserPages.FirstPage(request) : request;
         UserSummary[] read = await this.ReadAsync(answered, key, cancellationToken).ConfigureAwait(false);
-        if (key is not null && UserPages.IsTooShort(answered, read))
+        if (key is not null && ListPages.IsTooShort(answered.Cursor?.Position, answered.PageSize, read))
         {
             answered = UserPages.FirstPage(request);
             read = await this.ReadAsync(answered, null, cancellationToken).ConfigureAwait(false);

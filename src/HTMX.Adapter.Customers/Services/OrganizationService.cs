@@ -57,7 +57,7 @@ internal sealed class OrganizationService : IOrganizationService
         OrganizationSortKey? key = await this.FindCursorKeyAsync(request.Cursor, cancellationToken).ConfigureAwait(false);
         OrganizationCollectionRequest answered = key is null ? OrganizationPages.FirstPage(request) : request;
         OrganizationSummary[] read = await this.ReadAsync(answered, key, cancellationToken).ConfigureAwait(false);
-        if (key is not null && OrganizationPages.IsTooShort(answered, read))
+        if (key is not null && ListPages.IsTooShort(answered.Cursor?.Position, answered.PageSize, read))
         {
             answered = OrganizationPages.FirstPage(request);
             read = await this.ReadAsync(answered, null, cancellationToken).ConfigureAwait(false);
