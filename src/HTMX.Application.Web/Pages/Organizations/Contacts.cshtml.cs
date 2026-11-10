@@ -15,14 +15,18 @@ using Microsoft.AspNetCore.Mvc;
 /// The Contacts tab of an organization's page, at /organizations/{id}/contacts: the people who belong to it, in name
 /// order, archived ones among the rest, ten to a page. Paging is key-based, as for the organizations list, and kept in
 /// the query string. Each row's menu archives or restores its contact at once, says so in a toast whose Undo does the
-/// opposite, and draws the list again as it was.
+/// opposite, and draws the list again as it was. An archived contact's menu also deletes them permanently, after a
+/// confirm dialog, and draws the list again without them.
 /// </summary>
 /// <remarks>
 /// Previous and Next change the URL, and the header's Archive and Restore post to the URL's values too, so with HTMX
 /// they answer with the tab's whole content, header and all. An action on a row posts to the list's own address with
 /// the handler and the contact added, so the POST binds where the list is just as the GET does, and reads the same
 /// page again. It leaves the URL as it is, so with HTMX it answers with the list alone, and the rest of the tab stays;
-/// without HTMX, the redirect goes back to the same page of the list.
+/// without HTMX, the redirect goes back to the same page of the list. A delete reads the page from the same cursor
+/// too: the rows after the deleted one move up, and a page left with no row is the service's to answer, with the
+/// first page. It also changes the count on the Contacts tab's label, so with HTMX it answers with the tab's whole
+/// content.
 /// </remarks>
 public sealed class ContactsModel : OrganizationPageModel
 {
@@ -38,6 +42,7 @@ public sealed class ContactsModel : OrganizationPageModel
 
     private const string ArchiveContactHandler = "ArchiveContact";
     private const string RestoreContactHandler = "RestoreContact";
+    private const string DeleteContactHandler = "DeleteContact";
     private const string ListChangedPartial = "_ContactListChanged";
 
     // What an action on a row, and its Undo, replaces: the list's card.
@@ -81,10 +86,17 @@ public sealed class ContactsModel : OrganizationPageModel
     public ContactCollectionResponse? Contacts { get; private set; }
 
     /// <summary>
-    /// Gets the contact a row's action was just for, whose menu button takes the focus when the list is drawn again,
-    /// or <see langword="null"/> when no action has run.
+    /// Gets the contact whose row's menu button takes the focus when the list is drawn again: the row a row's action
+    /// was just for or, once a delete has taken that row away, the row now in its place. It is
+    /// <see langword="null"/> when no action has run, or when a delete left no row to take the focus.
     /// </summary>
     public ContactId? Focused { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether the list's heading takes the focus when the list is drawn again, as it does
+    /// after a delete that left no row to take it.
+    /// </summary>
+    public bool HeadingFocused { get; private set; }
 
     /// <summary>
     /// Archives one of the organization's contacts, and says so in a toast whose Undo restores them.
@@ -108,6 +120,62 @@ public sealed class ContactsModel : OrganizationPageModel
     public Task<IActionResult> OnPostRestoreContactAsync(long contact, CancellationToken cancellationToken)
     {
         return this.ChangeContactAsync(contact, ChangeKind.Restored, cancellationToken);
+    }
+
+    /// <summary>
+    /// Deletes one of the organization's archived contacts permanently, from the version their row's confirm dialog
+    /// showed, reads the same page of the list again, and answers with it and a toast with no Undo. The deleted row is
+    /// gone from the page read again, so the keyboard goes to the row now in its place.
+    /// </summary>
+    /// <remarks>
+    /// Unlike archiving, a delete changes how many contacts the organization has, which the Contacts tab's label
+    /// counts, so with HTMX it answers with the tab's whole content, header and all, not the list alone.
+    /// </remarks>
+    /// <param name="contact">The contact's identifier, from the row's address.</param>
+    /// <param name="version">The version the dialog showed them at, from its form.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The tab's content and the toast for HTMX; a redirect back to the same page of the list otherwise; 400
+    /// for an identifier or a version number that cannot be one.</returns>
+    public async Task<IActionResult> OnPostDeleteContactAsync(
+        long contact,
+        int version,
+        CancellationToken cancellationToken)
+    {
+        if (contact < 1 || version < 1)
+        {
+            return this.BadRequest();
+        }
+
+        // Read the page as it was shown first: once the contact is deleted, the page read again holds neither their
+        // name, which the toast gives, nor their place, which the focus goes back to.
+        OrganizationSingleResponse? shown = await this.ReadAsync(cancellationToken).ConfigureAwait(false);
+        if (shown is null)
+        {
+            return this.ShowGone();
+        }
+
+        ContactId id = new ContactId(contact);
+        string name = this.NameOf(id);
+        int place = this.PlaceOf(id);
+        ContactDeleteRequest request = new ContactDeleteRequest
+        {
+            Id = id,
+            Organization = shown.Id,
+            Version = new VersionNumber(version),
+        };
+        DeleteOutcome outcome = await this._contacts.DeleteAsync(request, cancellationToken).ConfigureAwait(false);
+        OrganizationSingleResponse? organization = await this.ReadAsync(cancellationToken).ConfigureAwait(false);
+        if (organization is null)
+        {
+            return this.ShowGone();
+        }
+
+        // A refused delete leaves the row, and the keyboard goes back to its menu button. A delete takes the row away,
+        // so the keyboard goes to the row now in its place, or to the list's heading when no row is left.
+        this.Focused = outcome == DeleteOutcome.Deleted ? this.RowAt(place) : id;
+        this.HeadingFocused = this.Focused is null;
+        string message = ContactMessages.Delete(outcome, name, organization.Name);
+        return this.Answer(message, undoAction: null);
     }
 
     /// <inheritdoc/>
@@ -146,6 +214,17 @@ public sealed class ContactsModel : OrganizationPageModel
         ArgumentNullException.ThrowIfNull(contact);
         string handler = contact.ArchivedOn is null ? ArchiveContactHandler : RestoreContactHandler;
         return this.ContactAddress(handler, contact.Id);
+    }
+
+    /// <summary>
+    /// Writes the address an archived contact's confirm dialog posts to, to delete them, with where the list is.
+    /// </summary>
+    /// <param name="contact">The row's contact.</param>
+    /// <returns>The address.</returns>
+    public string DeleteAction(ContactSummary contact)
+    {
+        ArgumentNullException.ThrowIfNull(contact);
+        return this.ContactAddress(DeleteContactHandler, contact.Id);
     }
 
     /// <inheritdoc/>
@@ -253,6 +332,34 @@ public sealed class ContactsModel : OrganizationPageModel
         ContactSummary[] shown = this.Contacts?.Items ?? [];
         ContactSummary? found = shown.FirstOrDefault(summary => summary.Id == contact);
         return found?.Name.Value ?? "The contact";
+    }
+
+    /// <summary>
+    /// Gives where a contact's row is on the page of the list just read.
+    /// </summary>
+    /// <param name="contact">The contact.</param>
+    /// <returns>The row's place, counting from 0, or -1 when they are not on the page.</returns>
+    private int PlaceOf(ContactId contact)
+    {
+        ContactSummary[] shown = this.Contacts?.Items ?? [];
+        return Array.FindIndex(shown, summary => summary.Id == contact);
+    }
+
+    /// <summary>
+    /// Gives the contact in a place on the page of the list just read: the row at that place or, when the page is now
+    /// shorter, its last row.
+    /// </summary>
+    /// <param name="place">The place, counting from 0.</param>
+    /// <returns>The contact, or <see langword="null"/> when the page has no rows.</returns>
+    private ContactId? RowAt(int place)
+    {
+        ContactSummary[] shown = this.Contacts?.Items ?? [];
+        if (shown.Length == 0)
+        {
+            return null;
+        }
+
+        return shown[Math.Clamp(place, 0, shown.Length - 1)].Id;
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 namespace HTMX.Test.Unit.Application.Web.Pages.Organizations;
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
@@ -243,6 +244,188 @@ public sealed class ContactsModelTests
             "Undo should restore the organization from the same page, and replace the tab's whole content.");
     }
 
+    /// <summary>
+    /// Unit test to verify that a delete HTMX sent from a row's confirm dialog asks for that contact among the
+    /// organization's, at the version the dialog showed, and answers with the tab's whole content, whose label counts
+    /// the contacts, holding the same page of the list without them, and a toast with no Undo.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostDeleteContactAsync_DeletedByHtmx_AnswersTheListWithoutThem()
+    {
+        // Arrange (Given)
+        StubContactService contacts = new StubContactService(CreateContacts());
+        ContactsModel page = CreatePage(contacts, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page
+            .OnPostDeleteContactAsync(10018, 3, CancellationToken.None)
+            .ConfigureAwait(false);
+        ContactDeleteRequest? sent = contacts.LastDeletion();
+        ContactCollectionRequest? readAgain = contacts.LastRequest();
+        ContactSummary[] shown = page.Contacts?.Items ?? [];
+
+        // Assert (Then)
+        PartialViewResult partial = Assert.IsInstanceOfType<PartialViewResult>(
+            result,
+            "HTMX should get the tab's content to swap in place.");
+        Assert.AreEqual(
+            (new ContactId(10018), (OrganizationId?)new OrganizationId(10003), new VersionNumber(3)),
+            (sent?.Id, sent?.Organization, sent?.Version),
+            "The page should delete Florian Fallback among Placeholder Logistics's contacts, at the dialog's version.");
+        Assert.AreEqual(
+            (
+                "_RecordChanged",
+                (ContactCursor?)new ContactCursor(new ContactId(10017), CursorPosition.After),
+                new ContactId(10019)),
+            (partial.ViewName, readAgain?.Cursor, shown.Single().Id),
+            "The list should be read again from the same cursor, without the contact deleted.");
+        Assert.AreEqual(
+            ("Florian Fallback deleted.", (string?)null),
+            (page.Toast?.Message, page.Toast?.UndoAction),
+            "The toast should say who was deleted, with nothing to undo.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that once a delete has taken a row away, the keyboard goes to the row now in its place, or
+    /// to the last row when the deleted one was last.
+    /// </summary>
+    /// <param name="deleted">The contact deleted.</param>
+    /// <param name="focused">The contact whose menu button should take the focus.</param>
+    [TestMethod]
+    [DataRow(10018L, 10019L, DisplayName = "The first row: the next one moves up")]
+    [DataRow(10019L, 10018L, DisplayName = "The last row: the one before")]
+    public async Task OnPostDeleteContactAsync_Deleted_FocusesTheRowNowInItsPlace(long deleted, long focused)
+    {
+        // Arrange (Given)
+        ContactsModel page = CreatePage(new StubContactService(CreateContacts()), HtmxRequest.Partial);
+
+        // Act (When)
+        await page.OnPostDeleteContactAsync(deleted, 1, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            ((ContactId?)new ContactId(focused), false),
+            (page.Focused, page.HeadingFocused),
+            "The row now in the deleted one's place should take the focus.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete that leaves no row puts the keyboard on the list's heading.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostDeleteContactAsync_OnlyRowDeleted_FocusesTheHeading()
+    {
+        // Arrange (Given)
+        ContactSummary[] one = [CreateContacts()[0]];
+        ContactsModel page = CreatePage(new StubContactService(one), HtmxRequest.Partial);
+
+        // Act (When)
+        await page.OnPostDeleteContactAsync(10018, 3, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            ((ContactId?)null, true),
+            (page.Focused, page.HeadingFocused),
+            "With no row left, the list's heading should take the focus.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete sent without HTMX is redirected back to the same page of the list, and leaves
+    /// its toast in TempData with no Undo.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostDeleteContactAsync_DeletedWithoutHtmx_RedirectsToTheSamePage()
+    {
+        // Arrange (Given)
+        ContactsModel page = CreatePage(new StubContactService(CreateContacts()));
+
+        // Act (When)
+        IActionResult result = await page
+            .OnPostDeleteContactAsync(10018, 3, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        // Assert (Then)
+        RedirectToPageResult redirect = Assert.IsInstanceOfType<RedirectToPageResult>(
+            result,
+            "A delete without HTMX should be redirected.");
+        Assert.AreEqual(
+            ("./Contacts", "10017"),
+            (redirect.PageName, redirect.RouteValues?["after"]),
+            "The redirect should go back to the same page of the Contacts tab.");
+        Assert.AreEqual(
+            ("Florian Fallback deleted.", null),
+            (page.TempData["ToastMessage"], page.TempData["ToastUndo"]),
+            "The toast should wait in TempData, with no Undo.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete the service refuses says why, with no Undo, and keeps the keyboard on the
+    /// row, which is still there.
+    /// </summary>
+    /// <param name="outcome">What the service answered.</param>
+    /// <param name="expected">The toast's message.</param>
+    [TestMethod]
+    [DataRow(
+        DeleteOutcome.Active,
+        "Florian Fallback is active again, so they can't be deleted.",
+        DisplayName = "Active")]
+    [DataRow(
+        DeleteOutcome.Overtaken,
+        "Florian Fallback has changed since the page was shown, so they weren't deleted. Check them, then try again.",
+        DisplayName = "Overtaken")]
+    [DataRow(
+        DeleteOutcome.NotFound,
+        "That contact no longer belongs to Placeholder Logistics.",
+        DisplayName = "Not one of its contacts")]
+    [DataRow(
+        DeleteOutcome.OrganizationArchived,
+        "Placeholder Logistics is archived, so its contacts can't be changed until it is restored.",
+        DisplayName = "Organization archived")]
+    public async Task OnPostDeleteContactAsync_Refused_SaysWhyAndKeepsTheRow(DeleteOutcome outcome, string expected)
+    {
+        // Arrange (Given)
+        StubContactService contacts = new StubContactService(CreateContacts(), deletion: outcome);
+        ContactsModel page = CreatePage(contacts, HtmxRequest.Partial);
+
+        // Act (When)
+        await page.OnPostDeleteContactAsync(10018, 3, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (expected, (string?)null, (ContactId?)new ContactId(10018)),
+            (page.Toast?.Message, page.Toast?.UndoAction, page.Focused),
+            "The toast should say why nothing was deleted, and the row's menu button should take the focus.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an identifier or a version number that cannot be one is refused with 400, and nothing
+    /// is deleted.
+    /// </summary>
+    /// <param name="contact">The contact's identifier, as sent.</param>
+    /// <param name="version">The version number, as sent.</param>
+    [TestMethod]
+    [DataRow(0L, 3, DisplayName = "An impossible identifier")]
+    [DataRow(10018L, 0, DisplayName = "An impossible version")]
+    public async Task OnPostDeleteContactAsync_ImpossibleValues_AnswersBadRequest(long contact, int version)
+    {
+        // Arrange (Given)
+        StubContactService contacts = new StubContactService(CreateContacts());
+        ContactsModel page = CreatePage(contacts, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page
+            .OnPostDeleteContactAsync(contact, version, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsInstanceOfType<BadRequestResult>(
+            result,
+            "An identifier or a version number below 1 should be refused.");
+        Assert.IsNull(
+            contacts.LastDeletion(),
+            "Nothing should be deleted.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -278,12 +461,18 @@ public sealed class ContactsModelTests
     {
         return
         [
-            new ContactSummary { Id = new ContactId(10018), Name = new DisplayName("Florian Fallback") },
+            new ContactSummary
+            {
+                Id = new ContactId(10018),
+                Name = new DisplayName("Florian Fallback"),
+                Version = new VersionNumber(3),
+            },
             new ContactSummary
             {
                 Id = new ContactId(10019),
                 Name = new DisplayName("Fran Footnote"),
                 JobTitle = new JobTitle("Template Designer"),
+                Version = new VersionNumber(1),
             },
         ];
     }

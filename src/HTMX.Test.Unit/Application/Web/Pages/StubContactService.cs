@@ -10,7 +10,8 @@ using HTMX.Adapter.Customers.Contracts;
 /// Stands in for the contact service in page tests: it keeps each request the page sends, answers a page of contacts
 /// with the contacts it was given as the page the request asked for, a lookup with the one contact and the versions it
 /// was given, and a new contact, a change, an archive, a restore, a roll-back or a delete with the outcome it was
-/// given, so a test sees what the page asked for without a database.
+/// given, so a test sees what the page asked for without a database. A contact it answered a delete of with Deleted is
+/// left out of every page after.
 /// </summary>
 internal sealed class StubContactService : IContactService
 {
@@ -114,11 +115,16 @@ internal sealed class StubContactService : IContactService
         CancellationToken cancellationToken = default)
     {
         this._received.Add(request);
+        bool deleting = this._deletion == DeleteOutcome.Deleted;
+        ContactSummary[] remaining =
+        [
+            .. this._contacts.Where(contact => !deleting || this._deletions.All(deleted => deleted.Id != contact.Id)),
+        ];
         ContactCollectionResponse response = new ContactCollectionResponse
         {
             Request = request,
-            Items = this._contacts,
-            Total = new RecordCount(this._contacts.Length),
+            Items = remaining,
+            Total = new RecordCount(remaining.Length),
         };
         return Task.FromResult(response);
     }

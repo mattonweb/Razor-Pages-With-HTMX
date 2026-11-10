@@ -122,6 +122,27 @@ public sealed class ContactServiceTests
     }
 
     /// <summary>
+    /// Unit test to verify that each contact on a page carries the version they are at, which their row's confirm
+    /// dialog sends with a delete.
+    /// </summary>
+    [TestMethod]
+    public async Task ListAsync_PlaceholderLogistics_GivesEachContactTheirVersion()
+    {
+        // Arrange (Given)
+        ContactCollectionRequest request = ContactServiceCalls.PageOf(OrganizationSeed.PlaceholderLogistics);
+
+        // Act (When)
+        ContactCollectionResponse[] pages = await ContactServiceCalls.ReadInTurnAsync(request).ConfigureAwait(false);
+        ContactSummary ainsley = pages[0].Items.Single(static contact => contact.Id == new ContactId(10001));
+
+        // Assert (Then)
+        Assert.AreEqual(
+            new VersionNumber(4),
+            ainsley.Version,
+            "Ainsley Archetype should be at version 4, their latest.");
+    }
+
+    /// <summary>
     /// Unit test to verify that archiving an active contact saves an Archived version, keeps their values and their
     /// organization, and leaves them archived at that version.
     /// </summary>
@@ -558,16 +579,23 @@ public sealed class ContactServiceTests
     /// </summary>
     /// <param name="id">The contact's identifier.</param>
     /// <param name="version">The version the page showed them at.</param>
+    /// <param name="organization">The organization whose contacts the request was made among, if any.</param>
     /// <param name="expected">What should become of the request.</param>
     [TestMethod]
-    [DataRow(99999L, 1, DeleteOutcome.NotFound, DisplayName = "An unknown identifier")]
-    [DataRow(10002L, 1, DeleteOutcome.OrganizationArchived, DisplayName = "A contact of an archived organization")]
-    [DataRow(10001L, 4, DeleteOutcome.Active, DisplayName = "An active contact")]
-    [DataRow(10004L, 1, DeleteOutcome.Overtaken, DisplayName = "From a version they have moved on from")]
-    public async Task DeleteAsync_Refused_DeletesNothing(long id, int version, DeleteOutcome expected)
+    [DataRow(99999L, 1, null, DeleteOutcome.NotFound, DisplayName = "An unknown identifier")]
+    [DataRow(10004L, 2, 10009L, DeleteOutcome.NotFound, DisplayName = "Among another organization's contacts")]
+    [DataRow(10002L, 1, null, DeleteOutcome.OrganizationArchived, DisplayName = "In an archived organization")]
+    [DataRow(10001L, 4, null, DeleteOutcome.Active, DisplayName = "An active contact")]
+    [DataRow(10004L, 1, null, DeleteOutcome.Overtaken, DisplayName = "From a version they have moved on from")]
+    public async Task DeleteAsync_Refused_DeletesNothing(
+        long id,
+        int version,
+        long? organization,
+        DeleteOutcome expected)
     {
         // Arrange (Given)
-        ContactDeleteRequest request = CreateDelete(new ContactId(id), version);
+        OrganizationId? among = organization is long named ? new OrganizationId(named) : null;
+        ContactDeleteRequest request = CreateDelete(new ContactId(id), version, among);
         ContactSingleResponse? before = await ContactServiceCalls.FindAsync(request.Id).ConfigureAwait(false);
 
         // Act (When)
@@ -594,16 +622,23 @@ public sealed class ContactServiceTests
     #region Private Methods
 
     /// <summary>
-    /// Creates a delete as a contact's confirm dialog would send it.
+    /// Creates a delete as a contact's confirm dialog would send it: from their own page, or from their row on an
+    /// organization's Contacts tab.
     /// </summary>
     /// <param name="contact">The contact to delete.</param>
     /// <param name="version">The version the dialog showed them at.</param>
+    /// <param name="organization">The organization whose Contacts tab sent it, or <see langword="null"/> for the
+    /// contact's own page.</param>
     /// <returns>The delete.</returns>
-    private static ContactDeleteRequest CreateDelete(ContactId contact, int version)
+    private static ContactDeleteRequest CreateDelete(
+        ContactId contact,
+        int version,
+        OrganizationId? organization = null)
     {
         return new ContactDeleteRequest
         {
             Id = contact,
+            Organization = organization,
             Version = new VersionNumber(version),
         };
     }

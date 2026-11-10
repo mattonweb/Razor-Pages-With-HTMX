@@ -99,9 +99,10 @@ public abstract class ContactPageModel : RecordPageModel
         DeleteOutcome outcome = await this.Contacts.DeleteAsync(request, cancellationToken).ConfigureAwait(false);
         if (outcome == DeleteOutcome.Deleted)
         {
-            OrganizationId organization = before.Organization.Id;
-            TempDataToasts.Leave(this.TempData, new Toast { Message = $"{before.Name.Value} deleted." });
-            return HtmxAnswers.NextPage(this, ContactsTab, new { id = organization.Value });
+            OrganizationReference organization = before.Organization;
+            string deleted = ContactMessages.Delete(outcome, before.Name.Value, organization.Name);
+            TempDataToasts.Leave(this.TempData, new Toast { Message = deleted });
+            return HtmxAnswers.NextPage(this, ContactsTab, new { id = organization.Id.Value });
         }
 
         ContactSingleResponse? contact = await this.ReadAsync(cancellationToken).ConfigureAwait(false);
@@ -110,7 +111,8 @@ public abstract class ContactPageModel : RecordPageModel
             return this.ShowGone();
         }
 
-        return this.Answer(DeleteMessage(outcome, contact.Name, contact.Organization.Name), undoAction: null);
+        string message = ContactMessages.Delete(outcome, contact.Name.Value, contact.Organization.Name);
+        return this.Answer(message, undoAction: null);
     }
 
     /// <inheritdoc/>
@@ -155,26 +157,6 @@ public abstract class ContactPageModel : RecordPageModel
     protected IActionResult ShowGone()
     {
         return HtmxAnswers.NextPage(this, "./Details", new { id = this.Input.Id });
-    }
-
-    /// <summary>
-    /// Writes the toast's message for a delete that was refused.
-    /// </summary>
-    /// <param name="outcome">Why it was refused.</param>
-    /// <param name="name">The contact's name.</param>
-    /// <param name="organization">The name of the organization they belong to.</param>
-    /// <returns>The message.</returns>
-    private static string DeleteMessage(DeleteOutcome outcome, DisplayName name, OrganizationName organization)
-    {
-        return outcome switch
-        {
-            DeleteOutcome.OrganizationArchived =>
-                $"{organization.Value} is archived, so its contacts can't be changed until it is restored.",
-            DeleteOutcome.Active =>
-                $"{name.Value} is active again, so they can't be deleted.",
-            _ =>
-                $"{name.Value} has changed since the page was shown, so they weren't deleted. Check them, then try again.",
-        };
     }
 
     /// <summary>

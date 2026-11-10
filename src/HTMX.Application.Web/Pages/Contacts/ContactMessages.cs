@@ -3,8 +3,8 @@ namespace HTMX.Application.Web.Pages.Contacts;
 using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
-/// The toast's words for what became of archiving or restoring a contact, the same on the contact's own page as on
-/// their organization's Contacts tab.
+/// The toast's words for what became of archiving, restoring or deleting a contact, the same on the contact's own page
+/// as on their organization's Contacts tab.
 /// </summary>
 public static class ContactMessages
 {
@@ -31,6 +31,30 @@ public static class ContactMessages
                 $"That contact no longer belongs to {organization.Value}.",
             _ =>
                 $"{name} was changed by someone else at the same moment. Try again.",
+        };
+    }
+
+    /// <summary>
+    /// Writes the toast's message for what became of a delete. None offers Undo: a delete cannot be undone.
+    /// </summary>
+    /// <param name="outcome">What became of it.</param>
+    /// <param name="name">The contact's name, or words that stand for it when it is not known.</param>
+    /// <param name="organization">The name of the organization the request was made from.</param>
+    /// <returns>The message.</returns>
+    public static string Delete(DeleteOutcome outcome, string name, OrganizationName organization)
+    {
+        return outcome switch
+        {
+            DeleteOutcome.Deleted =>
+                $"{name} deleted.",
+            DeleteOutcome.OrganizationArchived =>
+                $"{organization.Value} is archived, so its contacts can't be changed until it is restored.",
+            DeleteOutcome.Active =>
+                $"{name} is active again, so they can't be deleted.",
+            DeleteOutcome.NotFound =>
+                $"That contact no longer belongs to {organization.Value}.",
+            _ =>
+                $"{name} has changed since the page was shown, so they weren't deleted. Check them, then try again.",
         };
     }
 }

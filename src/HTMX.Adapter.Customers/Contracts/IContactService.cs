@@ -91,9 +91,11 @@ public interface IContactService
     /// Deletes a contact permanently, with their history, when their organization is active, they are archived, and
     /// they are still at the version the request names. It cannot be undone.
     /// </summary>
-    /// <param name="request">Which contact, and the version the page showed them at.</param>
+    /// <param name="request">Which contact, the version the page showed them at, and the organization the request was
+    /// made among, if any.</param>
     /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
     /// <returns>Deleted when they were; otherwise NotFound, OrganizationArchived, Active or Overtaken, the first that
-    /// applies, in that order.</returns>
+    /// applies, in that order. NotFound also when the request names an organization the contact does not belong
+    /// to.</returns>
     Task<DeleteOutcome> DeleteAsync(ContactDeleteRequest request, CancellationToken cancellationToken = default);
 }

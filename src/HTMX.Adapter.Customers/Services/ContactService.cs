@@ -175,7 +175,8 @@ internal sealed class ContactService : IContactService
     {
         ArgumentNullException.ThrowIfNull(request);
         Contact? current = await this._provider.FindForChangeAsync(request.Id, cancellationToken).ConfigureAwait(false);
-        if (current is null)
+        bool elsewhere = request.Organization is OrganizationId named && current?.OrganizationId != named;
+        if (current is null || elsewhere)
         {
             return DeleteOutcome.NotFound;
         }

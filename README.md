@@ -41,9 +41,14 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   archives or restores its contact at once, with a toast whose Undo does the opposite. The row's form posts to the
   list's own address with the handler and the contact added (`?after=10017&contact=10018&handler=ArchiveContact`), so
   the answer is the same page of the list: with HTMX the list's card alone, with the keyboard back on that row's menu
-  button; without it, a redirect to the same page. Previous and Next redraw the whole tab, header included, because
-  the header's Archive and Restore post to the page's address too. An archived organization's contacts can be seen
-  but not changed until it is restored, and offers no **New contact**. Each name links to the contact's own page.
+  button; without it, a redirect to the same page. An archived contact's menu ends with **Delete permanently**, which
+  asks first in a confirm dialog that posts the version the row shows. The list is read again from the same cursor,
+  so the rows after the deleted one move up, the keyboard goes to the row now in its place, and the toast has no
+  Undo; a delete that leaves no row on the page shows the first page. A delete changes the count on the Contacts
+  tab's label, so with HTMX it redraws the whole tab, not the list alone. Previous and Next redraw the whole tab, header
+  included, because the header's Archive and Restore post to the page's address too. An archived organization's
+  contacts can be seen but not changed until it is restored, and offers no **New contact**. Each name links to the
+  contact's own page.
 - **`/organizations/{id}/history`** — the History tab: every version, newest first, in a timeline, each with the fields
   it changed. An earlier version whose values differ from now offers **Roll back**, previewed in a dialog with the
   change from now; rolling back saves those values as a new version, under the same rules as an edit, and its toast's

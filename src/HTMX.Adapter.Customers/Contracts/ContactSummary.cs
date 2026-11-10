@@ -36,4 +36,9 @@ public sealed record ContactSummary
     /// Gets when the contact was archived, in UTC, or <see langword="null"/> while they are active.
     /// </summary>
     public DateTime? ArchivedOn { get; init; }
+
+    /// <summary>
+    /// Gets the version the contact is at, which an action that cannot be undone, sent from the list, names.
+    /// </summary>
+    required public VersionNumber Version { get; init; }
 }

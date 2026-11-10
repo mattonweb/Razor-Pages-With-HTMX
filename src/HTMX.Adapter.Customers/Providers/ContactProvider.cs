@@ -190,6 +190,7 @@ internal sealed class ContactProvider
                 Email = contact.Email,
                 Phone = contact.Phone,
                 ArchivedOn = contact.ArchivedOn,
+                Version = contact.Version,
             })
             .ToArrayAsync(cancellationToken);
     }

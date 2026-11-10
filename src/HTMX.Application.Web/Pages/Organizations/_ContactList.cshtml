@@ -11,6 +11,13 @@
 
     New contact, the card's one action, opens the create form with this organization chosen. It leaves the list, so it
     is a normal link, not a swap, and an archived organization, which takes no one in, does not offer it.
+
+    An archived contact's menu ends with Delete permanently, which cannot be undone, so it opens a confirm dialog whose
+    own form posts to the list's address with the version the row shows. A delete changes the count on the Contacts
+    tab's label, so the form replaces the tab's whole content, #organization, which the card's links already target,
+    not this card alone. The dialogs come after the table: after a swap HTMX focuses only the first element that says
+    autofocus, and each dialog's Cancel says it, so the row's menu button, or the heading once a delete leaves no row,
+    must come first.
 *@
 @{
     OrganizationSingleResponse organization = Model.Organization
@@ -26,7 +33,7 @@
          hx-boost:inherited="true" hx-target:inherited="#organization" hx-swap:inherited="outerHTML"
          hx-indicator:inherited="#contact-list">
     <header class="card-header">
-        <h2 id="contacts-heading">Contacts</h2>
+        <h2 id="contacts-heading" tabindex="-1" autofocus="@Model.HeadingFocused">Contacts</h2>
         @if (changeable)
         {
             <a class="btn ghost" asp-page="/Contacts/Create" asp-route-organization="@organization.Id.Value" hx-boost="false"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>New contact</a>
@@ -114,6 +121,11 @@
                                                 <button type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>Archive</button>
                                             }
                                         </form>
+                                        @if (archived)
+                                        {
+                                            <hr>
+                                            <button class="danger" type="button" commandfor="contact-@(contact.Id.Value)-delete" command="show-modal"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg>Delete permanently</button>
+                                        }
                                     </div>
                                 </td>
                             }
@@ -122,6 +134,31 @@
                 </tbody>
             </table>
         </div>
+
+        @if (changeable)
+        {
+            foreach (ContactSummary contact in list.Items.Where(static contact => contact.ArchivedOn is not null))
+            {
+                string dialog = $"contact-{contact.Id.Value}-delete";
+                string deleteAction = Model.DeleteAction(contact);
+                <dialog class="dialog sm" id="@dialog" aria-labelledby="@(dialog)-title" aria-describedby="@(dialog)-text">
+                    <form method="post" action="@deleteAction" asp-antiforgery="true"
+                          hx-post="@deleteAction" hx-target="#organization"
+                          hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+                        <input type="hidden" name="version" value="@contact.Version.Value" />
+                        <header class="dialog-header"><h2 id="@(dialog)-title">Delete @contact.Name.Value permanently?</h2></header>
+                        <div class="dialog-body confirm">
+                            <span class="dialog-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg></span>
+                            <div class="message" id="@(dialog)-text"><p>This removes @contact.Name.Value and their history, and takes them off this list. It cannot be undone.</p></div>
+                        </div>
+                        <footer class="dialog-footer">
+                            <button class="btn" type="button" commandfor="@dialog" command="close" autofocus>Cancel</button>
+                            <button class="btn danger" type="submit">Delete permanently</button>
+                        </footer>
+                    </form>
+                </dialog>
+            }
+        }
 
         @* A pager with nowhere to go is left out. Key-based paging knows the total and whether there is a page either
            side, not where in the list this page starts, so the summary gives the count shown and the total. *@
