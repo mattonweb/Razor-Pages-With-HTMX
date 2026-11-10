@@ -4,8 +4,8 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using HTMX.Adapter.Customers.Contracts;
-using HTMX.Adapter.Customers.Data.Conversions;
 using HTMX.Adapter.Customers.Entities;
+using HTMX.Adapter.Customers.Extensions;
 
 /// <summary>
 /// The conditions that seek a page in key-based paging: those organizations that come after a cursor's, in the order
@@ -41,8 +41,8 @@ internal static class OrganizationSeek
     /// Each condition says "at least the key's value, and then past the key", rather than "a greater value, or the same
     /// value and a greater identifier". The first half alone is a range that the index on the column and the
     /// identifier can seek to; the second half only settles the ties at its edge. LINQ cannot compare two columns as a
-    /// pair, so the pair is written out. Names and identifiers are compared with the adapter's own operators,
-    /// <see cref="OrganizationNameComparison"/> and <see cref="OrganizationIdComparison"/>, which Entity Framework
+    /// pair, so the pair is written out. Names and identifiers are compared with the adapter's own extension methods,
+    /// <see cref="OrganizationNameExtensions"/> and <see cref="OrganizationIdExtensions"/>, which Entity Framework
     /// turns into SQL on the bare columns; a cast to the stored type would become a SQL CAST, and the database would
     /// read the index from its start instead of seeking. Contacts is a count worked out for every organization, which
     /// no index can hold: its condition is right, but the database reads every organization to answer it.
@@ -65,17 +65,17 @@ internal static class OrganizationSeek
         {
             OrganizationSortColumn.Industry =>
                 organization => organization.Industry >= industry
-                    && (organization.Industry > industry || organization.Id > id),
+                    && (organization.Industry > industry || organization.Id.IsGreaterThan(id)),
             OrganizationSortColumn.Contacts =>
                 organization => contacts.Count(contact => contact.OrganizationId == organization.Id) >= contactCount
                     && (contacts.Count(contact => contact.OrganizationId == organization.Id) > contactCount
-                        || organization.Id > id),
+                        || organization.Id.IsGreaterThan(id)),
             OrganizationSortColumn.Updated =>
                 organization => organization.LastModifiedOn >= changed
-                    && (organization.LastModifiedOn > changed || organization.Id > id),
+                    && (organization.LastModifiedOn > changed || organization.Id.IsGreaterThan(id)),
             _ =>
-                organization => organization.Name >= name
-                    && (organization.Name > name || organization.Id > id),
+                organization => organization.Name.IsGreaterThanOrEqualTo(name)
+                    && (organization.Name.IsGreaterThan(name) || organization.Id.IsGreaterThan(id)),
         };
     }
 
@@ -102,17 +102,17 @@ internal static class OrganizationSeek
         {
             OrganizationSortColumn.Industry =>
                 organization => organization.Industry <= industry
-                    && (organization.Industry < industry || organization.Id < id),
+                    && (organization.Industry < industry || organization.Id.IsLessThan(id)),
             OrganizationSortColumn.Contacts =>
                 organization => contacts.Count(contact => contact.OrganizationId == organization.Id) <= contactCount
                     && (contacts.Count(contact => contact.OrganizationId == organization.Id) < contactCount
-                        || organization.Id < id),
+                        || organization.Id.IsLessThan(id)),
             OrganizationSortColumn.Updated =>
                 organization => organization.LastModifiedOn <= changed
-                    && (organization.LastModifiedOn < changed || organization.Id < id),
+                    && (organization.LastModifiedOn < changed || organization.Id.IsLessThan(id)),
             _ =>
-                organization => organization.Name <= name
-                    && (organization.Name < name || organization.Id < id),
+                organization => organization.Name.IsLessThanOrEqualTo(name)
+                    && (organization.Name.IsLessThan(name) || organization.Id.IsLessThan(id)),
         };
     }
 }

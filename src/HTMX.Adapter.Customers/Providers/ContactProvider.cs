@@ -7,8 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data;
-using HTMX.Adapter.Customers.Data.Conversions;
 using HTMX.Adapter.Customers.Entities;
+using HTMX.Adapter.Customers.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -308,8 +308,8 @@ internal sealed class ContactProvider
     /// <remarks>
     /// As in <see cref="OrganizationSeek"/>, the condition says "at least the key's name, and then past the key", so
     /// that its first half is a range the index can seek to, and the names and identifiers are compared with the
-    /// adapter's own operators, <see cref="DisplayNameComparison"/> and <see cref="ContactIdComparison"/>, which
-    /// Entity Framework turns into SQL on the bare columns.
+    /// adapter's own extension methods, <see cref="DisplayNameExtensions"/> and <see cref="ContactIdExtensions"/>,
+    /// which Entity Framework turns into SQL on the bare columns.
     /// </remarks>
     /// <param name="key">How the list sorts the cursor's contact.</param>
     /// <param name="backwards">Whether the page is read backwards, for the page before the cursor.</param>
@@ -320,10 +320,12 @@ internal sealed class ContactProvider
         DisplayName name = key.Name;
         if (backwards)
         {
-            return contact => contact.Name <= name && (contact.Name < name || contact.Id < id);
+            return contact => contact.Name.IsLessThanOrEqualTo(name)
+                && (contact.Name.IsLessThan(name) || contact.Id.IsLessThan(id));
         }
 
-        return contact => contact.Name >= name && (contact.Name > name || contact.Id > id);
+        return contact => contact.Name.IsGreaterThanOrEqualTo(name)
+            && (contact.Name.IsGreaterThan(name) || contact.Id.IsGreaterThan(id));
     }
 
     /// <summary>

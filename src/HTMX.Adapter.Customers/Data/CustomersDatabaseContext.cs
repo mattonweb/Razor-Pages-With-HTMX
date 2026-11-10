@@ -4,6 +4,7 @@ using System;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data.Conversions;
 using HTMX.Adapter.Customers.Data.Mappings;
+using HTMX.Adapter.Customers.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -50,6 +51,16 @@ internal sealed class CustomersDatabaseContext : DbContext
         // Choices from a list are stored by name, so the SQL log reads Edited and Shipping rather than 1 and 4.
         configurationBuilder.Properties<ChangeKind>().HaveConversion<string>();
         configurationBuilder.Properties<Industry>().HaveConversion<string>();
+
+        // A value that a query hands to one of ComparisonTranslations' comparisons is a parameter, not a column, so it
+        // needs its own mapping, the same as its column's.
+        configurationBuilder.DefaultTypeMapping<UserId>().HasConversion<UserIdConverter>();
+        configurationBuilder.DefaultTypeMapping<Username>().HasConversion<UsernameConverter>();
+        configurationBuilder.DefaultTypeMapping<EmailAddress>().HasConversion<EmailAddressConverter>();
+        configurationBuilder.DefaultTypeMapping<DisplayName>().HasConversion<DisplayNameConverter>();
+        configurationBuilder.DefaultTypeMapping<OrganizationId>().HasConversion<OrganizationIdConverter>();
+        configurationBuilder.DefaultTypeMapping<OrganizationName>().HasConversion<OrganizationNameConverter>();
+        configurationBuilder.DefaultTypeMapping<ContactId>().HasConversion<ContactIdConverter>();
     }
 
     /// <summary>
@@ -65,5 +76,14 @@ internal sealed class CustomersDatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new OrganizationVersionMapping());
         modelBuilder.ApplyConfiguration(new ContactMapping());
         modelBuilder.ApplyConfiguration(new ContactVersionMapping());
+
+        // The comparisons key-based paging seeks with, each turned into SQL on the bare column.
+        ComparisonTranslations.Map(modelBuilder, typeof(UserIdExtensions));
+        ComparisonTranslations.Map(modelBuilder, typeof(UsernameExtensions));
+        ComparisonTranslations.Map(modelBuilder, typeof(EmailAddressExtensions));
+        ComparisonTranslations.Map(modelBuilder, typeof(DisplayNameExtensions));
+        ComparisonTranslations.Map(modelBuilder, typeof(OrganizationIdExtensions));
+        ComparisonTranslations.Map(modelBuilder, typeof(OrganizationNameExtensions));
+        ComparisonTranslations.Map(modelBuilder, typeof(ContactIdExtensions));
     }
 }

@@ -3,8 +3,8 @@ namespace HTMX.Adapter.Customers.Providers;
 using System;
 using System.Linq.Expressions;
 using HTMX.Adapter.Customers.Contracts;
-using HTMX.Adapter.Customers.Data.Conversions;
 using HTMX.Adapter.Customers.Entities;
+using HTMX.Adapter.Customers.Extensions;
 
 /// <summary>
 /// The conditions that seek a page of the users list in key-based paging: those users who come after a cursor's, in
@@ -13,8 +13,8 @@ using HTMX.Adapter.Customers.Entities;
 /// <remarks>
 /// The same arrangement as <see cref="OrganizationSeek"/>. Each condition says "at least the key's value, and then past
 /// the key", so that its first half is a range the column's index can seek to and the second only settles the ties at
-/// its edge. Names, usernames, email addresses and identifiers are compared with the adapter's own operators, such as
-/// <see cref="UsernameComparison"/>, which Entity Framework turns into SQL on the bare columns.
+/// its edge. Names, usernames, email addresses and identifiers are compared with the adapter's own extension methods,
+/// such as <see cref="UsernameExtensions"/>, which Entity Framework turns into SQL on the bare columns.
 /// </remarks>
 internal static class UserSeek
 {
@@ -52,13 +52,17 @@ internal static class UserSeek
         return column switch
         {
             UserSortColumn.Username =>
-                user => user.Username >= username && (user.Username > username || user.Id > id),
+                user => user.Username.IsGreaterThanOrEqualTo(username)
+                    && (user.Username.IsGreaterThan(username) || user.Id.IsGreaterThan(id)),
             UserSortColumn.Email =>
-                user => user.Email >= email && (user.Email > email || user.Id > id),
+                user => user.Email.IsGreaterThanOrEqualTo(email)
+                    && (user.Email.IsGreaterThan(email) || user.Id.IsGreaterThan(id)),
             UserSortColumn.Updated =>
-                user => user.LastModifiedOn >= changed && (user.LastModifiedOn > changed || user.Id > id),
+                user => user.LastModifiedOn >= changed
+                    && (user.LastModifiedOn > changed || user.Id.IsGreaterThan(id)),
             _ =>
-                user => user.DisplayName >= name && (user.DisplayName > name || user.Id > id),
+                user => user.DisplayName.IsGreaterThanOrEqualTo(name)
+                    && (user.DisplayName.IsGreaterThan(name) || user.Id.IsGreaterThan(id)),
         };
     }
 
@@ -79,13 +83,17 @@ internal static class UserSeek
         return column switch
         {
             UserSortColumn.Username =>
-                user => user.Username <= username && (user.Username < username || user.Id < id),
+                user => user.Username.IsLessThanOrEqualTo(username)
+                    && (user.Username.IsLessThan(username) || user.Id.IsLessThan(id)),
             UserSortColumn.Email =>
-                user => user.Email <= email && (user.Email < email || user.Id < id),
+                user => user.Email.IsLessThanOrEqualTo(email)
+                    && (user.Email.IsLessThan(email) || user.Id.IsLessThan(id)),
             UserSortColumn.Updated =>
-                user => user.LastModifiedOn <= changed && (user.LastModifiedOn < changed || user.Id < id),
+                user => user.LastModifiedOn <= changed
+                    && (user.LastModifiedOn < changed || user.Id.IsLessThan(id)),
             _ =>
-                user => user.DisplayName <= name && (user.DisplayName < name || user.Id < id),
+                user => user.DisplayName.IsLessThanOrEqualTo(name)
+                    && (user.DisplayName.IsLessThan(name) || user.Id.IsLessThan(id)),
         };
     }
 }
