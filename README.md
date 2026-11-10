@@ -77,8 +77,17 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
 - **`/users`** — the people who use the application, in the side nav under Organizations: the same list as
   `/organizations`, filtered by name, username or email address, with Active, Archived and All, headers that sort by
   name, username, email or last change, key-based paging and Rows per page. Both lists read and write their query
-  string through `ListQuery`, so their URLs take the same names. A user has no page of their own yet, so a name is
-  text, not a link.
+  string through `ListQuery`, so their URLs take the same names. Each name links to the user's own page.
+- **`/users/{id}`** — one user: their name, status and version, who changed them last, their username and email
+  address, read in one query that joins the Users table to itself for who created, last changed and archived them.
+  **Archive** and **Restore** work as an organization's do, with Undo, except that nobody may archive themselves:
+  Demo User's own page offers no Archive and says why, and the service refuses one sent anyway. Wherever a page names
+  who created, changed or archived a record, the name links here, muted and marked Archived once that user is; a
+  timeline entry names them as text, because its summary line is the button that opens it. An identifier that names
+  no user gets the page saying so, with 404.
+- **`/users/{id}/history`** — the user's History tab, in the same timeline. Rolling Pat Example back to version 1
+  brings back the misspelled name and the old email address. A roll-back to a username or email address another user
+  has taken since, however it is capitalized, is refused, and its toast names the one taken.
 
 ## Sample data
 

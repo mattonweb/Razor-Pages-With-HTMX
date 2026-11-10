@@ -1,0 +1,72 @@
+@model HTMX.Application.Web.Pages.Users.UserPageModel
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The top of every tab of a user's page: its header, the alert that says they are archived, and the tabs. Archive
+    and Restore post to the current tab's own handlers, with HTMX or without it, so the answer is that tab again; their
+    buttons share the id status-action, so that HTMX puts the focus back on whichever the new content holds, and
+    neither says hx-disable, which would lose it. Nobody may archive themselves, so the signed-in user's own page
+    offers no Archive and says why. Users have no edit form yet, so there is no Edit.
+*@
+@{
+    UserSingleResponse account = Model.Account
+        ?? throw new InvalidOperationException("The user's header needs the user.");
+    RecordChange lastChange = account.LastModified;
+    long id = account.Id.Value;
+    string? archiveAction = Url.Page(Model.PageName, "Archive", Model.TabValues());
+    string? restoreAction = Url.Page(Model.PageName, "Restore", Model.TabValues());
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Users</a></li><li><span aria-current="page">@account.DisplayName.Value</span></li></ol>
+    </nav>
+    <div class="title-row">
+        <div class="title">
+            <h1>@account.DisplayName.Value</h1>
+            @if (account.Archived is null)
+            {
+                <span class="chip success">Active</span>
+            }
+            else
+            {
+                <span class="chip">Archived</span>
+            }
+            <span class="version current">v@(account.Version.Value)</span>
+        </div>
+        @if (account.Archived is null && !Model.IsSignedInUser)
+        {
+            <div class="btn-group">
+                <form method="post" action="@archiveAction" asp-antiforgery="true"
+                      hx-post="@archiveAction" hx-target="#user" hx-swap="outerHTML"
+                      hx-indicator="find button">
+                    <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>Archive</button>
+                </form>
+            </div>
+        }
+    </div>
+    <p class="muted">Updated <partial name="_Moment" model="lastChange.On" /> by <partial name="_UserLink" model="lastChange.By" /></p>
+    @if (Model.IsSignedInUser)
+    {
+        <p class="muted">You are signed in as @account.DisplayName.Value, so only another user can archive you.</p>
+    }
+</header>
+
+@if (account.Archived is not null)
+{
+    <div class="alert" role="status">
+        <svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>
+        <div class="content"><p><strong>This user is archived.</strong> They are hidden from the active list and stay named on every record they changed, and they can't be rolled back until they are restored.</p></div>
+        <div class="actions">
+            <form method="post" action="@restoreAction" asp-antiforgery="true"
+                  hx-post="@restoreAction" hx-target="#user" hx-swap="outerHTML"
+                  hx-indicator="find button">
+                <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Restore</button>
+            </form>
+        </div>
+    </div>
+}
+
+@* Each tab is a page with its own URL; the count after History is how many versions the user has. *@
+<nav class="tabs" aria-label="User">
+    <a asp-page="./Details" asp-route-id="@id" aria-current="@(Model.PageName == "./Details" ? "page" : null)">Details</a>
+    <a asp-page="./History" asp-route-id="@id" aria-current="@(Model.PageName == "./History" ? "page" : null)">History <span class="count">@account.Version.Value</span></a>
+</nav>

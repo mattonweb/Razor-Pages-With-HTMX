@@ -8,8 +8,7 @@
 @* The users list's card, built as the organizations list's is. Every link and form in the card loads over HTMX: the
    response replaces the card itself, the URL follows, and the card shows the busy bar while a request is in flight.
    In HTMX 4 an attribute reaches the card's descendants only when it says :inherited, and "this" means the card that
-   declares it. Without HTMX they are plain links and GET forms. A user has no page of their own yet, so a name is
-   text, not a link. *@
+   declares it. Without HTMX they are plain links and GET forms. *@
 <div class="card" id="user-list"
      hx-boost:inherited="true" hx-target:inherited="this" hx-swap:inherited="outerHTML"
      hx-indicator:inherited="#user-list">
@@ -74,7 +73,10 @@
                     {
                         @* Archived rows are muted only among active ones, in the All view. *@
                         <tr class="@(current.Status == RecordStatus.All && user.ArchivedOn is not null ? "archived" : null)">
-                            <td class="title">@user.DisplayName.Value</td>
+                            <td class="title">
+                                @* A link to the user leaves the list, so it is a normal link, not a swap. *@
+                                <a asp-page="./Details" asp-route-id="@user.Id.Value" hx-boost="false">@user.DisplayName.Value</a>
+                            </td>
                             <td class="mono">@user.Username.Value</td>
                             <td><a href="mailto:@user.Email.Value">@user.Email.Value</a></td>
                             <td>

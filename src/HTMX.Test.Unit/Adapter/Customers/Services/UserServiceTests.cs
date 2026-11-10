@@ -6,12 +6,15 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
+using HTMX.Adapter.Customers.Data.Seed;
+using HTMX.Adapter.Customers.Entities;
+using HTMX.Test.Unit.Adapter.Customers.Data;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Contains unit tests for verifying the behavior of the user service behind <see cref="IUserService"/>, over a seeded
 /// in-memory database: the pages of the users list, filtered, narrowed by status, sorted by each column either way,
-/// and paged by key.
+/// and paged by key; one user and their versions; and archiving, restoring and rolling back a user.
 /// </summary>
 [TestClass]
 public sealed class UserServiceTests
@@ -162,6 +165,331 @@ public sealed class UserServiceTests
             "Every user should be shown once, in the list's order, ties in identifier order.");
     }
 
+    /// <summary>
+    /// Unit test to verify that one user is read with every value they hold, and who created and last changed them.
+    /// </summary>
+    [TestMethod]
+    public async Task FindAsync_PatExample_ReturnsTheirValuesAndWhoChangedThem()
+    {
+        // Arrange (Given)
+        UserId id = UserSeed.PatExample;
+
+        // Act (When)
+        UserSingleResponse? found = await UserServiceCalls.FindAsync(id).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsNotNull(
+            found,
+            "Pat Example should be found.");
+        Assert.AreEqual(
+            ("Pat Example", "pat.example", "pat@example.com", new VersionNumber(5)),
+            (found.DisplayName.Value, found.Username.Value, found.Email.Value, found.Version),
+            "Pat should hold the values of their fifth version.");
+        Assert.AreEqual(
+            ("Demo User", "Demo User", TestDatabase.StartedOn.AddMinutes(-13)),
+            (found.Created.By.Name.Value, found.LastModified.By.Name.Value, found.LastModified.On),
+            "Pat should say who created them, and who last changed them and when.");
+        Assert.IsNull(
+            found.Archived,
+            "Pat was restored, so they should not say they are archived.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an archived user says who archived them and when.
+    /// </summary>
+    [TestMethod]
+    public async Task FindAsync_SamSample_SaysWhoArchivedThem()
+    {
+        // Arrange (Given)
+        UserId id = UserSeed.SamSample;
+
+        // Act (When)
+        UserSingleResponse? found = await UserServiceCalls.FindAsync(id).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (UserSeed.DemoUser, TestDatabase.StartedOn.AddDays(-38)),
+            (found?.Archived?.By.Id, found?.Archived?.On),
+            "Sam should say Demo User archived them 38 days ago.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an identifier that names no user finds nothing.
+    /// </summary>
+    [TestMethod]
+    public async Task FindAsync_UnknownIdentifier_ReturnsNull()
+    {
+        // Arrange (Given)
+        UserId id = new UserId(99999);
+
+        // Act (When)
+        UserSingleResponse? found = await UserServiceCalls.FindAsync(id).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsNull(
+            found,
+            "No user has the identifier 99999.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a user's versions come newest first, each with what happened, who did it and the
+    /// values it left.
+    /// </summary>
+    [TestMethod]
+    public async Task ListVersionsAsync_PatExample_ReturnsNewestFirstWithWhoMadeEach()
+    {
+        // Arrange (Given)
+        UserId id = UserSeed.PatExample;
+
+        // Act (When)
+        UserVersionResponse[] versions = await UserServiceCalls.ListVersionsAsync(id).ConfigureAwait(false);
+
+        // Assert (Then)
+        CollectionAssert.AreEqual(
+            new[] { 5, 4, 3, 2, 1 },
+            versions.Select(static version => version.Version.Value).ToArray(),
+            "Pat's five versions should come newest first.");
+        Assert.AreEqual(
+            (ChangeKind.Archived, "Sam Sample", "Pat Exampel"),
+            (versions[3].Change, versions[3].Changed.By.Name.Value, versions[3].DisplayName.Value),
+            "Version 2 should say Sam archived Pat, under the name Pat had then.");
+        Assert.IsNotNull(
+            versions[3].Changed.By.ArchivedOn,
+            "Sam has since been archived, and the version should say so.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that archiving an active user saves an Archived version that says who archived them and
+    /// when, keeps their values, and leaves them archived at that version.
+    /// </summary>
+    [TestMethod]
+    public async Task ArchiveAsync_ActiveUser_ArchivesThemAsTheNextVersion()
+    {
+        // Arrange (Given)
+        UserStatusRequest request = CreateStatusRequest(UserSeed.PatExample);
+
+        // Act (When)
+        (UpdateOutcome outcome, UserSingleResponse? after, UserVersion[] history) =
+            await UserServiceCalls.ChangeStatusAsync(request, ChangeKind.Archived).ConfigureAwait(false);
+        UserVersion latest = history[^1];
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.Saved,
+            outcome,
+            "An active user should be archived.");
+        Assert.AreEqual(
+            (UserSeed.DemoUser, TestDatabase.StartedOn),
+            (after?.Archived?.By.Id, after?.Archived?.On),
+            "Pat should say Demo User archived them, now.");
+        Assert.AreEqual(
+            (new VersionNumber(6), "pat@example.com"),
+            (after?.Version, after?.Email.Value),
+            "Archiving should move Pat to version 6 and keep their values.");
+        Assert.AreEqual(
+            (ChangeKind.Archived, (UserId?)UserSeed.DemoUser),
+            (latest.Change, latest.ArchivedBy),
+            "The new version should record the archiving, and who did it.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that restoring an archived user saves a Restored version and leaves them active at that
+    /// version.
+    /// </summary>
+    [TestMethod]
+    public async Task RestoreAsync_ArchivedUser_RestoresThemAsTheNextVersion()
+    {
+        // Arrange (Given)
+        UserStatusRequest request = CreateStatusRequest(new UserId(10002));
+
+        // Act (When)
+        (UpdateOutcome outcome, UserSingleResponse? after, UserVersion[] history) =
+            await UserServiceCalls.ChangeStatusAsync(request, ChangeKind.Restored).ConfigureAwait(false);
+        UserVersion latest = history[^1];
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.Saved,
+            outcome,
+            "An archived user should be restored.");
+        Assert.IsNotNull(
+            after,
+            "Casey Mockup should still be found.");
+        Assert.IsNull(
+            after.Archived,
+            "Casey should be active again.");
+        Assert.AreEqual(
+            (new VersionNumber(3), ChangeKind.Restored, (DateTime?)null),
+            (after.Version, latest.Change, latest.ArchivedOn),
+            "Restoring should move Casey from version 2 to version 3, a Restored version that leaves them active.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that archiving the signed-in user themselves, archiving a user already archived, restoring
+    /// one already active, or either for an unknown identifier, saves nothing.
+    /// </summary>
+    /// <param name="id">The user's identifier.</param>
+    /// <param name="change">Archived to archive them, Restored to restore them.</param>
+    /// <param name="expected">What should become of the request.</param>
+    [TestMethod]
+    [DataRow(10001L, ChangeKind.Archived, UpdateOutcome.SelfArchive, DisplayName = "Demo User archiving themselves")]
+    [DataRow(10002L, ChangeKind.Archived, UpdateOutcome.Unchanged, DisplayName = "Archive one already archived")]
+    [DataRow(10007L, ChangeKind.Restored, UpdateOutcome.Unchanged, DisplayName = "Restore one already active")]
+    [DataRow(99999L, ChangeKind.Archived, UpdateOutcome.NotFound, DisplayName = "An unknown identifier")]
+    public async Task ChangeStatus_RefusedOrAlreadyThatWay_SavesNothing(
+        long id,
+        ChangeKind change,
+        UpdateOutcome expected)
+    {
+        // Arrange (Given)
+        UserId userId = new UserId(id);
+        UserSingleResponse? before = await UserServiceCalls.FindAsync(userId).ConfigureAwait(false);
+
+        // Act (When)
+        (UpdateOutcome outcome, UserSingleResponse? after, UserVersion[] history) =
+            await UserServiceCalls.ChangeStatusAsync(CreateStatusRequest(userId), change).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            outcome,
+            $"The request should be answered {expected}.");
+        Assert.AreEqual(
+            before?.Version,
+            after?.Version,
+            "The user should keep their version.");
+        Assert.HasCount(
+            before is null ? 0 : before.Version.Value,
+            history,
+            "The history should gain no version.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that rolling back saves the earlier version's values as the next version, a RolledBack one
+    /// that names the version it went back to.
+    /// </summary>
+    [TestMethod]
+    public async Task RollBackAsync_ToAnEarlierVersion_SavesItsValuesAsTheNextVersion()
+    {
+        // Arrange (Given)
+        UserRollBackRequest request = CreateRollBack(UserSeed.PatExample, 5, 1);
+
+        // Act (When)
+        (UpdateOutcome outcome, UserSingleResponse? after, UserVersion[] history) =
+            await UserServiceCalls.RollBackAsync(request).ConfigureAwait(false);
+        UserVersion latest = history[^1];
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.Saved,
+            outcome,
+            "Rolling back to a version with other values should be saved.");
+        Assert.AreEqual(
+            ("Pat Exampel", "pat@placeholder.example"),
+            (after?.DisplayName.Value, after?.Email.Value),
+            "Pat should take version 1's name and email address again.");
+        Assert.AreEqual(
+            new VersionNumber(6),
+            after?.Version,
+            "The roll-back should be version 6, not a return to version 1.");
+        Assert.AreEqual(
+            (ChangeKind.RolledBack, (VersionNumber?)new VersionNumber(1)),
+            (latest.Change, latest.RolledBackTo),
+            "The new version should record a roll-back to version 1.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a roll-back the rules refuse, or that changes nothing, saves nothing.
+    /// </summary>
+    /// <param name="id">The user's identifier.</param>
+    /// <param name="version">The version the request says the user is at.</param>
+    /// <param name="to">The version to roll back to.</param>
+    /// <param name="expected">What should become of the request.</param>
+    [TestMethod]
+    [DataRow(10007L, 4, 1, UpdateOutcome.Overtaken, DisplayName = "From a version they have moved on from")]
+    [DataRow(10007L, 5, 5, UpdateOutcome.Unchanged, DisplayName = "To the version they are at")]
+    [DataRow(10002L, 2, 1, UpdateOutcome.Archived, DisplayName = "An archived user")]
+    [DataRow(10007L, 5, 9, UpdateOutcome.NotFound, DisplayName = "To a version they never had")]
+    [DataRow(99999L, 1, 1, UpdateOutcome.NotFound, DisplayName = "An unknown identifier")]
+    public async Task RollBackAsync_RefusedOrUnchanged_SavesNothing(
+        long id,
+        int version,
+        int to,
+        UpdateOutcome expected)
+    {
+        // Arrange (Given)
+        UserId userId = new UserId(id);
+        UserSingleResponse? before = await UserServiceCalls.FindAsync(userId).ConfigureAwait(false);
+
+        // Act (When)
+        (UpdateOutcome outcome, UserSingleResponse? after, _) =
+            await UserServiceCalls.RollBackAsync(CreateRollBack(userId, version, to)).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            outcome,
+            $"The roll-back should be answered {expected}.");
+        Assert.AreEqual(
+            before?.Version,
+            after?.Version,
+            "The user should keep their version.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a roll-back to an email address another user has taken since, in other capitals, is
+    /// refused, and saves nothing.
+    /// </summary>
+    [TestMethod]
+    public async Task RollBackAsync_ToAnEmailAnotherUserNowHas_SavesNothing()
+    {
+        // Arrange (Given)
+        UserRollBackRequest request = CreateRollBack(UserSeed.TaylorDummy, 2, 1);
+        (UserId, string?, string?) robinTakesTaylorsOldEmail = (new UserId(10010), null, "TAYLOR@DUMMY.EXAMPLE");
+
+        // Act (When)
+        (UpdateOutcome outcome, UserSingleResponse? after, _) =
+            await UserServiceCalls.RollBackAsync(request, robinTakesTaylorsOldEmail).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.EmailTaken,
+            outcome,
+            "Robin now has the email address Taylor had at version 1.");
+        Assert.AreEqual(
+            (new VersionNumber(2), "taylor@example.com"),
+            (after?.Version, after?.Email.Value),
+            "Taylor should keep their version and their email address.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a roll-back to a username another user has taken since, in other capitals, is refused,
+    /// and saves nothing.
+    /// </summary>
+    [TestMethod]
+    public async Task RollBackAsync_ToAUsernameAnotherUserNowHas_SavesNothing()
+    {
+        // Arrange (Given)
+        UserRollBackRequest request = CreateRollBack(UserSeed.PatExample, 5, 4);
+        (UserId, string?, string?) patIsRenamed = (UserSeed.PatExample, "pat.renamed", null);
+        (UserId, string?, string?) robinTakesPatsOldUsername = (new UserId(10010), "PAT.EXAMPLE", null);
+
+        // Act (When)
+        (UpdateOutcome outcome, UserSingleResponse? after, _) = await UserServiceCalls
+            .RollBackAsync(request, patIsRenamed, robinTakesPatsOldUsername)
+            .ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.NameTaken,
+            outcome,
+            "Robin now has the username Pat had at version 4.");
+        Assert.AreEqual(
+            (new VersionNumber(5), "pat.renamed"),
+            (after?.Version, after?.Username.Value),
+            "Pat should keep their version and their username.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -187,6 +515,38 @@ public sealed class UserServiceTests
             Sort = sort,
             Direction = direction,
             PageSize = new PageSize(10),
+        };
+    }
+
+    /// <summary>
+    /// Creates an archive or a restore as Demo User would send it from a user's page.
+    /// </summary>
+    /// <param name="id">The user to archive or restore.</param>
+    /// <returns>The request.</returns>
+    private static UserStatusRequest CreateStatusRequest(UserId id)
+    {
+        return new UserStatusRequest
+        {
+            Id = id,
+            ChangedBy = UserSeed.DemoUser,
+        };
+    }
+
+    /// <summary>
+    /// Creates a roll-back as Demo User would send it from the History tab.
+    /// </summary>
+    /// <param name="id">The user to roll back.</param>
+    /// <param name="version">The version the History tab showed them at.</param>
+    /// <param name="to">The version to roll back to.</param>
+    /// <returns>The roll-back.</returns>
+    private static UserRollBackRequest CreateRollBack(UserId id, int version, int to)
+    {
+        return new UserRollBackRequest
+        {
+            Id = id,
+            Version = new VersionNumber(version),
+            To = new VersionNumber(to),
+            ChangedBy = UserSeed.DemoUser,
         };
     }
 

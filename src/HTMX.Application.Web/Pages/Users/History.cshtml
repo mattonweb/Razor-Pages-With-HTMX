@@ -1,0 +1,23 @@
+@page "/users/{id:long}/history"
+@model HTMX.Application.Web.Pages.Users.HistoryModel
+@{
+    ViewData["Title"] = Model.Account is null ? "User not found" : $"History · {Model.Account.DisplayName.Value}";
+    ViewData["Section"] = "Users";
+}
+
+@if (Model.Account is null)
+{
+    <partial name="_UserNotFound" model="Model.Input.Id" />
+}
+else
+{
+    <partial name="_UserHistory" model="Model" />
+}
+
+@* After an action without HTMX, the redirect's page shows the toast the action left. *@
+@section Toasts {
+    @if (Model.Toast is Toast toast)
+    {
+        <partial name="_Toast" model="toast" />
+    }
+}

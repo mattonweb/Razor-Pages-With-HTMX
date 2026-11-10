@@ -45,6 +45,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ContactVersionProvider>();
         services.AddScoped<IContactService, ContactService>();
         services.AddScoped<UserProvider>();
+        services.AddScoped<UserVersionProvider>();
         services.AddScoped<IUserService, UserService>();
         return services;
     }

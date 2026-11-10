@@ -31,10 +31,10 @@
                 </div>
                 <div><dt>Contacts</dt><dd class="mono">@organization.Contacts.Value.ToString("N0", CultureInfo.CurrentCulture)</dd></div>
                 <div><dt>Identifier</dt><dd class="mono">@organization.Id.Value</dd></div>
-                <div><dt>Created</dt><dd><partial name="_Moment" model="created.On" /> by @created.By.Name.Value</dd></div>
+                <div><dt>Created</dt><dd><partial name="_Moment" model="created.On" /> by <partial name="_UserLink" model="created.By" /></dd></div>
                 @if (organization.Archived is RecordChange archived)
                 {
-                    <div><dt>Archived</dt><dd><partial name="_Moment" model="archived.On" /> by @archived.By.Name.Value</dd></div>
+                    <div><dt>Archived</dt><dd><partial name="_Moment" model="archived.On" /> by <partial name="_UserLink" model="archived.By" /></dd></div>
                 }
             </dl>
         </div>

@@ -10,6 +10,9 @@ using HTMX.Adapter.Customers.Data;
 using HTMX.Adapter.Customers.DTOs;
 using HTMX.Adapter.Customers.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 /// <summary>
 /// The Entity Framework queries over users: each method is one query, and what it sends is the SQL the console shows.
@@ -44,6 +47,162 @@ internal sealed class UserProvider
         IQueryable<User> matching = this.Match(filter, status);
         int count = await matching.CountAsync(cancellationToken).ConfigureAwait(false);
         return new RecordCount(count);
+    }
+
+    /// <summary>
+    /// Reads one user with every value they hold, and the users who created, last changed and archived them, all in
+    /// one query.
+    /// </summary>
+    /// <remarks>
+    /// The users the row names are in the same table, so each is a join of the Users table to itself, as an
+    /// organization's are: an inner join for the creator and the last editor, who are always set, and an outer join
+    /// for the archiver, who is set only once the user is archived. Demo User created themselves, so their creator is
+    /// their own row.
+    /// </remarks>
+    /// <param name="id">The user's identifier.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the user.</param>
+    /// <returns>The user, or <see langword="null"/> when no user has the identifier.</returns>
+    public Task<UserSingleResponse?> FindAsync(UserId id, CancellationToken cancellationToken = default)
+    {
+        IQueryable<User> users = this._context.Set<User>();
+        IQueryable<UserSingleResponse> found =
+            from user in users
+            where user.Id == id
+            join creator in users on user.CreatedBy equals creator.Id
+            join editor in users on user.LastModifiedBy equals editor.Id
+            join archivedBy in users on user.ArchivedBy equals (UserId?)archivedBy.Id into archivers
+            from archiver in archivers.DefaultIfEmpty()
+            select new UserSingleResponse
+            {
+                Id = user.Id,
+                DisplayName = user.DisplayName,
+                Username = user.Username,
+                Email = user.Email,
+                Version = user.Version,
+                Created = new RecordChange
+                {
+                    On = user.CreatedOn,
+                    By = new UserReference
+                    {
+                        Id = creator.Id,
+                        Name = creator.DisplayName,
+                        ArchivedOn = creator.ArchivedOn,
+                    },
+                },
+                LastModified = new RecordChange
+                {
+                    On = user.LastModifiedOn,
+                    By = new UserReference
+                    {
+                        Id = editor.Id,
+                        Name = editor.DisplayName,
+                        ArchivedOn = editor.ArchivedOn,
+                    },
+                },
+                Archived = user.ArchivedOn == null || archiver == null
+                    ? null
+                    : new RecordChange
+                    {
+                        On = user.ArchivedOn.Value,
+                        By = new UserReference
+                        {
+                            Id = archiver.Id,
+                            Name = archiver.DisplayName,
+                            ArchivedOn = archiver.ArchivedOn,
+                        },
+                    },
+            };
+        return found.FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Reads one user's row to change it. The context keeps track of the row, so a later
+    /// <see cref="SaveChangeAsync"/> in the same request writes only what changed.
+    /// </summary>
+    /// <param name="id">The user's identifier.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the row.</param>
+    /// <returns>The row, or <see langword="null"/> when no user has the identifier.</returns>
+    public Task<User?> FindForChangeAsync(UserId id, CancellationToken cancellationToken = default)
+    {
+        IQueryable<User> users = this._context.Set<User>();
+        return users.FirstOrDefaultAsync(user => user.Id == id, cancellationToken);
+    }
+
+    /// <summary>
+    /// Says whether a user other than the one given already has a username. Usernames are compared however they are
+    /// capitalized, by the column's NOCASE collation, through its unique index.
+    /// </summary>
+    /// <param name="username">The username to look for.</param>
+    /// <param name="except">The user whose own username does not count.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns><see langword="true"/> when another user has the username.</returns>
+    public Task<bool> IsUsernameTakenAsync(
+        Username username,
+        UserId except,
+        CancellationToken cancellationToken = default)
+    {
+        IQueryable<User> users = this._context.Set<User>();
+        return users.AnyAsync(user => user.Username == username && user.Id != except, cancellationToken);
+    }
+
+    /// <summary>
+    /// Says whether a user other than the one given already has an email address. Addresses are compared however
+    /// they are capitalized, by the column's NOCASE collation, through its unique index.
+    /// </summary>
+    /// <param name="email">The email address to look for.</param>
+    /// <param name="except">The user whose own address does not count.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns><see langword="true"/> when another user has the address.</returns>
+    public Task<bool> IsEmailTakenAsync(
+        EmailAddress email,
+        UserId except,
+        CancellationToken cancellationToken = default)
+    {
+        IQueryable<User> users = this._context.Set<User>();
+        return users.AnyAsync(user => user.Email == email && user.Id != except, cancellationToken);
+    }
+
+    /// <summary>
+    /// Saves a change to a user: their row's new values, then the version that records them, in one transaction.
+    /// </summary>
+    /// <remarks>
+    /// As for an organization, the row's version number is a concurrency token, so its UPDATE names the version that
+    /// was read as well as the identifier, and a request that another saved over first changes no row and writes no
+    /// version. The row is saved first, so that this check always comes before the version's insert.
+    /// </remarks>
+    /// <param name="current">The row as <see cref="FindForChangeAsync"/> read it.</param>
+    /// <param name="changed">The row's new values.</param>
+    /// <param name="version">The version that records the change.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns><see langword="true"/> when the change was saved; <see langword="false"/> when another save overtook
+    /// it.</returns>
+    public async Task<bool> SaveChangeAsync(
+        User current,
+        User changed,
+        UserVersion version,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(current);
+        ArgumentNullException.ThrowIfNull(changed);
+        ArgumentNullException.ThrowIfNull(version);
+        DatabaseFacade database = this._context.Database;
+        IDbContextTransaction transaction = await database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using (transaction.ConfigureAwait(false))
+        {
+            EntityEntry<User> entry = this._context.Entry(current);
+            PropertyValues values = entry.CurrentValues;
+            values.SetValues(changed);
+            bool updated = await this.TrySaveAsync(cancellationToken).ConfigureAwait(false);
+            if (!updated)
+            {
+                return false;
+            }
+
+            this._context.Add(version);
+            await this._context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
     }
 
     /// <summary>
@@ -197,5 +356,24 @@ internal sealed class UserProvider
             _ =>
                 users,
         };
+    }
+
+    /// <summary>
+    /// Saves what the context holds, unless a row it changes was saved by another request since it was read.
+    /// </summary>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns><see langword="false"/> when a concurrency token no longer matched.</returns>
+    private async Task<bool> TrySaveAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await this._context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // An expected outcome, not a failure: the caller tells the user, who decides whether to try again.
+            return false;
+        }
     }
 }

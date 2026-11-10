@@ -33,7 +33,8 @@ public enum UpdateOutcome
     Overtaken,
 
     /// <summary>
-    /// Another record already has the name the changes give, however it is capitalized.
+    /// Another record of the same kind already has the name the changes give, however it is capitalized: another
+    /// organization the organization's name, or another user the user's username.
     /// </summary>
     NameTaken,
 
@@ -42,4 +43,15 @@ public enum UpdateOutcome
     /// longer exists.
     /// </summary>
     OrganizationUnavailable,
+
+    /// <summary>
+    /// Another user already has the email address the changes give, however it is capitalized.
+    /// </summary>
+    EmailTaken,
+
+    /// <summary>
+    /// The request would archive the user who sent it, who would then be shut out of the application. Another user
+    /// must archive them.
+    /// </summary>
+    SelfArchive,
 }

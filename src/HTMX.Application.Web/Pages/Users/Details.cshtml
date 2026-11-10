@@ -1,0 +1,24 @@
+@page "/users/{id:long}"
+@model HTMX.Application.Web.Pages.Users.DetailsModel
+@{
+    ViewData["Title"] = Model.Account?.DisplayName.Value ?? "User not found";
+    ViewData["Section"] = "Users";
+}
+@* The page's route is written out in full, so a user's address is /users/10007. *@
+
+@if (Model.Account is null)
+{
+    <partial name="_UserNotFound" model="Model.Input.Id" />
+}
+else
+{
+    <partial name="_UserDetails" model="Model" />
+}
+
+@* After Archive, Restore or Undo without HTMX, the redirect's page shows the toast the action left. *@
+@section Toasts {
+    @if (Model.Toast is Toast toast)
+    {
+        <partial name="_Toast" model="toast" />
+    }
+}

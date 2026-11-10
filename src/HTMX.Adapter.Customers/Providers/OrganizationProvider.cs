@@ -21,7 +21,6 @@ using Microsoft.EntityFrameworkCore.Storage;
 /// </summary>
 internal sealed class OrganizationProvider
 {
-    // The character that makes the next % or _ in a LIKE pattern literal, so a filter of "50%" means fifty percent.
     private readonly CustomersDatabaseContext _context;
 
     /// <summary>

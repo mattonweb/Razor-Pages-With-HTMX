@@ -1,0 +1,12 @@
+@model HTMX.Adapter.Customers.Contracts.UserReference
+@*
+    A user another record names, such as who created or last changed it, as the brand's related-record link to the
+    user's own page: led by the user icon, and muted and followed by an Archived chip once the user is archived.
+    Not for a timeline entry's summary line, which is the toggle that opens the entry: a link inside it would be a
+    control inside a control, so the timeline names the user as text.
+*@
+<a class="related @(Model.ArchivedOn is null ? null : "archived")" asp-page="/Users/Details" asp-route-id="@Model.Id.Value"><svg class="icon" aria-hidden="true"><use href="/icons.svg#user"></use></svg>@Model.Name.Value</a>
+@if (Model.ArchivedOn is not null)
+{
+    <span class="chip">Archived</span>
+}

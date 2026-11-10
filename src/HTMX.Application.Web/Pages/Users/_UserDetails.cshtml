@@ -1,0 +1,30 @@
+@model HTMX.Application.Web.Pages.Users.DetailsModel
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The Details tab's content: the user's header and every value they hold. HTMX replaces #user whole (outerHTML)
+    with it after Archive, Restore or Undo on this tab, as part of _RecordChanged.
+*@
+@{
+    UserSingleResponse account = Model.Account
+        ?? throw new InvalidOperationException("The Details tab needs the user.");
+    RecordChange created = account.Created;
+}
+<div id="user">
+    <partial name="_UserHeader" model="Model" />
+
+    <section class="card" aria-labelledby="details-heading">
+        <header class="card-header"><h2 id="details-heading">Details</h2></header>
+        <div class="card-body">
+            <dl class="fields">
+                <div><dt>Username</dt><dd class="mono">@account.Username.Value</dd></div>
+                <div><dt>Email</dt><dd><a href="mailto:@account.Email.Value">@account.Email.Value</a></dd></div>
+                <div><dt>Identifier</dt><dd class="mono">@account.Id.Value</dd></div>
+                <div><dt>Created</dt><dd><partial name="_Moment" model="created.On" /> by <partial name="_UserLink" model="created.By" /></dd></div>
+                @if (account.Archived is RecordChange archived)
+                {
+                    <div><dt>Archived</dt><dd><partial name="_Moment" model="archived.On" /> by <partial name="_UserLink" model="archived.By" /></dd></div>
+                }
+            </dl>
+        </div>
+    </section>
+</div>

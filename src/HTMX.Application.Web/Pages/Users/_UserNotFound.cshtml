@@ -1,0 +1,20 @@
+@model long
+@*
+    What a user's pages show for an identifier that names no user, inside the application's frame. The page that
+    renders it also sets the status 404 Not Found. Its model is the identifier from the route.
+*@
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Users</a></li><li><span aria-current="page">Not found</span></li></ol>
+    </nav>
+    <div class="title-row"><h1>User not found</h1></div>
+</header>
+
+<div class="card">
+    <div class="empty">
+        <svg class="icon" aria-hidden="true"><use href="/icons.svg#user"></use></svg>
+        <h3>No user has the identifier @Model</h3>
+        <p>They may have been deleted, or the link may be mistyped.</p>
+        <a class="btn" asp-page="./Index">Back to users</a>
+    </div>
+</div>

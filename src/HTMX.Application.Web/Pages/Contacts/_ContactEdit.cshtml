@@ -36,7 +36,7 @@
                 <span class="version current">v@(contact.Version.Value)</span>
             </div>
         </div>
-        <p class="muted">Updated <partial name="_Moment" model="lastChange.On" /> by @lastChange.By.Name.Value</p>
+        <p class="muted">Updated <partial name="_Moment" model="lastChange.On" /> by <partial name="_UserLink" model="lastChange.By" /></p>
     </header>
 
     @if (organization.ArchivedOn is not null)
