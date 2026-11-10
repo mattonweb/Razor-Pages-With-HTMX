@@ -1,8 +1,8 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, and the patterns still open (fields checked as you type, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then, and the patterns still open (fields checked as you type, polling). Written against HTMX 4.0.1. Draft; the status table says which sections are proven.
 owner: Matt
-version: 0.8.0
+version: 0.9.0
 visibility: public
 ---
 
@@ -21,7 +21,7 @@ page looks (the repository's brand skill, if it has one).
 post. HTMX only narrows what a response replaces and keeps the address bar in step. A page that cannot be built that
 way is a decision to make out loud, never a default.
 
-## Status: draft 0.8.0, HTMX 4.0.1
+## Status: draft 0.9.0, HTMX 4.0.1
 
 | Section | State |
 |---|---|
@@ -36,7 +36,8 @@ way is a decision to make out loud, never a default.
 | 9. Actions on a row | Proven |
 | 10. A field HTMX enhances | Proven |
 | 11. An action that cannot be undone | Proven |
-| 12. Still open | Open |
+| 12. An action that takes its row out of the list | Proven |
+| 13. Still open | Open |
 
 - **Proven:** built in a Razor Pages application on HTMX 4.0.1, and shown working by a unit test or in the browser.
 - **Checked:** read in the 4.0.1 source and the reference, and true of that version, but not yet built.
@@ -55,7 +56,7 @@ A section moves up only when that is true of it, in a session Matt attends.
   Its unminified source is `https://unpkg.com/htmx.org@<version>/dist/htmx.js`; citations below to "4.0.1 source"
   name a method in that file.
 - **Chris Woodruff's [htmx Razor Pages workshop](https://github.com/cwoodruff/htmx-razor-workshop)**, MIT. Good on the
-  Razor Pages side, and sections 3, 6 to 9 and 12 take several ideas from it, each credited by chapter: a comment that
+  Razor Pages side, and sections 3, 6 to 9 and 13 take several ideas from it, each credited by chapter: a comment that
   states each partial's contract, what each request gets back, handlers named for what they do, a row action that
   draws the list again, checking a field as you type, form rows added by the server, polling the server stops, and
   what to look for in the network panel. It is written for htmx 1.9.12, and some of its central code does not carry
@@ -468,7 +469,46 @@ why when it cannot, and the list afterwards, with a toast.
   and for a history restore, and not for a partial one. A page model that reads or writes `TempData` gets a
   `TempDataDictionary` over a stand-in `ITempDataProvider` in its test, as the framework would give it one.
 
-## 12. Still open (open)
+## 12. An action that takes its row out of the list (proven)
+
+Built as Delete permanently on an archived row of a paged list of a record's related records: the row's menu opens a
+confirm dialog (section 11), and the answer draws the list again without the row.
+
+- **Read the page again from the same cursor.** The dialog's form posts to the list's own address, its state
+  included, as a row's action does (section 9), and the handler reads the page that address names once the action has
+  run. With key-based paging the cursor names a row outside the page, so the rows after the one that left move up and
+  the page fills from the next; only the last page comes back a row short. A page left with no row is a cursor that
+  leaves nothing to show, and the list's own rule for one decides what is shown, such as its first page, so the
+  answer needs no rule of its own. The workshop goes back a page instead (Lab 4), which paging by page number needs
+  and paging by key does not.
+- **The target holds every count the row was in.** An action that leaves its row in the list, such as Archive among
+  rows that show archived ones, changes the list alone. One that takes the row out also changes any count of the
+  list's records shown outside it, such as a count on a tab's label, so its target is the smallest element that holds
+  the list and the count (section 9): here the element Previous and Next replace, which holds both.
+- **Read the row's name and place before the action.** Once the row has gone, the page read again holds neither, so
+  the handler reads the page as it was shown first, for the name its toast gives and the place the keyboard goes back
+  to.
+- **The keyboard goes to the row now in its place.** The menu button that opened the dialog went with its row, so the
+  answer marks `autofocus` on the menu button of the row now at the same place, or of the last row when the page is
+  shorter, and on the list's heading, made focusable with `tabindex="-1"`, when no row is left (section 9). A refused
+  action leaves the row, and the keyboard goes back to its own menu button.
+- **The rows' dialogs come after the table.** After a swap HTMX focuses the first `[autofocus]` in the new content
+  only, whether or not it can take the focus (4.0.1 source, `#handleAutoFocus`). Each dialog's safe button says
+  `autofocus` (section 11), and a button in a closed dialog cannot take the focus, so a dialog earlier in the content
+  than the row's menu button keeps the button from getting it.
+- **One dialog for each row, opened from its menu.** The menu's last item is a `type="button"` with `commandfor`
+  naming the row's dialog, whose `id`, like the menu's, is built from the row's record. Showing a modal dialog hides
+  the open popovers that are not its ancestors (HTML's
+  [showModal()](https://html.spec.whatwg.org/multipage/interactive-elements.html#dom-dialog-showmodal) steps), so the
+  menu closes as the dialog opens. The dialog's form carries the version the row shows (section 11), so the list's
+  rows carry each record's version.
+- **Without HTMX** the dialog opens the same way, its form posts, and the handler redirects to the list's address,
+  which reads the same page without the row, with the toast waiting in `TempData` (section 8).
+- **Testing.** A stand-in service that leaves a deleted record out of every page it answers afterwards lets a page
+  test see the page read again: the row is gone, the row after it takes the focus, the last row does when the deleted
+  row was last, and the heading does when it was the only one.
+
+## 13. Still open (open)
 
 Nothing in this section is built yet. What is known, to start from; an idea taken from the workshop names its
 chapter.
@@ -478,11 +518,10 @@ chapter.
   ([CSRF prevention](https://four.htmx.org/docs#csrf-prevention)). An input that posts on its own, such as one checked
   as you type, sends only its own value unless it says `hx-include="closest form"` (workshop, "Checkpoint:
   Troubleshooting + Pattern Review").
-- **An action that takes its row out of the list.** Section 9's rows stay, an archived one shown among the rest, so
-  the page read again holds the same rows. Where the action removes the row, as a delete from the list itself
-  (section 11 deletes from the record's own page) or a list of active records only would, the page read again from
-  the same cursor is one row short, and when that row was the last on its page the page is empty. The workshop shows
-  the page before (Lab 4); with key-based paging the list's own rule for a cursor that leaves nothing to show decides.
+- **An action that takes its row out of the list and can be undone**, such as Archive on a list of active records
+  only. The page read again is as section 12 says, and the toast's Undo posts the opposite from the same address,
+  which puts the row back. Where the keyboard goes after that Undo, which was sent from the toast and not from a row,
+  is not yet built.
 - **Check one field as you type.** The input posts on its own to a handler of its own: `hx-post="?handler=CheckName"`,
   `hx-trigger="input changed delay:500ms"`, `hx-include="closest form"` for the token and the other fields, and the
   field's message element as its `hx-target`. The handler validates what was bound and returns only that field's
