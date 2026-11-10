@@ -1,5 +1,6 @@
 namespace HTMX.Test.Unit.Application.Web.Pages.Organizations;
 
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -225,6 +226,32 @@ public sealed class IndexModelTests
             "The page size should be written as size.");
     }
 
+    /// <summary>
+    /// Unit test to verify that the whole page shows the toast a deleted organization's page left in TempData, and
+    /// that a swap of the list's card leaves it waiting.
+    /// </summary>
+    /// <param name="kind">What sent the request, by its name in <see cref="HtmxRequest"/>.</param>
+    /// <param name="shown">Whether the toast should be shown.</param>
+    [TestMethod]
+    [DataRow(nameof(HtmxRequest.None), true, DisplayName = "The whole page, after a redirect")]
+    [DataRow(nameof(HtmxRequest.HistoryRestore), true, DisplayName = "The whole page, loaded by HTMX")]
+    [DataRow(nameof(HtmxRequest.Partial), false, DisplayName = "A swap of the card")]
+    public async Task OnGetAsync_ToastLeftByADelete_ShowsItOnTheWholePage(string kind, bool shown)
+    {
+        // Arrange (Given)
+        IndexModel page = CreatePage(new StubOrganizationService(), Enum.Parse<HtmxRequest>(kind));
+        page.TempData["ToastMessage"] = "Draft Distribution deleted.";
+
+        // Act (When)
+        await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            shown ? "Draft Distribution deleted." : null,
+            page.Toast?.Message,
+            "Only the whole page should show the toast.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -260,6 +287,7 @@ public sealed class IndexModelTests
         {
             PageContext = context,
             MetadataProvider = metadata,
+            TempData = new TempDataDictionary(http, new StubTempDataProvider()),
         };
     }
 

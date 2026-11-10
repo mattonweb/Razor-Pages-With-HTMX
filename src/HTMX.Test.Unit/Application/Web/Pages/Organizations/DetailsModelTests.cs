@@ -15,7 +15,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Contains unit tests for verifying the behavior of the <see cref="DetailsModel"/> class: which organization the page
-/// asks for, what it answers when there is none, and what Archive and Restore answer, with HTMX and without it.
+/// asks for, what it answers when there is none, and what Archive, Restore and Delete permanently answer, with HTMX
+/// and without it.
 /// </summary>
 [TestClass]
 public sealed class DetailsModelTests
@@ -234,6 +235,143 @@ public sealed class DetailsModelTests
             "HX-Location should name the organization's page.");
     }
 
+    /// <summary>
+    /// Unit test to verify that an organization is in use, and so cannot be deleted, exactly while contacts belong to
+    /// it.
+    /// </summary>
+    /// <param name="contacts">How many contacts belong to it.</param>
+    /// <param name="expected">Whether it should be in use.</param>
+    [TestMethod]
+    [DataRow(2, true, DisplayName = "Two contacts")]
+    [DataRow(0, false, DisplayName = "No contacts")]
+    public async Task InUse_ArchivedOrganization_FollowsItsContacts(int contacts, bool expected)
+    {
+        // Arrange (Given)
+        DetailsModel page = CreatePage(new StubOrganizationService(CreateOrganization(10013, true, contacts)), 10013);
+
+        // Act (When)
+        await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            page.InUse,
+            "Only an organization that contacts belong to should be in use.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete HTMX sent asks for the organization and version the dialog showed, and loads
+    /// the organizations list, leaving it a toast with no Undo.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostDeleteAsync_DeletedByHtmx_LoadsTheListWithAToast()
+    {
+        // Arrange (Given)
+        StubOrganizationService service = new StubOrganizationService(CreateOrganization(10013, true, 0));
+        DetailsModel page = CreatePage(service, 10013, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page.OnPostDeleteAsync(2, CancellationToken.None).ConfigureAwait(false);
+        OrganizationDeleteRequest? sent = service.LastDeletion();
+
+        // Assert (Then)
+        StatusCodeResult status = Assert.IsInstanceOfType<StatusCodeResult>(
+            result,
+            "HTMX should be asked to load the list.");
+        Assert.AreEqual(
+            (StatusCodes.Status204NoContent, "/Organizations/Index"),
+            (status.StatusCode, page.Response.Headers["HX-Location"].ToString()),
+            "The answer should have no content to swap, and HX-Location should name the organizations list.");
+        Assert.AreEqual(
+            (new OrganizationId(10013), new VersionNumber(2)),
+            (sent?.Id, sent?.Version),
+            "The page should delete the organization the route names, at the version the dialog showed.");
+        Assert.AreEqual(
+            ("Placeholder Logistics deleted.", null),
+            (page.TempData["ToastMessage"], page.TempData["ToastUndo"]),
+            "The list should be left a toast that says so, with no Undo.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete sent without HTMX is redirected to the organizations list.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostDeleteAsync_DeletedWithoutHtmx_RedirectsToTheList()
+    {
+        // Arrange (Given)
+        DetailsModel page = CreatePage(new StubOrganizationService(CreateOrganization(10013, true, 0)), 10013);
+
+        // Act (When)
+        IActionResult result = await page.OnPostDeleteAsync(2, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        RedirectToPageResult redirect = Assert.IsInstanceOfType<RedirectToPageResult>(
+            result,
+            "A delete without HTMX should be redirected.");
+        Assert.AreEqual(
+            "./Index",
+            redirect.PageName,
+            "The redirect should go to the organizations list.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete the service refuses answers with the page's content and a toast that says
+    /// why, with no Undo, as an archive does.
+    /// </summary>
+    /// <param name="outcome">What the service answers.</param>
+    /// <param name="message">What the toast should say.</param>
+    [TestMethod]
+    [DataRow(DeleteOutcome.Active, "Placeholder Logistics is active again, so it can't be deleted.", DisplayName = "Active")]
+    [DataRow(
+        DeleteOutcome.InUse,
+        "Contacts now belong to Placeholder Logistics, so it can't be deleted.",
+        DisplayName = "In use")]
+    [DataRow(
+        DeleteOutcome.Overtaken,
+        "Placeholder Logistics has changed since the page was shown, so it wasn't deleted. Check it, then try again.",
+        DisplayName = "Overtaken")]
+    public async Task OnPostDeleteAsync_Refused_SaysWhyWithoutUndo(DeleteOutcome outcome, string message)
+    {
+        // Arrange (Given)
+        StubOrganizationService service =
+            new StubOrganizationService(CreateOrganization(10013, true, 0), deletion: outcome);
+        DetailsModel page = CreatePage(service, 10013, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page.OnPostDeleteAsync(2, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        PartialViewResult partial = Assert.IsInstanceOfType<PartialViewResult>(
+            result,
+            "HTMX should get the page's content to swap in place.");
+        Assert.AreEqual(
+            ("_RecordChanged", message, null),
+            (partial.ViewName, page.Toast?.Message, page.Toast?.UndoAction),
+            "The toast should say why nothing was deleted, with nothing to undo.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a version number that cannot be one is refused with 400, and nothing is deleted.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostDeleteAsync_ImpossibleVersion_AnswersBadRequest()
+    {
+        // Arrange (Given)
+        StubOrganizationService service = new StubOrganizationService(CreateOrganization(10013, true, 0));
+        DetailsModel page = CreatePage(service, 10013, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page.OnPostDeleteAsync(0, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsInstanceOfType<BadRequestResult>(
+            result,
+            "A version number below 1 should be refused.");
+        Assert.IsNull(
+            service.LastDeletion(),
+            "Nothing should be deleted.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -242,8 +380,10 @@ public sealed class DetailsModelTests
     /// Creates an organization as the service would answer with it, with invented values.
     /// </summary>
     /// <param name="id">The organization's identifier.</param>
+    /// <param name="archived">Whether it is archived.</param>
+    /// <param name="contacts">How many contacts belong to it.</param>
     /// <returns>The organization.</returns>
-    private static OrganizationSingleResponse CreateOrganization(long id)
+    private static OrganizationSingleResponse CreateOrganization(long id, bool archived = false, int contacts = 18)
     {
         UserReference demo = new UserReference
         {
@@ -256,10 +396,11 @@ public sealed class DetailsModelTests
             Id = new OrganizationId(id),
             Name = new OrganizationName("Placeholder Logistics"),
             Industry = Industry.Shipping,
-            Contacts = new RecordCount(18),
-            Version = new VersionNumber(1),
+            Contacts = new RecordCount(contacts),
+            Version = new VersionNumber(archived ? 2 : 1),
             Created = new RecordChange { On = createdOn, By = demo },
             LastModified = new RecordChange { On = createdOn, By = demo },
+            Archived = archived ? new RecordChange { On = createdOn, By = demo } : null,
         };
     }
 

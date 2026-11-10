@@ -31,7 +31,11 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   to the page's named handlers (`?handler=Archive`, `?handler=Restore`), run at once, and say so in a toast whose
   **Undo** posts the opposite; each is a version in the organization's history. With HTMX one answer carries both the
   page's content and the toast, in an `<hx-partial>`. Without HTMX the post is redirected back to the page, and the toast
-  waits in TempData for it.
+  waits in TempData for it. **Delete permanently**, beside Restore on an archived organization's page, works as a
+  user's does: a confirm dialog with its own form, the version it shows, and the list afterwards with a toast. Only an
+  archived organization that no contact belongs to can be deleted, so Mockup Media's button opens a dialog that says
+  how many contacts keep it, with a link to its Contacts tab. A contact's history that names a deleted organization
+  keeps its identifier and shows it as a deleted organization.
 - **`/organizations/{id}/contacts`** — the Contacts tab: the people who belong to the organization, in name order,
   archived ones muted among the rest, ten to a page, paged by key as the list is (`?after=10017`). Each row's menu
   archives or restores its contact at once, with a toast whose Undo does the opposite. The row's form posts to the
@@ -136,7 +140,7 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   organizations, Placeholder Logistics (10003) has a history of two versions, Mockup Media (10009) is archived with
   two contacts, so cannot be deleted, and Draft Distribution (10013) is archived with none, so can. Among the contacts,
   Ainsley Archetype (10001) moved from Fictional Freight to Placeholder Logistics, so Fictional Freight can be deleted
-  although Ainsley's history names it, and Darcy Dataset (10004) is archived and can be deleted.
+  once it is archived, although Ainsley's history names it, and Darcy Dataset (10004) is archived and can be deleted.
 
 ## Versions and choices
 

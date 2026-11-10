@@ -177,6 +177,35 @@ internal sealed class OrganizationProvider
     }
 
     /// <summary>
+    /// Says whether any contact belongs to an organization, archived contacts included, through the index that leads
+    /// with the organization.
+    /// </summary>
+    /// <param name="id">The organization's identifier.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns><see langword="true"/> when a contact belongs to it.</returns>
+    public Task<bool> HasContactsAsync(OrganizationId id, CancellationToken cancellationToken = default)
+    {
+        IQueryable<Contact> contacts = this._context.Set<Contact>();
+        return contacts.AnyAsync(contact => contact.OrganizationId == id, cancellationToken);
+    }
+
+    /// <summary>
+    /// Deletes an organization's row; the database deletes its versions with it. The row's version number is a
+    /// concurrency token, so the DELETE names the version that was read as well as the identifier, and deletes nothing
+    /// if another request saved the organization since.
+    /// </summary>
+    /// <param name="current">The row as <see cref="FindForChangeAsync"/> read it.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns><see langword="true"/> when the organization was deleted; <see langword="false"/> when another save
+    /// overtook the delete.</returns>
+    public Task<bool> DeleteAsync(Organization current, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(current);
+        this._context.Remove(current);
+        return this.TrySaveAsync(cancellationToken);
+    }
+
+    /// <summary>
     /// Says whether an organization other than the one given already has a name. Names are compared however they are
     /// capitalized, by the column's NOCASE collation, through its unique index.
     /// </summary>

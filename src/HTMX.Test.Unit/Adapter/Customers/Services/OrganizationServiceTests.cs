@@ -922,6 +922,102 @@ public sealed class OrganizationServiceTests
             "The organization should keep its version.");
     }
 
+    /// <summary>
+    /// Unit test to verify that an archived organization that no contact belongs to is deleted, with its history, at
+    /// the version the page showed.
+    /// </summary>
+    [TestMethod]
+    public async Task DeleteAsync_DraftDistribution_DeletesItAndItsHistory()
+    {
+        // Arrange (Given)
+        OrganizationDeleteRequest request = CreateDelete(OrganizationSeed.DraftDistribution, 2);
+
+        // Act (When)
+        (DeleteOutcome outcome, OrganizationSingleResponse? after, OrganizationVersion[] history, _) =
+            await OrganizationServiceCalls.DeleteAsync(request, archivedFirst: false, new ContactId(10001))
+                .ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            DeleteOutcome.Deleted,
+            outcome,
+            "Draft Distribution, archived with no contacts, should be deleted.");
+        Assert.IsNull(
+            after,
+            "Draft Distribution should no longer be found.");
+        Assert.IsEmpty(
+            history,
+            "Its history should go with it.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an organization a contact's history names, but that no contact belongs to now, can be
+    /// deleted once it is archived, and that the history keeps its identifier and says it no longer exists.
+    /// </summary>
+    [TestMethod]
+    public async Task DeleteAsync_FictionalFreightOnceArchived_LeavesAinsleysHistoryNamingIt()
+    {
+        // Arrange (Given)
+        OrganizationDeleteRequest request = CreateDelete(new OrganizationId(10002), 2);
+
+        // Act (When)
+        (DeleteOutcome outcome, _, _, ContactVersionResponse[] ainsley) =
+            await OrganizationServiceCalls.DeleteAsync(request, archivedFirst: true, new ContactId(10001))
+                .ConfigureAwait(false);
+        ContactVersionResponse[] atFictionalFreight =
+            [.. ainsley.Where(static version => version.OrganizationId == new OrganizationId(10002))];
+
+        // Assert (Then)
+        Assert.AreEqual(
+            DeleteOutcome.Deleted,
+            outcome,
+            "Fictional Freight, archived with no contacts, should be deleted although Ainsley's history names it.");
+        Assert.IsNotEmpty(
+            atFictionalFreight,
+            "Ainsley's history should still name Fictional Freight by its identifier.");
+        Assert.IsTrue(
+            atFictionalFreight.All(static version => version.Organization is null),
+            "Those versions should say the organization no longer exists.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete the rules refuse deletes nothing. The rules run in order, so each row breaks
+    /// only one.
+    /// </summary>
+    /// <param name="id">The organization's identifier.</param>
+    /// <param name="version">The version the page showed it at.</param>
+    /// <param name="expected">What should become of the request.</param>
+    [TestMethod]
+    [DataRow(99999L, 1, DeleteOutcome.NotFound, DisplayName = "An unknown identifier")]
+    [DataRow(10003L, 2, DeleteOutcome.Active, DisplayName = "An active organization")]
+    [DataRow(10013L, 1, DeleteOutcome.Overtaken, DisplayName = "From a version it has moved on from")]
+    [DataRow(10009L, 2, DeleteOutcome.InUse, DisplayName = "An archived organization with contacts")]
+    public async Task DeleteAsync_Refused_DeletesNothing(long id, int version, DeleteOutcome expected)
+    {
+        // Arrange (Given)
+        OrganizationDeleteRequest request = CreateDelete(new OrganizationId(id), version);
+        OrganizationSingleResponse? before = await OrganizationServiceCalls.FindAsync(request.Id).ConfigureAwait(false);
+
+        // Act (When)
+        (DeleteOutcome outcome, OrganizationSingleResponse? after, OrganizationVersion[] history, _) =
+            await OrganizationServiceCalls.DeleteAsync(request, archivedFirst: false, new ContactId(10001))
+                .ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            outcome,
+            $"The delete should be answered {expected}.");
+        Assert.AreEqual(
+            before?.Version,
+            after?.Version,
+            "The organization should still be there, at the version it was.");
+        Assert.HasCount(
+            before is null ? 0 : before.Version.Value,
+            history,
+            "The history should keep every version.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -951,6 +1047,21 @@ public sealed class OrganizationServiceTests
             Sort = sort,
             Direction = direction,
             PageSize = new PageSize(size),
+        };
+    }
+
+    /// <summary>
+    /// Creates a delete as an organization's confirm dialog would send it.
+    /// </summary>
+    /// <param name="id">The organization to delete.</param>
+    /// <param name="version">The version the dialog showed it at.</param>
+    /// <returns>The delete.</returns>
+    private static OrganizationDeleteRequest CreateDelete(OrganizationId id, int version)
+    {
+        return new OrganizationDeleteRequest
+        {
+            Id = id,
+            Version = new VersionNumber(version),
         };
     }
 

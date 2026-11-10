@@ -22,8 +22,8 @@ public enum DeleteOutcome
     Active,
 
     /// <summary>
-    /// Other records still name the record, such as a user who changed them, and would be left naming nothing, so it
-    /// stays archived instead.
+    /// Other records still need the record, such as a user whom other records' histories name, or an organization that
+    /// contacts belong to, and would be left naming nothing, so it stays archived instead.
     /// </summary>
     InUse,
 

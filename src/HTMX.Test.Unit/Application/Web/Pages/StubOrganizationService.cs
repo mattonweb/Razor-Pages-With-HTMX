@@ -9,9 +9,8 @@ using HTMX.Adapter.Customers.Contracts;
 /// <summary>
 /// Stands in for the organization service in page tests: it keeps each request the page sends and answers with an
 /// empty page for a list, with the one organization, the versions and the choices it was given for a lookup, and with
-/// the outcomes
-/// it was given for a change, an archive or restore, a roll-back and a new organization, so a test sees what the page
-/// asked for without a database.
+/// the outcomes it was given for a change, an archive or restore, a roll-back, a new organization and a delete, so a
+/// test sees what the page asked for without a database.
 /// </summary>
 internal sealed class StubOrganizationService : IOrganizationService
 {
@@ -21,11 +20,13 @@ internal sealed class StubOrganizationService : IOrganizationService
     private readonly List<OrganizationCreateRequest> _creations = [];
     private readonly List<(ChangeKind Change, OrganizationStatusRequest Request)> _statusChanges = [];
     private readonly List<OrganizationRollBackRequest> _rollBacks = [];
+    private readonly List<OrganizationDeleteRequest> _deletions = [];
     private readonly OrganizationSingleResponse? _found;
     private readonly UpdateOutcome _outcome;
     private readonly CreateOutcome _creation;
     private readonly OrganizationVersionResponse[] _versions;
     private readonly OrganizationReference[] _choices;
+    private readonly DeleteOutcome _deletion;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StubOrganizationService"/> class.
@@ -36,18 +37,21 @@ internal sealed class StubOrganizationService : IOrganizationService
     /// 11001, as the first after the seed would.</param>
     /// <param name="versions">The versions a lookup of the history answers with, newest first.</param>
     /// <param name="choices">The organizations a list of choices answers with.</param>
+    /// <param name="deletion">What a delete is answered with.</param>
     public StubOrganizationService(
         OrganizationSingleResponse? found = null,
         UpdateOutcome outcome = UpdateOutcome.Saved,
         CreateOutcome creation = CreateOutcome.Created,
         OrganizationVersionResponse[]? versions = null,
-        OrganizationReference[]? choices = null)
+        OrganizationReference[]? choices = null,
+        DeleteOutcome deletion = DeleteOutcome.Deleted)
     {
         this._found = found;
         this._outcome = outcome;
         this._creation = creation;
         this._versions = versions ?? [];
         this._choices = choices ?? [];
+        this._deletion = deletion;
     }
 
     /// <summary>
@@ -94,6 +98,15 @@ internal sealed class StubOrganizationService : IOrganizationService
     public (ChangeKind Change, OrganizationStatusRequest Request)? LastStatusChange()
     {
         return this._statusChanges.Count == 0 ? null : this._statusChanges[^1];
+    }
+
+    /// <summary>
+    /// Gives the last delete the page asked for.
+    /// </summary>
+    /// <returns>The delete, or <see langword="null"/> before the page asks for one.</returns>
+    public OrganizationDeleteRequest? LastDeletion()
+    {
+        return this._deletions.LastOrDefault();
     }
 
     /// <summary>
@@ -181,6 +194,15 @@ internal sealed class StubOrganizationService : IOrganizationService
     {
         this._statusChanges.Add((ChangeKind.Restored, request));
         return Task.FromResult(this._outcome);
+    }
+
+    /// <inheritdoc/>
+    public Task<DeleteOutcome> DeleteAsync(
+        OrganizationDeleteRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        this._deletions.Add(request);
+        return Task.FromResult(this._deletion);
     }
 
     /// <inheritdoc/>

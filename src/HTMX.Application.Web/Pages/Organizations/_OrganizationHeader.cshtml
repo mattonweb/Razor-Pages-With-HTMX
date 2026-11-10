@@ -8,14 +8,22 @@
     Their buttons share the id status-action, so that HTMX puts the focus back on whichever the new content holds.
     Neither says hx-disable: a disabled button loses the focus, and HTMX would have none to put back. The busy style
     that hx-indicator turns on already stops a second click.
+
+    Delete permanently, last in an archived organization's alert, asks first in the brand's confirm dialog, as a user's
+    does: a native <dialog> opened with commandfor, holding its own form, which posts to the tab's Delete handler with
+    the version it shows, with HTMX or without it. When contacts still belong to the organization, the same button opens
+    the dialog for an action that is not allowed instead: it says why, links to the Contacts tab, and posts nothing.
 *@
 @{
     OrganizationSingleResponse organization = Model.Organization
         ?? throw new InvalidOperationException("The organization's header needs the organization.");
     RecordChange lastChange = organization.LastModified;
     long id = organization.Id.Value;
+    string name = organization.Name.Value;
+    int contacts = organization.Contacts.Value;
     string? archiveAction = Url.Page(Model.PageName, "Archive", Model.TabValues());
     string? restoreAction = Url.Page(Model.PageName, "Restore", Model.TabValues());
+    string? deleteAction = Url.Page(Model.PageName, "Delete", Model.TabValues());
 }
 <header class="page-header">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -61,8 +69,48 @@
                   hx-indicator="find button">
                 <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Restore</button>
             </form>
+            <button class="btn danger" type="button" commandfor="delete-organization" command="show-modal"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg>Delete permanently</button>
         </div>
     </div>
+
+    @if (Model.InUse)
+    {
+        <dialog class="dialog sm" id="delete-organization" aria-labelledby="delete-organization-title" aria-describedby="delete-organization-text">
+            <form method="dialog">
+                <header class="dialog-header"><h2 id="delete-organization-title">@name can't be deleted</h2></header>
+                <div class="dialog-body confirm">
+                    <span class="dialog-icon warning"><svg class="icon" aria-hidden="true"><use href="/icons.svg#alert"></use></svg></span>
+                    <div class="message" id="delete-organization-text">
+                        <p>@(contacts == 1 ? "1 contact still belongs" : $"{contacts:N0} contacts still belong") to it, archived ones included, and would be left without an organization.</p>
+                        <p>Leave it archived, or restore it and move them to another organization first.</p>
+                    </div>
+                </div>
+                <footer class="dialog-footer">
+                    <a class="btn" asp-page="./Contacts" asp-route-id="@id">Show its contacts</a>
+                    <button class="btn primary" type="button" commandfor="delete-organization" command="close" autofocus>OK</button>
+                </footer>
+            </form>
+        </dialog>
+    }
+    else
+    {
+        <dialog class="dialog sm" id="delete-organization" aria-labelledby="delete-organization-title" aria-describedby="delete-organization-text">
+            <form method="post" action="@deleteAction" asp-antiforgery="true"
+                  hx-post="@deleteAction" hx-target="#organization" hx-swap="outerHTML"
+                  hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+                <input type="hidden" name="version" value="@organization.Version.Value" />
+                <header class="dialog-header"><h2 id="delete-organization-title">Delete @name permanently?</h2></header>
+                <div class="dialog-body confirm">
+                    <span class="dialog-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg></span>
+                    <div class="message" id="delete-organization-text"><p>This removes @name and its history. A contact's history that names it will show it as a deleted organization, by its identifier. It cannot be undone.</p></div>
+                </div>
+                <footer class="dialog-footer">
+                    <button class="btn" type="button" commandfor="delete-organization" command="close" autofocus>Cancel</button>
+                    <button class="btn danger" type="submit">Delete permanently</button>
+                </footer>
+            </form>
+        </dialog>
+    }
 }
 
 @* Each tab is a page with its own URL. The count after Contacts is how many people belong to the organization,

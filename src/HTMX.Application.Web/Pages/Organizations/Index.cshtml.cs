@@ -53,6 +53,12 @@ public sealed class IndexModel : PageModel
     public OrganizationCollectionResponse Organizations { get; private set; } = NotYetRead;
 
     /// <summary>
+    /// Gets the toast another page left for this one, such as a deleted organization's, or <see langword="null"/>
+    /// when none was left.
+    /// </summary>
+    public Toast? Toast { get; private set; }
+
+    /// <summary>
     /// Gives the part of a website's address a list shows under the name, such as placeholder.example.
     /// </summary>
     /// <param name="website">The website.</param>
@@ -82,6 +88,9 @@ public sealed class IndexModel : PageModel
             return this.Partial(ListPartial, this);
         }
 
+        // A toast waits for the whole page, which a deleted organization's page loads, and is not spent on a swap of
+        // the card.
+        this.Toast = TempDataToasts.Take(this.TempData, "#organization-list");
         return this.Page();
     }
 

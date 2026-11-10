@@ -11,10 +11,17 @@ using Microsoft.AspNetCore.Mvc;
 /// What every tab of an organization's page shares: the organization the route names, and its header with Archive or
 /// Restore. The identifier, the toast and the answers an action gives are <see cref="RecordPageModel"/>'s.
 /// </summary>
+/// <remarks>
+/// An archived organization can be deleted permanently, after a confirm dialog, unless contacts still belong to it;
+/// then the dialog says why not.
+/// </remarks>
 public abstract class OrganizationPageModel : RecordPageModel
 {
     private const string ArchiveHandler = "Archive";
     private const string RestoreHandler = "Restore";
+
+    // Where a deleted organization's page goes: the list, which shows the toast the delete left.
+    private const string ListPage = "./Index";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OrganizationPageModel"/> class.
@@ -30,6 +37,12 @@ public abstract class OrganizationPageModel : RecordPageModel
     /// Gets the organization the page shows, or <see langword="null"/> when the identifier names none.
     /// </summary>
     public OrganizationSingleResponse? Organization { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether contacts belong to the organization, archived ones included, which keeps it
+    /// from being deleted. The organization already counts them, so this asks nothing more.
+    /// </summary>
+    public bool InUse => this.Organization is OrganizationSingleResponse organization && organization.Contacts.Value > 0;
 
     /// <summary>
     /// Gets the service the tab reads and changes the organization through.
@@ -57,6 +70,50 @@ public abstract class OrganizationPageModel : RecordPageModel
     public Task<IActionResult> OnPostRestoreAsync(CancellationToken cancellationToken)
     {
         return this.ChangeStatusAsync(ChangeKind.Restored, cancellationToken);
+    }
+
+    /// <summary>
+    /// Deletes the organization permanently, with its history, from the version the confirm dialog showed it at, and
+    /// goes to the organizations list, which says so in a toast with no Undo. A delete the service refuses answers as
+    /// Archive does, with the tab's content and a toast that says why.
+    /// </summary>
+    /// <param name="version">The version the page showed the organization at, from the confirm dialog's form.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The list, by a redirect or by asking HTMX to load it; the tab's content and a toast for a refusal; 400
+    /// for a version number that cannot be one.</returns>
+    public async Task<IActionResult> OnPostDeleteAsync(int version, CancellationToken cancellationToken)
+    {
+        if (version < 1)
+        {
+            return this.BadRequest();
+        }
+
+        // Read first, for the name the toast gives: once the organization is deleted, nothing holds it.
+        OrganizationSingleResponse? before = await this.ReadAsync(cancellationToken).ConfigureAwait(false);
+        if (before is null)
+        {
+            return this.ShowGone();
+        }
+
+        OrganizationDeleteRequest request = new OrganizationDeleteRequest
+        {
+            Id = before.Id,
+            Version = new VersionNumber(version),
+        };
+        DeleteOutcome outcome = await this.Organizations.DeleteAsync(request, cancellationToken).ConfigureAwait(false);
+        if (outcome == DeleteOutcome.Deleted)
+        {
+            TempDataToasts.Leave(this.TempData, new Toast { Message = $"{before.Name.Value} deleted." });
+            return HtmxAnswers.NextPage(this, ListPage, new { });
+        }
+
+        OrganizationSingleResponse? organization = await this.ReadAsync(cancellationToken).ConfigureAwait(false);
+        if (organization is null)
+        {
+            return this.ShowGone();
+        }
+
+        return this.Answer(DeleteMessage(outcome, organization.Name), undoAction: null);
     }
 
     /// <inheritdoc/>
@@ -121,6 +178,25 @@ public abstract class OrganizationPageModel : RecordPageModel
                 archiving ? $"{name.Value} was already archived." : $"{name.Value} was already active.",
             _ =>
                 $"{name.Value} was changed by someone else at the same moment. Try again.",
+        };
+    }
+
+    /// <summary>
+    /// Writes the toast's message for a delete that was refused.
+    /// </summary>
+    /// <param name="outcome">Why it was refused.</param>
+    /// <param name="name">The organization's name.</param>
+    /// <returns>The message.</returns>
+    private static string DeleteMessage(DeleteOutcome outcome, OrganizationName name)
+    {
+        return outcome switch
+        {
+            DeleteOutcome.Active =>
+                $"{name.Value} is active again, so it can't be deleted.",
+            DeleteOutcome.InUse =>
+                $"Contacts now belong to {name.Value}, so it can't be deleted.",
+            _ =>
+                $"{name.Value} has changed since the page was shown, so it wasn't deleted. Check it, then try again.",
         };
     }
 

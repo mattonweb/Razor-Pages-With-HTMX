@@ -93,4 +93,16 @@ public interface IOrganizationService
     /// <returns>Saved when it was restored; Unchanged when it was already active; NotFound or Overtaken
     /// otherwise.</returns>
     Task<UpdateOutcome> RestoreAsync(OrganizationStatusRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes an organization permanently, with its history, when it is archived, still at the version the request
+    /// names, and no contact belongs to it, archived contacts included. It cannot be undone.
+    /// </summary>
+    /// <param name="request">Which organization, and the version the page showed it at.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Deleted when it was; otherwise NotFound, Active, Overtaken or InUse, the first that applies, in that
+    /// order.</returns>
+    Task<DeleteOutcome> DeleteAsync(
+        OrganizationDeleteRequest request,
+        CancellationToken cancellationToken = default);
 }

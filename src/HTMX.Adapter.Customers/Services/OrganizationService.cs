@@ -108,9 +108,9 @@ internal sealed class OrganizationService : IOrganizationService
             return new OrganizationCreateResponse { Outcome = CreateOutcome.NameTaken };
         }
 
-        Organization organization = Start(request, this._clock.GetUtcNow().UtcDateTime);
+        Organization organization = OrganizationHistory.Start(request, this._clock.GetUtcNow().UtcDateTime);
         OrganizationId id = await this._provider
-            .AddAsync(organization, RecordCreation, cancellationToken)
+            .AddAsync(organization, OrganizationHistory.RecordCreation, cancellationToken)
             .ConfigureAwait(false);
         return new OrganizationCreateResponse { Outcome = CreateOutcome.Created, Id = id };
     }
@@ -176,6 +176,45 @@ internal sealed class OrganizationService : IOrganizationService
         return this.ChangeStatusAsync(request, ChangeKind.Restored, cancellationToken);
     }
 
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Only an archived organization can be deleted, so that nothing is deleted in one step, and only one that no
+    /// contact belongs to. A contact's history that names it keeps its identifier: it records where the contact was,
+    /// and is not a foreign key, so it never stops a delete.
+    /// </remarks>
+    public async Task<DeleteOutcome> DeleteAsync(
+        OrganizationDeleteRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        Organization? current = await this._provider
+            .FindForChangeAsync(request.Id, cancellationToken)
+            .ConfigureAwait(false);
+        if (current is null)
+        {
+            return DeleteOutcome.NotFound;
+        }
+
+        if (current.ArchivedOn is null)
+        {
+            return DeleteOutcome.Active;
+        }
+
+        if (current.Version != request.Version)
+        {
+            return DeleteOutcome.Overtaken;
+        }
+
+        bool hasContacts = await this._provider.HasContactsAsync(request.Id, cancellationToken).ConfigureAwait(false);
+        if (hasContacts)
+        {
+            return DeleteOutcome.InUse;
+        }
+
+        bool deleted = await this._provider.DeleteAsync(current, cancellationToken).ConfigureAwait(false);
+        return deleted ? DeleteOutcome.Deleted : DeleteOutcome.Overtaken;
+    }
+
     /// <summary>
     /// Gives the outcome a change has before anything is saved: refused because the organization is archived or has
     /// moved on since the form was filled, or done already because it holds the values sent.
@@ -199,132 +238,6 @@ internal sealed class OrganizationService : IOrganizationService
             && current.Industry == request.Industry
             && current.Website == request.Website;
         return same ? UpdateOutcome.Unchanged : null;
-    }
-
-    /// <summary>
-    /// Makes a new organization's row: the values sent, at version 1, created and last changed by whoever sent them.
-    /// </summary>
-    /// <param name="request">The new organization.</param>
-    /// <param name="now">When it is created, in UTC.</param>
-    /// <returns>The row, without an identifier until the database gives it one.</returns>
-    private static Organization Start(OrganizationCreateRequest request, DateTime now)
-    {
-        return new Organization
-        {
-            Name = request.Name,
-            Industry = request.Industry,
-            Website = request.Website,
-            CreatedOn = now,
-            CreatedBy = request.CreatedBy,
-            LastModifiedOn = now,
-            LastModifiedBy = request.CreatedBy,
-            Version = new VersionNumber(1),
-        };
-    }
-
-    /// <summary>
-    /// Makes the first version of a new organization from its row as saved: a Created version holding the same values.
-    /// </summary>
-    /// <param name="organization">The row, with the identifier the database gave it.</param>
-    /// <returns>The version.</returns>
-    private static OrganizationVersion RecordCreation(Organization organization)
-    {
-        return new OrganizationVersion
-        {
-            OrganizationId = organization.Id,
-            Version = organization.Version,
-            Change = ChangeKind.Created,
-            ChangedOn = organization.CreatedOn,
-            ChangedBy = organization.CreatedBy,
-            Name = organization.Name,
-            Industry = organization.Industry,
-            Website = organization.Website,
-        };
-    }
-
-    /// <summary>
-    /// Makes the version that records a change: the next number, the values sent, and who saved them and when.
-    /// </summary>
-    /// <param name="current">The organization as it is now, which is active.</param>
-    /// <param name="request">The change.</param>
-    /// <param name="rolledBackTo">The earlier version the values came from, or <see langword="null"/> for an
-    /// edit.</param>
-    /// <param name="now">When the change is saved, in UTC.</param>
-    /// <returns>The version.</returns>
-    private static OrganizationVersion Record(
-        Organization current,
-        OrganizationUpdateRequest request,
-        VersionNumber? rolledBackTo,
-        DateTime now)
-    {
-        return new OrganizationVersion
-        {
-            OrganizationId = current.Id,
-            Version = new VersionNumber(current.Version.Value + 1),
-            Change = rolledBackTo is null ? ChangeKind.Edited : ChangeKind.RolledBack,
-            RolledBackTo = rolledBackTo,
-            ChangedOn = now,
-            ChangedBy = request.ChangedBy,
-            Name = request.Name,
-            Industry = request.Industry,
-            Website = request.Website,
-        };
-    }
-
-    /// <summary>
-    /// Makes the version that records an organization being archived or restored: the next number, its values as they
-    /// are, and when and by whom it was archived, or nothing there once it is restored.
-    /// </summary>
-    /// <param name="current">The organization as it is now.</param>
-    /// <param name="change">Archived or Restored.</param>
-    /// <param name="by">Who is archiving or restoring it.</param>
-    /// <param name="now">When, in UTC.</param>
-    /// <returns>The version.</returns>
-    private static OrganizationVersion RecordStatusChange(
-        Organization current,
-        ChangeKind change,
-        UserId by,
-        DateTime now)
-    {
-        bool archiving = change == ChangeKind.Archived;
-        return new OrganizationVersion
-        {
-            OrganizationId = current.Id,
-            Version = new VersionNumber(current.Version.Value + 1),
-            Change = change,
-            ChangedOn = now,
-            ChangedBy = by,
-            Name = current.Name,
-            Industry = current.Industry,
-            Website = current.Website,
-            ArchivedOn = archiving ? now : null,
-            ArchivedBy = archiving ? by : null,
-        };
-    }
-
-    /// <summary>
-    /// Gives an organization's row the values of its newest version, keeping who created it and when.
-    /// </summary>
-    /// <param name="current">The row as it is now.</param>
-    /// <param name="version">The newest version.</param>
-    /// <returns>The row's new values.</returns>
-    private static Organization Apply(Organization current, OrganizationVersion version)
-    {
-        // Written out rather than with a with expression, which StyleCop 1.1.118 misreads in an instance class (SA1101).
-        return new Organization
-        {
-            Id = current.Id,
-            Name = version.Name,
-            Industry = version.Industry,
-            Website = version.Website,
-            CreatedOn = current.CreatedOn,
-            CreatedBy = current.CreatedBy,
-            LastModifiedOn = version.ChangedOn,
-            LastModifiedBy = version.ChangedBy,
-            ArchivedOn = version.ArchivedOn,
-            ArchivedBy = version.ArchivedBy,
-            Version = version.Version,
-        };
     }
 
     /// <summary>
@@ -391,8 +304,8 @@ internal sealed class OrganizationService : IOrganizationService
         }
 
         DateTime now = this._clock.GetUtcNow().UtcDateTime;
-        OrganizationVersion version = RecordStatusChange(current, change, request.ChangedBy, now);
-        Organization changed = Apply(current, version);
+        OrganizationVersion version = OrganizationHistory.RecordStatusChange(current, change, request.ChangedBy, now);
+        Organization changed = OrganizationHistory.Apply(current, version);
         bool saved = await this._provider
             .SaveChangeAsync(current, changed, version, cancellationToken)
             .ConfigureAwait(false);
@@ -438,8 +351,8 @@ internal sealed class OrganizationService : IOrganizationService
         }
 
         DateTime now = this._clock.GetUtcNow().UtcDateTime;
-        OrganizationVersion version = Record(current, request, rolledBackTo, now);
-        Organization changed = Apply(current, version);
+        OrganizationVersion version = OrganizationHistory.Record(current, request, rolledBackTo, now);
+        Organization changed = OrganizationHistory.Apply(current, version);
         bool saved = await this._provider
             .SaveChangeAsync(current, changed, version, cancellationToken)
             .ConfigureAwait(false);

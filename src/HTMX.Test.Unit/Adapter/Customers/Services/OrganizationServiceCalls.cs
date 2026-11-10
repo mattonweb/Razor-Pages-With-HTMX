@@ -137,6 +137,48 @@ internal static class OrganizationServiceCalls
     }
 
     /// <summary>
+    /// Deletes an organization through the service, after archiving it first when asked, then reads it, every version
+    /// of it, and the versions of one contact, as they are afterwards.
+    /// </summary>
+    /// <param name="request">The delete.</param>
+    /// <param name="archivedFirst">Whether to archive the organization, as Demo User, before the delete.</param>
+    /// <param name="contact">A contact whose versions to read afterwards.</param>
+    /// <returns>What became of the delete, the organization afterwards, its versions, oldest first, and the contact's
+    /// versions, newest first.</returns>
+    internal static async Task<(DeleteOutcome Outcome, OrganizationSingleResponse? After, OrganizationVersion[] History, ContactVersionResponse[] Contact)>
+        DeleteAsync(OrganizationDeleteRequest request, bool archivedFirst, ContactId contact)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            DeleteOutcome outcome;
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IOrganizationService organizations = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
+                if (archivedFirst)
+                {
+                    OrganizationStatusRequest archive = new OrganizationStatusRequest
+                    {
+                        Id = request.Id,
+                        ChangedBy = UserSeed.DemoUser,
+                    };
+                    await organizations.ArchiveAsync(archive).ConfigureAwait(false);
+                }
+
+                outcome = await organizations.DeleteAsync(request).ConfigureAwait(false);
+            }
+
+            OrganizationSingleResponse? after = await FindAsync(services, request.Id).ConfigureAwait(false);
+            OrganizationVersion[] history = await ReadHistoryAsync(services, request.Id).ConfigureAwait(false);
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IContactService contacts = scope.ServiceProvider.GetRequiredService<IContactService>();
+                ContactVersionResponse[] versions = await contacts.ListVersionsAsync(contact).ConfigureAwait(false);
+                return (outcome, after, history, versions);
+            }
+        }
+    }
+
+    /// <summary>
     /// Reads every version of one organization through the service, newest first, as its History tab does.
     /// </summary>
     /// <param name="id">The organization's identifier.</param>
