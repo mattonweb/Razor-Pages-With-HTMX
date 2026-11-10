@@ -1,4 +1,4 @@
-namespace HTMX.Adapter.Customers.Data.Mappings;
+namespace HTMX.Adapter.Customers.Mappers;
 
 using System;
 using HTMX.Adapter.Customers.Entities;
@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 /// <summary>
 /// Maps <see cref="Contact"/> to the Contacts table.
 /// </summary>
-internal sealed class ContactMapping : IEntityTypeConfiguration<Contact>
+internal sealed class ContactMapper : IEntityTypeConfiguration<Contact>
 {
     /// <summary>
     /// Names the table, sorts names however they are capitalized, indexes the order an organization's contacts are

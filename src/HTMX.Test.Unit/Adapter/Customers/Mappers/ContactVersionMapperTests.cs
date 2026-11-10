@@ -1,20 +1,21 @@
-namespace HTMX.Test.Unit.Adapter.Customers.Data.Mappings;
+namespace HTMX.Test.Unit.Adapter.Customers.Mappers;
 
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data;
-using HTMX.Adapter.Customers.Data.Mappings;
 using HTMX.Adapter.Customers.Data.Seed;
 using HTMX.Adapter.Customers.Entities;
+using HTMX.Adapter.Customers.Mappers;
+using HTMX.Test.Unit.Adapter.Customers.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
-/// Contains unit tests for verifying the behavior of the <see cref="ContactVersionMapping"/> class: what deleting a
+/// Contains unit tests for verifying the behavior of the <see cref="ContactVersionMapper"/> class: what deleting a
 /// contact, or an organization a contact once belonged to, does to the history.
 /// </summary>
 [TestClass]
-public sealed class ContactVersionMappingTests
+public sealed class ContactVersionMapperTests
 {
     #region Public Methods
 

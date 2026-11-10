@@ -3,8 +3,8 @@ namespace HTMX.Adapter.Customers.Data;
 using System;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data.Conversions;
-using HTMX.Adapter.Customers.Data.Mappings;
 using HTMX.Adapter.Customers.Extensions;
+using HTMX.Adapter.Customers.Mappers;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 /// </summary>
 /// <remarks>
 /// Tables are reached with <c>Set&lt;User&gt;()</c> rather than a property per table, so the context has no public
-/// state; each mapping names its table instead.
+/// state; each mapper in the Mappers folder names its table instead.
 /// </remarks>
 internal sealed class CustomersDatabaseContext : DbContext
 {
@@ -70,12 +70,12 @@ internal sealed class CustomersDatabaseContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
-        modelBuilder.ApplyConfiguration(new UserMapping());
-        modelBuilder.ApplyConfiguration(new UserVersionMapping());
-        modelBuilder.ApplyConfiguration(new OrganizationMapping());
-        modelBuilder.ApplyConfiguration(new OrganizationVersionMapping());
-        modelBuilder.ApplyConfiguration(new ContactMapping());
-        modelBuilder.ApplyConfiguration(new ContactVersionMapping());
+        modelBuilder.ApplyConfiguration(new UserMapper());
+        modelBuilder.ApplyConfiguration(new UserVersionMapper());
+        modelBuilder.ApplyConfiguration(new OrganizationMapper());
+        modelBuilder.ApplyConfiguration(new OrganizationVersionMapper());
+        modelBuilder.ApplyConfiguration(new ContactMapper());
+        modelBuilder.ApplyConfiguration(new ContactVersionMapper());
 
         // The comparisons key-based paging seeks with, each turned into SQL on the bare column.
         ComparisonTranslations.Map(modelBuilder, typeof(UserIdExtensions));

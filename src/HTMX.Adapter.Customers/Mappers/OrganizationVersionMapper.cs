@@ -1,4 +1,4 @@
-namespace HTMX.Adapter.Customers.Data.Mappings;
+namespace HTMX.Adapter.Customers.Mappers;
 
 using System;
 using HTMX.Adapter.Customers.Entities;
@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 /// <summary>
 /// Maps <see cref="OrganizationVersion"/> to the OrganizationVersions table.
 /// </summary>
-internal sealed class OrganizationVersionMapping : IEntityTypeConfiguration<OrganizationVersion>
+internal sealed class OrganizationVersionMapper : IEntityTypeConfiguration<OrganizationVersion>
 {
     /// <summary>
     /// Names the table, keys each version by its organization and number, and points the version at its organization

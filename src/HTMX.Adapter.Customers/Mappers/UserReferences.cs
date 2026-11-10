@@ -1,4 +1,4 @@
-namespace HTMX.Adapter.Customers.Data.Mappings;
+namespace HTMX.Adapter.Customers.Mappers;
 
 using System;
 using System.Linq.Expressions;
@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 /// <summary>
 /// Makes the columns that name a user, such as CreatedBy and ChangedBy, foreign keys to the Users table. Every entity
-/// records who created it, changed it and archived it, so every mapping uses this.
+/// records who created it, changed it and archived it, so every mapper uses this.
 /// </summary>
 internal static class UserReferences
 {

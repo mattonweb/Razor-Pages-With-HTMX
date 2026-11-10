@@ -1,4 +1,4 @@
-namespace HTMX.Adapter.Customers.Data.Mappings;
+namespace HTMX.Adapter.Customers.Mappers;
 
 using System;
 using HTMX.Adapter.Customers.Entities;
@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 /// <summary>
 /// Maps <see cref="ContactVersion"/> to the ContactVersions table.
 /// </summary>
-internal sealed class ContactVersionMapping : IEntityTypeConfiguration<ContactVersion>
+internal sealed class ContactVersionMapper : IEntityTypeConfiguration<ContactVersion>
 {
     /// <summary>
     /// Names the table, keys each version by its contact and number, and points the version at its contact and at

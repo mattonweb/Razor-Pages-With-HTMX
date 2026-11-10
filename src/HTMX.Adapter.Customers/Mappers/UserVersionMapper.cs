@@ -1,4 +1,4 @@
-namespace HTMX.Adapter.Customers.Data.Mappings;
+namespace HTMX.Adapter.Customers.Mappers;
 
 using System;
 using HTMX.Adapter.Customers.Entities;
@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 /// <summary>
 /// Maps <see cref="UserVersion"/> to the UserVersions table.
 /// </summary>
-internal sealed class UserVersionMapping : IEntityTypeConfiguration<UserVersion>
+internal sealed class UserVersionMapper : IEntityTypeConfiguration<UserVersion>
 {
     /// <summary>
     /// Names the table, keys each version by its user and number, and points the version at its user and at whoever

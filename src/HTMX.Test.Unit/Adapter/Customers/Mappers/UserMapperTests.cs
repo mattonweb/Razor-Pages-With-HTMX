@@ -1,22 +1,23 @@
-namespace HTMX.Test.Unit.Adapter.Customers.Data.Mappings;
+namespace HTMX.Test.Unit.Adapter.Customers.Mappers;
 
 using System.Linq;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data;
-using HTMX.Adapter.Customers.Data.Mappings;
 using HTMX.Adapter.Customers.Data.Seed;
 using HTMX.Adapter.Customers.Entities;
+using HTMX.Adapter.Customers.Mappers;
+using HTMX.Test.Unit.Adapter.Customers.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
-/// Contains unit tests for verifying the behavior of the <see cref="UserMapping"/> class: the rules the Users table
+/// Contains unit tests for verifying the behavior of the <see cref="UserMapper"/> class: the rules the Users table
 /// enforces on every save.
 /// </summary>
 [TestClass]
-public sealed class UserMappingTests
+public sealed class UserMapperTests
 {
     #region Public Methods
 

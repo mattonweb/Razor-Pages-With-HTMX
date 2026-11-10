@@ -1,4 +1,4 @@
-namespace HTMX.Adapter.Customers.Data.Mappings;
+namespace HTMX.Adapter.Customers.Mappers;
 
 using System;
 using HTMX.Adapter.Customers.Entities;
@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 /// <summary>
 /// Maps <see cref="User"/> to the Users table.
 /// </summary>
-internal sealed class UserMapping : IEntityTypeConfiguration<User>
+internal sealed class UserMapper : IEntityTypeConfiguration<User>
 {
     /// <summary>
     /// Names the table, makes usernames and email addresses unique however they are capitalized, sorts names however
