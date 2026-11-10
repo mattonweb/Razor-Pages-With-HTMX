@@ -68,6 +68,30 @@ public sealed class ContactsModelTests
     }
 
     /// <summary>
+    /// Unit test to verify that the tab shows the toast a deleted contact's page left in TempData, whether that page
+    /// redirected the browser here or asked HTMX to load the tab.
+    /// </summary>
+    /// <param name="kind">What sent the request, by its name in <see cref="HtmxRequest"/>.</param>
+    [TestMethod]
+    [DataRow(nameof(HtmxRequest.None), DisplayName = "The whole page, after a redirect")]
+    [DataRow(nameof(HtmxRequest.HistoryRestore), DisplayName = "The whole page, loaded by HTMX")]
+    public async Task OnGetAsync_ToastLeftByADelete_ShowsItWithoutUndo(string kind)
+    {
+        // Arrange (Given)
+        ContactsModel page = CreatePage(new StubContactService(CreateContacts()), Enum.Parse<HtmxRequest>(kind));
+        page.TempData["ToastMessage"] = "Darcy Dataset deleted.";
+
+        // Act (When)
+        await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            ("Darcy Dataset deleted.", null),
+            (page.Toast?.Message, page.Toast?.UndoAction),
+            "The tab should show the toast, with nothing to undo.");
+    }
+
+    /// <summary>
     /// Unit test to verify that an archive HTMX sent from a row asks for that contact among the organization's, as the
     /// signed-in user, and answers with the list alone and a toast whose Undo restores them from the same page.
     /// </summary>

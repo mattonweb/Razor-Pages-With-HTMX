@@ -14,7 +14,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Contains unit tests for verifying the behavior of the contacts' <see cref="DetailsModel"/> class: which contact the
-/// tab shows, and what Archive sends from the contact's own page and answers.
+/// tab shows, what Archive sends from the contact's own page and answers, and what Delete permanently answers, with
+/// HTMX and without it.
 /// </summary>
 [TestClass]
 public sealed class DetailsModelTests
@@ -112,6 +113,118 @@ public sealed class DetailsModelTests
                 (string?)null),
             (page.Toast?.Message, page.Toast?.UndoAction),
             "The toast should say why, with nothing to undo.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete HTMX sent asks for the contact and version the dialog showed, and loads their
+    /// organization's Contacts tab, leaving it a toast with no Undo.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostDeleteAsync_DeletedByHtmx_LoadsTheContactsTabWithAToast()
+    {
+        // Arrange (Given)
+        StubContactService contacts = new StubContactService(found: CreateContact());
+        DetailsModel page = CreatePage(contacts, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page.OnPostDeleteAsync(4, CancellationToken.None).ConfigureAwait(false);
+        ContactDeleteRequest? sent = contacts.LastDeletion();
+
+        // Assert (Then)
+        StatusCodeResult status = Assert.IsInstanceOfType<StatusCodeResult>(
+            result,
+            "HTMX should be asked to load the Contacts tab.");
+        Assert.AreEqual(
+            (StatusCodes.Status204NoContent, "/Organizations/Contacts/10003"),
+            (status.StatusCode, page.Response.Headers["HX-Location"].ToString()),
+            "The answer should have no content to swap, and HX-Location should name the organization's Contacts tab.");
+        Assert.AreEqual(
+            (new ContactId(10001), new VersionNumber(4)),
+            (sent?.Id, sent?.Version),
+            "The page should delete the contact the route names, at the version the dialog showed.");
+        Assert.AreEqual(
+            ("Ainsley Archetype deleted.", null),
+            (page.TempData["ToastMessage"], page.TempData["ToastUndo"]),
+            "The Contacts tab should be left a toast that says so, with no Undo.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete sent without HTMX is redirected to the contact's organization's Contacts tab.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostDeleteAsync_DeletedWithoutHtmx_RedirectsToTheContactsTab()
+    {
+        // Arrange (Given)
+        DetailsModel page = CreatePage(new StubContactService(found: CreateContact()));
+
+        // Act (When)
+        IActionResult result = await page.OnPostDeleteAsync(4, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        RedirectToPageResult redirect = Assert.IsInstanceOfType<RedirectToPageResult>(
+            result,
+            "A delete without HTMX should be redirected.");
+        Assert.AreEqual(
+            ("/Organizations/Contacts", (object?)10003L),
+            (redirect.PageName, redirect.RouteValues?["id"]),
+            "The redirect should go to Placeholder Logistics's Contacts tab.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete the service refuses answers with the tab's content and a toast that says
+    /// why, with no Undo, as an archive does.
+    /// </summary>
+    /// <param name="outcome">What the service answers.</param>
+    /// <param name="message">What the toast should say.</param>
+    [TestMethod]
+    [DataRow(
+        DeleteOutcome.OrganizationArchived,
+        "Placeholder Logistics is archived, so its contacts can't be changed until it is restored.",
+        DisplayName = "Organization archived")]
+    [DataRow(DeleteOutcome.Active, "Ainsley Archetype is active again, so they can't be deleted.", DisplayName = "Active")]
+    [DataRow(
+        DeleteOutcome.Overtaken,
+        "Ainsley Archetype has changed since the page was shown, so they weren't deleted. Check them, then try again.",
+        DisplayName = "Overtaken")]
+    public async Task OnPostDeleteAsync_Refused_SaysWhyWithoutUndo(DeleteOutcome outcome, string message)
+    {
+        // Arrange (Given)
+        StubContactService contacts = new StubContactService(found: CreateContact(), deletion: outcome);
+        DetailsModel page = CreatePage(contacts, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page.OnPostDeleteAsync(4, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        PartialViewResult partial = Assert.IsInstanceOfType<PartialViewResult>(
+            result,
+            "HTMX should get the tab's content to swap in place.");
+        Assert.AreEqual(
+            ("_RecordChanged", message, null),
+            (partial.ViewName, page.Toast?.Message, page.Toast?.UndoAction),
+            "The toast should say why nothing was deleted, with nothing to undo.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a version number that cannot be one is refused with 400, and nothing is deleted.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostDeleteAsync_ImpossibleVersion_AnswersBadRequest()
+    {
+        // Arrange (Given)
+        StubContactService contacts = new StubContactService(found: CreateContact());
+        DetailsModel page = CreatePage(contacts, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page.OnPostDeleteAsync(0, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsInstanceOfType<BadRequestResult>(
+            result,
+            "A version number below 1 should be refused.");
+        Assert.IsNull(
+            contacts.LastDeletion(),
+            "Nothing should be deleted.");
     }
 
     #endregion Public Methods

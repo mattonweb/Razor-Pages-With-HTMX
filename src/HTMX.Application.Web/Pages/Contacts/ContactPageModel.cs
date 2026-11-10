@@ -13,12 +13,16 @@ using Microsoft.AspNetCore.Mvc;
 /// </summary>
 /// <remarks>
 /// A contact is changed only while their organization is active, as on the organization's Contacts tab; while it is
-/// archived the page shows the contact and says why nothing can be changed.
+/// archived the page shows the contact and says why nothing can be changed. An archived contact can be deleted
+/// permanently, after a confirm dialog; nothing but their own history names a contact, so nothing else stops it.
 /// </remarks>
 public abstract class ContactPageModel : RecordPageModel
 {
     private const string ArchiveHandler = "Archive";
     private const string RestoreHandler = "Restore";
+
+    // Where a deleted contact's page goes: their organization's Contacts tab, which shows the toast the delete left.
+    private const string ContactsTab = "/Organizations/Contacts";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ContactPageModel"/> class.
@@ -63,6 +67,52 @@ public abstract class ContactPageModel : RecordPageModel
         return this.ChangeStatusAsync(ChangeKind.Restored, cancellationToken);
     }
 
+    /// <summary>
+    /// Deletes the contact permanently, with their history, from the version the confirm dialog showed them at, and
+    /// goes to their organization's Contacts tab, which says so in a toast with no Undo. A delete the service refuses
+    /// answers as Archive does, with the tab's content and a toast that says why.
+    /// </summary>
+    /// <param name="version">The version the page showed the contact at, from the confirm dialog's form.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The Contacts tab, by a redirect or by asking HTMX to load it; the tab's content and a toast for a
+    /// refusal; 400 for a version number that cannot be one.</returns>
+    public async Task<IActionResult> OnPostDeleteAsync(int version, CancellationToken cancellationToken)
+    {
+        if (version < 1)
+        {
+            return this.BadRequest();
+        }
+
+        // Read first, for the name the toast gives and the organization to go to: once the contact is deleted, nothing
+        // holds either.
+        ContactSingleResponse? before = await this.ReadAsync(cancellationToken).ConfigureAwait(false);
+        if (before is null)
+        {
+            return this.ShowGone();
+        }
+
+        ContactDeleteRequest request = new ContactDeleteRequest
+        {
+            Id = before.Id,
+            Version = new VersionNumber(version),
+        };
+        DeleteOutcome outcome = await this.Contacts.DeleteAsync(request, cancellationToken).ConfigureAwait(false);
+        if (outcome == DeleteOutcome.Deleted)
+        {
+            OrganizationId organization = before.Organization.Id;
+            TempDataToasts.Leave(this.TempData, new Toast { Message = $"{before.Name.Value} deleted." });
+            return HtmxAnswers.NextPage(this, ContactsTab, new { id = organization.Value });
+        }
+
+        ContactSingleResponse? contact = await this.ReadAsync(cancellationToken).ConfigureAwait(false);
+        if (contact is null)
+        {
+            return this.ShowGone();
+        }
+
+        return this.Answer(DeleteMessage(outcome, contact.Name, contact.Organization.Name), undoAction: null);
+    }
+
     /// <inheritdoc/>
     protected override async Task<bool> FindRecordAsync(CancellationToken cancellationToken)
     {
@@ -105,6 +155,26 @@ public abstract class ContactPageModel : RecordPageModel
     protected IActionResult ShowGone()
     {
         return HtmxAnswers.NextPage(this, "./Details", new { id = this.Input.Id });
+    }
+
+    /// <summary>
+    /// Writes the toast's message for a delete that was refused.
+    /// </summary>
+    /// <param name="outcome">Why it was refused.</param>
+    /// <param name="name">The contact's name.</param>
+    /// <param name="organization">The name of the organization they belong to.</param>
+    /// <returns>The message.</returns>
+    private static string DeleteMessage(DeleteOutcome outcome, DisplayName name, OrganizationName organization)
+    {
+        return outcome switch
+        {
+            DeleteOutcome.OrganizationArchived =>
+                $"{organization.Value} is archived, so its contacts can't be changed until it is restored.",
+            DeleteOutcome.Active =>
+                $"{name.Value} is active again, so they can't be deleted.",
+            _ =>
+                $"{name.Value} has changed since the page was shown, so they weren't deleted. Check them, then try again.",
+        };
     }
 
     /// <summary>

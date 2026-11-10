@@ -59,7 +59,9 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   The breadcrumbs lead back through the organization's Contacts tab. **Archive** and **Restore** work as an
   organization's do, with Undo, and **Edit** goes to the edit form. While the organization is archived the contact can
   be seen but not changed, and the page says why. An identifier that names no contact gets the page saying so, with
-  404.
+  404. **Delete permanently**, beside Restore on an archived contact's page, works as a user's does, with the same
+  confirm dialog, and goes to the organization's Contacts tab, which shows the toast. Nothing but their own history
+  names a contact, so any archived contact can be deleted while their organization is active, as Darcy Dataset can.
 - **`/contacts/{id}/edit`** — the contact's edit form: name, organization, job title, email, phone and notes, saved as
   the next version, with the same answers as an organization's edit form (422, 409 with the saved values beside the
   edited ones, and a 204 with `HX-Location` after a save). The organization starts as a select of every active

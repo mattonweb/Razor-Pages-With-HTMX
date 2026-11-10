@@ -12,7 +12,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 /// <summary>
 /// Contains unit tests for verifying the behavior of the contact service behind <see cref="IContactService"/>, over a
 /// seeded in-memory database: the pages of an organization's contacts, one contact and their versions, and creating,
-/// changing, archiving, restoring and rolling back a contact.
+/// changing, archiving, restoring, rolling back and deleting a contact.
 /// </summary>
 [TestClass]
 public sealed class ContactServiceTests
@@ -525,9 +525,88 @@ public sealed class ContactServiceTests
             "No version should have been saved.");
     }
 
+    /// <summary>
+    /// Unit test to verify that an archived contact whose organization is active is deleted, with their history, at the
+    /// version the page showed.
+    /// </summary>
+    [TestMethod]
+    public async Task DeleteAsync_DarcyDataset_DeletesThemAndTheirHistory()
+    {
+        // Arrange (Given)
+        ContactDeleteRequest request = CreateDelete(ContactSeed.DarcyDataset, 2);
+
+        // Act (When)
+        (DeleteOutcome outcome, Contact? after, ContactVersion[] history) =
+            await ContactServiceCalls.DeleteAsync(request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            DeleteOutcome.Deleted,
+            outcome,
+            "Darcy Dataset, archived in an active organization, should be deleted.");
+        Assert.IsNull(
+            after,
+            "Darcy Dataset should no longer be found.");
+        Assert.IsEmpty(
+            history,
+            "Their history should go with them.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a delete the rules refuse deletes nothing. The rules run in order, and each row passes
+    /// every rule before the one it breaks.
+    /// </summary>
+    /// <param name="id">The contact's identifier.</param>
+    /// <param name="version">The version the page showed them at.</param>
+    /// <param name="expected">What should become of the request.</param>
+    [TestMethod]
+    [DataRow(99999L, 1, DeleteOutcome.NotFound, DisplayName = "An unknown identifier")]
+    [DataRow(10002L, 1, DeleteOutcome.OrganizationArchived, DisplayName = "A contact of an archived organization")]
+    [DataRow(10001L, 4, DeleteOutcome.Active, DisplayName = "An active contact")]
+    [DataRow(10004L, 1, DeleteOutcome.Overtaken, DisplayName = "From a version they have moved on from")]
+    public async Task DeleteAsync_Refused_DeletesNothing(long id, int version, DeleteOutcome expected)
+    {
+        // Arrange (Given)
+        ContactDeleteRequest request = CreateDelete(new ContactId(id), version);
+        ContactSingleResponse? before = await ContactServiceCalls.FindAsync(request.Id).ConfigureAwait(false);
+
+        // Act (When)
+        (DeleteOutcome outcome, Contact? after, ContactVersion[] history) =
+            await ContactServiceCalls.DeleteAsync(request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            outcome,
+            $"The delete should be answered {expected}.");
+        Assert.AreEqual(
+            before?.Version,
+            after?.Version,
+            "The contact should still be there, at the version they were.");
+        Assert.HasCount(
+            before is null ? 0 : before.Version.Value,
+            history,
+            "The history should keep every version.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
+
+    /// <summary>
+    /// Creates a delete as a contact's confirm dialog would send it.
+    /// </summary>
+    /// <param name="contact">The contact to delete.</param>
+    /// <param name="version">The version the dialog showed them at.</param>
+    /// <returns>The delete.</returns>
+    private static ContactDeleteRequest CreateDelete(ContactId contact, int version)
+    {
+        return new ContactDeleteRequest
+        {
+            Id = contact,
+            Version = new VersionNumber(version),
+        };
+    }
 
     /// <summary>
     /// Creates a new contact from Demo User, Quinn Quickstart, with invented values, at the organization given.

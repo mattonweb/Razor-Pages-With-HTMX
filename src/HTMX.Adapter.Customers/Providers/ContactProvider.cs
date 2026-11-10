@@ -303,6 +303,22 @@ internal sealed class ContactProvider
     }
 
     /// <summary>
+    /// Deletes a contact's row; the database deletes their versions with it. As for an organization, the row's version
+    /// number is a concurrency token, so the DELETE names the version that was read as well as the identifier, and
+    /// deletes nothing if another request saved the contact since.
+    /// </summary>
+    /// <param name="current">The row as <see cref="FindForChangeAsync"/> read it.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns><see langword="true"/> when the contact was deleted; <see langword="false"/> when another save overtook
+    /// the delete.</returns>
+    public Task<bool> DeleteAsync(Contact current, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(current);
+        this._context.Remove(current);
+        return this.TrySaveAsync(cancellationToken);
+    }
+
+    /// <summary>
     /// Keeps the contacts that come after the cursor's in the order the page is read: the seek of key-based paging.
     /// </summary>
     /// <remarks>

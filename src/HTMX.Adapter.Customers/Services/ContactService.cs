@@ -91,9 +91,9 @@ internal sealed class ContactService : IContactService
             return new ContactCreateResponse { Outcome = CreateOutcome.OrganizationUnavailable };
         }
 
-        Contact contact = Start(request, this._clock.GetUtcNow().UtcDateTime);
+        Contact contact = ContactHistory.Start(request, this._clock.GetUtcNow().UtcDateTime);
         ContactId id = await this._provider
-            .AddAsync(contact, RecordCreation, cancellationToken)
+            .AddAsync(contact, ContactHistory.RecordCreation, cancellationToken)
             .ConfigureAwait(false);
         return new ContactCreateResponse { Outcome = CreateOutcome.Created, Id = id };
     }
@@ -163,115 +163,43 @@ internal sealed class ContactService : IContactService
         return this.ChangeStatusAsync(request, ChangeKind.Restored, cancellationToken);
     }
 
-    /// <summary>
-    /// Makes a new contact's row: the values sent, active, at version 1, created and last changed now by whoever sent
-    /// them. The database gives the identifier as the row is saved.
-    /// </summary>
-    /// <param name="request">The new contact.</param>
-    /// <param name="now">When they are created, in UTC.</param>
-    /// <returns>The row, without an identifier.</returns>
-    private static Contact Start(ContactCreateRequest request, DateTime now)
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Only an archived contact can be deleted, so that nothing is deleted in one step, and only while their
+    /// organization is active: an archived organization's contacts are closed to changes until it is restored, and a
+    /// delete is one. Nothing but their own history names a contact, so nothing else keeps one from being deleted.
+    /// </remarks>
+    public async Task<DeleteOutcome> DeleteAsync(
+        ContactDeleteRequest request,
+        CancellationToken cancellationToken = default)
     {
-        return new Contact
+        ArgumentNullException.ThrowIfNull(request);
+        Contact? current = await this._provider.FindForChangeAsync(request.Id, cancellationToken).ConfigureAwait(false);
+        if (current is null)
         {
-            Name = request.Name,
-            Email = request.Email,
-            Phone = request.Phone,
-            JobTitle = request.JobTitle,
-            OrganizationId = request.Organization,
-            Notes = request.Notes,
-            CreatedOn = now,
-            CreatedBy = request.CreatedBy,
-            LastModifiedOn = now,
-            LastModifiedBy = request.CreatedBy,
-            Version = new VersionNumber(1),
-        };
-    }
+            return DeleteOutcome.NotFound;
+        }
 
-    /// <summary>
-    /// Makes a new contact's first version from their row as saved: a Created version holding the same values.
-    /// </summary>
-    /// <param name="contact">The row, with the identifier the database gave it.</param>
-    /// <returns>The version.</returns>
-    private static ContactVersion RecordCreation(Contact contact)
-    {
-        return new ContactVersion
+        bool open = await this._provider
+            .IsOrganizationActiveAsync(current.OrganizationId, cancellationToken)
+            .ConfigureAwait(false);
+        if (!open)
         {
-            ContactId = contact.Id,
-            Version = contact.Version,
-            Change = ChangeKind.Created,
-            ChangedOn = contact.CreatedOn,
-            ChangedBy = contact.CreatedBy,
-            Name = contact.Name,
-            Email = contact.Email,
-            Phone = contact.Phone,
-            JobTitle = contact.JobTitle,
-            OrganizationId = contact.OrganizationId,
-            Notes = contact.Notes,
-        };
-    }
+            return DeleteOutcome.OrganizationArchived;
+        }
 
-    /// <summary>
-    /// Makes the version that records a contact being archived or restored: the next number, their values as they
-    /// are, and when and by whom they were archived, or nothing there once they are restored.
-    /// </summary>
-    /// <param name="current">The contact as they are now.</param>
-    /// <param name="change">Archived or Restored.</param>
-    /// <param name="by">Who is archiving or restoring them.</param>
-    /// <param name="now">When, in UTC.</param>
-    /// <returns>The version.</returns>
-    private static ContactVersion RecordStatusChange(Contact current, ChangeKind change, UserId by, DateTime now)
-    {
-        bool archiving = change == ChangeKind.Archived;
-        return new ContactVersion
+        if (current.ArchivedOn is null)
         {
-            ContactId = current.Id,
-            Version = new VersionNumber(current.Version.Value + 1),
-            Change = change,
-            ChangedOn = now,
-            ChangedBy = by,
-            Name = current.Name,
-            Email = current.Email,
-            Phone = current.Phone,
-            JobTitle = current.JobTitle,
-            OrganizationId = current.OrganizationId,
-            Notes = current.Notes,
-            ArchivedOn = archiving ? now : null,
-            ArchivedBy = archiving ? by : null,
-        };
-    }
+            return DeleteOutcome.Active;
+        }
 
-    /// <summary>
-    /// Makes the version that records a change: the next number, the values sent, active, and who saved them and
-    /// when.
-    /// </summary>
-    /// <param name="current">The contact as they are now, who is active.</param>
-    /// <param name="request">The change.</param>
-    /// <param name="rolledBackTo">The earlier version the values came from, or <see langword="null"/> for an
-    /// edit.</param>
-    /// <param name="now">When the change is saved, in UTC.</param>
-    /// <returns>The version.</returns>
-    private static ContactVersion Record(
-        Contact current,
-        ContactUpdateRequest request,
-        VersionNumber? rolledBackTo,
-        DateTime now)
-    {
-        return new ContactVersion
+        if (current.Version != request.Version)
         {
-            ContactId = current.Id,
-            Version = new VersionNumber(current.Version.Value + 1),
-            Change = rolledBackTo is null ? ChangeKind.Edited : ChangeKind.RolledBack,
-            RolledBackTo = rolledBackTo,
-            ChangedOn = now,
-            ChangedBy = request.ChangedBy,
-            Name = request.Name,
-            Email = request.Email,
-            Phone = request.Phone,
-            JobTitle = request.JobTitle,
-            OrganizationId = request.Organization,
-            Notes = request.Notes,
-        };
+            return DeleteOutcome.Overtaken;
+        }
+
+        bool deleted = await this._provider.DeleteAsync(current, cancellationToken).ConfigureAwait(false);
+        return deleted ? DeleteOutcome.Deleted : DeleteOutcome.Overtaken;
     }
 
     /// <summary>
@@ -288,35 +216,6 @@ internal sealed class ContactService : IContactService
             && current.JobTitle == request.JobTitle
             && current.OrganizationId == request.Organization
             && current.Notes == request.Notes;
-    }
-
-    /// <summary>
-    /// Gives a contact's row the values of their newest version, keeping who created them and when.
-    /// </summary>
-    /// <param name="current">The row as it is now.</param>
-    /// <param name="version">The newest version.</param>
-    /// <returns>The row's new values.</returns>
-    private static Contact Apply(Contact current, ContactVersion version)
-    {
-        // Written out rather than with a with expression, which StyleCop 1.1.118 misreads in an instance class
-        // (SA1101).
-        return new Contact
-        {
-            Id = current.Id,
-            Name = version.Name,
-            Email = version.Email,
-            Phone = version.Phone,
-            JobTitle = version.JobTitle,
-            OrganizationId = version.OrganizationId,
-            Notes = version.Notes,
-            CreatedOn = current.CreatedOn,
-            CreatedBy = current.CreatedBy,
-            LastModifiedOn = version.ChangedOn,
-            LastModifiedBy = version.ChangedBy,
-            ArchivedOn = version.ArchivedOn,
-            ArchivedBy = version.ArchivedBy,
-            Version = version.Version,
-        };
     }
 
     /// <summary>
@@ -389,8 +288,8 @@ internal sealed class ContactService : IContactService
         }
 
         DateTime now = this._clock.GetUtcNow().UtcDateTime;
-        ContactVersion version = Record(current, request, rolledBackTo, now);
-        Contact changed = Apply(current, version);
+        ContactVersion version = ContactHistory.Record(current, request, rolledBackTo, now);
+        Contact changed = ContactHistory.Apply(current, version);
         bool saved = await this._provider
             .SaveChangeAsync(current, changed, version, cancellationToken)
             .ConfigureAwait(false);
@@ -471,8 +370,8 @@ internal sealed class ContactService : IContactService
         }
 
         DateTime now = this._clock.GetUtcNow().UtcDateTime;
-        ContactVersion version = RecordStatusChange(current, change, request.ChangedBy, now);
-        Contact changed = Apply(current, version);
+        ContactVersion version = ContactHistory.RecordStatusChange(current, change, request.ChangedBy, now);
+        Contact changed = ContactHistory.Apply(current, version);
         bool saved = await this._provider
             .SaveChangeAsync(current, changed, version, cancellationToken)
             .ConfigureAwait(false);

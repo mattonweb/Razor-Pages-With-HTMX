@@ -12,8 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Calls <see cref="IContactService"/> as the pages do, over a seeded database of its own: a page and then the pages
-/// its Previous and Next lead to, one contact or their versions, or a new contact, an archive, a restore or a
-/// roll-back.
+/// its Previous and Next lead to, one contact or their versions, or a new contact, an archive, a restore, a roll-back
+/// or a delete.
 /// </summary>
 internal static class ContactServiceCalls
 {
@@ -199,6 +199,30 @@ internal static class ContactServiceCalls
                 outcome = change == ChangeKind.Archived
                     ? await contacts.ArchiveAsync(request).ConfigureAwait(false)
                     : await contacts.RestoreAsync(request).ConfigureAwait(false);
+            }
+
+            (Contact? after, ContactVersion[] history) =
+                await ReadBackAsync(services, request.Id).ConfigureAwait(false);
+            return (outcome, after, history);
+        }
+    }
+
+    /// <summary>
+    /// Deletes a contact through the service, then reads their row, and every version of them, straight from the
+    /// database as they are afterwards.
+    /// </summary>
+    /// <param name="request">The delete.</param>
+    /// <returns>What became of the delete, the contact afterwards, and their versions, oldest first.</returns>
+    internal static async Task<(DeleteOutcome Outcome, Contact? After, ContactVersion[] History)> DeleteAsync(
+        ContactDeleteRequest request)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            DeleteOutcome outcome;
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IContactService contacts = scope.ServiceProvider.GetRequiredService<IContactService>();
+                outcome = await contacts.DeleteAsync(request).ConfigureAwait(false);
             }
 
             (Contact? after, ContactVersion[] history) =

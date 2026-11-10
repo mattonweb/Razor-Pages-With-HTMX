@@ -86,4 +86,14 @@ public interface IContactService
     /// <returns>Saved when they were restored; Unchanged when they were already active; otherwise Archived, NotFound
     /// or Overtaken, as for <see cref="ArchiveAsync"/>.</returns>
     Task<UpdateOutcome> RestoreAsync(ContactStatusRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a contact permanently, with their history, when their organization is active, they are archived, and
+    /// they are still at the version the request names. It cannot be undone.
+    /// </summary>
+    /// <param name="request">Which contact, and the version the page showed them at.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Deleted when they were; otherwise NotFound, OrganizationArchived, Active or Overtaken, the first that
+    /// applies, in that order.</returns>
+    Task<DeleteOutcome> DeleteAsync(ContactDeleteRequest request, CancellationToken cancellationToken = default);
 }

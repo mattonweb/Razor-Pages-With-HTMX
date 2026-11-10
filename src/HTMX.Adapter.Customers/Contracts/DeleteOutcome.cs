@@ -32,4 +32,10 @@ public enum DeleteOutcome
     /// not deleted.
     /// </summary>
     Overtaken,
+
+    /// <summary>
+    /// The record is a contact whose organization is archived. An archived organization's contacts are closed to
+    /// changes, a delete among them, until it is restored.
+    /// </summary>
+    OrganizationArchived,
 }

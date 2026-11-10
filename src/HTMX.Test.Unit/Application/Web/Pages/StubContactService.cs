@@ -9,8 +9,8 @@ using HTMX.Adapter.Customers.Contracts;
 /// <summary>
 /// Stands in for the contact service in page tests: it keeps each request the page sends, answers a page of contacts
 /// with the contacts it was given as the page the request asked for, a lookup with the one contact and the versions it
-/// was given, and a new contact, a change, an archive, a restore or a roll-back with the outcome it was given, so a
-/// test sees what the page asked for without a database.
+/// was given, and a new contact, a change, an archive, a restore, a roll-back or a delete with the outcome it was
+/// given, so a test sees what the page asked for without a database.
 /// </summary>
 internal sealed class StubContactService : IContactService
 {
@@ -19,11 +19,13 @@ internal sealed class StubContactService : IContactService
     private readonly List<ContactRollBackRequest> _rollBacks = [];
     private readonly List<ContactUpdateRequest> _updates = [];
     private readonly List<ContactCreateRequest> _creations = [];
+    private readonly List<ContactDeleteRequest> _deletions = [];
     private readonly ContactSummary[] _contacts;
     private readonly UpdateOutcome _outcome;
     private readonly CreateOutcome _creation;
     private readonly ContactSingleResponse? _found;
     private readonly ContactVersionResponse[] _versions;
+    private readonly DeleteOutcome _deletion;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StubContactService"/> class.
@@ -34,18 +36,21 @@ internal sealed class StubContactService : IContactService
     /// <param name="versions">The versions a lookup of the history answers with, newest first.</param>
     /// <param name="creation">What a new contact is answered with; one that is created gets the identifier
     /// 20001.</param>
+    /// <param name="deletion">What a delete is answered with.</param>
     public StubContactService(
         ContactSummary[]? contacts = null,
         UpdateOutcome outcome = UpdateOutcome.Saved,
         ContactSingleResponse? found = null,
         ContactVersionResponse[]? versions = null,
-        CreateOutcome creation = CreateOutcome.Created)
+        CreateOutcome creation = CreateOutcome.Created,
+        DeleteOutcome deletion = DeleteOutcome.Deleted)
     {
         this._contacts = contacts ?? [];
         this._outcome = outcome;
         this._creation = creation;
         this._found = found;
         this._versions = versions ?? [];
+        this._deletion = deletion;
     }
 
     /// <summary>
@@ -92,6 +97,15 @@ internal sealed class StubContactService : IContactService
     public ContactRollBackRequest? LastRollBack()
     {
         return this._rollBacks.LastOrDefault();
+    }
+
+    /// <summary>
+    /// Gives the last delete the page asked for.
+    /// </summary>
+    /// <returns>The delete, or <see langword="null"/> before the page asks for one.</returns>
+    public ContactDeleteRequest? LastDeletion()
+    {
+        return this._deletions.LastOrDefault();
     }
 
     /// <inheritdoc/>
@@ -171,5 +185,14 @@ internal sealed class StubContactService : IContactService
     {
         this._statusChanges.Add((ChangeKind.Restored, request));
         return Task.FromResult(this._outcome);
+    }
+
+    /// <inheritdoc/>
+    public Task<DeleteOutcome> DeleteAsync(
+        ContactDeleteRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        this._deletions.Add(request);
+        return Task.FromResult(this._deletion);
     }
 }

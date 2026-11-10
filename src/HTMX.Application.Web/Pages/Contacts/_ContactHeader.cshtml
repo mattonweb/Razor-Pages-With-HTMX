@@ -8,6 +8,12 @@
     hx-disable, which would lose it. Edit goes to the contact's edit form. An archived contact offers Restore in the
     alert and no Edit; while the contact's organization is archived, the contact can't be changed, so the page offers
     none of them.
+
+    Delete permanently, last in an archived contact's alert, asks first in the brand's confirm dialog, as a user's and
+    an organization's do: a native <dialog> opened with commandfor, holding its own form, which posts to the tab's
+    Delete handler with the version it shows, with HTMX or without it. A deleted contact's page goes to their
+    organization's Contacts tab; a refused delete answers like Archive, and the answer replaces #contact, the dialog
+    with it. Nothing but their own history names a contact, so there is no dialog for a delete that is not allowed.
 *@
 @{
     ContactSingleResponse contact = Model.Contact
@@ -15,10 +21,12 @@
     OrganizationReference organization = contact.Organization;
     RecordChange lastChange = contact.LastModified;
     long id = contact.Id.Value;
+    string name = contact.Name.Value;
     long organizationId = organization.Id.Value;
     bool organizationActive = organization.ArchivedOn is null;
     string? archiveAction = Url.Page(Model.PageName, "Archive", Model.TabValues());
     string? restoreAction = Url.Page(Model.PageName, "Restore", Model.TabValues());
+    string? deleteAction = Url.Page(Model.PageName, "Delete", Model.TabValues());
 }
 <header class="page-header">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -79,8 +87,26 @@ else if (contact.Archived is not null)
                   hx-indicator="find button">
                 <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Restore</button>
             </form>
+            <button class="btn danger" type="button" commandfor="delete-contact" command="show-modal"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg>Delete permanently</button>
         </div>
     </div>
+
+    <dialog class="dialog sm" id="delete-contact" aria-labelledby="delete-contact-title" aria-describedby="delete-contact-text">
+        <form method="post" action="@deleteAction" asp-antiforgery="true"
+              hx-post="@deleteAction" hx-target="#contact" hx-swap="outerHTML"
+              hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+            <input type="hidden" name="version" value="@contact.Version.Value" />
+            <header class="dialog-header"><h2 id="delete-contact-title">Delete @name permanently?</h2></header>
+            <div class="dialog-body confirm">
+                <span class="dialog-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg></span>
+                <div class="message" id="delete-contact-text"><p>This removes @name and their history, and takes them off the Contacts tab of @organization.Name.Value. It cannot be undone.</p></div>
+            </div>
+            <footer class="dialog-footer">
+                <button class="btn" type="button" commandfor="delete-contact" command="close" autofocus>Cancel</button>
+                <button class="btn danger" type="submit">Delete permanently</button>
+            </footer>
+        </form>
+    </dialog>
 }
 
 @* Each tab is a page with its own URL; the count after History is how many versions the contact has. *@
