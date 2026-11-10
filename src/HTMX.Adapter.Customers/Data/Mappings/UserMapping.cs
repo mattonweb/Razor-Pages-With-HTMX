@@ -11,8 +11,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 internal sealed class UserMapping : IEntityTypeConfiguration<User>
 {
     /// <summary>
-    /// Names the table, makes usernames and email addresses unique however they are capitalized, makes the version
-    /// number refuse a save from an out-of-date form, and points the three "by" columns at other users.
+    /// Names the table, makes usernames and email addresses unique however they are capitalized, sorts names however
+    /// they are capitalized, indexes the orders the users list is paged in, makes the version number refuse a save
+    /// from an out-of-date form, and points the three "by" columns at other users.
     /// </summary>
     /// <param name="builder">The builder for the user entity.</param>
     public void Configure(EntityTypeBuilder<User> builder)
@@ -31,6 +32,13 @@ internal sealed class UserMapping : IEntityTypeConfiguration<User>
         builder.Property(static user => user.Email).UseCollation("NOCASE");
         builder.HasIndex(static user => user.Username).IsUnique();
         builder.HasIndex(static user => user.Email).IsUnique();
+
+        // The users list sorts by name however it is capitalized, and pages by key, so an index holds each order it is
+        // read in: the name or the last change, then the identifier that settles a tie. The unique indexes above give
+        // the username's and the email address's orders, because SQLite ends every index entry with the identifier.
+        builder.Property(static user => user.DisplayName).UseCollation("NOCASE");
+        builder.HasIndex(static user => new { user.DisplayName, user.Id });
+        builder.HasIndex(static user => new { user.LastModifiedOn, user.Id });
 
         // Every update says which version it started from, and saves nothing if another save got there first.
         builder.Property(static user => user.Version).IsConcurrencyToken();

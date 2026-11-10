@@ -4,16 +4,16 @@ using System;
 using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
-/// Orders contacts' names as the Contacts table does, so that a query can ask for the names after another, as
+/// Orders contacts' and users' names as their tables do, so that a query can ask for the names after another, as
 /// key-based paging does.
 /// </summary>
 /// <remarks>
 /// The same arrangement as <see cref="OrganizationNameComparison"/>, for the same reasons: this is the database's
 /// ordering, context semantics, so it lives at the data layer's boundary and is internal. The Contacts table's Name
-/// column uses SQLite's NOCASE collation, which ignores the case of A to Z. A user's display name is a
-/// <see cref="DisplayName"/> too, but the Users table compares it with case, so these operators are only for the
-/// contacts' names. In a query, Entity Framework turns each one into SQL on the bare Name column, which can seek in
-/// the index on the organization, the name and the identifier.
+/// column and the Users table's DisplayName column both use SQLite's NOCASE collation, which ignores the case of A
+/// to Z, so these operators serve both. In a query, Entity Framework turns each one into SQL on the bare column,
+/// which can seek in the index that starts with it: the organization, the name and the identifier for contacts, and
+/// the display name and the identifier for users.
 /// </remarks>
 internal static class DisplayNameComparison
 {

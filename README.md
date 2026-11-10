@@ -74,6 +74,11 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   save that succeeds goes to the organization's page: a redirect without HTMX, and with HTMX a 204 with `HX-Location`,
   because `fetch` would follow a redirect itself and HTMX would swap the whole of the next page into the form. An
   archived organization can't be edited, so its page offers no Edit and its edit page says why.
+- **`/users`** — the people who use the application, in the side nav under Organizations: the same list as
+  `/organizations`, filtered by name, username or email address, with Active, Archived and All, headers that sort by
+  name, username, email or last change, key-based paging and Rows per page. Both lists read and write their query
+  string through `ListQuery`, so their URLs take the same names. A user has no page of their own yet, so a name is
+  text, not a link.
 
 ## Sample data
 

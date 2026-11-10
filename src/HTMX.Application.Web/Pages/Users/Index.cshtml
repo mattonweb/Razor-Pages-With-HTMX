@@ -1,0 +1,16 @@
+@page
+@model HTMX.Application.Web.Pages.Users.IndexModel
+@{
+    ViewData["Title"] = "Users";
+    ViewData["Section"] = "Users";
+}
+
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><span aria-current="page">Users</span></li></ol>
+    </nav>
+    <div class="title-row"><h1>Users</h1></div>
+</header>
+
+@* The list's card is a partial: the page renders it here, and the handler sends it alone to an HTMX request. *@
+<partial name="_UserList" model="Model" />

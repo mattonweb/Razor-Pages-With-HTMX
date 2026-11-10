@@ -1,5 +1,6 @@
 namespace HTMX.Test.Unit.Adapter.Customers.Data.Mappings;
 
+using System.Linq;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Adapter.Customers.Data;
@@ -103,6 +104,34 @@ public sealed class UserMappingTests
     }
 
     /// <summary>
+    /// Unit test to verify that display names sort however they are capitalized, so the users list puts a name typed
+    /// in lower case among the others rather than after every capital.
+    /// </summary>
+    [TestMethod]
+    public async Task OrderBy_DisplayNameInLowerCase_SortsAmongTheOthers()
+    {
+        // Arrange (Given)
+        User newcomer = CreateNewUser(
+            new Username("aaron.lowercase"),
+            new EmailAddress("aaron@example.com"),
+            "aaron lowercase");
+        Username first;
+
+        // Act (When)
+        using (InMemoryDatabase database = await CreateSeededDatabaseAsync().ConfigureAwait(false))
+        {
+            await AddUserAsync(database, newcomer).ConfigureAwait(false);
+            first = await ReadFirstByNameAsync(database).ConfigureAwait(false);
+        }
+
+        // Assert (Then)
+        Assert.AreEqual(
+            new Username("aaron.lowercase"),
+            first,
+            "A name in lower case should sort with its letters, before Alex Placeholder, not after every capital.");
+    }
+
+    /// <summary>
     /// Unit test to verify that a deleted user's identifier is never given out again, so an old link can never open a
     /// different user.
     /// </summary>
@@ -185,14 +214,15 @@ public sealed class UserMappingTests
     /// </summary>
     /// <param name="username">The new user's name.</param>
     /// <param name="email">The new user's email address.</param>
+    /// <param name="displayName">The new user's name as the application shows it.</param>
     /// <returns>The unsaved user.</returns>
-    private static User CreateNewUser(Username username, EmailAddress email)
+    private static User CreateNewUser(Username username, EmailAddress email, string displayName = "Nova Newcomer")
     {
         return new User
         {
             Username = username,
             Email = email,
-            DisplayName = new DisplayName("Nova Newcomer"),
+            DisplayName = new DisplayName(displayName),
             CreatedOn = TestDatabase.StartedOn,
             CreatedBy = UserSeed.DemoUser,
             LastModifiedOn = TestDatabase.StartedOn,
@@ -214,6 +244,23 @@ public sealed class UserMappingTests
             context.Set<User>().Add(user);
             await context.SaveChangesAsync().ConfigureAwait(false);
             return user;
+        }
+    }
+
+    /// <summary>
+    /// Reads the username of the user whose display name sorts first, through a context of its own.
+    /// </summary>
+    /// <param name="database">The database to read.</param>
+    /// <returns>The username.</returns>
+    private static async Task<Username> ReadFirstByNameAsync(InMemoryDatabase database)
+    {
+        using (CustomersDatabaseContext context = TestDatabase.CreateContext(database))
+        {
+            return await context.Set<User>()
+                .OrderBy(static user => user.DisplayName)
+                .Select(static user => user.Username)
+                .FirstAsync()
+                .ConfigureAwait(false);
         }
     }
 

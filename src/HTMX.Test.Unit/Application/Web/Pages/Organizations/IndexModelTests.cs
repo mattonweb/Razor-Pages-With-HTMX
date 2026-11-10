@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
+using HTMX.Application.Web.Pages;
 using HTMX.Application.Web.Pages.Organizations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -114,7 +115,7 @@ public sealed class IndexModelTests
         // Arrange (Given)
         StubOrganizationService service = new StubOrganizationService();
         IndexModel page = CreatePage(service, HtmxRequest.None);
-        page.Input = new IndexModel.InputModel
+        page.Input = new ListInput
         {
             Filter = "   ",
             Status = "deleted",
@@ -165,7 +166,7 @@ public sealed class IndexModelTests
         // Arrange (Given)
         StubOrganizationService service = new StubOrganizationService();
         IndexModel page = CreatePage(service, HtmxRequest.Partial);
-        page.Input = new IndexModel.InputModel
+        page.Input = new ListInput
         {
             After = 10100,
         };
@@ -194,7 +195,7 @@ public sealed class IndexModelTests
         // Arrange (Given)
         StubOrganizationService service = new StubOrganizationService();
         IndexModel page = CreatePage(service, HtmxRequest.None);
-        page.Input = new IndexModel.InputModel
+        page.Input = new ListInput
         {
             Direction = "descending",
             PageSize = 25,

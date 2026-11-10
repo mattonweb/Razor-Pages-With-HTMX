@@ -2,66 +2,26 @@ namespace HTMX.Application.Web.Pages.Organizations;
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 /// <summary>
 /// The list of organizations: filtered, narrowed by status, sorted and paged, all through the query string, so every
 /// view of the list has its own URL and the page works without HTMX. Paging is key-based: Next and Previous name the
-/// organization the next page starts after, or the previous page ends before, never a page number.
+/// organization the next page starts after, or the previous page ends before, never a page number. The query string's
+/// names, and how its values are read and written, are <see cref="ListQuery"/>'s, which every list shares.
 /// </summary>
 public sealed class IndexModel : PageModel
 {
-    /// <summary>
-    /// The query string name of the text the names must contain. Every name is short and lower case, like the URLs
-    /// the application writes.
-    /// </summary>
-    public const string FilterKey = "filter";
-
-    /// <summary>
-    /// The query string name of which organizations to show: active, archived or all.
-    /// </summary>
-    public const string StatusKey = "status";
-
-    /// <summary>
-    /// The query string name of the column to sort by.
-    /// </summary>
-    public const string SortKey = "sort";
-
-    /// <summary>
-    /// The query string name of which way to sort: ascending or descending.
-    /// </summary>
-    public const string DirectionKey = "dir";
-
-    /// <summary>
-    /// The query string name of the organization the page starts after: where Next goes.
-    /// </summary>
-    public const string AfterKey = "after";
-
-    /// <summary>
-    /// The query string name of the organization the page ends before: where Previous goes.
-    /// </summary>
-    public const string BeforeKey = "before";
-
-    /// <summary>
-    /// The query string name of how many organizations a page holds.
-    /// </summary>
-    public const string PageSizeKey = "size";
-
-    private const int DefaultPageSize = 10;
     private const string ListPartial = "_OrganizationList";
-
-    private static readonly int[] PageSizes = [DefaultPageSize, 25, 50, PageSize.Largest];
 
     // What the page shows before OnGetAsync has read the list: nothing, as the defaults would ask for it.
     private static readonly OrganizationCollectionResponse NotYetRead = new OrganizationCollectionResponse
     {
-        Request = CreateRequest(new InputModel()),
+        Request = CreateRequest(new ListInput()),
         Items = [],
         Matching = new RecordCount(0),
         Active = new RecordCount(0),
@@ -85,17 +45,12 @@ public sealed class IndexModel : PageModel
     /// Gets or sets the list's query string, as the browser sent it. Model binding writes it; the page only reads it.
     /// </summary>
     [BindProperty(SupportsGet = true)]
-    public InputModel Input { get; set; } = new InputModel();
+    public ListInput Input { get; set; } = new ListInput();
 
     /// <summary>
     /// Gets the page of organizations to show, with the request it answers and the counts.
     /// </summary>
     public OrganizationCollectionResponse Organizations { get; private set; } = NotYetRead;
-
-    /// <summary>
-    /// Gets the page sizes the Rows per page select offers.
-    /// </summary>
-    public IReadOnlyList<int> PageSizeOptions { get; } = PageSizes;
 
     /// <summary>
     /// Gives the part of a website's address a list shows under the name, such as placeholder.example.
@@ -144,14 +99,31 @@ public sealed class IndexModel : PageModel
         bool withoutFilter = false)
     {
         OrganizationCollectionRequest current = this.Organizations.Request;
+        string? filter = withoutFilter ? null : current.Filter?.Value;
         Dictionary<string, string> values = [];
-        AddUnlessDefault(values, FilterKey, withoutFilter ? null : current.Filter?.Value, null);
-        AddUnlessDefault(values, StatusKey, Name(status ?? current.Status), Name(RecordStatus.Active));
-        AddUnlessDefault(values, SortKey, Name(current.Sort), Name(OrganizationSortColumn.Name));
-        AddUnlessDefault(values, DirectionKey, Name(current.Direction), Name(SortDirection.Ascending));
-        AddUnlessDefault(values, AfterKey, CursorId(cursor, CursorPosition.After), null);
-        AddUnlessDefault(values, BeforeKey, CursorId(cursor, CursorPosition.Before), null);
-        AddUnlessDefault(values, PageSizeKey, Number(current.PageSize.Value), Number(DefaultPageSize));
+        ListQuery.AddUnlessDefault(values, ListQuery.FilterKey, filter, null);
+        ListQuery.AddUnlessDefault(
+            values,
+            ListQuery.StatusKey,
+            ListQuery.Name(status ?? current.Status),
+            ListQuery.Name(RecordStatus.Active));
+        ListQuery.AddUnlessDefault(
+            values,
+            ListQuery.SortKey,
+            ListQuery.Name(current.Sort),
+            ListQuery.Name(OrganizationSortColumn.Name));
+        ListQuery.AddUnlessDefault(
+            values,
+            ListQuery.DirectionKey,
+            ListQuery.Name(current.Direction),
+            ListQuery.Name(SortDirection.Ascending));
+        ListQuery.AddUnlessDefault(values, ListQuery.AfterKey, CursorId(cursor, CursorPosition.After), null);
+        ListQuery.AddUnlessDefault(values, ListQuery.BeforeKey, CursorId(cursor, CursorPosition.Before), null);
+        ListQuery.AddUnlessDefault(
+            values,
+            ListQuery.PageSizeKey,
+            ListQuery.Number(current.PageSize.Value),
+            ListQuery.Number(ListQuery.DefaultPageSize));
         return values;
     }
 
@@ -164,17 +136,14 @@ public sealed class IndexModel : PageModel
     public Dictionary<string, string> SortRouteValues(OrganizationSortColumn column)
     {
         OrganizationCollectionRequest current = this.Organizations.Request;
-        SortDirection direction = NaturalDirection(column);
-        if (column == current.Sort)
-        {
-            direction = current.Direction == SortDirection.Ascending
-                ? SortDirection.Descending
-                : SortDirection.Ascending;
-        }
-
+        SortDirection direction = ListQuery.NextDirection(
+            column,
+            current.Sort,
+            current.Direction,
+            NaturalDirection(column));
         Dictionary<string, string> values = this.RouteValues();
-        values[SortKey] = Name(column);
-        values[DirectionKey] = Name(direction);
+        values[ListQuery.SortKey] = ListQuery.Name(column);
+        values[ListQuery.DirectionKey] = ListQuery.Name(direction);
         return values;
     }
 
@@ -187,7 +156,7 @@ public sealed class IndexModel : PageModel
     public string? AriaSort(OrganizationSortColumn column)
     {
         OrganizationCollectionRequest current = this.Organizations.Request;
-        return column == current.Sort ? Name(current.Direction) : null;
+        return ListQuery.AriaSort(column, current.Sort, current.Direction);
     }
 
     /// <summary>
@@ -195,16 +164,16 @@ public sealed class IndexModel : PageModel
     /// </summary>
     /// <param name="input">The query string, as bound.</param>
     /// <returns>The request.</returns>
-    private static OrganizationCollectionRequest CreateRequest(InputModel input)
+    private static OrganizationCollectionRequest CreateRequest(ListInput input)
     {
         return new OrganizationCollectionRequest
         {
             Filter = string.IsNullOrWhiteSpace(input.Filter) ? null : new FilterText(input.Filter),
-            Status = ParseOrDefault(input.Status, RecordStatus.Active),
-            Sort = ParseOrDefault(input.Sort, OrganizationSortColumn.Name),
-            Direction = ParseOrDefault(input.Direction, SortDirection.Ascending),
+            Status = ListQuery.ParseOrDefault(input.Status, RecordStatus.Active),
+            Sort = ListQuery.ParseOrDefault(input.Sort, OrganizationSortColumn.Name),
+            Direction = ListQuery.ParseOrDefault(input.Direction, SortDirection.Ascending),
             Cursor = CreateCursor(input),
-            PageSize = ChoosePageSize(input.PageSize),
+            PageSize = ListQuery.ChoosePageSize(input.PageSize),
         };
     }
 
@@ -214,7 +183,7 @@ public sealed class IndexModel : PageModel
     /// </summary>
     /// <param name="input">The query string, as bound.</param>
     /// <returns>The cursor, or <see langword="null"/> for the first page.</returns>
-    private static OrganizationCursor? CreateCursor(InputModel input)
+    private static OrganizationCursor? CreateCursor(ListInput input)
     {
         if (input.After is long after)
         {
@@ -242,36 +211,7 @@ public sealed class IndexModel : PageModel
             return null;
         }
 
-        long id = named.Id.Value;
-        return id.ToString(CultureInfo.InvariantCulture);
-    }
-
-    /// <summary>
-    /// Reads a choice from the query string, ignoring case, or gives the default when it is missing or unknown.
-    /// </summary>
-    /// <typeparam name="TChoice">The list of choices.</typeparam>
-    /// <param name="text">The value as sent.</param>
-    /// <param name="fallback">The default.</param>
-    /// <returns>The choice.</returns>
-    private static TChoice ParseOrDefault<TChoice>(string? text, TChoice fallback)
-        where TChoice : struct, Enum
-    {
-        return Enum.TryParse(text, ignoreCase: true, out TChoice parsed) && Enum.IsDefined(parsed) ? parsed : fallback;
-    }
-
-    /// <summary>
-    /// Reads the page size from the query string, or gives the default when it is missing or not one the select offers.
-    /// </summary>
-    /// <param name="size">The page size as sent, if any.</param>
-    /// <returns>The page size.</returns>
-    private static PageSize ChoosePageSize(int? size)
-    {
-        if (size is int offered && Array.IndexOf(PageSizes, offered) >= 0)
-        {
-            return new PageSize(offered);
-        }
-
-        return new PageSize(DefaultPageSize);
+        return ListQuery.Number(named.Id.Value);
     }
 
     /// <summary>
@@ -284,91 +224,5 @@ public sealed class IndexModel : PageModel
         return column is OrganizationSortColumn.Contacts or OrganizationSortColumn.Updated
             ? SortDirection.Descending
             : SortDirection.Ascending;
-    }
-
-    /// <summary>
-    /// Adds a value to a query string unless it is missing or the default, so the default view's URL stays plain.
-    /// </summary>
-    /// <param name="values">The query string being built.</param>
-    /// <param name="key">The value's name.</param>
-    /// <param name="value">The value, if any.</param>
-    /// <param name="defaultValue">The value that is left out.</param>
-    private static void AddUnlessDefault(
-        Dictionary<string, string> values,
-        string key,
-        string? value,
-        string? defaultValue)
-    {
-        if (value is null || value == defaultValue)
-        {
-            return;
-        }
-
-        values[key] = value;
-    }
-
-    /// <summary>
-    /// Writes a choice as it appears in a URL, such as archived.
-    /// </summary>
-    /// <param name="choice">The choice.</param>
-    /// <returns>Its name in lower case.</returns>
-    private static string Name(Enum choice)
-    {
-        string name = choice.ToString();
-        return name.ToLowerInvariant();
-    }
-
-    /// <summary>
-    /// Writes a number as it appears in a URL, the same whatever the browser's language.
-    /// </summary>
-    /// <param name="number">The number.</param>
-    /// <returns>The number in the invariant culture.</returns>
-    private static string Number(int number)
-    {
-        return number.ToString(CultureInfo.InvariantCulture);
-    }
-
-    /// <summary>
-    /// The list's query string, as the browser sent it. Every value is optional, and is kept as sent until the page
-    /// turns it into a request.
-    /// </summary>
-    public sealed class InputModel
-    {
-        /// <summary>
-        /// Gets or sets the text the names must contain.
-        /// </summary>
-        public string? Filter { get; set; }
-
-        /// <summary>
-        /// Gets or sets which organizations to show: active, archived or all.
-        /// </summary>
-        public string? Status { get; set; }
-
-        /// <summary>
-        /// Gets or sets what to sort by: name, industry, contacts or updated.
-        /// </summary>
-        public string? Sort { get; set; }
-
-        /// <summary>
-        /// Gets or sets which way to sort: ascending or descending. The query string calls it dir.
-        /// </summary>
-        [FromQuery(Name = DirectionKey)]
-        public string? Direction { get; set; }
-
-        /// <summary>
-        /// Gets or sets the identifier of the organization the page starts after, for Next.
-        /// </summary>
-        public long? After { get; set; }
-
-        /// <summary>
-        /// Gets or sets the identifier of the organization the page ends before, for Previous.
-        /// </summary>
-        public long? Before { get; set; }
-
-        /// <summary>
-        /// Gets or sets how many organizations a page holds: 10, 25, 50 or 100. The query string calls it size.
-        /// </summary>
-        [FromQuery(Name = PageSizeKey)]
-        public int? PageSize { get; set; }
     }
 }

@@ -22,8 +22,6 @@ using Microsoft.EntityFrameworkCore.Storage;
 internal sealed class OrganizationProvider
 {
     // The character that makes the next % or _ in a LIKE pattern literal, so a filter of "50%" means fifty percent.
-    private const string LikeEscape = "\\";
-
     private readonly CustomersDatabaseContext _context;
 
     /// <summary>
@@ -388,19 +386,6 @@ internal sealed class OrganizationProvider
     }
 
     /// <summary>
-    /// Makes a LIKE pattern that finds the text anywhere in a name, with any % or _ in it taken literally.
-    /// </summary>
-    /// <param name="filter">The text to find.</param>
-    /// <returns>The pattern.</returns>
-    private static string ContainsPattern(FilterText filter)
-    {
-        string escaped = filter.Value.Replace(LikeEscape, LikeEscape + LikeEscape, StringComparison.Ordinal);
-        escaped = escaped.Replace("%", LikeEscape + "%", StringComparison.Ordinal);
-        escaped = escaped.Replace("_", LikeEscape + "_", StringComparison.Ordinal);
-        return $"%{escaped}%";
-    }
-
-    /// <summary>
     /// Narrows the organizations to those whose names contain the filter and whose status matches.
     /// </summary>
     /// <param name="filter">The text the names must contain, or <see langword="null"/> for every organization.</param>
@@ -412,9 +397,9 @@ internal sealed class OrganizationProvider
         if (filter is FilterText text)
         {
             // SQLite's LIKE ignores the case of A to Z. The cast lets LIKE see the name as the text it is stored as.
-            string pattern = ContainsPattern(text);
+            string pattern = LikePattern.Contains(text);
             organizations = organizations.Where(organization =>
-                EF.Functions.Like((string)(object)organization.Name, pattern, LikeEscape));
+                EF.Functions.Like((string)(object)organization.Name, pattern, LikePattern.Escape));
         }
 
         return status switch
