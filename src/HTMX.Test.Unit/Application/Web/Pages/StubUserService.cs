@@ -8,13 +8,14 @@ using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
 /// Stands in for the user service in page tests: it keeps each request the page sends and answers with an empty page
-/// for a list, with the one user and the versions it was given for a lookup, and with the outcome it was given for an
-/// archive, a restore or a roll-back, so a test sees what the page asked for without a database.
+/// for a list, with the one user and the versions it was given for a lookup, and with the outcome it was given for a
+/// change, an archive, a restore or a roll-back, so a test sees what the page asked for without a database.
 /// </summary>
 internal sealed class StubUserService : IUserService
 {
     private readonly List<UserCollectionRequest> _received = [];
     private readonly List<UserId> _looked = [];
+    private readonly List<UserUpdateRequest> _updates = [];
     private readonly List<(ChangeKind Change, UserStatusRequest Request)> _statusChanges = [];
     private readonly List<UserRollBackRequest> _rollBacks = [];
     private readonly UserSingleResponse? _found;
@@ -25,7 +26,7 @@ internal sealed class StubUserService : IUserService
     /// Initializes a new instance of the <see cref="StubUserService"/> class.
     /// </summary>
     /// <param name="found">The user a lookup answers with, or <see langword="null"/> for none.</param>
-    /// <param name="outcome">What an archive, a restore and a roll-back are answered with.</param>
+    /// <param name="outcome">What a change, an archive, a restore and a roll-back are answered with.</param>
     /// <param name="versions">The versions a lookup of the history answers with, newest first.</param>
     public StubUserService(
         UserSingleResponse? found = null,
@@ -53,6 +54,15 @@ internal sealed class StubUserService : IUserService
     public UserId? LastLookup()
     {
         return this._looked.Count == 0 ? null : this._looked[^1];
+    }
+
+    /// <summary>
+    /// Gives the last change the page sent.
+    /// </summary>
+    /// <returns>The change, or <see langword="null"/> before the page sends one.</returns>
+    public UserUpdateRequest? LastUpdate()
+    {
+        return this._updates.LastOrDefault();
     }
 
     /// <summary>
@@ -103,6 +113,13 @@ internal sealed class StubUserService : IUserService
     public Task<UserVersionResponse[]> ListVersionsAsync(UserId id, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(this._versions);
+    }
+
+    /// <inheritdoc/>
+    public Task<UpdateOutcome> UpdateAsync(UserUpdateRequest request, CancellationToken cancellationToken = default)
+    {
+        this._updates.Add(request);
+        return Task.FromResult(this._outcome);
     }
 
     /// <inheritdoc/>

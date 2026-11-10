@@ -77,12 +77,21 @@ internal sealed class UserService : IUserService
 
     /// <inheritdoc/>
     /// <remarks>
-    /// The rules run in order, and the first that applies is the answer: the earlier version and the user must exist,
-    /// the user must be active, still at the version the request names, and hold some value other than the earlier
-    /// version's, and no other user may have its username or email address now, however it is capitalized. A roll-back
-    /// that passes is saved as a RolledBack version that names the version it went back to, and the row takes its
-    /// values, as the seed builds every row from its latest version. History is never rewritten: rolling back adds a
-    /// version, and rolling back again undoes it.
+    /// The rules run in order, and the first that applies is the answer: the user must exist, be active, still be at
+    /// the version the form was filled from, and hold some value other than the ones sent, and no other user may have
+    /// the username or the email address sent, however either is capitalized. A change that passes is saved as the
+    /// next version, and the row takes that version's values, as the seed builds every row from its latest version.
+    /// </remarks>
+    public Task<UpdateOutcome> UpdateAsync(UserUpdateRequest request, CancellationToken cancellationToken = default)
+    {
+        return this.SaveValuesAsync(request, rolledBackTo: null, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// A roll-back is a change whose values come from an earlier version, so it runs the same rules as
+    /// <see cref="UpdateAsync"/>, and is recorded as a RolledBack version that names the version it went back to.
+    /// History is never rewritten: rolling back adds a version, and rolling back again undoes it.
     /// </remarks>
     public async Task<UpdateOutcome> RollBackAsync(
         UserRollBackRequest request,
@@ -92,28 +101,21 @@ internal sealed class UserService : IUserService
         UserVersion? earlier = await this._versions
             .FindAsync(request.Id, request.To, cancellationToken)
             .ConfigureAwait(false);
-        User? current = await this._provider.FindForChangeAsync(request.Id, cancellationToken).ConfigureAwait(false);
-        if (earlier is null || current is null)
+        if (earlier is null)
         {
             return UpdateOutcome.NotFound;
         }
 
-        if (OutcomeWithoutSaving(current, request.Version, earlier) is UpdateOutcome settled)
+        UserUpdateRequest values = new UserUpdateRequest
         {
-            return settled;
-        }
-
-        if (await this.FindClashAsync(earlier, cancellationToken).ConfigureAwait(false) is UpdateOutcome clash)
-        {
-            return clash;
-        }
-
-        UserVersion version = RecordRollBack(current, earlier, request, this._clock.GetUtcNow().UtcDateTime);
-        User changed = Apply(current, version);
-        bool saved = await this._provider
-            .SaveChangeAsync(current, changed, version, cancellationToken)
-            .ConfigureAwait(false);
-        return saved ? UpdateOutcome.Saved : UpdateOutcome.Overtaken;
+            Id = request.Id,
+            Version = request.Version,
+            DisplayName = earlier.DisplayName,
+            Username = earlier.Username,
+            Email = earlier.Email,
+            ChangedBy = request.ChangedBy,
+        };
+        return await this.SaveValuesAsync(values, request.To, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -129,57 +131,56 @@ internal sealed class UserService : IUserService
     }
 
     /// <summary>
-    /// Gives the outcome a roll-back has before anything is saved: refused because the user is archived or has moved
-    /// on since their history was shown, or done already because they hold the earlier version's values.
+    /// Gives the outcome a change has before anything is saved: refused because the user is archived or has moved on
+    /// since the form was filled, or done already because they hold the values sent.
     /// </summary>
     /// <param name="current">The user as they are now.</param>
-    /// <param name="version">The version the request says the user is at.</param>
-    /// <param name="earlier">The version to roll back to.</param>
-    /// <returns>The outcome, or <see langword="null"/> when the roll-back can go on to be saved.</returns>
-    private static UpdateOutcome? OutcomeWithoutSaving(User current, VersionNumber version, UserVersion earlier)
+    /// <param name="request">The change.</param>
+    /// <returns>The outcome, or <see langword="null"/> when the change can go on to be saved.</returns>
+    private static UpdateOutcome? OutcomeWithoutSaving(User current, UserUpdateRequest request)
     {
         if (current.ArchivedOn is not null)
         {
             return UpdateOutcome.Archived;
         }
 
-        if (current.Version != version)
+        if (current.Version != request.Version)
         {
             return UpdateOutcome.Overtaken;
         }
 
-        bool same = current.DisplayName == earlier.DisplayName
-            && current.Username == earlier.Username
-            && current.Email == earlier.Email;
+        bool same = current.DisplayName == request.DisplayName
+            && current.Username == request.Username
+            && current.Email == request.Email;
         return same ? UpdateOutcome.Unchanged : null;
     }
 
     /// <summary>
-    /// Makes the version that records a roll-back: the next number, the earlier version's values, and who saved them
-    /// and when.
+    /// Makes the version that records a change: the next number, the values sent, and who saved them and when.
     /// </summary>
     /// <param name="current">The user as they are now, who is active.</param>
-    /// <param name="earlier">The version whose values are saved again.</param>
-    /// <param name="request">The roll-back, with who asked for it.</param>
-    /// <param name="now">When the roll-back is saved, in UTC.</param>
+    /// <param name="request">The change.</param>
+    /// <param name="rolledBackTo">The earlier version the values came from, or <see langword="null"/> for an
+    /// edit.</param>
+    /// <param name="now">When the change is saved, in UTC.</param>
     /// <returns>The version.</returns>
-    private static UserVersion RecordRollBack(
+    private static UserVersion Record(
         User current,
-        UserVersion earlier,
-        UserRollBackRequest request,
+        UserUpdateRequest request,
+        VersionNumber? rolledBackTo,
         DateTime now)
     {
         return new UserVersion
         {
             UserId = current.Id,
             Version = new VersionNumber(current.Version.Value + 1),
-            Change = ChangeKind.RolledBack,
-            RolledBackTo = earlier.Version,
+            Change = rolledBackTo is null ? ChangeKind.Edited : ChangeKind.RolledBack,
+            RolledBackTo = rolledBackTo,
             ChangedOn = now,
             ChangedBy = request.ChangedBy,
-            Username = earlier.Username,
-            Email = earlier.Email,
-            DisplayName = earlier.DisplayName,
+            Username = request.Username,
+            Email = request.Email,
+            DisplayName = request.DisplayName,
         };
     }
 
@@ -236,17 +237,17 @@ internal sealed class UserService : IUserService
     }
 
     /// <summary>
-    /// Says whether another user now has the username or the email address an earlier version holds, either of which
-    /// would stop a roll-back to it.
+    /// Says whether another user already has the username or the email address a change gives, either of which stops
+    /// it.
     /// </summary>
-    /// <param name="earlier">The version to roll back to.</param>
+    /// <param name="request">The change.</param>
     /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
     /// <returns>NameTaken for the username, EmailTaken for the email address, or <see langword="null"/> when neither
     /// is taken.</returns>
-    private async Task<UpdateOutcome?> FindClashAsync(UserVersion earlier, CancellationToken cancellationToken)
+    private async Task<UpdateOutcome?> FindClashAsync(UserUpdateRequest request, CancellationToken cancellationToken)
     {
         bool usernameTaken = await this._provider
-            .IsUsernameTakenAsync(earlier.Username, earlier.UserId, cancellationToken)
+            .IsUsernameTakenAsync(request.Username, request.Id, cancellationToken)
             .ConfigureAwait(false);
         if (usernameTaken)
         {
@@ -254,7 +255,7 @@ internal sealed class UserService : IUserService
         }
 
         bool emailTaken = await this._provider
-            .IsEmailTakenAsync(earlier.Email, earlier.UserId, cancellationToken)
+            .IsEmailTakenAsync(request.Email, request.Id, cancellationToken)
             .ConfigureAwait(false);
         return emailTaken ? UpdateOutcome.EmailTaken : null;
     }
@@ -324,6 +325,47 @@ internal sealed class UserService : IUserService
 
         DateTime now = this._clock.GetUtcNow().UtcDateTime;
         UserVersion version = RecordStatusChange(current, change, request.ChangedBy, now);
+        User changed = Apply(current, version);
+        bool saved = await this._provider
+            .SaveChangeAsync(current, changed, version, cancellationToken)
+            .ConfigureAwait(false);
+        return saved ? UpdateOutcome.Saved : UpdateOutcome.Overtaken;
+    }
+
+    /// <summary>
+    /// Saves new values for a user as their next version, after the rules, in order: the user must exist, be active,
+    /// still be at the version the values started from, and hold some value other than the ones sent, and no other
+    /// user may have the username or the email address sent. The row takes the version's values, as the seed builds
+    /// every row from its latest version.
+    /// </summary>
+    /// <param name="request">The values, the version they started from, and who is saving them.</param>
+    /// <param name="rolledBackTo">The earlier version the values came from, or <see langword="null"/> for an
+    /// edit.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Whether the values were saved and, if not, why.</returns>
+    private async Task<UpdateOutcome> SaveValuesAsync(
+        UserUpdateRequest request,
+        VersionNumber? rolledBackTo,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        User? current = await this._provider.FindForChangeAsync(request.Id, cancellationToken).ConfigureAwait(false);
+        if (current is null)
+        {
+            return UpdateOutcome.NotFound;
+        }
+
+        if (OutcomeWithoutSaving(current, request) is UpdateOutcome settled)
+        {
+            return settled;
+        }
+
+        if (await this.FindClashAsync(request, cancellationToken).ConfigureAwait(false) is UpdateOutcome clash)
+        {
+            return clash;
+        }
+
+        UserVersion version = Record(current, request, rolledBackTo, this._clock.GetUtcNow().UtcDateTime);
         User changed = Apply(current, version);
         bool saved = await this._provider
             .SaveChangeAsync(current, changed, version, cancellationToken)

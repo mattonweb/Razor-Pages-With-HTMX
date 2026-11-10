@@ -1,0 +1,16 @@
+@page "/users/{id:long}/edit"
+@model HTMX.Application.Web.Pages.Users.EditModel
+@{
+    ViewData["Title"] = Model.Account is null ? "User not found" : $"Edit {Model.Account.DisplayName.Value}";
+    ViewData["Section"] = "Users";
+}
+@* The page's content is a partial: the page renders it here, and a refused save that HTMX sent gets it alone. *@
+
+@if (Model.Account is null)
+{
+    <partial name="_UserNotFound" model="Model.Id" />
+}
+else
+{
+    <partial name="_UserEdit" model="Model" />
+}

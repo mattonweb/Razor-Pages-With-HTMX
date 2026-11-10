@@ -1,0 +1,51 @@
+@model HTMX.Application.Web.Pages.Users.UserFields
+@using HTMX.Adapter.Customers.Contracts
+@*
+    A user's fields, in the card the edit form holds. Each field's name is Input.Name and so on, as the page binds
+    them, so the messages in ModelState find their fields. When another save overtook this one (Saved is set), each
+    field whose saved value differs from the one being edited shows the saved value under it. Every value is required,
+    so a saved value is never empty.
+*@
+@{
+    UserInput input = Model.Input;
+    UserSingleResponse? saved = Model.Saved;
+    string? savedName = saved is null ? null : SavedValue.Hint(saved.DisplayName.Value, input.Name, "no name");
+    string? savedUsername = saved is null ? null : SavedValue.Hint(saved.Username.Value, input.Username, "no username");
+    string? savedEmail = saved is null ? null : SavedValue.Hint(saved.Email.Value, input.Email, "no email address");
+}
+<section class="card" aria-labelledby="details-heading">
+    <header class="card-header"><h2 id="details-heading">Details</h2></header>
+    <div class="card-body fields">
+        <div class="field">
+            <label asp-for="Input.Name"></label>
+            <input asp-for="Input.Name" autocomplete="off" aria-describedby="@(savedName is null ? null : "name-saved")" />
+            @if (savedName is not null)
+            {
+                <p class="hint" id="name-saved">Saved as @savedName</p>
+            }
+            <span asp-validation-for="Input.Name"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Username"></label>
+            <input asp-for="Input.Username" autocomplete="off" spellcheck="false" autocapitalize="none"
+                   aria-describedby="@(savedUsername is null ? "username-hint" : "username-hint username-saved")" />
+            <p class="hint" id="username-hint">Letters, digits, dots, hyphens and underscores. No other user may have it.</p>
+            @if (savedUsername is not null)
+            {
+                <p class="hint" id="username-saved">Saved as @savedUsername</p>
+            }
+            <span asp-validation-for="Input.Username"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Email"></label>
+            <input asp-for="Input.Email" type="email" autocomplete="off" spellcheck="false"
+                   aria-describedby="@(savedEmail is null ? "email-hint" : "email-hint email-saved")" />
+            <p class="hint" id="email-hint">No other user may have it, however it is capitalized.</p>
+            @if (savedEmail is not null)
+            {
+                <p class="hint" id="email-saved">Saved as @savedEmail</p>
+            }
+            <span asp-validation-for="Input.Email"></span>
+        </div>
+    </div>
+</section>

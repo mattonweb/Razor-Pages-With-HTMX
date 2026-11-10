@@ -1,0 +1,66 @@
+@model HTMX.Application.Web.Pages.Users.EditModel
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The edit page's content: the page header and the form, or, for an archived user, the alert that says they can't be
+    edited. HTMX replaces #user-edit whole (outerHTML) with it when a save it sent is refused, with 422 or 409, as the
+    organization's edit form does; a save that succeeds answers 204 with HX-Location to the user's page. The header is
+    inside so that a refused save also shows the user as they are saved now.
+*@
+@{
+    UserSingleResponse account = Model.Account
+        ?? throw new InvalidOperationException("The edit form needs the user it edits.");
+    RecordChange lastChange = account.LastModified;
+    long id = account.Id.Value;
+    string? action = Url.Page("./Edit", new { id });
+
+    // After another save overtook this one, the fields show the values it saved beside the ones being edited.
+    UserFields fields = new UserFields
+    {
+        Input = Model.Input,
+        Saved = Model.Overtaken ? account : null,
+    };
+}
+<div id="user-edit">
+    <header class="page-header">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Users</a></li><li><a asp-page="./Details" asp-route-id="@id">@account.DisplayName.Value</a></li><li><span aria-current="page">Edit</span></li></ol>
+        </nav>
+        <div class="title-row">
+            <div class="title">
+                <h1>Edit @account.DisplayName.Value</h1>
+                <span class="version current">v@(account.Version.Value)</span>
+            </div>
+        </div>
+        <p class="muted">Updated <partial name="_Moment" model="lastChange.On" /> by <partial name="_UserLink" model="lastChange.By" /></p>
+    </header>
+
+    @if (account.Archived is not null)
+    {
+        <div class="alert warning" role="status">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#alert"></use></svg>
+            <div class="content">
+                <strong>@account.DisplayName.Value is archived</strong>
+                <span>An archived user can't be edited until they are restored.</span>
+            </div>
+            <div class="actions"><a class="btn" asp-page="./Details" asp-route-id="@id">Back to the user</a></div>
+        </div>
+    }
+    else
+    {
+        <form method="post" action="@action" asp-antiforgery="true" novalidate
+              hx-post="@action" hx-target="#user-edit" hx-swap="outerHTML"
+              hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+            <div asp-validation-summary="ModelOnly" role="alert"></div>
+            <input type="hidden" asp-for="Input.Version" />
+
+            <partial name="_UserFields" model="fields" />
+
+            <div class="form-actions">
+                <div class="end">
+                    <a class="btn" asp-page="./Details" asp-route-id="@id">Cancel</a>
+                    <button class="btn primary" type="submit">Save changes</button>
+                </div>
+            </div>
+        </form>
+    }
+</div>

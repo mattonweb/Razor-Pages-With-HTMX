@@ -14,7 +14,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 /// <summary>
 /// Contains unit tests for verifying the behavior of the user service behind <see cref="IUserService"/>, over a seeded
 /// in-memory database: the pages of the users list, filtered, narrowed by status, sorted by each column either way,
-/// and paged by key; one user and their versions; and archiving, restoring and rolling back a user.
+/// and paged by key; one user and their versions; and changing, archiving, restoring and rolling back a user.
 /// </summary>
 [TestClass]
 public sealed class UserServiceTests
@@ -256,6 +256,145 @@ public sealed class UserServiceTests
         Assert.IsNotNull(
             versions[3].Changed.By.ArchivedOn,
             "Sam has since been archived, and the version should say so.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a change from the current version is saved as the next one: the user takes its values,
+    /// says who changed them and when, and their history gains an Edited version holding the same values.
+    /// </summary>
+    [TestMethod]
+    public async Task UpdateAsync_NewValuesFromTheCurrentVersion_SavesTheNextVersion()
+    {
+        // Arrange (Given)
+        UserId id = UserSeed.PatExample;
+        UserUpdateRequest request = CreateUpdate(id, 5, "patricia.example", "patricia@example.com", "Patricia Example");
+
+        // Act (When)
+        (UpdateOutcome[] outcomes, UserSingleResponse? after, UserVersion[] history) =
+            await UserServiceCalls.UpdateInTurnAsync(id, request).ConfigureAwait(false);
+        UserVersion latest = history[^1];
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.Saved,
+            outcomes[0],
+            "A change from the current version should be saved.");
+        Assert.AreEqual(
+            ("Patricia Example", "patricia.example", "patricia@example.com", new VersionNumber(6)),
+            (after?.DisplayName.Value, after?.Username.Value, after?.Email.Value, after?.Version),
+            "Pat should take the new values as version 6.");
+        Assert.AreEqual(
+            (UserSeed.DemoUser, TestDatabase.StartedOn),
+            (after?.LastModified.By.Id, after?.LastModified.On),
+            "The change should name who saved it, dated by the clock.");
+        Assert.AreEqual(
+            (ChangeKind.Edited, "patricia.example"),
+            (latest.Change, latest.Username.Value),
+            "The new version should record an edit, holding the values Pat now has.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a change the rules refuse, or that changes nothing, saves nothing: the user keeps their
+    /// version and their history gains no version. The rules run in order, so each row breaks only one.
+    /// </summary>
+    /// <param name="id">The user the change is for.</param>
+    /// <param name="version">The version the change starts from.</param>
+    /// <param name="username">The username the change gives.</param>
+    /// <param name="email">The email address the change gives.</param>
+    /// <param name="expected">What should become of the change.</param>
+    [TestMethod]
+    [DataRow(10007L, 5, "pat.example", "pat@example.com", UpdateOutcome.Unchanged, DisplayName = "The values they hold")]
+    [DataRow(10007L, 4, "pat.example", "pat@example.net", UpdateOutcome.Overtaken, DisplayName = "From an older version")]
+    [DataRow(10007L, 5, "SAM.SAMPLE", "pat@example.com", UpdateOutcome.NameTaken, DisplayName = "Another's username")]
+    [DataRow(10007L, 5, "pat.example", "TAYLOR@EXAMPLE.COM", UpdateOutcome.EmailTaken, DisplayName = "Another's email")]
+    [DataRow(10002L, 2, "casey.mockup", "casey@example.net", UpdateOutcome.Archived, DisplayName = "An archived user")]
+    [DataRow(99999L, 1, "nobody", "nobody@example.com", UpdateOutcome.NotFound, DisplayName = "An unknown identifier")]
+    public async Task UpdateAsync_RefusedOrUnchanged_SavesNothing(
+        long id,
+        int version,
+        string username,
+        string email,
+        UpdateOutcome expected)
+    {
+        // Arrange (Given)
+        UserId userId = new UserId(id);
+        UserUpdateRequest request = CreateUpdate(userId, version, username, email);
+        UserSingleResponse? before = await UserServiceCalls.FindAsync(userId).ConfigureAwait(false);
+
+        // Act (When)
+        (UpdateOutcome[] outcomes, UserSingleResponse? after, UserVersion[] history) =
+            await UserServiceCalls.UpdateInTurnAsync(userId, request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            outcomes[0],
+            $"The change should be answered {expected}.");
+        Assert.AreEqual(
+            before?.Version,
+            after?.Version,
+            "The user should keep their version.");
+        Assert.HasCount(
+            before is null ? 0 : before.Version.Value,
+            history,
+            "The history should gain no version.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a user can take their own username and email address in other capitals: a value
+    /// counts as taken only when another user has it.
+    /// </summary>
+    [TestMethod]
+    public async Task UpdateAsync_OwnValuesInCapitals_SavesThem()
+    {
+        // Arrange (Given)
+        UserId id = UserSeed.PatExample;
+        UserUpdateRequest request = CreateUpdate(id, 5, "PAT.EXAMPLE", "PAT@EXAMPLE.COM");
+
+        // Act (When)
+        (UpdateOutcome[] outcomes, UserSingleResponse? after, _) =
+            await UserServiceCalls.UpdateInTurnAsync(id, request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            UpdateOutcome.Saved,
+            outcomes[0],
+            "Pat's own values in capitals should not count as taken.");
+        Assert.AreEqual(
+            ("PAT.EXAMPLE", "PAT@EXAMPLE.COM"),
+            (after?.Username.Value, after?.Email.Value),
+            "Pat should take the new capitals.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that of two changes started from the same version, as from two browser tabs, the first is
+    /// saved and the second is answered Overtaken rather than saved over it.
+    /// </summary>
+    [TestMethod]
+    public async Task UpdateAsync_SecondChangeFromTheSameVersion_IsOvertaken()
+    {
+        // Arrange (Given)
+        UserId id = UserSeed.PatExample;
+        UserUpdateRequest first = CreateUpdate(id, 5, "pat.example", "pat@example.net");
+        UserUpdateRequest second = CreateUpdate(id, 5, "pat.example", "pat@example.org");
+
+        // Act (When)
+        (UpdateOutcome[] outcomes, UserSingleResponse? after, UserVersion[] history) =
+            await UserServiceCalls.UpdateInTurnAsync(id, first, second).ConfigureAwait(false);
+
+        // Assert (Then)
+        CollectionAssert.AreEqual(
+            new[] { UpdateOutcome.Saved, UpdateOutcome.Overtaken },
+            outcomes,
+            "The first change should be saved and the second refused.");
+        Assert.AreEqual(
+            "pat@example.net",
+            after?.Email.Value,
+            "Pat should keep the first change.");
+        Assert.HasCount(
+            6,
+            history,
+            "Only the first change should add a version.");
     }
 
     /// <summary>
@@ -528,6 +667,33 @@ public sealed class UserServiceTests
         return new UserStatusRequest
         {
             Id = id,
+            ChangedBy = UserSeed.DemoUser,
+        };
+    }
+
+    /// <summary>
+    /// Creates a change as Demo User would send it from the edit form.
+    /// </summary>
+    /// <param name="id">The user to change.</param>
+    /// <param name="version">The version the form was filled from.</param>
+    /// <param name="username">The username to save.</param>
+    /// <param name="email">The email address to save.</param>
+    /// <param name="name">The name to save; Pat's own unless given.</param>
+    /// <returns>The change.</returns>
+    private static UserUpdateRequest CreateUpdate(
+        UserId id,
+        int version,
+        string username,
+        string email,
+        string name = "Pat Example")
+    {
+        return new UserUpdateRequest
+        {
+            Id = id,
+            Version = new VersionNumber(version),
+            DisplayName = new DisplayName(name),
+            Username = new Username(username),
+            Email = new EmailAddress(email),
             ChangedBy = UserSeed.DemoUser,
         };
     }

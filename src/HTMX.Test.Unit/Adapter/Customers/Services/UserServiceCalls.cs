@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// Calls <see cref="IUserService"/> as the users' pages do, over a seeded database of its own: one page, a page and
 /// then the pages its Previous and Next lead to, every page from the first to the last, one user or their versions, or
-/// an archive, a restore or a roll-back.
+/// changes, an archive, a restore or a roll-back.
 /// </summary>
 internal static class UserServiceCalls
 {
@@ -82,6 +82,34 @@ internal static class UserServiceCalls
     }
 
     /// <summary>
+    /// Sends changes to one user one after another, each in a request of its own as two browser tabs would, then reads
+    /// the user and every version of them.
+    /// </summary>
+    /// <param name="id">The user the changes are for.</param>
+    /// <param name="requests">The changes, in the order they are sent.</param>
+    /// <returns>What became of each change, the user afterwards, and their versions, oldest first.</returns>
+    internal static async Task<(UpdateOutcome[] Outcomes, UserSingleResponse? After, UserVersion[] History)>
+        UpdateInTurnAsync(UserId id, params UserUpdateRequest[] requests)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            List<UpdateOutcome> outcomes = [];
+            foreach (UserUpdateRequest request in requests)
+            {
+                using (IServiceScope scope = services.CreateScope())
+                {
+                    IUserService users = scope.ServiceProvider.GetRequiredService<IUserService>();
+                    outcomes.Add(await users.UpdateAsync(request).ConfigureAwait(false));
+                }
+            }
+
+            UserSingleResponse? after = await FindAsync(services, id).ConfigureAwait(false);
+            UserVersion[] history = await ReadHistoryAsync(services, id).ConfigureAwait(false);
+            return ([.. outcomes], after, history);
+        }
+    }
+
+    /// <summary>
     /// Archives or restores a user through the service, then reads them, and every version of them, as they are
     /// afterwards.
     /// </summary>
@@ -113,8 +141,8 @@ internal static class UserServiceCalls
     /// every version of them, as they are afterwards.
     /// </summary>
     /// <remarks>
-    /// Users have no edit form yet, so a value another user has taken since an earlier version is written straight to
-    /// their row, without a version, as an edit would leave it.
+    /// The new values are written straight to the rows, without a version, so that one roll-back can meet a username
+    /// or an email address another user has taken since, without a history of edits to set it up.
     /// </remarks>
     /// <param name="request">The roll-back.</param>
     /// <param name="givenFirst">Users to give a new username or email address before the roll-back, if any.</param>

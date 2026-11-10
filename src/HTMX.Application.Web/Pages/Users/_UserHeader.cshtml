@@ -5,7 +5,8 @@
     and Restore post to the current tab's own handlers, with HTMX or without it, so the answer is that tab again; their
     buttons share the id status-action, so that HTMX puts the focus back on whichever the new content holds, and
     neither says hx-disable, which would lose it. Nobody may archive themselves, so the signed-in user's own page
-    offers no Archive and says why. Users have no edit form yet, so there is no Edit.
+    offers no Archive and says why; it still offers Edit, since anyone may change their own values. An archived user
+    offers Restore in the alert and no Edit.
 *@
 @{
     UserSingleResponse account = Model.Account
@@ -32,14 +33,18 @@
             }
             <span class="version current">v@(account.Version.Value)</span>
         </div>
-        @if (account.Archived is null && !Model.IsSignedInUser)
+        @if (account.Archived is null)
         {
             <div class="btn-group">
-                <form method="post" action="@archiveAction" asp-antiforgery="true"
-                      hx-post="@archiveAction" hx-target="#user" hx-swap="outerHTML"
-                      hx-indicator="find button">
-                    <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>Archive</button>
-                </form>
+                @if (!Model.IsSignedInUser)
+                {
+                    <form method="post" action="@archiveAction" asp-antiforgery="true"
+                          hx-post="@archiveAction" hx-target="#user" hx-swap="outerHTML"
+                          hx-indicator="find button">
+                        <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>Archive</button>
+                    </form>
+                }
+                <a class="btn primary" asp-page="./Edit" asp-route-id="@id"><svg class="icon" aria-hidden="true"><use href="/icons.svg#edit"></use></svg>Edit</a>
             </div>
         }
     </div>
@@ -54,7 +59,7 @@
 {
     <div class="alert" role="status">
         <svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>
-        <div class="content"><p><strong>This user is archived.</strong> They are hidden from the active list and stay named on every record they changed, and they can't be rolled back until they are restored.</p></div>
+        <div class="content"><p><strong>This user is archived.</strong> They are hidden from the active list and stay named on every record they changed, and they can't be edited or rolled back until they are restored.</p></div>
         <div class="actions">
             <form method="post" action="@restoreAction" asp-antiforgery="true"
                   hx-post="@restoreAction" hx-target="#user" hx-swap="outerHTML"

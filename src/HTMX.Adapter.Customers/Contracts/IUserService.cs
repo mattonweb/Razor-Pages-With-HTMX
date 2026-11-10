@@ -37,9 +37,19 @@ public interface IUserService
     Task<UserVersionResponse[]> ListVersionsAsync(UserId id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Saves an earlier version's values again, as the user's next version: the user must be active, still at the
-    /// version the request names, and holding some value other than the earlier version's, and no other user may
-    /// have the earlier version's username or email address now.
+    /// Saves a change to one user's values as their next version, unless the user is archived, has moved on since the
+    /// form was filled, already holds the values sent, or would take a username or an email address another user has.
+    /// </summary>
+    /// <param name="request">The values to save, the version they started from, and who is saving them.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns>Whether the change was saved and, if not, why: NameTaken for the username, EmailTaken for the email
+    /// address.</returns>
+    Task<UpdateOutcome> UpdateAsync(UserUpdateRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Saves an earlier version's values again, as the user's next version, under the same rules as a change: the
+    /// user must be active, still at the version the request names, and holding some value other than the earlier
+    /// version's, and no other user may have the earlier version's username or email address now.
     /// </summary>
     /// <param name="request">Which user, the version they are at, the version to roll back to, and who asks.</param>
     /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
