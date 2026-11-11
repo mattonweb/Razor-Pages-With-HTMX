@@ -36,7 +36,8 @@
             </div>
         </header>
 
-        @* Each page names its section in ViewData, and the section's link is marked as the current page. *@
+        @* Each page names its section in ViewData, and the section's link is marked as the current page. The foot of
+           the nav holds the one link that leaves the application, to its source on GitHub, which opens a new tab. *@
         <nav class="app-nav" id="app-nav" aria-label="Main">
             <a asp-page="/Organizations/Index" title="Organizations"
                aria-current="@(ViewData["Section"] as string == "Organizations" ? "page" : null)">
@@ -46,6 +47,12 @@
                aria-current="@(ViewData["Section"] as string == "Users" ? "page" : null)">
                 <svg class="icon" aria-hidden="true"><use href="/icons.svg#users"></use></svg><span>Users</span>
             </a>
+            <div class="end">
+                <a href="https://github.com/mattonweb/Razor-Pages-With-HTMX" target="_blank" rel="noopener"
+                   title="GitHub (opens in a new tab)">
+                    <svg class="icon" aria-hidden="true"><use href="/icons.svg#external"></use></svg><span>GitHub</span><span class="visually-hidden"> (opens in a new tab)</span>
+                </a>
+            </div>
         </nav>
 
         <main class="app-main" id="main">
