@@ -117,6 +117,12 @@
   display: flex; align-items: center; gap: var(--space-2); color: var(--text-muted);
 }
 .pager select { font-variant-numeric: tabular-nums; }
+/* Rows per page applies as it changes, through HTMX. Without HTMX its form needs its Apply button, which shows when
+   the browser runs no script, or when the application's script finds no HTMX and sets data-htmx="absent" on the
+   root. */
+@media (scripting: enabled) {
+  :root:not([data-htmx="absent"]) .pager .page-size .btn { display: none; }
+}
 @container (max-width: 560px) {
   .pager { grid-template-columns: 1fr auto; grid-template-areas: "summary size" "pages pages"; }
   .pager .pages { justify-self: center; }

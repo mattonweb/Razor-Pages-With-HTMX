@@ -2,6 +2,12 @@
 // and a toast goes when Dismiss is pressed or when it has faded out. Every listener is on the document rather than on
 // an element, because when the back button restores a page, HTMX swaps in a new body and with it new elements.
 (() => {
+  // HTMX loads before this script. When it has not, say so on the root, so that the brand's CSS shows the Apply
+  // buttons that a form HTMX would otherwise send as you go needs without it.
+  if (typeof window.htmx === "undefined") {
+    document.documentElement.dataset.htmx = "absent";
+  }
+
   const toggleSelector = "[data-action='toggle-nav']";
   const navIsFull = () => document.querySelector(".app-nav").offsetWidth > 100;
   const describeButton = () =>
