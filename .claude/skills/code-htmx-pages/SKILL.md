@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
 description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then, and the patterns still open (expired sign-ins and answers a page did not plan for, fields checked as you type, polling). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.11.0
+version: 0.11.1
 visibility: public
 ---
 
@@ -417,6 +417,12 @@ form itself.
   two, answers 409 the same way and draws its own choice. Whichever it draws, remove the posted version from
   `ModelState` before setting the new one on the input model: a tag helper writes the value that was posted ahead of
   the model's.
+- **A refused save puts the keyboard where the answer needs it.** A 422 gives it to the first invalid field, as above.
+  A 409 marks no field invalid, and `hx-disable` has taken it from the Save button (below), so the answer gives it to
+  the message above the form, made focusable with `tabindex="-1"`. When the record was archived after the form was
+  shown and the answer draws an alert in place of the form, the alert takes it the same way. Each mark comes from a
+  flag the handler sets for that answer alone, so the same partial drawn as the page loads takes the keyboard nowhere
+  (Principles); without HTMX the browser follows the same `autofocus` as the page loads.
 - **A submit button that is busy.** The form is the request's source, so HTMX marks the form with `htmx-request`
   unless told otherwise. `hx-indicator="find button[type=submit]"` marks the button instead, and
   `hx-disable="find button[type=submit]"` disables it while the request runs, which also stops Enter in a field from
