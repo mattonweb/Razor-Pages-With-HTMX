@@ -90,9 +90,9 @@
         button sends a real one to the bottom of the window.</p>
       <div class="card card-body toast-frame">
         <div class="toasts">
-          <div class="toast"><span class="message">Pat Example archived.</span><button class="btn ghost" type="button">Undo</button><button class="btn ghost icon-only" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
-          <div class="toast"><span class="message">2 records restored.</span><button class="btn ghost" type="button">Undo</button><button class="btn ghost icon-only" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
-          <div class="toast"><span class="message">Changes saved.</span><button class="btn ghost icon-only" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
+          <div class="toast"><span class="message">Pat Example archived.</span><button class="btn ghost" type="button">Undo</button><button class="btn ghost icon-only" type="button" data-action="dismiss-toast" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
+          <div class="toast"><span class="message">2 records restored.</span><button class="btn ghost" type="button">Undo</button><button class="btn ghost icon-only" type="button" data-action="dismiss-toast" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
+          <div class="toast"><span class="message">Changes saved.</span><button class="btn ghost icon-only" type="button" data-action="dismiss-toast" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
         </div>
       </div>
       <p><button class="btn" type="button" data-demo-toast><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#archive"></use></svg>Archive Pat Example</button></p>
@@ -285,7 +285,7 @@
 </div>
 <div class="toasts" role="status" aria-live="polite"></div>
 <template id="demo-toast">
-  <div class="toast"><span class="message">Pat Example archived.</span><button class="btn ghost" type="button">Undo</button><button class="btn ghost icon-only" type="button" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
+  <div class="toast"><span class="message">Pat Example archived.</span><button class="btn ghost" type="button">Undo</button><button class="btn ghost icon-only" type="button" data-action="dismiss-toast" aria-label="Dismiss"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></div>
 </template>
 <script src="specimens.js"></script>
 </body>

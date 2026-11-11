@@ -115,6 +115,13 @@ input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; margin:
 
 .btn-group { display: inline-flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
 
+/* Without script. A control that only script makes work says so with data-action, or data-select-all on a grid's
+   select-all box, and leaves the page when the browser runs no script, so that nothing on it does nothing when
+   pressed. A form that HTMX applies as you go keeps its own Apply button for that case (inputs.css, navigation.css). */
+@media (scripting: none) {
+  [data-action], [data-select-all] { display: none; }
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Reduced motion: transitions stop; busy indicators slow down rather than vanish, so the state stays visible. */

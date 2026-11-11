@@ -2,7 +2,7 @@
 name: brand-htmlx-pages
 description: The HTMLX Pages component library for the Razor Pages and HTMX application in this repository. Use whenever writing, styling or reviewing its markup, CSS, partial views or page layouts. Covers the design tokens (color, type, space, shape) taken from the DevExtreme UI Template Gallery and MudBlazor, light and dark mode, the class naming rule, buttons and icons, and a catalog of components by family, each with its markup, variants, states, accessibility and when to use it — layout (app shell, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, busy bar, bulk bar, alert, toast). Draft; the status table says which components are settled.
 owner: Matt
-version: 0.4.0
+version: 0.5.0
 visibility: public
 ---
 
@@ -18,11 +18,12 @@ The layout patterns come from the [DevExtreme UI Template Gallery](https://githu
 code, CSS or artwork is copied from either: the gallery runs on DevExtreme, which has its own commercial license, and
 this repository is public. Everything in this skill was written for this repository.
 
-## Status: draft 0.4.0
+## Status: draft 0.5.0
 
 | Family | Components | State |
 |---|---|---|
 | Foundations | tokens, color roles, type, space, shape, icons, buttons, form-control defaults | Settled for review |
+| Foundations, added | without script and without HTMX: script-only controls leave, Apply buttons show | Ready for review |
 | Layout | app shell, avatar, page header, card, toolbar, tabs | Settled for review |
 | Layout, added | hero | Ready for review |
 | Navigation | side nav and rail, breadcrumbs, menu, segmented control, pager | Settled for review |
@@ -111,12 +112,17 @@ scoped to its block (`.btn.primary`, `.chip.success`), and ARIA attributes for s
 block of text. A control may stop short (the filter box stops at 360px); text does not.
 
 **Without HTMX.** Every component works as plain HTML first. Navigation is real links, filters are GET forms, actions
-are buttons in forms that post; HTMX only narrows what a response replaces.
+are buttons in forms that post; HTMX only narrows what a response replaces. A form that HTMX applies as you go, the
+filter box and Rows per page, holds an Apply button, a plain `.btn` of `type="submit"`, which its block's CSS hides
+while script runs and HTMX is there. It shows when the browser runs no script, and when the application's script
+finds no HTMX and sets `data-htmx="absent"` on the root element.
 
 **Script.** The components need almost none. Menus and the side panel are popovers, dialogs open and close through
-`commandfor` and `command`, the bulk bar shows and counts in CSS, and Clear is a reset button. Only two pieces need
-script, and the application keeps them: the side nav's toggle between full and rail, and a grid header's select-all
-box.
+`commandfor` and `command`, the bulk bar shows and counts in CSS, a toast leaves by itself, and Clear is a reset
+button. Only three pieces need script, and the application keeps them: the side nav's toggle between full and rail,
+a toast's Dismiss, and a grid header's select-all box. Each says so, with `data-action` or `data-select-all`, and
+base.css takes it off the page when the browser runs no script (`@media (scripting: none)`), so that nothing on the
+page does nothing when pressed.
 
 **Sample text.** Text in specimens and examples is invented and obviously so: names like Pat Example and Sam Sample,
 addresses at `example.com`, `example.org` or `example.net`, websites under `.example`.
@@ -129,7 +135,8 @@ and when to use it. The specimen page for its family shows it in every state.
 ### Layout
 
 **App shell** (`layout.css`). The frame of every page. `.app` holds `.app-header`, `.app-nav` and
-`main.app-main#main`, with a `.skip-link` to `#main` first in `<body>`. The header holds the menu button and the
+`main.app-main#main`, with a `.skip-link` to `#main` first in `<body>`. The header holds the menu button
+(`data-action="toggle-nav"`, gone when the browser runs no script, which leaves the nav at its default) and the
 `.brand` at the left and, in `.end`, whatever belongs to the whole application, ending with the avatar. The nav is
 full from 900px and an icon rail below that; `data-nav="rail"` or `"full"` on `.app` overrides the default.
 
@@ -185,7 +192,8 @@ optional `.count`. In a toolbar it sits at the right end.
 
 **Pager** (`navigation.css`). `<footer class="pager">` at the bottom of a list's card, in three columns: `.summary`
 with the range shown ("Showing 1–10 of 128"), `.pages` with Previous and Next, and a `.page-size` GET form with a
-Rows per page select (10, 25, 50, 100). A Previous or Next with nowhere to go is a
+Rows per page select (10, 25, 50, 100) and an Apply button that shows only without HTMX (Conventions). A Previous or
+Next with nowhere to go is a
 `<span class="btn" aria-disabled="true">`, not a link. On a card narrower than 560px the buttons move to a second
 line.
 
@@ -275,8 +283,8 @@ the records that can be chosen.
 
 **Filter box** (`inputs.css`). A search input that narrows a list as you type: a GET
 `<form class="filter-box" role="search">` with the `filter` icon and an `<input type="search">` with an
-`aria-label`. Its placeholder reads "Filter …", never "Search …", and its icon is `filter`, not `search`. It stops at
-360px wide.
+`aria-label`, then an Apply button that shows only without HTMX (Conventions). Its placeholder reads "Filter …",
+never "Search …", and its icon is `filter`, not `search`. It stops at 360px wide, Apply included.
 
 **Form action bar** (ready for review, `inputs.css`). The last thing in a form: `.form-actions`, which sticks to the
 bottom of the window while a long form scrolls. Actions on the whole record sit at the left as ghost buttons; Cancel
@@ -321,6 +329,8 @@ line. A failure that needs attention now is `role="alert"`; the rest are `role="
 
 **Toast** (ready for review, `feedback.css`). A short message about an action that just ran:
 `<div class="toast"><span class="message">…</span>…</div>`, with Undo as a ghost button when the action can be
-undone and an icon-only Dismiss button. Toasts appear in one `<div class="toasts" role="status" aria-live="polite">`
-that sits empty in the layout until a response adds one. A toast leaves by itself after 8 seconds, waiting while the
-pointer or keyboard is on it, and reverses the page's colors.
+undone and an icon-only Dismiss button, `data-action="dismiss-toast"`, which the application's script makes work
+and which is gone when the browser runs no script. Toasts appear in one
+`<div class="toasts" role="status" aria-live="polite">` that sits empty in the layout until a response adds one. A
+toast leaves by itself after 8 seconds, waiting while the pointer or keyboard is on it, and reverses the page's
+colors.
