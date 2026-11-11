@@ -164,7 +164,9 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   [FreeSVG](https://freesvg.org/artificial-intelligence-technology-concept), CC0 (public domain), with the blue square
   behind it removed.
 - **HTMX 4.0.1**, pinned: `wwwroot/js/htmx.min.js`, downloaded from <https://unpkg.com/htmx.org@4.0.1/dist/htmx.min.js>.
-  Every page still works without it, as plain Razor Pages of links and forms that GET. With it, a list's links and
+  Its SHA-256 is `a0abb04f2f45a1f89d1d4844023245537e5e6014c87b144553e0607b4cc32130`, the integrity unpkg publishes for
+  that file, so the copy here is the one released; `Get-FileHash` checks it again. Every page still works without
+  HTMX, as plain Razor Pages of links and forms that GET. With it, a list's links and
   forms swap only the list's card: HTMX 4 sends `HX-Request-Type: partial` when it will swap part of the page, and the
   page handler then returns the card's partial view instead of the whole page. Previous, Next and Rows per page are the
   exception: they take the page's `<main>` from the whole page (`hx-select="#main"`), and a page that HTMX asked for
