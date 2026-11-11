@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then, and the patterns still open (requests that overlap, expired sign-ins and answers a page did not plan for, fields checked as you type, polling). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.10.1
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then, and the patterns still open (expired sign-ins and answers a page did not plan for, fields checked as you type, polling). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.11.0
 visibility: public
 ---
 
@@ -234,7 +234,7 @@ public static class HtmxHeaders
   ```html
   <div id="product-list"
        hx-boost:inherited="true" hx-target:inherited="this" hx-swap:inherited="outerHTML"
-       hx-indicator:inherited="#product-list">
+       hx-indicator:inherited="#product-list" hx-sync:inherited="this:replace">
   ```
 
   Every link and GET form inside it becomes a request that replaces the container, sends `HX-Request-Type: partial`
@@ -262,8 +262,18 @@ public static class HtmxHeaders
   The request goes 300 ms after the last key, and `search` catches the box's clear button. The input sends only its own
   value, so `hx-include` adds the form's hidden inputs, which carry the rest of the list's state; pressing Enter
   without HTMX submits the same values. An input is not a boost target, so it pushes its own URL. The `id` lets HTMX
-  put focus and the caret back into the new copy of the box after the swap (4.0.1 source, `#insertContent`). An
-  answer slower than the typing can leave the list on an earlier value than the box holds; section 13 says why.
+  put focus and the caret back into the new copy of the box after the swap (4.0.1 source, `#insertContent`).
+- **One queue for the list, and the newest request wins.** With no `hx-sync`, each element keeps its own queue with
+  the strategy `queue first`: while one request runs, the next waits, and any after that is dropped (4.0.1 source,
+  `#determineSyncStrategy`, `#getRequestQueue` and `RequestQueue.admit`; the reference page names `drop` as the
+  default, and the pinned file wins). A filter typed while a slow answer is on its way would end on an earlier value
+  than the box holds, and a filter, a sort link and Next would keep three queues whose answers land in any order. So
+  the container also says `hx-sync:inherited="this:replace"`: every request in it joins the container's queue, and
+  each new one aborts the one running ([hx-sync](https://four.htmx.org/reference/attributes/hx-sync)). An aborted
+  fetch fails, and HTMX swaps nothing for it (4.0.1 source, `#issueRequest`). Because the target is the element the
+  request replaces (section 3), even an answer that arrived late would land in the old copy, which the newer answer
+  has already taken out of the page. An abort stops the browser waiting, not the server, so a row's action that a
+  newer request aborts has still run, and the newer answer shows the list as it left it.
 - **Show that a request is running** by naming the container in `hx-indicator`. HTMX adds the class `htmx-request` to
   it while the request runs, and CSS keyed on that class dims the rows or runs a progress bar.
 
@@ -307,7 +317,9 @@ public static class HtmxHeaders
 - **What a unit test cannot see is checked in the browser:** which element a swap replaces, inheritance, focus, and
   the URL that is pushed. Read the request headers and the response body in the developer tools' network panel: the
   body holds the target's own outer element, and the target's `id` appears once on the page (workshop, "Checkpoint:
-  Troubleshooting + Pattern Review"). Then press Back and Forward after a few swaps.
+  Troubleshooting + Pattern Review"). Then press Back and Forward after a few swaps. To see answers land out of
+  order, wrap `window.fetch` in the page first: HTMX looks it up for each request (4.0.1 source, `#issueRequest`), so
+  the wrapper can hold one answer back and release it after a newer one has landed.
 - **Without HTMX is tried two ways.** Once with HTMX's script left out and the application's own still running, as
   when the file fails to load, and once with script turned off in the browser, which takes the application's own
   away too. A page reaches every action both ways.
@@ -416,7 +428,7 @@ form itself.
   leave `hx-disable` off so that the focus comes back by `id`, and keep a repeat harmless in other ways. A busy style
   keyed on `htmx-request` shows that the request is running, and `pointer-events: none` in it stops a second click,
   but not a second Enter or Space on the focused button: that request joins the form's queue behind the first
-  (section 13). `hx-sync="this:drop"` on the form would drop it instead (4.0.1 source, `RequestQueue.admit`), which
+  (section 4). `hx-sync="this:drop"` on the form would drop it instead (4.0.1 source, `RequestQueue.admit`), which
   is not yet tried. What makes a repeat safe is the server: the action names the state it leads to, so a repeat
   finds the record already there and changes nothing, as an Archive of an archived record does, with no Undo to
   offer, and an action that would do harm twice carries the record's version (section 11). No handler counts on a
@@ -529,6 +541,9 @@ with a filter box over a list of radio buttons, narrows the choices as you type.
   `autofocus` to put the keyboard back there (section 9).
 - **Enter in the picker's filter sends the picker's form**, because the filter is one of its fields. By then the list
   has kept up with the typing, so Enter chooses the checked radio, and with none checked the browser asks for one.
+- **The picker's filter and Choose share the form's queue.** The filter says `hx-sync="closest form:replace"`, so the
+  newest filter replaces one still running, and Choose, the form's own request, waits behind a filter already on its
+  way instead of racing it ([hx-sync](https://four.htmx.org/reference/attributes/hx-sync); section 4).
 
 ## 11. An action that cannot be undone
 
@@ -634,18 +649,6 @@ workshop names its chapter.
   as it was ([hx-status](https://four.htmx.org/reference/attributes/hx-status)); that page does not say whether it
   can be inherited from a container. What the user is told then, how they try again and where the keyboard goes,
   after an error, a timeout (60 seconds, section 1) or a lost connection, is not yet worked out.
-- **Requests that overlap.** With no `hx-sync`, each element keeps its own queue with the strategy `queue first`:
-  while one request runs, the next waits, and any after that is dropped (4.0.1 source, `#determineSyncStrategy`,
-  `#getRequestQueue` and `RequestQueue.admit`; the reference page names `drop` as the default, and the pinned file
-  wins). So a filter typed while a slow answer is on its way can end on the results for an earlier value than the
-  box holds, with that value's URL pushed; and a filter, a sort link and Next in one list keep three queues, whose
-  answers land in any order. The likely answer is one queue for the list, whose newest request replaces the one
-  running: `hx-sync:inherited="this:replace"` on the list's container, where `this` is the container (section 1), and
-  `replace` aborts the running request ([hx-sync](https://four.htmx.org/reference/attributes/hx-sync)). A form with a
-  field checked as you type says on the field which wins when both run, such as `hx-sync="closest form:abort"`, so
-  that sending the form aborts the check. Before any of this is a rule, a browser test holds an answer back, lets a
-  newer one land and then releases the old one, to show that an aborted request swaps nothing in 4.0.1. An abort
-  stops the browser waiting, not the server, so a handler that changes data never counts on one.
 - **An action that takes its row out of the list and can be undone**, such as Archive on a list of active records
   only. The page read again is as section 12 says, and the toast's Undo posts the opposite from the same address,
   which puts the row back. Where the keyboard goes after that Undo, which was sent from the toast and not from a row,
@@ -654,7 +657,9 @@ workshop names its chapter.
   `hx-trigger="input changed delay:500ms"`, `hx-include="closest form"` for the token and the other fields, and the
   field's message element as its `hx-target`. The handler validates what was bound and returns only that field's
   message, as a partial whose root is the message element (workshop, Lab 3). Without HTMX the same rule runs when
-  the form is posted.
+  the form is posted. When the check and the form's own save can both be running, the field says which wins, such as
+  `hx-sync="closest form:abort"`, so that sending the form aborts the check
+  ([hx-sync](https://four.htmx.org/reference/attributes/hx-sync)).
 - **Rows added to and removed from a form.** For a list of plain values, every row's input has the same name, such
   as `name="Input.Tags"`, which binds to a `List<string>` with no index numbers. The server renders one new row as a
   fragment that `hx-swap="beforeend"` appends, and removing a row only removes its element (workshop, Lab 5). A list
