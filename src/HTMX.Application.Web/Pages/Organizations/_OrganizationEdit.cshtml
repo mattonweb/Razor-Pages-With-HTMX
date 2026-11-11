@@ -11,7 +11,8 @@
     among them, and marks the Save button busy and disabled until the answer arrives. After a 422 the first invalid
     field takes the keyboard. After a 409 no field is invalid and the disabled Save button has lost it, so the message
     above the form takes it instead (tabindex="-1" and autofocus, set only for that answer), and Tab goes on to the
-    fields.
+    fields. A 409 because the organization was archived meanwhile draws the alert in place of the form, and the alert
+    takes it the same way.
 *@
 @{
     OrganizationSingleResponse organization = Model.Organization
@@ -42,7 +43,7 @@
 
     @if (organization.Archived is not null)
     {
-        <div class="alert warning" role="status">
+        <div class="alert warning" role="status" tabindex="-1" autofocus="@Model.ArchivedMeanwhile">
             <svg class="icon" aria-hidden="true"><use href="/icons.svg#alert"></use></svg>
             <div class="content">
                 <strong>@organization.Name.Value is archived</strong>

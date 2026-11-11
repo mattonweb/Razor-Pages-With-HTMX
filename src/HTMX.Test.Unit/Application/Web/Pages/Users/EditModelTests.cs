@@ -231,10 +231,10 @@ public sealed class EditModelTests
 
     /// <summary>
     /// Unit test to verify that a save to a user archived meanwhile comes back with 409, to show the alert that says
-    /// they cannot be edited.
+    /// they cannot be edited, and that the alert takes the keyboard, since the form and its Save button are gone.
     /// </summary>
     [TestMethod]
-    public async Task OnPostAsync_Archived_AnswersConflict()
+    public async Task OnPostAsync_Archived_AnswersConflictAndFocusesTheAlert()
     {
         // Arrange (Given)
         EditModel page = CreatePage(new StubUserService(CreateUser(6), UpdateOutcome.Archived), HtmxRequest.Partial);
@@ -248,9 +248,9 @@ public sealed class EditModelTests
             result,
             "The edit page's content should come back to swap in place.");
         Assert.AreEqual(
-            StatusCodes.Status409Conflict,
-            page.Response.StatusCode,
-            "A save to an archived user should be answered with 409.");
+            (StatusCodes.Status409Conflict, true),
+            (page.Response.StatusCode, page.ArchivedMeanwhile),
+            "A save to an archived user should be answered with 409, the alert taking the keyboard.");
     }
 
     #endregion Public Methods

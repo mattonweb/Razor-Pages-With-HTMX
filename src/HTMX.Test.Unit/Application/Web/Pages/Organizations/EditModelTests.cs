@@ -275,10 +275,11 @@ public sealed class EditModelTests
 
     /// <summary>
     /// Unit test to verify that a save to an organization archived meanwhile comes back with 409, to show the alert
-    /// that says it cannot be edited.
+    /// that says it cannot be edited, and that the alert takes the keyboard, since the form and its Save button are
+    /// gone.
     /// </summary>
     [TestMethod]
-    public async Task OnPostAsync_Archived_AnswersConflict()
+    public async Task OnPostAsync_Archived_AnswersConflictAndFocusesTheAlert()
     {
         // Arrange (Given)
         StubOrganizationService service = new StubOrganizationService(CreateOrganization(3), UpdateOutcome.Archived);
@@ -293,9 +294,9 @@ public sealed class EditModelTests
             result,
             "The edit page's content should come back to swap in place.");
         Assert.AreEqual(
-            StatusCodes.Status409Conflict,
-            page.Response.StatusCode,
-            "A save to an archived organization should be answered with 409.");
+            (StatusCodes.Status409Conflict, true),
+            (page.Response.StatusCode, page.ArchivedMeanwhile),
+            "A save to an archived organization should be answered with 409, the alert taking the keyboard.");
     }
 
     #endregion Public Methods

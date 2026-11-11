@@ -48,6 +48,12 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
     public bool Overtaken { get; private set; }
 
     /// <summary>
+    /// Gets a value indicating whether the contact, or their organization, was archived after the form was shown, so
+    /// the alert that says they can't be edited takes the keyboard in place of the form.
+    /// </summary>
+    public bool ArchivedMeanwhile { get; private set; }
+
+    /// <summary>
     /// Gets a value indicating whether the contact can be edited: they and their organization are active.
     /// </summary>
     public bool Changeable => this.Contact is ContactSingleResponse contact
@@ -107,7 +113,7 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
             UpdateOutcome.Overtaken =>
                 await this.RefuseOvertakenAsync(id, cancellationToken).ConfigureAwait(false),
             UpdateOutcome.Archived =>
-                await this.RefuseAsync(id, StatusCodes.Status409Conflict, cancellationToken).ConfigureAwait(false),
+                await this.RefuseArchivedAsync(id, cancellationToken).ConfigureAwait(false),
             _ =>
                 this.ShowContact(id),
         };
@@ -159,6 +165,19 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
             Organization = new OrganizationId(organization),
             ChangedBy = SignedInUser.Of(this.User),
         };
+    }
+
+    /// <summary>
+    /// Says that the contact, or their organization, was archived after the form was shown, and answers with the alert
+    /// that says they can't be edited, which takes the keyboard, since the form and its Save button are gone.
+    /// </summary>
+    /// <param name="id">The contact's identifier.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The edit page's content, with the status 409.</returns>
+    private Task<IActionResult> RefuseArchivedAsync(long id, CancellationToken cancellationToken)
+    {
+        this.ArchivedMeanwhile = true;
+        return this.RefuseAsync(id, StatusCodes.Status409Conflict, cancellationToken);
     }
 
     /// <summary>

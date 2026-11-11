@@ -60,6 +60,12 @@ public sealed class EditModel : PageModel
     public bool Overtaken { get; private set; }
 
     /// <summary>
+    /// Gets a value indicating whether the organization was archived after the form was shown, so the alert that says
+    /// it can't be edited takes the keyboard in place of the form.
+    /// </summary>
+    public bool ArchivedMeanwhile { get; private set; }
+
+    /// <summary>
     /// Fills the form from the organization the route names.
     /// </summary>
     /// <param name="id">The organization's identifier, from the route.</param>
@@ -103,7 +109,7 @@ public sealed class EditModel : PageModel
             UpdateOutcome.Overtaken =>
                 await this.RefuseOvertakenAsync(id, cancellationToken).ConfigureAwait(false),
             UpdateOutcome.Archived =>
-                await this.RefuseAsync(id, StatusCodes.Status409Conflict, cancellationToken).ConfigureAwait(false),
+                await this.RefuseArchivedAsync(id, cancellationToken).ConfigureAwait(false),
             _ =>
                 this.ShowOrganization(id),
         };
@@ -144,6 +150,19 @@ public sealed class EditModel : PageModel
             Website = string.IsNullOrEmpty(website) ? null : new WebAddress(website),
             ChangedBy = SignedInUser.Of(this.User),
         };
+    }
+
+    /// <summary>
+    /// Says that the organization was archived after the form was shown, and answers with the alert that says it can't
+    /// be edited, which takes the keyboard, since the form and its Save button are gone.
+    /// </summary>
+    /// <param name="id">The organization's identifier.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The edit page's content, with the status 409.</returns>
+    private Task<IActionResult> RefuseArchivedAsync(long id, CancellationToken cancellationToken)
+    {
+        this.ArchivedMeanwhile = true;
+        return this.RefuseAsync(id, StatusCodes.Status409Conflict, cancellationToken);
     }
 
     /// <summary>

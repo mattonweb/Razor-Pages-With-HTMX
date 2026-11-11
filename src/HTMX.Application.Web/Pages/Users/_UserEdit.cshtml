@@ -6,7 +6,8 @@
     organization's edit form does; a save that succeeds answers 204 with HX-Location to the user's page. The header is
     inside so that a refused save also shows the user as they are saved now. After a 422 the first invalid field takes
     the keyboard. After a 409 no field is invalid and the disabled Save button has lost it, so the message above the
-    form takes it instead (tabindex="-1" and autofocus, set only for that answer), and Tab goes on to the fields.
+    form takes it instead (tabindex="-1" and autofocus, set only for that answer), and Tab goes on to the fields. A 409
+    because the user was archived meanwhile draws the alert in place of the form, and the alert takes it the same way.
 *@
 @{
     UserSingleResponse account = Model.Account
@@ -38,7 +39,7 @@
 
     @if (account.Archived is not null)
     {
-        <div class="alert warning" role="status">
+        <div class="alert warning" role="status" tabindex="-1" autofocus="@Model.ArchivedMeanwhile">
             <svg class="icon" aria-hidden="true"><use href="/icons.svg#alert"></use></svg>
             <div class="content">
                 <strong>@account.DisplayName.Value is archived</strong>

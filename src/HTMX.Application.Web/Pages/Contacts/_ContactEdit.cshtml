@@ -6,7 +6,8 @@
     organization's edit form does; a save that succeeds answers 204 with HX-Location to the contact's page. After a 422
     the first invalid field takes the keyboard. After a 409 no field is invalid and the disabled Save button has lost
     it, so the message above the form takes it instead (tabindex="-1" and autofocus, set only for that answer), and Tab
-    goes on to the fields.
+    goes on to the fields. A 409 because the contact or their organization was archived meanwhile draws an alert in
+    place of the form, and the alert takes it the same way.
 
     The organization picker sits after the form, not in it: it has a form of its own, and a form inside another is not
     HTML. Until HTMX loads the relation field it is an empty placeholder, which the field's answer replaces with the
@@ -44,7 +45,7 @@
 
     @if (organization.ArchivedOn is not null)
     {
-        <div class="alert warning" role="status">
+        <div class="alert warning" role="status" tabindex="-1" autofocus="@Model.ArchivedMeanwhile">
             <svg class="icon" aria-hidden="true"><use href="/icons.svg#alert"></use></svg>
             <div class="content">
                 <strong>@organization.Name.Value is archived</strong>
@@ -55,7 +56,7 @@
     }
     else if (contact.Archived is not null)
     {
-        <div class="alert warning" role="status">
+        <div class="alert warning" role="status" tabindex="-1" autofocus="@Model.ArchivedMeanwhile">
             <svg class="icon" aria-hidden="true"><use href="/icons.svg#alert"></use></svg>
             <div class="content">
                 <strong>@contact.Name.Value is archived</strong>

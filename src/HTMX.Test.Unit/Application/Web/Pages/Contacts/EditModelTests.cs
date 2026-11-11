@@ -163,6 +163,32 @@ public sealed class EditModelTests
     }
 
     /// <summary>
+    /// Unit test to verify that a save to a contact archived meanwhile, or whose organization was, comes back with 409,
+    /// to show the alert that says they cannot be edited, and that the alert takes the keyboard, since the form and its
+    /// Save button are gone.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostAsync_Archived_AnswersConflictAndFocusesTheAlert()
+    {
+        // Arrange (Given)
+        StubContactService contacts = new StubContactService(outcome: UpdateOutcome.Archived, found: CreateContact());
+        EditModel page = CreatePage(contacts, HtmxRequest.Partial);
+        page.Input = CreateInput(organization: 10003);
+
+        // Act (When)
+        IActionResult result = await page.OnPostAsync(10001, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsInstanceOfType<PartialViewResult>(
+            result,
+            "The edit page's content should come back to swap in place.");
+        Assert.AreEqual(
+            (StatusCodes.Status409Conflict, true, false),
+            (page.Response.StatusCode, page.ArchivedMeanwhile, page.Overtaken),
+            "A save to an archived contact should be answered with 409, the alert taking the keyboard.");
+    }
+
+    /// <summary>
     /// Unit test to verify that the field handler answers with the relation field for the organization chosen and
     /// the picker, whose button takes the focus after a choice.
     /// </summary>
