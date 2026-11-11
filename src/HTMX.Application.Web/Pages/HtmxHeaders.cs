@@ -2,6 +2,7 @@ namespace HTMX.Application.Web.Pages;
 
 using System;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Net.Http.Headers;
 
 /// <summary>
 /// The HTMX 4 headers the pages read and write: whether HTMX sent a request, whether it will swap part of the page,
@@ -48,14 +49,15 @@ public static class HtmxHeaders
 
     /// <summary>
     /// Says that the response depends on whether HTMX asked for part of the page, so that a cache keeps the two
-    /// answers to one URL apart.
+    /// answers to one URL apart. The header is added to any Vary already set, so what another part of the application
+    /// varies by is kept.
     /// </summary>
     /// <param name="response">The response.</param>
     public static void VaryByRequestType(HttpResponse response)
     {
         ArgumentNullException.ThrowIfNull(response);
         IHeaderDictionary headers = response.Headers;
-        headers.Vary = RequestType;
+        headers.Append(HeaderNames.Vary, RequestType);
     }
 
     /// <summary>
