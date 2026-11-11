@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then, and the patterns still open (expired sign-ins and answers a page did not plan for, fields checked as you type, polling). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.11.1
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then, and the patterns still open (expired sign-ins and answers a page did not plan for, fields checked as you type, polling). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.12.0
 visibility: public
 ---
 
@@ -128,7 +128,11 @@ Not yet tried on a Razor project.
   end of `<body>`, so a script a page puts there runs again on each body swap. Move it into `<head>`, or write it so
   that running twice does no harm.
 - **The application's own script listens on `document`.** A listener on an element is lost when a swap replaces the
-  element. Delegate events from `document`, and refresh any state the script keeps on `htmx:after:swap`.
+  element. Delegate events from `document`, and refresh any state the script keeps on `htmx:after:swap`. A control
+  that only this script makes work, such as a menu toggle, says so with an attribute, and CSS takes it off the page
+  under `@media (scripting: none)`
+  ([scripting](https://developer.mozilla.org/docs/Web/CSS/@media/scripting)), so that nothing on the page does
+  nothing when pressed.
 
 ## 3. One handler, two answers
 
@@ -274,6 +278,12 @@ public static class HtmxHeaders
   request replaces (section 3), even an answer that arrived late would land in the old copy, which the newer answer
   has already taken out of the page. An abort stops the browser waiting, not the server, so a row's action that a
   newer request aborts has still run, and the newer answer shows the list as it left it.
+- **A form HTMX sends as you go keeps a submit button for when HTMX is not there.** A select whose form says
+  `hx-trigger="change"`, such as rows per page, does nothing without HTMX unless its form has a submit button, and a
+  filter box sends on Enter but offers a pointer nothing. Give each such form an Apply button, and hide it with CSS
+  only while script runs and HTMX is there: under `@media (scripting: enabled)`, and only while the root lacks a mark
+  that the application's own script sets when `window.htmx` is missing, which it can tell because HTMX loads first
+  (section 2). The button then shows with script off and with HTMX failed to load, the two ways section 6 tries.
 - **Show that a request is running** by naming the container in `hx-indicator`. HTMX adds the class `htmx-request` to
   it while the request runs, and CSS keyed on that class dims the rows or runs a progress bar.
 
@@ -322,7 +332,9 @@ public static class HtmxHeaders
   the wrapper can hold one answer back and release it after a newer one has landed.
 - **Without HTMX is tried two ways.** Once with HTMX's script left out and the application's own still running, as
   when the file fails to load, and once with script turned off in the browser, which takes the application's own
-  away too. A page reaches every action both ways.
+  away too. A page reaches every action both ways. Removing a page's `<script>` elements stops the scripts but not
+  the browser's scripting, so `@media (scripting: none)` still does not match; turn script off in the browser's
+  settings, or through the DevTools protocol's `Emulation.setScriptExecutionDisabled` before loading the page.
 
 ## 7. Forms that post
 
@@ -670,8 +682,6 @@ workshop names its chapter.
   as `name="Input.Tags"`, which binds to a `List<string>` with no index numbers. The server renders one new row as a
   fragment that `hx-swap="beforeend"` appends, and removing a row only removes its element (workshop, Lab 5). A list
   of objects needs indexed names (`Input.Lines[0].Name`), and so more care when a row leaves.
-- **A select that applies when it changes** (`hx-trigger="change"` on its GET form) does nothing without HTMX unless
-  the form also has a submit button.
 - **An `HX-Trigger` response header** raises a client-side event, and an element elsewhere can listen for it and load
   itself again: `hx-get="?handler=Messages" hx-trigger="showMessage from:body"`. That is how the workshop shows a
   message after a save (Lab 3). It costs a second request for each message, where section 8's `<hx-partial>` arrives
