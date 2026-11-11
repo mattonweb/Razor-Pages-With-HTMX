@@ -2,6 +2,9 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-10, later (attended session with Matt): `code-htmx-pages` now stands on its own in any repository.** It
+  names nothing in this one, and it has no status table: its intro names HTMX 4.0.1, section 1 says it was read in the
+  source, and section 13 holds what is still open. Older entries that say to read its status table predate this.
 - **2026-11-10 (attended session with Matt): one Adapter per data store it owns, not per database.** What groups a
   set of tables depends on the engine, a database in some and a schema in others, so the solution-architecture
   paragraph now says data store. Nothing in the solution changes: `HTMX.Adapter.Customers` still owns the one
@@ -96,7 +99,7 @@ building this application.
 | `dotnet-solution-architecture` | Signalbox | Which projects exist and what each may reference: `{{solution}}.{{kind}}.{{name}}` naming, the four project kinds, the dependency rules, and the public surface of a class library. Read it before creating a project or adding a project reference |
 | `devops-git-conventions` | Signalbox | The commit-message form you draft for Matt. Its branch, pull-request and tag sections do not apply here; this repository has no branches and no pipeline |
 | `brand-htmlx-pages` | this repository | The HTMLX Pages brand: tokens, CSS, icons and the markup of every UI component, with specimen pages. A draft; its status table says which groups are settled |
-| `code-htmx-pages` | this repository | How Razor Pages and HTMX 4 work together: the HTMX 4 changes that break HTMX 2 habits, loading HTMX, a handler that returns a partial or the whole page by `HX-Request-Type`, history, testing, and the patterns still open. Read it before writing any `hx-` attribute or a handler that answers HTMX. A draft; its status table says which sections are proven |
+| `code-htmx-pages` | this repository | How Razor Pages and HTMX 4 work together: the HTMX 4 changes that break HTMX 2 habits, loading HTMX, a handler that returns a partial or the whole page by `HX-Request-Type`, history, testing, and the patterns still open. Read it before writing any `hx-` attribute or a handler that answers HTMX. A draft |
 
 ⛔ **Matt owns every skill. Never edit a file inside one of the five junctions**, however wrong it looks; report the
 defect in your final message instead. An edit through a junction lands in Signalbox's working tree.
