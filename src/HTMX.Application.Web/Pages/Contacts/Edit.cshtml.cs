@@ -221,8 +221,9 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
 
         // The save that overtook this one may be the same user's, from another tab, so the message names who made it.
         UserReference editor = saved.LastModified.By;
-        string message = $"{editor.Name.Value} saved this contact while you were editing it. Your changes are still "
-            + "here: compare them with the saved values shown under the fields, then save again.";
+        string message = $"{editor.Name.Value} saved this contact while you were editing them. Your changes are "
+            + "still here, and the saved values are shown under the fields that differ. Save again only if yours "
+            + "should replace theirs.";
         this.ModelState.AddModelError(string.Empty, message);
 
         // A tag helper writes the value that was posted ahead of the model's, so the posted version is forgotten first.

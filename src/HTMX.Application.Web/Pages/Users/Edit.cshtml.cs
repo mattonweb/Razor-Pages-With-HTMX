@@ -199,7 +199,8 @@ public sealed class EditModel : PageModel
         // The save that overtook this one may be the same person's, from another tab, so the message names who made it.
         UserReference editor = saved.LastModified.By;
         string message = $"{editor.Name.Value} saved this user while you were editing them. Your changes are still "
-            + "here: compare them with the saved values shown under the fields, then save again.";
+            + "here, and the saved values are shown under the fields that differ. Save again only if yours should "
+            + "replace theirs.";
         this.ModelState.AddModelError(string.Empty, message);
 
         // A tag helper writes the value that was posted ahead of the model's, so the posted version is forgotten first.

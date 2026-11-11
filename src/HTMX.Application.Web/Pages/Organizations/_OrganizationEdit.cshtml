@@ -8,7 +8,10 @@
     changed it last. A save that succeeds answers with no content, and HX-Location loads the organization's page.
 
     The form posts to the same address with or without HTMX. HTMX sends the form's fields, the antiforgery token
-    among them, and marks the Save button busy and disabled until the answer arrives.
+    among them, and marks the Save button busy and disabled until the answer arrives. After a 422 the first invalid
+    field takes the keyboard. After a 409 no field is invalid and the disabled Save button has lost it, so the message
+    above the form takes it instead (tabindex="-1" and autofocus, set only for that answer), and Tab goes on to the
+    fields.
 *@
 @{
     OrganizationSingleResponse organization = Model.Organization
@@ -53,7 +56,7 @@
         <form method="post" action="@action" asp-antiforgery="true" novalidate
               hx-post="@action" hx-target="#organization-edit" hx-swap="outerHTML"
               hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
-            <div asp-validation-summary="ModelOnly" role="alert"></div>
+            <div asp-validation-summary="ModelOnly" role="alert" tabindex="-1" autofocus="@Model.Overtaken"></div>
             <input type="hidden" asp-for="Input.Version" />
 
             <partial name="_OrganizationFields" model="fields" />
