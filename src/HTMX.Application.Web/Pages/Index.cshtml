@@ -2,6 +2,28 @@
 @{
     ViewData["Title"] = "Home";
 }
+@*
+    The home page: what the application is and where to start. It opens with the brand's hero, whose illustration
+    only decorates, so its alt text is empty: the heading beside it says what the page is about. The illustration is
+    wwwroot/images/robot.svg, from FreeSVG under CC0; the file's first line says where it came from.
+*@
+<header class="page-header">
+    <div class="title-row">
+        <h1>HTMLX Pages</h1>
+    </div>
+    <p class="muted">A Razor Pages application whose create, read, update, delete and list pages are made interactive with HTMX.</p>
+</header>
 
-<h1>HTMLX Pages</h1>
-<p>A Razor Pages application whose create, read, update, delete and list pages are made interactive with HTMX.</p>
+<section class="card" aria-labelledby="start-heading">
+    <div class="hero">
+        <img class="hero-art" src="~/images/robot.svg" asp-append-version="true" alt="" width="180" height="180" />
+        <div class="hero-text">
+            <h2 id="start-heading">Records you can change without leaving the page</h2>
+            <p>Organizations, their contacts, and the users who manage them. Lists filter as you type and page by key, forms save in place, and an archive takes effect at once, with Undo; a permanent delete asks first. Every page still works without HTMX.</p>
+            <div class="btn-group">
+                <a class="btn primary" asp-page="/Organizations/Index"><svg class="icon" aria-hidden="true"><use href="/icons.svg#building"></use></svg>Organizations</a>
+                <a class="btn" asp-page="/Users/Index"><svg class="icon" aria-hidden="true"><use href="/icons.svg#users"></use></svg>Users</a>
+            </div>
+        </div>
+    </div>
+</section>
