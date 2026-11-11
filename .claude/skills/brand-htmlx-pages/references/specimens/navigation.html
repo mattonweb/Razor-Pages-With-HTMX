@@ -40,6 +40,9 @@
     <a href="data-display.html" title="Data display"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#list"></use></svg><span>Data display</span></a>
     <a href="inputs.html" title="Inputs"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#edit"></use></svg><span>Inputs</span></a>
     <a href="feedback.html" title="Feedback"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#info"></use></svg><span>Feedback</span></a>
+    <div class="end">
+      <a href="https://example.org" target="_blank" rel="noopener" title="Repository (opens in a new tab)"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#external"></use></svg><span>Repository</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+    </div>
   </nav>
 
   <main class="app-main" id="main">
@@ -56,7 +59,8 @@
       <p class="spec-lead">The nav down the left of this page. Each link is an icon and a <code>&lt;span&gt;</code> label; the current
         page's link carries <code>aria-current="page"</code>, and a <code>.nav-label</code> heads a group of links. In the icon rail
         the labels leave the screen but stay in the accessibility tree, and each link's <code>title</code> gives it a tooltip.
-        <code>data-nav="rail"</code> or <code>"full"</code> on <code>.app</code> overrides the width-based default.</p>
+        <code>data-nav="rail"</code> or <code>"full"</code> on <code>.app</code> overrides the width-based default. A link that leaves
+        the application, as Repository does here, sits in <code>.end</code>, pinned to the foot of the nav, and opens a new tab.</p>
     </section>
 
     <section class="spec" aria-labelledby="breadcrumbs">

@@ -1,6 +1,6 @@
 /*
   HTMLX Pages: navigation. Moving between pages and between parts of a page.
-    .app-nav       the side navigation, full or an icon rail
+    .app-nav       the side navigation, full or an icon rail, with .end pinned to its foot
     .breadcrumbs   where this page sits
     .menu          a popover menu of actions, opened by a button
     .segmented     a few mutually exclusive views of the same content, as links
@@ -32,6 +32,16 @@
   padding: var(--space-4) 14px var(--space-1);
   font-size: var(--text-xs); font-weight: var(--weight-strong); letter-spacing: .04em;
   text-transform: uppercase; color: var(--text-muted); white-space: nowrap;
+}
+
+/* The nav's foot: links that leave the application, such as its source repository, pinned to the bottom of the nav
+   under a rule. Each opens a new tab and says so.
+   <div class="end"><a href="…" target="_blank" rel="noopener" title="Repository (opens in a new tab)">
+     <svg class="icon">…#external…</svg><span>Repository</span><span class="visually-hidden"> (opens in a new tab)</span>
+   </a></div> */
+.app-nav .end {
+  margin-top: auto; display: flex; flex-direction: column; gap: 2px;
+  padding-top: var(--space-2); border-top: 1px solid var(--border);
 }
 
 /* Rail: labels leave the screen but stay in the accessibility tree; each link has a title for a tooltip. */

@@ -2,7 +2,7 @@
 name: brand-htmlx-pages
 description: The HTMLX Pages component library for the Razor Pages and HTMX application in this repository. Use whenever writing, styling or reviewing its markup, CSS, partial views or page layouts. Covers the design tokens (color, type, space, shape) taken from the DevExtreme UI Template Gallery and MudBlazor, light and dark mode, the class naming rule, buttons and icons, and a catalog of components by family, each with its markup, variants, states, accessibility and when to use it — layout (app shell, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, busy bar, bulk bar, alert, toast). Draft; the status table says which components are settled.
 owner: Matt
-version: 0.3.0
+version: 0.4.0
 visibility: public
 ---
 
@@ -18,7 +18,7 @@ The layout patterns come from the [DevExtreme UI Template Gallery](https://githu
 code, CSS or artwork is copied from either: the gallery runs on DevExtreme, which has its own commercial license, and
 this repository is public. Everything in this skill was written for this repository.
 
-## Status: draft 0.3.0
+## Status: draft 0.4.0
 
 | Family | Components | State |
 |---|---|---|
@@ -26,6 +26,7 @@ this repository is public. Everything in this skill was written for this reposit
 | Layout | app shell, avatar, page header, card, toolbar, tabs | Settled for review |
 | Layout, added | hero | Ready for review |
 | Navigation | side nav and rail, breadcrumbs, menu, segmented control, pager | Settled for review |
+| Navigation, added | side nav foot, external icon | Ready for review |
 | Data display | grid (title cell, sort header, archived row), chip, empty state, fields, related-record link, side panel | Settled for review |
 | Data display, added | selection column, read-only grid, version badge, timeline, diff | Ready for review |
 | Inputs | filter box | Settled for review |
@@ -163,7 +164,10 @@ split one page into sections; moving between pages is the side nav's job.
 
 **Side nav** (`navigation.css`). The application's pages: `.app-nav`, each link an icon and a `<span>` label with a
 `title` for the rail's tooltip, and `.nav-label` over a group of links. The current page's link carries
-`aria-current="page"`. In the rail the labels leave the screen but stay in the accessibility tree.
+`aria-current="page"`. In the rail the labels leave the screen but stay in the accessibility tree. Links that leave
+the application, such as to its source repository, sit in `<div class="end">` at the foot of the nav, pinned to the
+bottom under a rule. Such a link opens a new tab (`target="_blank" rel="noopener"`), leads with the `external` icon,
+and says it opens a new tab in a visually hidden span after its label and in its `title`.
 
 **Breadcrumbs** (`navigation.css`). Where a page sits: `<nav class="breadcrumbs" aria-label="Breadcrumb">` around
 an `<ol>` of links that ends in the current page, as text with `aria-current="page"`.
