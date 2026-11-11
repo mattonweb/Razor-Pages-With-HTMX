@@ -4,6 +4,7 @@
     .avatar        the signed-in user's initials, in the header
     .page-header   breadcrumbs, the title row and the page's actions; .title holds a title and its status chip
     .card          a surface; .card-header and .card-body inside, .cards for a column of them
+    .hero          the opening of a landing page, in a card: an illustration beside a heading, text and actions
     .toolbar       the row at the top of a card that holds a filter box and a segmented control
     .tabs          links to the sections of one page
 
@@ -77,6 +78,23 @@
 
 /* Cards: a column of cards with the standard gap between them. */
 .cards { display: grid; gap: var(--space-4); }
+
+/* Hero: the opening of a landing page. It sits in a card, as the empty state does, so on a card narrower than 560px
+   the illustration moves above the text. The illustration is an image with colors of its own, so it must read on
+   the surface in light and dark mode alike.
+   <section class="card" aria-labelledby="…"><div class="hero">
+     <img class="hero-art" src="…" alt="" width="180" height="180">
+     <div class="hero-text"><h2 id="…">…</h2><p>…</p><div class="btn-group">…</div></div>
+   </div></section> */
+.hero { display: flex; align-items: center; gap: var(--space-6); padding: var(--space-6); }
+.hero-art { flex: none; width: 180px; height: 180px; }
+.hero-text { display: grid; justify-items: start; gap: var(--space-3); min-width: 0; }
+.hero-text p { color: var(--text-muted); }
+.hero-text .btn-group { margin-top: var(--space-2); }
+@container (max-width: 559px) {
+  .hero { flex-direction: column; align-items: flex-start; gap: var(--space-4); padding: var(--space-4); }
+  .hero-art { width: 120px; height: 120px; }
+}
 
 /* Toolbar */
 .toolbar {
