@@ -8,10 +8,13 @@
 @* The users list's card, built as the organizations list's is. Every link and form in the card loads over HTMX: the
    response replaces the card itself, the URL follows, and the card shows the busy bar while a request is in flight.
    In HTMX 4 an attribute reaches the card's descendants only when it says :inherited, and "this" means the card that
-   declares it. Without HTMX they are plain links and GET forms. *@
+   declares it. Every request in the card joins one queue on the card, and the newest replaces the one running, so a
+   slow answer to an older filter, sort or page never lands after a newer one; without hx-sync each element would keep
+   its own queue, and HTMX 4 drops a third request while one runs and one waits. Without HTMX they are plain links and
+   GET forms. *@
 <div class="card" id="user-list"
      hx-boost:inherited="true" hx-target:inherited="this" hx-swap:inherited="outerHTML"
-     hx-indicator:inherited="#user-list">
+     hx-indicator:inherited="#user-list" hx-sync:inherited="this:replace">
     <div class="toolbar">
         @* A GET form: typing a filter and pressing Enter loads the list again, keeping the status, sort and page size. *@
         <form class="filter-box" role="search" method="get">

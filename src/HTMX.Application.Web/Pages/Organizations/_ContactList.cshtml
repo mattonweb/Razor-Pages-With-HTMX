@@ -7,7 +7,9 @@
     Previous and Next are boosted links, so the URL follows them, and they replace the tab's whole content,
     #organization: the header's Archive and Restore post to the URL's values, so they must be drawn again whenever the
     URL changes. A row's form leaves the URL as it is and replaces only this card; it says hx-post, which HTMX sets up
-    before it boosts anything, so the post is not boosted. Without HTMX they are plain links and forms that post.
+    before it boosts anything, so the post is not boosted. Every request in the card joins one queue on the card, and
+    the newest replaces the one running, so a slow answer never lands after a newer one. Without HTMX they are plain
+    links and forms that post.
 
     New contact, the card's one action, opens the create form with this organization chosen. It leaves the list, so it
     is a normal link, not a swap, and an archived organization, which takes no one in, does not offer it.
@@ -31,7 +33,7 @@
 }
 <section class="card" id="contact-list" aria-labelledby="contacts-heading"
          hx-boost:inherited="true" hx-target:inherited="#organization" hx-swap:inherited="outerHTML"
-         hx-indicator:inherited="#contact-list">
+         hx-indicator:inherited="#contact-list" hx-sync:inherited="this:replace">
     <header class="card-header">
         <h2 id="contacts-heading" tabindex="-1" autofocus="@Model.ListHeadingFocused">Contacts</h2>
         @if (changeable)
