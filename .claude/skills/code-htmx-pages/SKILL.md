@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the HTMX 4 changes that break HTMX 2 habits, loading HTMX, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then, and the patterns still open (fields checked as you type, polling). Written against HTMX 4.0.1. Draft.
-version: 0.9.1
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then, and the patterns still open (requests that overlap, expired sign-ins and answers a page did not plan for, fields checked as you type, polling). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.10.0
 visibility: public
 ---
 
@@ -10,17 +10,65 @@ visibility: public
 How a Razor Pages application uses HTMX 4: which attributes go in the markup, how a page handler tells an HTMX
 request from a browser's and what it sends back, how history and forms behave, and how to test it. It is a baseline
 to copy into any repository that pairs the two. A copy belongs to the repository that takes it; nothing keeps the two
-in step. Every sentence holds for any Razor Pages application on HTMX 4.0.1, and every HTMX fact cites the reference
-page or the 4.0.1 source method it came from; how one application uses HTMX belongs in its own code, tests and
-README.
+in step. It is written for HTMX 4.0.1 and ASP.NET Core 10, and every sentence is meant to hold for any Razor Pages
+application on those versions, not only the one it was built in; how one application uses HTMX belongs in its own
+code, tests and README.
+
+The evidence differs by part. The patterns in sections 2 to 12 have been built and tried in a browser; where a
+section also covers a case that was not built, such as output caching, its citation is the only evidence.
+Section 1's rows were read in the source and the reference, not all built, and nothing in section 13 is built.
+Every HTMX fact cites the reference page or the 4.0.1 source method it came from, and the two kinds of citation
+carry different weight. A reference page is what HTMX documents. A method in the 4.0.1 source is what that release
+happens to do: the method is private, a later release may change it, and section 2 checks each one again before
+moving to a new version.
 
 It is not the HTMX reference, which is linked throughout and is the place to look for anything this skill does not
 cover. It says nothing about C# style, tests in general or how a page looks; the repository's own standards and
 brand, if it has them, cover those.
 
-**Every page works without HTMX.** Links are links, filters are GET forms, and actions are buttons in forms that
-post. HTMX only narrows what a response replaces and keeps the address bar in step. A page that cannot be built that
-way is a decision to make out loud, never a default.
+Its code samples are sketches: they show what HTMX touches and leave out usings, setup and the application's own
+types, such as a product service. An idea taken from Chris Woodruff's htmx Razor Pages workshop, described under
+References, is credited to "the workshop" and the chapter it comes from.
+
+## Principles
+
+Every section below applies these, and says why where it does.
+
+- **Every page works without HTMX.** Links are links, filters are GET forms, and actions are buttons in forms that
+  post. HTMX only narrows what a response replaces and keeps the address bar in step. A page that cannot be built
+  that way is a decision to make out loud, never a default. Without HTMX still means with the HTML the patterns use:
+  `<dialog>`, popovers and invoker commands (`commandfor` and `command`), which current browsers have all had only
+  since December 2025 ([Invoker Commands API](https://developer.mozilla.org/docs/Web/API/Invoker_Commands_API)). On
+  an older browser a button that opens a dialog does nothing, so the action behind it cannot be reached, though it
+  cannot be skipped either. Which browsers a repository supports is its own decision, stated in its README.
+- **The address holds the view.** Everything that decides what a page shows, such as a list's filter, sort and place,
+  is in its URL, and that URL loads the whole page on its own. HTMX pushes it into the history, Back and Forward
+  fetch it again, and an action on the page posts to it and reads it again (sections 4, 5 and 9).
+- **One partial draws both answers.** The page renders the same partials that its handlers return to HTMX, so the
+  whole page and the part that is swapped cannot disagree, and the browser holds nothing of its own that a swap could
+  lose (sections 3 and 8).
+- **Swap the smallest element that holds everything the request changes.** A smaller target leaves something out of
+  date, such as a count or a form that posts an old address; a larger one redraws what did not change (sections 7, 9
+  and 12).
+- **The keyboard is never left behind.** An answer that replaces the element that has the focus decides where the
+  focus goes next, and each pattern below names the element. HTMX puts the focus back on an element with the same
+  `id` (section 8), then moves it to the first `[autofocus]` in the new content, if there is one (section 9). Content
+  that arrives without the keyboard, such as a toast, goes into a live region, which a screen reader announces
+  (section 8). Only an answer to something the user just did moves the focus: the partial marks `autofocus` from a
+  flag its handler sets for that answer, so the same partial drawn as the page loads, on a poll or on any refresh the
+  user did not ask for takes the keyboard nowhere. And an `id` alone is not a destination: it puts the focus back
+  only on an element that is still there to take it and still where the user was, which a button in a closed menu is
+  not (section 9).
+- **HTMX adds no way in.** Every request HTMX sends reaches a Razor Pages handler through the same authorization,
+  antiforgery check and model binding as any other, so a handler that only HTMX calls is guarded as any handler is,
+  and what it binds, from the query string or a hidden field, is checked as any input is. What HTMX adds is HTML that
+  acts: it processes every `hx-` attribute in the content it swaps in. Razor encodes what a page writes, which keeps a
+  user's text inert; HTML from users that must be written raw sits inside an element that says `hx-ignore`, which
+  nothing inside it can turn off ([Security considerations](https://four.htmx.org/docs#security-considerations)).
+
+A departure from any of these, or from a pattern below, is made out loud: a comment where the page departs names
+what it departs from and says why, so that the next reader does not put it back. A repository that departs from one
+everywhere changes its own copy of this skill instead.
 
 ## 1. HTMX 4 against HTMX 2 habits
 
@@ -55,10 +103,21 @@ Not yet tried on a Razor project.
 ## 2. Loading HTMX
 
 - **Pin one exact version and serve it from `wwwroot`.** Download the release's `dist/htmx.min.js` once, keep it as
-  `wwwroot/js/htmx.min.js`, and record the version and its source address in the README. A pinned file cannot change
-  under the application, and section 1 shows how much a version can change. To move to a new version, read its What's
-  new page and its `dist/htmx.js`, check section 1 against them, update every place this skill names
-  4.0.1, and only then move the pin.
+  `wwwroot/js/htmx.min.js`, and record the version, its source address and its SHA-256 in the README. A pinned file
+  cannot change under the application, the checksum shows that the file is still the one released, and section 1
+  shows how much a version can change.
+- **Read a new version before moving the pin.** Each citation of the 4.0.1 source sits beside the pattern that rests
+  on it, so the citations are the list of what to check.
+  1. Read the new version's What's new page and its headers reference, and check sections 1 and 3 against them.
+  2. Run the new version's upgrade checker over the `.cshtml` files (section 1). It lists HTMX 2 names, which creep
+     back in whenever HTMX is written from memory.
+  3. Search this skill for "4.0.1 source" and find each method it names in the new `dist/htmx.js`, under a new name
+     if need be. Check that each still does what the sentence beside its citation says.
+  4. Update every place this skill names 4.0.1, then move the pin: the file in `wwwroot`, and the version and
+     checksum in the README.
+  5. In the browser, try each pattern that rests on a cited method, as section 6 says: Back and Forward, the focus
+     after a swap, a save's `HX-Location`, an answer with an `<hx-partial>`, a refused save's 422, and the others.
+     The page models' unit tests set HTMX's headers by hand, so they pass whatever the new version sends.
 - **Every script goes in `<head>`, with `defer`.** Back and Forward, and a boosted link with no target, swap a new
   `<body>` in, and HTMX runs every `<script>` in swapped content (4.0.1 source, `#processScripts`). A script in the
   body runs again on each such swap, and HTMX itself would load a second time. `defer` keeps the scripts from
@@ -81,42 +140,77 @@ with the whole page otherwise.
   with `hx-select`. Those send `HX-Request-Type: full`, and a request that will swap one element sends `partial`
   ([HX-Request-Type](https://four.htmx.org/reference/headers/HX-Request-Type)). Return the partial only for `partial`;
   return the page for `full` and for a request with no HTMX headers at all.
-- **Send `Vary: HX-Request-Type` from both branches**, so a cache keeps the two answers apart
-  ([Caching](https://four.htmx.org/docs#caching)).
+- **Send `Vary: HX-Request-Type` from both branches**, so that a cache never answers a request for the whole page
+  with the partial it stored for the same URL, as the browser's own cache can when it goes Back to a URL that HTMX
+  pushed ([Caching](https://four.htmx.org/docs#caching); its example still varies by `HX-Request`). A cache that keys
+  on the URL alone must be told too: ASP.NET Core's output caching does, unless the page's policy adds the header with
+  `SetVaryByHeader("HX-Request-Type")`
+  ([Output caching](https://learn.microsoft.com/aspnet/core/performance/caching/output#specify-the-cache-key)).
+  Add the header to any `Vary` already set rather than replacing it, so that what another part of the application
+  varies by survives. `Vary` keeps the two answers apart and does nothing more: whether a page may be cached at all,
+  as one drawn for a signed-in user may not, is decided apart from it.
 - **The page renders the same partial.** The page's `.cshtml` places it with `<partial name="_ProductList"
   model="Model" />` and the handler returns `this.Partial("_ProductList", this)`, so the two answers cannot differ.
-  The partial's model is the page model.
+  The partial's model is the page model, the simplest way to keep the two the same; a model of the partial's own
+  works as well, as long as the page and the handler pass the same one.
 - **The partial's root element is the target, and is replaced whole.** Give it an `id` and swap it with `outerHTML`,
   so that its attributes, counts and state come back with every response. Because the HTMX attributes sit on that
-  root, each new copy carries them. A comment at the top of the partial says which element it replaces, how, and
-  which handlers return it, so the contract can be read where it is kept (the workshop's "fragment inventory", in
-  "Checkpoint: Make It Production-Livable").
+  root, each new copy carries them. A comment at the top of the partial says which element it replaces, how, which
+  handlers return it, whether the URL follows, and where the keyboard goes after it, each with its reason, so the
+  contract can be read where it is kept (the workshop's "fragment inventory", in "Checkpoint: Make It
+  Production-Livable").
+- **One static class holds HTMX's headers, and every page model asks it.** It offers what a page means, such as
+  whether HTMX asked for part of the page, and keeps the header names private, so that no page decides on
+  `HX-Request` by mistake and a version that renames a header changes one file (section 2). A test writes the names
+  itself, so a name the class misspells fails the test instead of agreeing with it. The class reads and writes those
+  headers and decides nothing else: who may ask, and what a request may change, stay with the handler.
 
 ```csharp
-// HTMX 4 says on every request whether it will swap one element ("partial") or the whole body ("full").
-private const string HtmxRequestTypeHeader = "HX-Request-Type";
-private const string PartialRequestType = "partial";
-
 public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
 {
     ProductCollectionRequest request = CreateRequest(this.Input);
     this.Products = await this._products.ListAsync(request, cancellationToken).ConfigureAwait(false);
 
-    // One URL, two bodies: a cache must keep them apart by the header that chooses between them.
-    IHeaderDictionary responseHeaders = this.Response.Headers;
-    responseHeaders.Vary = HtmxRequestTypeHeader;
-    if (IsHtmxSwap(this.Request))
+    HtmxHeaders.VaryByRequestType(this.Response);
+    if (HtmxHeaders.IsPartialRequest(this.Request))
     {
         return this.Partial("_ProductList", this);
     }
 
     return this.Page();
 }
+```
 
-private static bool IsHtmxSwap(HttpRequest request)
+```csharp
+// The HTMX 4 headers that page models read and write, kept in one place.
+public static class HtmxHeaders
 {
-    IHeaderDictionary headers = request.Headers;
-    return headers[HtmxRequestTypeHeader] == PartialRequestType;
+    // HTMX 4 says on every request whether it will swap one element ("partial") or the whole body ("full").
+    private const string RequestType = "HX-Request-Type";
+    private const string PartialRequestType = "partial";
+
+    // Makes HTMX load another page as a boosted link would (section 7).
+    private const string Location = "HX-Location";
+
+    public static bool IsPartialRequest(HttpRequest request)
+    {
+        IHeaderDictionary headers = request.Headers;
+        return headers[RequestType] == PartialRequestType;
+    }
+
+    // One URL, two bodies: a cache must keep them apart by the header that chooses between them. Appended, so that
+    // a Vary set elsewhere is kept.
+    public static void VaryByRequestType(HttpResponse response)
+    {
+        IHeaderDictionary headers = response.Headers;
+        headers.Append(HeaderNames.Vary, RequestType);
+    }
+
+    public static void LoadPage(HttpResponse response, string url)
+    {
+        IHeaderDictionary headers = response.Headers;
+        headers[Location] = url;
+    }
 }
 ```
 
@@ -128,8 +222,13 @@ private static bool IsHtmxSwap(HttpRequest request)
   pushes into history must load the whole page on its own
   ([Browser history](https://four.htmx.org/docs#browser-history-support)), and this is what makes that true. Where
   the page lies is a cursor, `after=<id>` or `before=<id>`, not a page number: key-based paging, which seeks to the
-  page through an index instead of skipping the rows before it. Paging this way is not HTMX's concern, but it is the
-  pattern to copy, and every link and form in the list carries the cursor the same way it carries the rest.
+  page through an index instead of skipping the rows before it. HTMX needs only that the URL says where the page
+  lies; key-based paging is this skill's choice, and the pattern to copy. The cursor names the row beside the page:
+  the list's query reads that row's sort values and seeks past them, so the order must be fully unique, the sort
+  column and then the identifier ([Pagination](https://learn.microsoft.com/ef/core/querying/pagination)). Previous,
+  Next and the page size carry the cursor; a new filter, status or sort leaves it out and starts at the first page,
+  since the cursor names a place in another order. A cursor whose row has gone, or that leaves too little to show,
+  shows the first page, and each page is read as the data stands then, not from a snapshot.
 - **The list's container declares the swap once, inherited:**
 
   ```html
@@ -143,6 +242,15 @@ private static bool IsHtmxSwap(HttpRequest request)
   and forms, written with `asp-page` and `asp-all-route-data` like any others.
 - **A link that leaves the list says `hx-boost="false"`.** Otherwise it inherits the container as its target, and the
   next page would be swapped into the list.
+- **Paging takes the page's main content, and its heading takes the keyboard.** Previous, Next and the page-size
+  control replace the main content, heading and all, rather than the list alone (section 9). Each says
+  `hx-target="#main" hx-select="#main"`, where `#main` is the layout's `<main>`: `hx-select` makes the request
+  `HX-Request-Type: full` (section 3), so the handler answers with the whole page, and HTMX takes the main content
+  from it. The page marks its heading `tabindex="-1"` and `autofocus` when HTMX asked for it, and HTMX focuses the
+  heading after the swap (4.0.1 source, `#handleAutoFocus`). The control that was pressed may not be on the new page;
+  the heading starts the keyboard and the window at the top, as a page loaded without HTMX would, and a screen reader
+  reads it out, so the user hears that the page changed. A page the browser loads on its own starts at the top
+  already, so the heading is marked only when HTMX asked.
 - **Filter as you type** with a search input inside the list's GET form:
 
   ```html
@@ -154,7 +262,8 @@ private static bool IsHtmxSwap(HttpRequest request)
   The request goes 300 ms after the last key, and `search` catches the box's clear button. The input sends only its own
   value, so `hx-include` adds the form's hidden inputs, which carry the rest of the list's state; pressing Enter
   without HTMX submits the same values. An input is not a boost target, so it pushes its own URL. The `id` lets HTMX
-  put focus and the caret back into the new copy of the box after the swap (4.0.1 source, `#insertContent`).
+  put focus and the caret back into the new copy of the box after the swap (4.0.1 source, `#insertContent`). An
+  answer slower than the typing can leave the list on an earlier value than the box holds; section 13 says why.
 - **Show that a request is running** by naming the container in `hx-indicator`. HTMX adds the class `htmx-request` to
   it while the request runs, and CSS keyed on that class dims the rows or runs a progress bar.
 
@@ -182,9 +291,9 @@ private static bool IsHtmxSwap(HttpRequest request)
   | Partial | `HX-Request: true`, `HX-Request-Type: partial` | `PartialViewResult` with the partial's name |
   | History restore | `HX-Request: true`, `HX-Request-Type: full`, `HX-History-Restore-Request: true` | `PageResult` |
 
-  One more test checks that the response's `Vary` header names `HX-Request-Type`. `this.Partial(…)` reads the page's
-  `ViewData` and `MetadataProvider`, so the test sets both: a `ViewDataDictionary` on the `PageContext`, and an
-  `EmptyModelMetadataProvider` for each.
+  One more test starts the response with a `Vary` value already set, and checks that the header then names both it
+  and `HX-Request-Type`. `this.Partial(…)` reads the page's `ViewData` and `MetadataProvider`, so the test sets both:
+  a `ViewDataDictionary` on the `PageContext`, and an `EmptyModelMetadataProvider` for each.
 - **A handler that posts is tested the same way** (section 7). A plain post that succeeds gives a
   `RedirectToPageResult`; an HTMX one gives a `StatusCodeResult` of 204, with `HX-Location` among the response's
   headers; a refused one gives a `PageResult` or a `PartialViewResult`, with its status on the response. Two things
@@ -198,6 +307,9 @@ private static bool IsHtmxSwap(HttpRequest request)
   the URL that is pushed. Read the request headers and the response body in the developer tools' network panel: the
   body holds the target's own outer element, and the target's `id` appears once on the page (workshop, "Checkpoint:
   Troubleshooting + Pattern Review"). Then press Back and Forward after a few swaps.
+- **Without HTMX is tried two ways.** Once with HTMX's script left out and the application's own still running, as
+  when the file fails to load, and once with script turned off in the browser, which takes the application's own
+  away too. A page reaches every action both ways.
 
 ## 7. Forms that post
 
@@ -238,8 +350,9 @@ form itself.
   (section 1), so the handler needs no `HX-Retarget` or `HX-Reswap`: 422 Unprocessable Entity when a value must change,
   409 Conflict when the record has moved on since the form was filled. A plain post gets `Page()` with the same status,
   which a browser shows like any page. HTMX raises `htmx:response:error` for each (4.0.1 source, `#issueRequest`), and
-  the browser's console lists each one as a resource that failed to load; both are expected. `this.Partial(name, this)` hands the page's
-  `ModelState` to the partial (ASP.NET Core 10 source, `PageModel.Partial`), so the messages render with no helper.
+  the browser's console lists each one as a resource that failed to load; both are expected. `this.Partial(name, this)`
+  hands the page's `ModelState` to the partial (ASP.NET Core 10 source, `PageModel.Partial`), so the messages render
+  with no helper.
 - **The swapped element holds everything a refused save can change.** That is more than the form: a page header that
   shows the record's name, version and who changed it last belongs inside it too, so that a save refused because the
   record moved on shows the record as it is now. The handler reads the record again before it answers.
@@ -249,8 +362,10 @@ form itself.
   `aria-describedby` naming the message, and no `autofocus`. A tag helper of the application's own on `input`,
   `select` and `textarea` with `asp-for` can add all three from the view's `ViewData.ModelState`, the dictionary the
   framework's tag helpers read, running after them (theirs run at the order -1000) and giving `autofocus` to the first
-  invalid control in the response only. A second, on `span` with `asp-validation-for`, gives each message the `id`
-  the control names.
+  invalid control in the response only. It adds the message's `id` after any `id` already in `aria-describedby`,
+  such as a hint's, rather than replacing it. A second, on `span` with `asp-validation-for`, gives each message the
+  `id` the control names, built from the field's full name as the framework builds a control's `id`, prefix and index
+  included, so that a repeated field's message has its own.
 - **A save that succeeds answers 204 with `HX-Location`, never a redirect.** `fetch` follows a redirect itself (4.0.1
   source, `#issueRequest` leaves `redirect` at its default), so HTMX would swap whatever the next page returns into the
   form's target. `HX-Location` makes HTMX GET the address as a boosted link would: into `<body>`, with
@@ -261,7 +376,7 @@ form itself.
   ```csharp
   private IActionResult ShowProduct(long id)
   {
-      if (!IsHtmxSwap(this.Request))
+      if (!HtmxHeaders.IsPartialRequest(this.Request))
       {
           return this.RedirectToPage("./Details", new { id });
       }
@@ -269,25 +384,39 @@ form itself.
       // fetch would follow a redirect itself, and HTMX would swap the next page into the form.
       string url = this.Url.Page("./Details", new { id })
           ?? throw new InvalidOperationException("The product's page has no address.");
-      IHeaderDictionary headers = this.Response.Headers;
-      headers["HX-Location"] = url;
+      HtmxHeaders.LoadPage(this.Response, url);
       return this.StatusCode(StatusCodes.Status204NoContent);
   }
   ```
 
-  `PageModel` has no `NoContent()`; `StatusCode` gives the same result.
+  `PageModel` has no `NoContent()`; `StatusCode` gives the same result. The address comes from `Url.Page`, as a
+  redirect's would. One taken from the request, such as a return address, is checked with `Url.IsLocalUrl` first:
+  `LocalRedirect` makes that check for a redirect, and nothing makes it for a header.
 - **A save that another save overtook.** When the form carries the record's version, for optimistic concurrency, and
-  the record has moved on, the form comes back with 409, keeps the values being edited, and starts from the saved
-  version, so that saving again replaces it on purpose. Remove the posted version from `ModelState` before setting the
-  new one on the input model: a tag helper writes the value that was posted ahead of the model's.
+  the record has moved on, the form comes back with 409 and keeps the values being edited, so no work is lost. Under
+  each field whose saved value differs, it shows the saved value, tied to the field by `aria-describedby`; above the
+  form, apart from any field's own message, a message names who saved and says that saving again replaces what they
+  saved. The form now carries the saved version, so saving again replaces that version and only that one: a save
+  that lands in between is refused the same way, because every save is checked against the version it carries. This
+  answer keeps the user's work; an application that would rather start again from the saved values, or merge the
+  two, answers 409 the same way and draws its own choice. Whichever it draws, remove the posted version from
+  `ModelState` before setting the new one on the input model: a tag helper writes the value that was posted ahead of
+  the model's.
 - **A submit button that is busy.** The form is the request's source, so HTMX marks the form with `htmx-request`
   unless told otherwise. `hx-indicator="find button[type=submit]"` marks the button instead, and
   `hx-disable="find button[type=submit]"` disables it while the request runs, which also stops Enter in a field from
   sending the form again: HTML's implicit submission does nothing when the default button is disabled. `find` is HTMX
   4's selector for the first matching descendant (4.0.1 source, `#findAllExt`). `hx-disable` costs the focus: a
   disabled button loses it, and HTMX can put back only an element that had it (section 8). On a form whose answer
-  sets `autofocus` that does not matter; on a one-button form whose answer replaces the button, leave `hx-disable`
-  off, and let a busy style keyed on `htmx-request` stop a second click.
+  sets `autofocus` that does not matter. On a one-button form whose answer replaces the button, such as Archive,
+  leave `hx-disable` off so that the focus comes back by `id`, and keep a repeat harmless in other ways. A busy style
+  keyed on `htmx-request` shows that the request is running, and `pointer-events: none` in it stops a second click,
+  but not a second Enter or Space on the focused button: that request joins the form's queue behind the first
+  (section 13). `hx-sync="this:drop"` on the form would drop it instead (4.0.1 source, `RequestQueue.admit`), which
+  is not yet tried. What makes a repeat safe is the server: the action names the state it leads to, so a repeat
+  finds the record already there and changes nothing, as an Archive of an archived record does, with no Undo to
+  offer, and an action that would do harm twice carries the record's version (section 11). No handler counts on a
+  button being disabled.
 - **A button that acts on the record posts to a named handler**, named for what it does. A browser form can only GET
   or POST, so an action such as Archive is a one-button form posting to `?handler=Archive`, answered by
   `OnPostArchiveAsync`, and its opposite, Restore, is a handler of its own beside it.
@@ -295,9 +424,11 @@ form itself.
   both `action` and `hx-post`, and the handler binds the route's values as the GET handler does. `?handler=Archive` in
   the network panel leads straight to the method (workshop, "Checkpoint: Make It Production-Livable"). HTMX 4's
   `hx-delete` would leave out the form's fields (section 1), and the token with them, so the form posts.
-- **Handlers that several pages share live on a base page model.** Razor Pages finds the handlers an abstract base
-  class declares on every page that inherits it, so the tabs of one record, each a page with its own URL, share
-  actions such as Archive and Restore, while each posts to its own address and answers with its own content.
+- **Handlers that several pages share can live on a base page model.** Razor Pages finds the handlers an abstract
+  base class declares on every page that inherits it, so the tabs of one record, each a page with its own URL, share
+  actions such as Archive and Restore, while each posts to its own address and answers with its own content. It is
+  one way to share them, the one that needs no wiring; what the handlers do lives in a service either way, so a page
+  that cannot inherit calls the service from a handler of its own.
 - **A form inside a `<dialog>` posts like any other.** The dialog opens with `commandfor` and `command="show-modal"`,
   which need no script, and its form says `hx-post` as any form does. When the answer replaces the element that holds
   the dialog, the modal dialog leaves the document with it, and nothing is left inert. Without HTMX the post
@@ -319,8 +450,9 @@ region of the layout after an action on the page.
   page renders too, and the toast, which the page renders into the layout's region through a section
   (`@section Toasts`). The region sits empty in the layout, so a live region (`role="status"`) is in place before any
   toast arrives, and screen readers announce each one.
-- **Replace the region's content, never add to it.** `hx-swap="innerHTML"` leaves one toast at a time, so an Undo
-  never outlives the action it undoes.
+- **Replace the region's content, never add to it.** `hx-swap="innerHTML"` leaves one toast at a time, so the only
+  Undo on screen is the one for the last action. That is a choice about what the user sees, not what keeps an Undo
+  safe: an Undo is an ordinary action, and its handler checks it like any other.
 - **Without HTMX the extra content waits for the redirect.** A plain post answers with `RedirectToPage()`, as section
   7 says, and leaves the toast's message in `TempData`; the page's GET handler reads it there, and a read removes it,
   so refreshing the page does not show it again. Undo is a real form, so it works the same way.
@@ -385,8 +517,9 @@ with a filter box over a list of radio buttons, narrows the choices as you type.
   `hx-include` naming the list sends the radio that is checked, so the list comes back with it still checked.
 - **HTMX 4 checks a form with the browser's own validation before sending it**, unless the form says `novalidate`
   (4.0.1 source, `#createRequestContext` and `#collectFormData`). Radios marked `required` stop an empty choice with
-  the browser's message, and nothing is sent. The button that sent the form adds its own name and value, so
-  `name="choose" value="true"` tells the handler a choice was made, and its answer marks the field's button
+  the browser's message, and nothing is sent. That spares a request and proves nothing: the handler still validates
+  what it binds, since a request need not come from the browser. The button that sent the form adds its own name and
+  value, so `name="choose" value="true"` tells the handler a choice was made, and its answer marks the field's button
   `autofocus` to put the keyboard back there (section 9).
 - **Enter in the picker's filter sends the picker's form**, because the filter is one of its fields. By then the list
   has kept up with the typing, so Enter chooses the checked radio, and with none checked the browser asks for one.
@@ -437,11 +570,13 @@ confirm dialog (section 11), whose answer draws the list again without it.
 
 - **Read the page again from the same cursor.** The dialog's form posts to the list's own address, its state
   included, as a row's action does (section 9), and the handler reads the page that address names once the action has
-  run. With key-based paging the cursor names a row outside the page, so the rows after the one that left move up and
-  the page fills from the next; only the last page comes back a row short. A page left with no row is a cursor that
-  leaves nothing to show, and the list's own rule for one decides what is shown, such as its first page, so the
-  answer needs no rule of its own. The workshop goes back a page instead (Lab 4), which paging by page number needs
-  and paging by key does not.
+  run. With key-based paging the cursor names a row outside the page, so the page closes up around the gap. Read
+  forwards, from `after` or from the start, the rows after the one that left move up and the page fills from the
+  next, and only the last page comes back a row short. Read backwards, from `before`, the rows before it move down
+  and the page fills from the one before, and a page that reaches the start of the list shows the first page whole
+  (section 4). A page left with no row is a cursor that leaves nothing to show, and the list's own rule for one
+  decides what is shown, such as its first page, so the answer needs no rule of its own. The workshop goes back a page
+  instead (Lab 4), which paging by page number needs and paging by key does not.
 - **The target holds every count the row was in.** An action that leaves its row in the list, such as Archive among
   rows that show archived ones, changes the list alone. One that takes the row out also changes any count of the
   list's records shown outside it, such as a count on a tab's label, so its target is the smallest element that holds
@@ -479,6 +614,31 @@ workshop names its chapter.
   ([CSRF prevention](https://four.htmx.org/docs#csrf-prevention)). An input that posts on its own, such as one checked
   as you type, sends only its own value unless it says `hx-include="closest form"` (workshop, "Checkpoint:
   Troubleshooting + Pattern Review").
+- **A request whose sign-in has expired, or that is not allowed.** Cookie authentication answers it with a redirect
+  to the sign-in or access-denied page, `fetch` follows the redirect (section 7), and HTMX swaps that page into the
+  request's target. `CookieAuthenticationEvents.OnRedirectToLogin` and `OnRedirectToAccessDenied` can answer an HTMX
+  request with 204 and `HX-Redirect` naming the page instead. `HX-Redirect` loads it with a full reload, for a page
+  outside the application's own flow, where `HX-Location` loads a page as a boosted link would; HTMX reads it only
+  on a 2xx answer ([HX-Redirect](https://four.htmx.org/reference/headers/HX-Redirect)). That holds for every request
+  HTMX sends, a `full` one too, so the event tests `HX-Request`, not `HX-Request-Type` (section 3).
+- **An answer the page did not plan for.** HTMX 4 swaps it into the target like any other (section 1): a 400 or 404
+  with an empty body empties the target (section 7), and an error page built on the layout puts a whole page inside
+  it. `hx-status` sets the swap for one status or a range of them, as `hx-status:5xx="swap:none"` leaves the target
+  as it was ([hx-status](https://four.htmx.org/reference/attributes/hx-status)); that page does not say whether it
+  can be inherited from a container. What the user is told then, how they try again and where the keyboard goes,
+  after an error, a timeout (60 seconds, section 1) or a lost connection, is not yet worked out.
+- **Requests that overlap.** With no `hx-sync`, each element keeps its own queue with the strategy `queue first`:
+  while one request runs, the next waits, and any after that is dropped (4.0.1 source, `#determineSyncStrategy`,
+  `#getRequestQueue` and `RequestQueue.admit`; the reference page names `drop` as the default, and the pinned file
+  wins). So a filter typed while a slow answer is on its way can end on the results for an earlier value than the
+  box holds, with that value's URL pushed; and a filter, a sort link and Next in one list keep three queues, whose
+  answers land in any order. The likely answer is one queue for the list, whose newest request replaces the one
+  running: `hx-sync:inherited="this:replace"` on the list's container, where `this` is the container (section 1), and
+  `replace` aborts the running request ([hx-sync](https://four.htmx.org/reference/attributes/hx-sync)). A form with a
+  field checked as you type says on the field which wins when both run, such as `hx-sync="closest form:abort"`, so
+  that sending the form aborts the check. Before any of this is a rule, a browser test holds an answer back, lets a
+  newer one land and then releases the old one, to show that an aborted request swaps nothing in 4.0.1. An abort
+  stops the browser waiting, not the server, so a handler that changes data never counts on one.
 - **An action that takes its row out of the list and can be undone**, such as Archive on a list of active records
   only. The page read again is as section 12 says, and the toast's Undo posts the opposite from the same address,
   which puts the row back. Where the keyboard goes after that Undo, which was sent from the toast and not from a row,
@@ -503,6 +663,17 @@ workshop names its chapter.
   `hx-trigger="every 1s"`, and each answer replaces the element. The answer for a finished job leaves the trigger out,
   and the polling stops (workshop, Lab 5). HTMX 4 still reads `every` (4.0.1 source, `#parseTriggerSpecs`). Without
   HTMX the status needs a link that loads the page again.
+- **A confirmation page for a browser without invoker commands.** A link to a page the server draws, holding the
+  dialog's form, would reach an action behind a dialog on any browser and still give a chance to look before acting.
+  A page cannot offer the link to one browser and the dialog to another without script, so where that line falls is
+  not yet worked out.
+- **Tests that drive the pages.** Two layers sit between a page model's unit test and a person at a browser, and
+  neither is built. An integration test over `WebApplicationFactory` sends real requests through routing, binding
+  and the antiforgery check and reads the HTML that comes back
+  ([Integration tests](https://learn.microsoft.com/aspnet/core/test/integration-tests)). A browser test, with a tool
+  such as Playwright, loads the pinned `htmx.min.js` and checks swaps, history, focus, dialogs and both ways of
+  working without HTMX (section 6), and holds answers back to test requests that overlap. With them, step 5 of
+  section 2 runs the suite instead of a person.
 
 ## References
 
@@ -512,8 +683,9 @@ workshop names its chapter.
   branch of [bigskysoftware/htmx](https://github.com/bigskysoftware/htmx/tree/four), which runs ahead of any release,
   and some pages still describe HTMX 2: the [quirks](https://four.htmx.org/docs/quirks) page says error responses are
   not swapped and names config keys that 4 renamed. When the site and the pinned file disagree, the pinned file wins.
-  Its unminified source is `https://unpkg.com/htmx.org@<version>/dist/htmx.js`; citations in this skill to
-  "4.0.1 source" name a method in that file.
+  The pinned release's unminified source is `https://unpkg.com/htmx.org@4.0.1/dist/htmx.js`, and npm does not let a
+  published version change; citations in this skill to "4.0.1 source" name a method in that file, so anyone can read
+  what each one read. Another version's is at the same address with its own number.
 - **Chris Woodruff's [htmx Razor Pages workshop](https://github.com/cwoodruff/htmx-razor-workshop)**, MIT. Good on the
   Razor Pages side, and sections 3, 6 to 9 and 13 take several ideas from it, each credited by chapter: a comment that
   states each partial's contract, what each request gets back, handlers named for what they do, a row action that
