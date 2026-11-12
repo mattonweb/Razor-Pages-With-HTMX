@@ -5,6 +5,7 @@ using HTMX.Adapter.Customers;
 using HTMX.Adapter.Customers.Configuration;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Application.Web.Authentication;
+using HTMX.Application.Web.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -69,7 +70,8 @@ public static class Program
     }
 
     /// <summary>
-    /// Builds the request pipeline: error handling, HTTPS, static files, sign-in and the Razor Pages.
+    /// Builds the request pipeline: error handling, HTTPS, the Content Security Policy, static files, sign-in and the
+    /// Razor Pages.
     /// </summary>
     /// <param name="application">The application being built.</param>
     private static void UsePipeline(WebApplication application)
@@ -81,6 +83,9 @@ public static class Program
         }
 
         application.UseHttpsRedirection();
+
+        // Every answer, a static file's included, tells the browser what its page may load and run.
+        application.UseContentSecurityPolicy(application.Environment);
         application.MapStaticAssets();
         application.UseAuthentication();
 
