@@ -66,6 +66,31 @@
         screen readers announce each toast as it arrives.
     *@
     <div class="toasts" id="toasts" role="status" aria-live="polite">@await RenderSectionAsync("Toasts", required: false)</div>
+
+    @*
+        What the application's script puts in the toast region when a request HTMX sent fails, in place of swapping
+        anything: an answer the page did not plan for, no answer before HTMX gives up waiting, or none at all. The
+        toasts are written here, in the brand's markup, so that the script holds no words of its own. A template's
+        content is not part of the page until the script copies it out, and without script it never is.
+    *@
+    @{
+        Toast unplannedAnswer = new Toast
+        {
+            Message = "Something went wrong, so that may not have been done. Reload the page, then try again.",
+        };
+        Toast timedOut = new Toast
+        {
+            Message = "The server took too long to answer, so that may not have been done. "
+                + "Reload the page, then try again.",
+        };
+        Toast connectionLost = new Toast
+        {
+            Message = "The page couldn't reach the server. Check your connection, then try again.",
+        };
+    }
+    <template id="request-failed-answer"><partial name="_Toast" model="unplannedAnswer" /></template>
+    <template id="request-failed-timeout"><partial name="_Toast" model="timedOut" /></template>
+    <template id="request-failed-connection"><partial name="_Toast" model="connectionLost" /></template>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

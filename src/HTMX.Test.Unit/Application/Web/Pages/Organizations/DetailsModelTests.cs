@@ -85,6 +85,30 @@ public sealed class DetailsModelTests
     }
 
     /// <summary>
+    /// Unit test to verify that the tab's content, asked for by HTMX for an organization deleted since the page was
+    /// shown, loads the whole page, which says so, rather than putting that page inside the part that asked.
+    /// </summary>
+    [TestMethod]
+    public async Task OnGetAsync_GoneByHtmx_LoadsTheWholePage()
+    {
+        // Arrange (Given)
+        DetailsModel page = CreatePage(new StubOrganizationService(), 10003, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
+        IHeaderDictionary headers = page.Response.Headers;
+
+        // Assert (Then)
+        StatusCodeResult status = Assert.IsInstanceOfType<StatusCodeResult>(
+            result,
+            "HTMX should get no content to swap.");
+        Assert.AreEqual(
+            (StatusCodes.Status204NoContent, "/Organizations/Details/10003"),
+            (status.StatusCode, headers["HX-Location"].ToString()),
+            "HTMX should load the tab's whole page, which says no organization has the identifier.");
+    }
+
+    /// <summary>
     /// Unit test to verify that the page shows the toast an action left in TempData before the redirect, with an Undo
     /// that posts to the address it left.
     /// </summary>

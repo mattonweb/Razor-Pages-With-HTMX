@@ -67,12 +67,20 @@ public abstract class RecordPageModel : PageModel
     /// </summary>
     /// <param name="cancellationToken">Signals that the browser has gone away.</param>
     /// <returns>Only the tab's content when HTMX asked for it, as for another page of a list, to swap into the page it
-    /// already shows; the whole page otherwise, which says so when no record has the identifier.</returns>
+    /// already shows; the whole page otherwise, which says so when no record has the identifier. When HTMX asked for
+    /// the content of a record that has gone, 204 and a request to load the whole page.</returns>
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
         // One URL answers with two different bodies, so a cache must keep them apart by the header that chooses.
         HtmxHeaders.VaryByRequestType(this.Response);
         bool found = await this.FindRecordAsync(cancellationToken).ConfigureAwait(false);
+        if (!found && HtmxHeaders.IsPartialRequest(this.Request))
+        {
+            // The record went while the page showed it, so there is no tab content to swap in, and the page that says
+            // so is a whole page, which would land inside the part that asked. HTMX loads it in place of this one.
+            return HtmxAnswers.NextPage(this, this.PageName, this.TabValues());
+        }
+
         if (!found)
         {
             // The page still renders, inside the application's frame, and the status tells the browser too.
