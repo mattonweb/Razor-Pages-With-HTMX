@@ -2,7 +2,7 @@
 name: brand-htmlx-pages
 description: The HTMLX Pages component library for the Razor Pages and HTMX application in this repository. Use whenever writing, styling or reviewing its markup, CSS, partial views or page layouts. Covers the design tokens (color, type, space, shape) taken from the DevExtreme UI Template Gallery and MudBlazor, light and dark mode, the class naming rule, buttons and icons, and a catalog of components by family, each with its markup, variants, states, accessibility and when to use it — layout (app shell, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, busy bar, bulk bar, alert, toast). Draft; the status table says which components are settled.
 owner: Matt
-version: 0.5.0
+version: 0.5.1
 visibility: public
 ---
 
@@ -18,7 +18,7 @@ The layout patterns come from the [DevExtreme UI Template Gallery](https://githu
 code, CSS or artwork is copied from either: the gallery runs on DevExtreme, which has its own commercial license, and
 this repository is public. Everything in this skill was written for this repository.
 
-## Status: draft 0.5.0
+## Status: draft 0.5.1
 
 | Family | Components | State |
 |---|---|---|
@@ -31,7 +31,7 @@ this repository is public. Everything in this skill was written for this reposit
 | Data display | grid (title cell, sort header, archived row), chip, empty state, fields, related-record link, side panel | Settled for review |
 | Data display, added | selection column, read-only grid, version badge, timeline, diff | Ready for review |
 | Inputs | filter box | Settled for review |
-| Inputs, added | field and validation, switch, choices, relation field and picker, form action bar | Ready for review |
+| Inputs, added | field and validation (checked as you type too), switch, choices, relation field and picker, form action bar | Ready for review |
 | Feedback | dialog, busy bar | Settled for review |
 | Feedback, added | confirm dialog, preview dialog, bulk bar, alert, toast | Ready for review |
 
@@ -265,6 +265,9 @@ value keeps its place between reading and editing.
   validation summary (`<div asp-validation-summary="ModelOnly">`, styled as `.validation-summary-errors`) at the top
   of the form.
 - *Hint:* `p.hint` under the control, also named in the control's `aria-describedby`.
+- *Checked as you type:* the message is a polite live region (`aria-live="polite"`), so a screen reader reads a
+  message that appears or changes while the user is still in the field. Nothing else changes: the control and the
+  message look as in any other state.
 - *Disabled and read-only:* the control's own `disabled` or `readonly`.
 - A group of controls, such as a switch, choices or a relation field, is a `fieldset.field` whose `legend` names it.
 
