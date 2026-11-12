@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, and the patterns still open (expired sign-ins, polling, more rows as a list scrolls, a Content Security Policy, a form with a file, boosting every link). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.19.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, and the patterns still open (expired sign-ins, polling, more rows as a list scrolls, a form with a file, boosting every link). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.20.0
 visibility: public
 ---
 
@@ -14,9 +14,9 @@ in step. It is written for HTMX 4.0.1 and ASP.NET Core 10, and every sentence is
 application on those versions, not only the one it was built in; how one application uses HTMX belongs in its own
 code, tests and README.
 
-The evidence differs by part. The patterns in sections 2 to 14 have been built and tried in a browser; where a
+The evidence differs by part. The patterns in sections 2 to 15 have been built and tried in a browser; where a
 section also covers a case that was not built, such as output caching, its citation is the only evidence.
-Section 1's rows were read in the source and the reference, not all built, and nothing in section 15 is built.
+Section 1's rows were read in the source and the reference, not all built, and nothing in section 16 is built.
 Every HTMX fact cites the reference page or the 4.0.1 source method it came from, and the two kinds of citation
 carry different weight. A reference page is what HTMX documents. A method in the 4.0.1 source is what that release
 happens to do: the method is private, a later release may change it, and section 2 checks each one again before
@@ -69,7 +69,8 @@ Every section below applies these, and says why where it does.
   user's text inert, and a handler answers with a partial for the same reason: HTML it builds as a string, as with
   `Content("<p>…</p>")`, is written as it is, so an `hx-` attribute in a user's text would act. HTML from users that
   must be written raw sits inside an element that says `hx-ignore`, which nothing inside it can turn off
-  ([Security considerations](https://four.htmx.org/docs#security-considerations)).
+  ([Security considerations](https://four.htmx.org/docs#security-considerations)). If markup gets in anyway, a
+  Content Security Policy stops it running a script (section 15).
 
 A departure from any of these, or from a pattern below, is made out loud: a comment where the page departs names
 what it departs from and says why, so that the next reader does not put it back. A repository that departs from one
@@ -828,7 +829,79 @@ or no answer at all, because the server took too long or the connection was lost
   for real: a row's form with its antiforgery token changed got a 400 with an empty body, and stopping the server
   lost the connection. Each left the page and its address as they were, with the toast and the keyboard as above.
 
-## 15. Still open
+## 15. A Content Security Policy
+
+A response header that tells the browser what a page may load and run. Razor encodes what a page writes, and
+`hx-ignore` fences off what it cannot (Principles); the policy is the second line, so that markup that got in anyway
+can neither run a script nor send what the page holds to another site
+([Content Security Policy](https://developer.mozilla.org/docs/Web/HTTP/Guides/CSP)).
+
+- **HTMX 4 needs nothing relaxed.** HTMX and the application's own script load from files (section 2), so a policy
+  that allows scripts and stylesheets from the application alone, with neither `'unsafe-inline'` nor
+  `'unsafe-eval'`, leaves every pattern in sections 2 to 14 working. The indicator styles HTMX adds come from a
+  stylesheet it constructs in script (4.0.1 source, `#initRequestIndicatorCss`), which the browser applied under
+  `style-src 'self'`. The policy in full:
+
+  ```text
+  default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self';
+  form-action 'self'; frame-ancestors 'none'; base-uri 'none'
+  ```
+
+  `default-src 'none'` refuses whatever no other directive allows. `connect-src` covers HTMX's requests, which it
+  sends with `fetch`. `form-action`, `frame-ancestors` and `base-uri` do not fall back to `default-src`, so each is
+  written out: forms post only to the application, no other site shows its pages in a frame, and no `<base>` element
+  changes where relative addresses lead.
+- **Nothing in the markup is code.** No `<script>` without `src`, no `onclick` or other handler attribute, no
+  `<style>` element and no `style` attribute: a look goes in a class in a stylesheet, and behavior in the
+  application's script, listening on `document` (section 2). A `<template>` that the script copies out (section 14)
+  is markup, and needs nothing.
+- **No page uses what HTMX compiles from a string.** HTMX 4 builds a function from an attribute's text for `hx-on`, a
+  trigger filter such as `click[shiftKey]`, a `js:` value in `hx-vals`, `hx-headers` or `hx-confirm`, and a `js:`
+  request address (4.0.1 source, `#executeJavaScript` and the methods that call it). Each needs `'unsafe-eval'`, which
+  would let a script that got in compile more. A trigger filter is built with `Function`, so under the policy it
+  throws an `EvalError` and its request is never sent. The others are built with the async function constructor,
+  which Chromium 156 did not hold to the policy: an `hx-on` handler ran. That is a gap in one browser, not leave to
+  use them. The ECMAScript specification has every function constructor, async ones included, ask the host first
+  ([CreateDynamicFunction](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-createdynamicfunction),
+  step 16), so a browser that follows it breaks the page. What they would do belongs in the application's script.
+- **A script in an answer never runs.** HTMX creates each `<script>` in swapped content again, so that it runs (4.0.1
+  source, `#processScripts`), and under the policy an inline one is refused. Leave `htmx.config.inlineScriptNonce`
+  unset: HTMX gives that nonce to every script in every answer, so under a policy with nonces it would run any script
+  that got into one. A script that part of a page needs goes in the layout's `<head>` (section 2).
+- **One middleware sends the header with every answer.** It runs before the rest of the pipeline, so a static file's
+  answer and the production error page carry the policy too. The developer exception page clears the response's
+  headers before it writes itself (ASP.NET Core source, `DeveloperExceptionPageMiddlewareImpl` and
+  `HttpResponse.Clear`), so it keeps its own inline script and styles. The two policies are constants beside it:
+
+  ```cs
+  public static IApplicationBuilder UseContentSecurityPolicy(
+      this IApplicationBuilder application, IHostEnvironment environment)
+  {
+      string policy = environment.IsDevelopment() ? DevelopmentPolicy : Policy;
+      return application.Use((context, next) =>
+      {
+          context.Response.Headers.ContentSecurityPolicy = policy;
+          return next(context);
+      });
+  }
+  ```
+
+  `Program` calls it after `UseHttpsRedirection`, and a unit test runs a pipeline built with it and reads the header.
+- **Development adds hot reload, and nothing else.** Hot reload, from `dotnet watch` or the IDE, adds a script to each
+  page that talks to it over a WebSocket on another port of the same machine, such as `ws://localhost:65088`, and
+  `'self'` covers no other port. So Development's `connect-src` adds `ws://localhost:*` and `wss://localhost:*`. Every
+  other rule holds there, so a violation shows in the browser's console while the page is being built, not after it
+  ships. Tried with `dotnet watch`: a changed stylesheet reached the page. Not tried from Visual Studio.
+- **An existing application tries the policy first.** `Content-Security-Policy-Report-Only`, with the same value,
+  enforces nothing and reports each violation, which lists what to fix before the real header is sent
+  ([Report-Only](https://developer.mozilla.org/docs/Web/HTTP/Reference/Headers/Content-Security-Policy-Report-Only)).
+- **Tried in a browser**, Chromium 156, under the policy, with the console and a `securitypolicyviolation` listener
+  open: a list's filter, Next, Back, an archive and its Undo, a refused save's 422 and a save's `HX-Location`, a field
+  checked as you type and a field enhanced as the page loads, with no violation. A deliberate `style` attribute and
+  `<style>` element were refused, a trigger filter threw, an inline script in a swapped answer did not run, and an
+  `hx-on` handler ran, as above.
+
+## 16. Still open
 
 Nothing in this section is built yet, so none of it is a rule. What is known, to start from; an idea taken from the
 workshop names its chapter.
@@ -844,15 +917,12 @@ workshop names its chapter.
   outside the application's own flow, where `HX-Location` loads a page as a boosted link would; HTMX reads it only
   on a 2xx answer ([HX-Redirect](https://four.htmx.org/reference/headers/HX-Redirect)). That holds for every request
   HTMX sends, a `full` one too, so the event tests `HX-Request`, not `HX-Request-Type` (section 3).
-- **A Content Security Policy.** HTMX 4 compiles code with JavaScript's `Function` constructor for `hx-on`, for
-  trigger filters such as `click[shiftKey]`, for `js:` values in `hx-vals`, `hx-headers` and `hx-confirm`, and for a
-  `js:` request address (4.0.1 source, `#executeJavaScript` and the methods that call it). A policy without
-  `'unsafe-eval'` stops exactly those, so a page that uses none of them, and loads HTMX and its own script from files,
-  needs nothing relaxed in `script-src` for HTMX's sake. A `<script>` in swapped content is created again, and takes
-  a nonce only from `htmx.config.inlineScriptNonce` (`#processScripts`); an extension can supply its own compiler and
-  a Trusted Types policy (`initSecurity`). Not yet worked out: what `style-src` needs for the indicator styles HTMX
-  adds through a constructed stylesheet unless `includeIndicatorCSS` is false (`#initRequestIndicatorCss`). None of
-  this has been tried under a real policy.
+- **A policy past `'self'` (section 15).** Trusted Types, `require-trusted-types-for 'script'`, makes every string
+  that becomes HTML pass through a policy the page names. HTMX 4 parses each answer through one that an extension
+  supplies with `initSecurity`, and otherwise through a plain object that hands the string on (4.0.1 source,
+  `#parseHTML`), which a browser enforcing Trusted Types would refuse. And a policy built on a nonce for each
+  response, with `'strict-dynamic'`, suits an application whose own origin also serves files it did not write, such
+  as uploads, where `'self'` would let one of them run as a script. Neither has been tried.
 - **Rows added to and removed from a form.** For a list of plain values, every row's input has the same name, such
   as `name="Input.Tags"`, which binds to a `List<string>` with no index numbers. The server renders one new row as a
   fragment that `hx-swap="beforeend"` appends, and removing a row only removes its element (workshop, Lab 5). A list
