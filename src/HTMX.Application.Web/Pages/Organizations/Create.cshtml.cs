@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Application.Web.Authentication;
+using HTMX.Application.Web.TagHelpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -13,14 +14,15 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 /// The form that creates an organization, at /organizations/create. A save that succeeds goes to the new
 /// organization's page; a save that is refused comes back with the form and the reason. Without HTMX that is a
 /// redirect or the whole page; with HTMX it is a request to load the new organization's page, or only the form.
+/// With HTMX the name is also checked as it is typed.
 /// </summary>
 public sealed class CreateModel : PageModel
 {
+    private const string CreatePage = "./Create";
     private const string FormPartial = "_OrganizationCreateForm";
+    private const string NameFieldPartial = "_OrganizationNameField";
+    private const string CheckNameHandler = "CheckName";
     private const string DetailsPage = "./Details";
-
-    // The form's name for the Name field, as ModelState keys it.
-    private const string NameKey = nameof(Input) + "." + nameof(OrganizationInput.Name);
 
     private readonly IOrganizationService _organizations;
 
@@ -42,6 +44,11 @@ public sealed class CreateModel : PageModel
     public OrganizationInput Input { get; set; } = new OrganizationInput();
 
     /// <summary>
+    /// Gets the address the form's name is checked at as it is typed: this page's own, with the CheckName handler.
+    /// </summary>
+    public string? CheckNameAddress => this.Url.Page(CreatePage, CheckNameHandler);
+
+    /// <summary>
     /// Creates the organization. A form that fails validation, or names an organization that already exists, comes
     /// back with 422 and the messages.
     /// </summary>
@@ -60,14 +67,34 @@ public sealed class CreateModel : PageModel
             .ConfigureAwait(false);
         if (response.Outcome == CreateOutcome.NameTaken)
         {
-            // Names match however they are capitalized, so the message does not repeat the one typed.
-            this.ModelState.AddModelError(NameKey, "Another organization already has this name.");
+            OrganizationNameCheck.MarkTaken(this.ModelState);
             return this.Refuse();
         }
 
         OrganizationId created = response.Id
             ?? throw new InvalidOperationException("A created organization always has an identifier.");
         return HtmxAnswers.NextPage(this, DetailsPage, new { id = created.Value });
+    }
+
+    /// <summary>
+    /// Checks the name as it is typed, and answers with the Name field alone, which HTMX morphs into the form. It saves
+    /// nothing, so it answers 200 whatever it finds, and it moves no focus. Only HTMX sends it; without HTMX the save
+    /// checks the name.
+    /// </summary>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The Name field, with its message.</returns>
+    public async Task<IActionResult> OnPostCheckNameAsync(CancellationToken cancellationToken)
+    {
+        await OrganizationNameCheck
+            .CheckAsync(this._organizations, this.Input, except: null, this.ModelState, cancellationToken)
+            .ConfigureAwait(false);
+        InvalidControlTagHelper.LeaveFocusAlone(this.HttpContext);
+        OrganizationFields field = new OrganizationFields
+        {
+            Input = this.Input,
+            CheckNameAddress = this.CheckNameAddress,
+        };
+        return this.Partial(NameFieldPartial, field);
     }
 
     /// <summary>

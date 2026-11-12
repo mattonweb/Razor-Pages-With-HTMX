@@ -1,0 +1,46 @@
+@model HTMX.Application.Web.Pages.Organizations.OrganizationFields
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The organization's Name field: its label, its input, the saved name when another save overtook this one, and its
+    message. The fields card draws it, and the name check answers with it alone.
+
+    When CheckNameAddress is set, HTMX checks the name as it is typed: 500 ms after the last key, and at once when the
+    user leaves the field. A post from an input sends its whole form, the antiforgery token among them, so the handler
+    binds and validates the name as the save does; it changes nothing, and answers 200 with this field. Each check
+    replaces the one still running (hx-sync="this:replace"), so the newest name wins. Leaving the field sends one
+    more, so a check sent before the last keys were typed never lands once the user has left.
+
+    hx-swap="outerMorph" updates the field in place rather than replacing it: the input keeps the keyboard, its caret
+    and whatever was typed after the check was sent, and only its error style and the message change. The message is
+    a polite live region, so a screen reader reads it when it changes. The answer gives no control autofocus, so the
+    keyboard stays wherever the user is by then.
+
+    The check is advice: the save checks again, since another organization can take the name in between, and without
+    HTMX the save is the only check. While the form shows another save's values the name is not checked, because the
+    check's answer cannot know the saved name and would take it off the page.
+*@
+@{
+    OrganizationInput input = Model.Input;
+    OrganizationSingleResponse? saved = Model.Saved;
+    string? savedName = saved is not null && saved.Name.Value != input.Name.Trim() ? saved.Name.Value : null;
+    string? describedBy = savedName is null ? null : "name-saved";
+    string? check = Model.CheckNameAddress;
+}
+<div class="field">
+    <label asp-for="Input.Name"></label>
+    @if (check is null)
+    {
+        <input asp-for="Input.Name" aria-describedby="@describedBy" />
+    }
+    else
+    {
+        <input asp-for="Input.Name" aria-describedby="@describedBy"
+               hx-post="@check" hx-trigger="input changed delay:500ms, change"
+               hx-target="closest .field" hx-swap="outerMorph" hx-sync="this:replace" />
+    }
+    @if (savedName is not null)
+    {
+        <p class="hint" id="name-saved">Saved as @savedName</p>
+    }
+    <span asp-validation-for="Input.Name" aria-live="@(check is null ? null : "polite")"></span>
+</div>

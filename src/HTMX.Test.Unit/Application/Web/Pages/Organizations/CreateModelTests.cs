@@ -160,11 +160,132 @@ public sealed class CreateModelTests
             StatusCodes.Status422UnprocessableEntity,
             page.Response.StatusCode,
             "A name that must change should be answered with 422.");
+        Assert.IsTrue(
+            DrawnControls.TakesFocus(page, "Input.Name"),
+            "After the save the user pressed, the Name field should take the keyboard.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that the name check asks about the name typed, without the spaces around it and with no
+    /// organization left out, marks the Name field only when another organization has it, and answers with the Name
+    /// field alone, with 200, still checked at the same address.
+    /// </summary>
+    /// <param name="taken">Whether another organization has the name.</param>
+    /// <param name="expected">What the Name field should be marked.</param>
+    [TestMethod]
+    [DataRow(true, ModelValidationState.Invalid, DisplayName = "A name another organization has")]
+    [DataRow(false, ModelValidationState.Valid, DisplayName = "A name no other organization has")]
+    public async Task OnPostCheckNameAsync_ValidName_MarksItOnlyWhenTaken(bool taken, ModelValidationState expected)
+    {
+        // Arrange (Given)
+        StubOrganizationService service = new StubOrganizationService(nameTaken: taken);
+        CreateModel page = CreatePage(service, HtmxRequest.Partial);
+        page.Input = CreateInput("  Sample & Sons  ");
+        MarkNameValid(page.ModelState, page.Input.Name);
+
+        // Act (When)
+        IActionResult result = await page.OnPostCheckNameAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        PartialViewResult partial = Assert.IsInstanceOfType<PartialViewResult>(
+            result,
+            "The check should answer with part of the page.");
+        Assert.AreEqual(
+            "_OrganizationNameField",
+            partial.ViewName,
+            "The Name field alone should come back.");
+        OrganizationFields field = Assert.IsInstanceOfType<OrganizationFields>(
+            partial.Model,
+            "The Name field should be drawn from the form's values.");
+        Assert.AreEqual(
+            "/Organizations/Create?handler=CheckName",
+            field.CheckNameAddress,
+            "The field should still be checked at the same address.");
+        Assert.AreEqual<(OrganizationName Name, OrganizationId? Except)?>(
+            (new OrganizationName("Sample & Sons"), null),
+            service.LastNameCheck(),
+            "The name should be asked about without the spaces around it, with no organization left out.");
+        Assert.AreEqual(
+            expected,
+            page.ModelState.GetFieldValidationState("Input.Name"),
+            "The Name field should be marked only when another organization has the name.");
+        Assert.AreEqual(
+            StatusCodes.Status200OK,
+            page.Response.StatusCode,
+            "A check saves nothing, so it should be answered with 200 whatever it finds.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a name that fails the field's own rules, such as an empty one, keeps their message and
+    /// is not looked up.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostCheckNameAsync_NameFailsItsOwnRules_LooksNothingUp()
+    {
+        // Arrange (Given)
+        StubOrganizationService service = new StubOrganizationService(nameTaken: true);
+        CreateModel page = CreatePage(service, HtmxRequest.Partial);
+        page.Input = CreateInput(string.Empty);
+        page.ModelState.AddModelError("Input.Name", "Enter a name.");
+
+        // Act (When)
+        IActionResult result = await page.OnPostCheckNameAsync(CancellationToken.None).ConfigureAwait(false);
+        ModelStateEntry? name = page.ModelState["Input.Name"];
+
+        // Assert (Then)
+        Assert.IsInstanceOfType<PartialViewResult>(
+            result,
+            "The Name field should come back with its message.");
+        Assert.IsNull(
+            service.LastNameCheck(),
+            "A name that fails the field's own rules should not be looked up.");
+        Assert.HasCount(
+            1,
+            name?.Errors ?? [],
+            "The field should keep its own message, and only that.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that the check's answer gives no control the keyboard, even a Name field it marks: by the
+    /// time it arrives the user may have moved to another field.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostCheckNameAsync_NameTaken_GivesNoControlTheFocus()
+    {
+        // Arrange (Given)
+        StubOrganizationService service = new StubOrganizationService(nameTaken: true);
+        CreateModel page = CreatePage(service, HtmxRequest.Partial);
+        page.Input = CreateInput("Sample & Sons");
+        MarkNameValid(page.ModelState, page.Input.Name);
+
+        // Act (When)
+        await page.OnPostCheckNameAsync(CancellationToken.None).ConfigureAwait(false);
+        bool focused = DrawnControls.TakesFocus(page, "Input.Name");
+
+        // Assert (Then)
+        Assert.AreEqual(
+            ModelValidationState.Invalid,
+            page.ModelState.GetFieldValidationState("Input.Name"),
+            "The Name field should carry the message.");
+        Assert.IsFalse(
+            focused,
+            "The Name field should not take the keyboard from wherever the user is.");
     }
 
     #endregion Public Methods
 
     #region Private Methods
+
+    /// <summary>
+    /// Marks the Name field as posted and valid, as model binding leaves a name that passes the field's own rules.
+    /// </summary>
+    /// <param name="modelState">The page's ModelState.</param>
+    /// <param name="name">The name posted.</param>
+    private static void MarkNameValid(ModelStateDictionary modelState, string name)
+    {
+        modelState.SetModelValue("Input.Name", name, name);
+        modelState.MarkFieldValid("Input.Name");
+    }
 
     /// <summary>
     /// Creates the form's values as the browser would post them, in shipping.

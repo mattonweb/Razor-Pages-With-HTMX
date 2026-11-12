@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Application.Web.Authentication;
+using HTMX.Application.Web.TagHelpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -13,15 +14,18 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 /// <summary>
 /// One organization's edit form, at /organizations/{id}/edit. A save that succeeds goes to the organization's page; a
 /// save that is refused comes back with the form and the reason. Without HTMX that is a redirect or the whole page;
-/// with HTMX it is a request to load the organization's page, or only the edit page's content.
+/// with HTMX it is a request to load the organization's page, or only the edit page's content. With HTMX the name is
+/// also checked as it is typed.
 /// </summary>
 public sealed class EditModel : PageModel
 {
+    private const string EditPage = "./Edit";
     private const string EditPartial = "_OrganizationEdit";
+    private const string NameFieldPartial = "_OrganizationNameField";
+    private const string CheckNameHandler = "CheckName";
     private const string DetailsPage = "./Details";
 
-    // The form's names for its fields, as ModelState keys them.
-    private const string NameKey = nameof(Input) + "." + nameof(InputModel.Name);
+    // The form's name for the version it was filled from, as ModelState keys it.
     private const string VersionKey = nameof(Input) + "." + nameof(InputModel.Version);
 
     private readonly IOrganizationService _organizations;
@@ -64,6 +68,11 @@ public sealed class EditModel : PageModel
     /// it can't be edited takes the keyboard in place of the form.
     /// </summary>
     public bool ArchivedMeanwhile { get; private set; }
+
+    /// <summary>
+    /// Gets the address the form's name is checked at as it is typed: this page's own, with the CheckName handler.
+    /// </summary>
+    public string? CheckNameAddress => this.Url.Page(EditPage, CheckNameHandler, new { id = this.Id });
 
     /// <summary>
     /// Fills the form from the organization the route names.
@@ -113,6 +122,31 @@ public sealed class EditModel : PageModel
             _ =>
                 this.ShowOrganization(id),
         };
+    }
+
+    /// <summary>
+    /// Checks the name as it is typed, and answers with the Name field alone, which HTMX morphs into the form. The
+    /// organization's own name does not count as taken. It saves nothing and reads nothing more, so it answers 200
+    /// whatever it finds, even for an organization archived or deleted meanwhile, which the save then reports; and it
+    /// moves no focus. Only HTMX sends it; without HTMX the save checks the name.
+    /// </summary>
+    /// <param name="id">The organization's identifier, from the route.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The Name field, with its message.</returns>
+    public async Task<IActionResult> OnPostCheckNameAsync(long id, CancellationToken cancellationToken)
+    {
+        this.Id = id;
+        OrganizationId except = new OrganizationId(id);
+        await OrganizationNameCheck
+            .CheckAsync(this._organizations, this.Input, except, this.ModelState, cancellationToken)
+            .ConfigureAwait(false);
+        InvalidControlTagHelper.LeaveFocusAlone(this.HttpContext);
+        OrganizationFields field = new OrganizationFields
+        {
+            Input = this.Input,
+            CheckNameAddress = this.CheckNameAddress,
+        };
+        return this.Partial(NameFieldPartial, field);
     }
 
     /// <summary>
@@ -189,8 +223,7 @@ public sealed class EditModel : PageModel
     /// <returns>The form, with the status 422.</returns>
     private Task<IActionResult> RefuseNameAsync(long id, CancellationToken cancellationToken)
     {
-        // Names match however they are capitalized, so the message does not repeat the one typed.
-        this.ModelState.AddModelError(NameKey, "Another organization already has this name.");
+        OrganizationNameCheck.MarkTaken(this.ModelState);
         return this.RefuseAsync(id, StatusCodes.Status422UnprocessableEntity, cancellationToken);
     }
 

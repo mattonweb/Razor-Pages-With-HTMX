@@ -4,12 +4,12 @@
     An organization's fields, in the card both the create and the edit form hold. Each field's name is Input.Name and
     so on, as the pages bind them, so the messages in ModelState find their fields. When another save overtook this
     one (Saved is set), each field whose saved value differs from the one being edited shows the saved value under it.
+    The Name field is a partial of its own, because checking the name as it is typed answers with that field alone.
 *@
 @{
     // Each saved value is set only when it differs from the one being edited.
     OrganizationInput input = Model.Input;
     OrganizationSingleResponse? saved = Model.Saved;
-    string? savedName = saved is not null && saved.Name.Value != input.Name.Trim() ? saved.Name.Value : null;
     string? savedIndustry = saved is not null && saved.Industry != input.Industry
         ? IndustryNames.Of(saved.Industry)
         : null;
@@ -22,15 +22,7 @@
 <section class="card" aria-labelledby="details-heading">
     <header class="card-header"><h2 id="details-heading">Details</h2></header>
     <div class="card-body fields">
-        <div class="field">
-            <label asp-for="Input.Name"></label>
-            <input asp-for="Input.Name" aria-describedby="@(savedName is null ? null : "name-saved")" />
-            @if (savedName is not null)
-            {
-                <p class="hint" id="name-saved">Saved as @savedName</p>
-            }
-            <span asp-validation-for="Input.Name"></span>
-        </div>
+        <partial name="_OrganizationNameField" model="Model" />
         <div class="field">
             <label asp-for="Input.Industry"></label>
             <select asp-for="Input.Industry" asp-items="Html.GetEnumSelectList<Industry>()"

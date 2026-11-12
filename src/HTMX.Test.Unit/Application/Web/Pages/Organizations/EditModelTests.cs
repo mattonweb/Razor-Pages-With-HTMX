@@ -299,9 +299,92 @@ public sealed class EditModelTests
             "A save to an archived organization should be answered with 409, the alert taking the keyboard.");
     }
 
+    /// <summary>
+    /// Unit test to verify that the edit form's name check leaves the organization's own name out, so that keeping it,
+    /// in any capitals, is not taken; reads nothing more; and answers with the Name field alone, still checked at the
+    /// same address.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostCheckNameAsync_OwnNameInCapitals_LeavesTheOrganizationOut()
+    {
+        // Arrange (Given)
+        StubOrganizationService service = new StubOrganizationService(CreateOrganization(2));
+        EditModel page = CreatePage(service, HtmxRequest.Partial);
+        page.Input = CreateInput(2, "PLACEHOLDER LOGISTICS");
+        MarkNameValid(page.ModelState, page.Input.Name);
+
+        // Act (When)
+        IActionResult result = await page.OnPostCheckNameAsync(10003, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        PartialViewResult partial = Assert.IsInstanceOfType<PartialViewResult>(
+            result,
+            "The check should answer with part of the page.");
+        Assert.AreEqual(
+            "_OrganizationNameField",
+            partial.ViewName,
+            "The Name field alone should come back.");
+        OrganizationFields field = Assert.IsInstanceOfType<OrganizationFields>(
+            partial.Model,
+            "The Name field should be drawn from the form's values.");
+        Assert.AreEqual(
+            "/Organizations/Edit/10003?handler=CheckName",
+            field.CheckNameAddress,
+            "The field should still be checked at the same address.");
+        Assert.AreEqual<(OrganizationName Name, OrganizationId? Except)?>(
+            (new OrganizationName("PLACEHOLDER LOGISTICS"), new OrganizationId(10003)),
+            service.LastNameCheck(),
+            "The name should be asked about with the organization being edited left out.");
+        Assert.IsNull(
+            service.LastLookup(),
+            "The check should read nothing more of the organization.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a name another organization has is marked on the Name field, with 200, and that the
+    /// answer gives no control the keyboard.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostCheckNameAsync_NameTaken_MarksTheFieldWithoutTheFocus()
+    {
+        // Arrange (Given)
+        StubOrganizationService service = new StubOrganizationService(CreateOrganization(2), nameTaken: true);
+        EditModel page = CreatePage(service, HtmxRequest.Partial);
+        page.Input = CreateInput(2, "Sample & Sons");
+        MarkNameValid(page.ModelState, page.Input.Name);
+
+        // Act (When)
+        await page.OnPostCheckNameAsync(10003, CancellationToken.None).ConfigureAwait(false);
+        bool focused = DrawnControls.TakesFocus(page, "Input.Name");
+
+        // Assert (Then)
+        Assert.AreEqual(
+            ModelValidationState.Invalid,
+            page.ModelState.GetFieldValidationState("Input.Name"),
+            "The Name field should carry the message.");
+        Assert.AreEqual(
+            StatusCodes.Status200OK,
+            page.Response.StatusCode,
+            "A check saves nothing, so it should be answered with 200 whatever it finds.");
+        Assert.IsFalse(
+            focused,
+            "The Name field should not take the keyboard from wherever the user is.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
+
+    /// <summary>
+    /// Marks the Name field as posted and valid, as model binding leaves a name that passes the field's own rules.
+    /// </summary>
+    /// <param name="modelState">The page's ModelState.</param>
+    /// <param name="name">The name posted.</param>
+    private static void MarkNameValid(ModelStateDictionary modelState, string name)
+    {
+        modelState.SetModelValue("Input.Name", name, name);
+        modelState.MarkFieldValid("Input.Name");
+    }
 
     /// <summary>
     /// Creates Placeholder Logistics as the service would answer with it, at a version, with invented values.

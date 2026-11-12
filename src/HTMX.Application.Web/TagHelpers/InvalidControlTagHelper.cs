@@ -44,6 +44,18 @@ public sealed class InvalidControlTagHelper : TagHelper
     public ViewContext? ViewContext { get; set; }
 
     /// <summary>
+    /// Says that a response moves no focus, so that no invalid control in it takes <c>autofocus</c>. A field checked
+    /// while the user types answers this way: by the time the answer arrives the user may have moved on, and the
+    /// keyboard stays where they are.
+    /// </summary>
+    /// <param name="context">The request the response answers.</param>
+    public static void LeaveFocusAlone(HttpContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        context.Items.TryAdd(FocusTaken, true);
+    }
+
+    /// <summary>
     /// Marks the control when its field has a validation error, and leaves it alone otherwise.
     /// </summary>
     /// <param name="context">The element as Razor read it.</param>

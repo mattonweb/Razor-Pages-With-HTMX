@@ -80,6 +80,33 @@ public sealed class InvalidControlTagHelperTests
     }
 
     /// <summary>
+    /// Unit test to verify that in a response that leaves the focus alone, such as a check made as the user types, an
+    /// invalid control is still marked invalid but takes no focus.
+    /// </summary>
+    [TestMethod]
+    public void Process_ResponseLeavesFocusAlone_MarksTheControlWithoutFocus()
+    {
+        // Arrange (Given)
+        ViewContext view = CreateView();
+        view.ViewData.ModelState.AddModelError("Input.Name", "Another organization already has this name.");
+        TagHelperOutput output = CreateOutput();
+        InvalidControlTagHelper.LeaveFocusAlone(view.HttpContext);
+
+        // Act (When)
+        Process(view, "Input.Name", output);
+        TagHelperAttributeList attributes = output.Attributes;
+
+        // Assert (Then)
+        Assert.AreEqual(
+            "true",
+            attributes["aria-invalid"]?.Value,
+            "An invalid control should still say so.");
+        Assert.IsFalse(
+            attributes.ContainsName("autofocus"),
+            "No control should take the focus in a response that leaves it alone.");
+    }
+
+    /// <summary>
     /// Unit test to verify that a valid control is left as the framework wrote it.
     /// </summary>
     [TestMethod]

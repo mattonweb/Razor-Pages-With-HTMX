@@ -20,11 +20,13 @@
     RecordChange lastChange = organization.LastModified;
     string? action = Url.Page("./Edit", new { id = organization.Id.Value });
 
-    // After another save overtook this one, the fields show the values it saved beside the ones being edited.
+    // After another save overtook this one, the fields show the values it saved beside the ones being edited, and the
+    // name is not checked as it is typed, since the check's answer would draw the Name field without its saved value.
     OrganizationFields fields = new OrganizationFields
     {
         Input = Model.Input,
         Saved = Model.Overtaken ? organization : null,
+        CheckNameAddress = Model.Overtaken ? null : Model.CheckNameAddress,
     };
 }
 <div id="organization-edit">
