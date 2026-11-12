@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, and the patterns still open (expired sign-ins and answers a page did not plan for, polling). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.13.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, and the patterns still open (expired sign-ins and answers a page did not plan for, polling). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.14.0
 visibility: public
 ---
 
@@ -498,6 +498,14 @@ region of the layout after an action on the page.
 - **An Undo that needs more than the record's identifier carries it in its address.** For example, a roll-back's Undo is
   another roll-back, so its address holds the version to go back to and the version it starts from
   (`?handler=RollBack&to=2&version=3`); a POST handler's parameters bind from the query string as they do from a form.
+- **The toast outlives the view it was offered from.** It sits in the layout, outside anything a list's paging or
+  filter replaces, so Undo can be pressed after the list has moved on. Its address holds the view where the action
+  ran (section 9), so its answer draws that view, and the handler names that view's address in an `HX-Replace-Url`
+  header. HTMX puts the address in place of the current one, loading nothing and adding nothing to the history
+  (4.0.1 source, `#resolveHistoryAction`), so the address bar and the page agree again (Principles). Since the
+  address can change, the Undo's target holds everything that carries the list's state, as paging's does (section
+  9). An action sent from the page names the address already shown, which changes nothing. Tried in a browser:
+  without the header, an Undo pressed after Next drew the first page under the second page's address.
 
 ## 9. Actions on a row
 
@@ -607,7 +615,8 @@ not, and the list afterwards, with a toast.
 ## 12. An action that takes its row out of the list
 
 An action on one row that takes the row out of a paged list, such as a permanent delete from the row's menu after a
-confirm dialog (section 11), whose answer draws the list again without it.
+confirm dialog (section 11) or an archive from a list of active records only, whose answer draws the list again
+without it, and the Undo that puts the row back.
 
 - **Read the page again from the same cursor.** The dialog's form posts to the list's own address, its state
   included, as a row's action does (section 9), and the handler reads the page that address names once the action has
@@ -622,13 +631,23 @@ confirm dialog (section 11), whose answer draws the list again without it.
   rows that show archived ones, changes the list alone. One that takes the row out also changes any count of the
   list's records shown outside it, such as a count on a tab's label, so its target is the smallest element that holds
   the list and the count (section 9): here the element Previous and Next replace, which holds both.
-- **Read the row's name and place before the action.** Once the row has gone, the page read again holds neither, so
-  the handler reads the page as it was shown first, for the name its toast gives and the place the keyboard goes back
-  to.
-- **The keyboard goes to the row now in its place.** The menu button that opened the dialog went with its row, so the
-  answer marks `autofocus` on the menu button of the row now at the same place, or of the last row when the page is
-  shorter, and on the list's heading, made focusable with `tabindex="-1"`, when no row is left (section 9). A refused
-  action leaves the row, and the keyboard goes back to its own menu button.
+- **Read the row's place before the action.** Once the row has gone, the page read again does not hold it, so the
+  handler reads the page as it was shown first, for the place the keyboard goes back to and, for a delete, the name
+  its toast gives. An action that can be undone reads the name from the record instead, after the action, because
+  its Undo, sent from the toast, can be for a row that neither page shows.
+- **The keyboard goes to the row now in its place.** The row's menu button, where the keyboard was before the menu
+  opened, went with the row, so the answer marks `autofocus` on the menu button of the row now at the same place, or
+  of the last row when the page is shorter (section 9). When no row is left it marks a heading inside the target, made focusable with
+  `tabindex="-1"`: the list's own, or the empty list's when the page's heading is outside the target, since HTMX
+  looks for `[autofocus]` only in the new content (below). An action that leaves its row on the page, such as an
+  archive in a view that shows archived records too, or a refused one, keeps the keyboard on the row's own menu
+  button, wherever the row now is.
+- **After Undo, the keyboard goes to the row that came back.** Undo was pressed in the toast, so HTMX first puts the
+  keyboard back on the new toast's Undo by `id` (section 8), then moves it to the `[autofocus]` the answer marks
+  (section 9): the menu button of the row that came back, which the handler finds on the page read again, whether or
+  not the page shown held it. A row can come back on another page, as when the list is sorted by when each record
+  last changed and the Undo has just changed it. The answer then marks nothing, and the keyboard stays on the new
+  toast's Undo, whose message names the record. Both were tried in a browser.
 - **The rows' dialogs come after the table.** After a swap HTMX focuses the first `[autofocus]` in the new content
   only, whether or not it can take the focus (4.0.1 source, `#handleAutoFocus`). Each dialog's safe button says
   `autofocus` (section 11), and a button in a closed dialog cannot take the focus, so a dialog earlier in the content
@@ -639,11 +658,14 @@ confirm dialog (section 11), whose answer draws the list again without it.
   [showModal()](https://html.spec.whatwg.org/multipage/interactive-elements.html#dom-dialog-showmodal) steps), so the
   menu closes as the dialog opens. The dialog's form carries the version the row shows (section 11), so the list's
   rows carry each record's version.
-- **Without HTMX** the dialog opens the same way, its form posts, and the handler redirects to the list's address,
-  which reads the same page without the row, with the toast waiting in `TempData` (section 8).
+- **Without HTMX** the dialog opens the same way, and its form, or the row's own for an action that can be undone,
+  posts. The handler redirects to the list's address, which reads the same page without the row, with the toast
+  waiting in `TempData` (section 8); its Undo is a form too, and is redirected the same way.
 - **Testing.** A stand-in service that leaves a deleted record out of every page it answers afterwards lets a page
   test see the page read again: the row is gone, the row after it takes the focus, the last row does when the deleted
-  row was last, and the heading does when it was the only one.
+  row was last, and the heading does when it was the only one. For an action that can be undone, a stand-in whose
+  pages hold only the records with the status a request asks for, and that applies each archive or restore it
+  answered as done, lets a test see the row leave and come back, and the toast's Undo address keep the view.
 
 ## 13. A field checked as you type
 
@@ -724,10 +746,6 @@ workshop names its chapter.
   as it was ([hx-status](https://four.htmx.org/reference/attributes/hx-status)); that page does not say whether it
   can be inherited from a container. What the user is told then, how they try again and where the keyboard goes,
   after an error, a timeout (60 seconds, section 1) or a lost connection, is not yet worked out.
-- **An action that takes its row out of the list and can be undone**, such as Archive on a list of active records
-  only. The page read again is as section 12 says, and the toast's Undo posts the opposite from the same address,
-  which puts the row back. Where the keyboard goes after that Undo, which was sent from the toast and not from a row,
-  is not yet built.
 - **Rows added to and removed from a form.** For a list of plain values, every row's input has the same name, such
   as `name="Input.Tags"`, which binds to a `List<string>` with no index numbers. The server renders one new row as a
   fragment that `hx-swap="beforeend"` appends, and removing a row only removes its element (workshop, Lab 5). A list
