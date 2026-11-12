@@ -35,7 +35,8 @@ public sealed class ValidationMessageIdTagHelper : TagHelper
     /// <summary>
     /// Gives the <c>id</c> of a field's validation message.
     /// </summary>
-    /// <param name="fullName">The field's full name, as its control is named in the form, such as <c>Input.Name</c>.</param>
+    /// <param name="fullName">The field's full name, as its control is named in the form, such as
+    /// <c>Input.Name</c>.</param>
     /// <returns>The <c>id</c>, built as the framework builds a control's <c>id</c> from its name, then
     /// <c>-error</c>.</returns>
     public static string IdFor(string fullName)

@@ -84,7 +84,8 @@ public interface IOrganizationService
     /// the organization must be active, still at the version the request names, hold some value other than the earlier
     /// version's, and the earlier name must not have passed to another organization since.
     /// </summary>
-    /// <param name="request">Which organization, the version it is at, the version to roll back to, and who asks.</param>
+    /// <param name="request">Which organization, the version it is at, the version to roll back to, and who
+    /// asks.</param>
     /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
     /// <returns>Whether the values were saved and, if not, why; NotFound also when the earlier version does not
     /// exist.</returns>

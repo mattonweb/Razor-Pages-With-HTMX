@@ -17,7 +17,8 @@ internal sealed class StubUrlHelper : IUrlHelper
     /// <summary>
     /// Initializes a new instance of the <see cref="StubUrlHelper"/> class.
     /// </summary>
-    /// <param name="actionContext">The page's own context, whose route names the page that relative names start from.</param>
+    /// <param name="actionContext">The page's own context, whose route names the page that relative names start
+    /// from.</param>
     public StubUrlHelper(ActionContext actionContext)
     {
         this.ActionContext = actionContext;

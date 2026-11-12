@@ -18,7 +18,8 @@ internal static class UserReferences
     /// <typeparam name="TEntity">The entity whose column names the user.</typeparam>
     /// <param name="builder">The builder for that entity.</param>
     /// <param name="foreignKey">The column that holds the user's identifier.</param>
-    /// <param name="onDelete">What deleting that user does to this row; usually <see cref="DeleteBehavior.Restrict"/>.</param>
+    /// <param name="onDelete">What deleting that user does to this row; usually
+    /// <see cref="DeleteBehavior.Restrict"/>.</param>
     internal static void Add<TEntity>(
         EntityTypeBuilder<TEntity> builder,
         Expression<Func<TEntity, object?>> foreignKey,

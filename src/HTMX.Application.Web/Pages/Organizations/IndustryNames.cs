@@ -14,7 +14,8 @@ public static class IndustryNames
     /// Gives an industry's name as the pages show it.
     /// </summary>
     /// <param name="industry">The industry.</param>
-    /// <returns>The display name its <see cref="DisplayAttribute"/> gives, or the value's own name without one.</returns>
+    /// <returns>The display name its <see cref="DisplayAttribute"/> gives, or the value's own name without
+    /// one.</returns>
     public static string Of(Industry industry)
     {
         string name = industry.ToString();

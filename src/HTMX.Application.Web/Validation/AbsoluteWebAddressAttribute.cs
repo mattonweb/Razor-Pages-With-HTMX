@@ -14,7 +14,8 @@ public sealed class AbsoluteWebAddressAttribute : ValidationAttribute
     /// <summary>
     /// Says whether a value is an absolute http or https address, or empty.
     /// </summary>
-    /// <param name="value">The value as bound: a string, or <see langword="null"/> when the field was left empty.</param>
+    /// <param name="value">The value as bound: a string, or <see langword="null"/> when the field was left
+    /// empty.</param>
     /// <returns><see langword="true"/> when the value is acceptable.</returns>
     public override bool IsValid(object? value)
     {

@@ -107,7 +107,8 @@ internal static class OrganizationServiceCalls
     /// </summary>
     /// <param name="request">The new organization.</param>
     /// <param name="readBack">The identifier to read afterwards: the one the organization should be given.</param>
-    /// <returns>What became of the request, the organization at the identifier, and its versions, oldest first.</returns>
+    /// <returns>What became of the request, the organization at the identifier, and its versions, oldest
+    /// first.</returns>
     internal static async Task<(OrganizationCreateResponse Response, OrganizationSingleResponse? After, OrganizationVersion[] History)>
         CreateAsync(OrganizationCreateRequest request, OrganizationId readBack)
     {
