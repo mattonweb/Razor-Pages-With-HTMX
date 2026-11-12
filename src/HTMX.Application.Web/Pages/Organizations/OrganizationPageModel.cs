@@ -113,7 +113,7 @@ public abstract class OrganizationPageModel : RecordPageModel
             return this.ShowGone();
         }
 
-        return this.Answer(DeleteMessage(outcome, organization.Name), undoAction: null);
+        return this.Answer(OrganizationMessages.Delete(outcome, organization.Name), undoAction: null);
     }
 
     /// <inheritdoc/>
@@ -161,46 +161,6 @@ public abstract class OrganizationPageModel : RecordPageModel
     }
 
     /// <summary>
-    /// Writes the toast's message for what became of an archive or a restore.
-    /// </summary>
-    /// <param name="change">Archived or Restored.</param>
-    /// <param name="outcome">What became of it.</param>
-    /// <param name="name">The organization's name.</param>
-    /// <returns>The message.</returns>
-    private static string StatusMessage(ChangeKind change, UpdateOutcome outcome, OrganizationName name)
-    {
-        bool archiving = change == ChangeKind.Archived;
-        return outcome switch
-        {
-            UpdateOutcome.Saved =>
-                archiving ? $"{name.Value} archived." : $"{name.Value} restored.",
-            UpdateOutcome.Unchanged =>
-                archiving ? $"{name.Value} was already archived." : $"{name.Value} was already active.",
-            _ =>
-                $"{name.Value} was changed by someone else at the same moment. Try again.",
-        };
-    }
-
-    /// <summary>
-    /// Writes the toast's message for a delete that was refused.
-    /// </summary>
-    /// <param name="outcome">Why it was refused.</param>
-    /// <param name="name">The organization's name.</param>
-    /// <returns>The message.</returns>
-    private static string DeleteMessage(DeleteOutcome outcome, OrganizationName name)
-    {
-        return outcome switch
-        {
-            DeleteOutcome.Active =>
-                $"{name.Value} is active again, so it can't be deleted.",
-            DeleteOutcome.InUse =>
-                $"Contacts now belong to {name.Value}, so it can't be deleted.",
-            _ =>
-                $"{name.Value} has changed since the page was shown, so it wasn't deleted. Check it, then try again.",
-        };
-    }
-
-    /// <summary>
     /// Archives or restores the organization, reads it again, and answers with what it now is and a toast that says
     /// what happened. When the organization no longer exists, its page says so.
     /// </summary>
@@ -231,6 +191,7 @@ public abstract class OrganizationPageModel : RecordPageModel
             undo = this.HandlerAddress(opposite, this.TabValues());
         }
 
-        return this.Answer(StatusMessage(change, outcome, organization.Name), undo);
+        string message = OrganizationMessages.Status(change, outcome, organization.Name.Value);
+        return this.Answer(message, undo);
     }
 }

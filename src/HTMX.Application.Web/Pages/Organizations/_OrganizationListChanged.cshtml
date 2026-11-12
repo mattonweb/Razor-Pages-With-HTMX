@@ -1,0 +1,11 @@
+@model HTMX.Application.Web.Pages.Organizations.IndexModel
+@*
+    What HTMX gets after an action on a row of the organizations list: the list's card, drawn again from the same view,
+    which replaces #organization-list, and the toast, which replaces whatever the layout's #toasts region holds. The
+    page's header is left as it is; an action on a row changes nothing in it.
+*@
+<partial name="_OrganizationList" model="Model" />
+@if (Model.Toast is Toast toast)
+{
+    <partial name="_ToastUpdate" model="toast" />
+}

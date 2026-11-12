@@ -10,7 +10,14 @@
    only when it says :inherited, and "this" means the card that declares it. Every request in the card joins one
    queue on the card, and the newest replaces the one running, so a slow answer to an older filter, sort or page never
    lands after a newer one; without hx-sync each element would keep its own queue, and HTMX 4 drops a third request
-   while one runs and one waits. Without HTMX they are plain links and GET forms. *@
+   while one runs and one waits. Without HTMX they are plain links and GET forms.
+
+   Each row's menu archives or restores its organization: a form that posts to the list's own address, with the
+   handler and the organization added, with HTMX or without it. It says hx-post, which HTMX sets up before it boosts
+   anything, so the post is not boosted, and it inherits the card as its target and the card's queue. In the Active or
+   Archived view the row leaves the list and the counts change, which the card holds too. Once the answer has drawn
+   the card again, HTMX focuses the one element that says autofocus: the row's menu button, the menu button of the row
+   now in its place, or the empty list's heading. *@
 <div class="card" id="organization-list"
      hx-boost:inherited="true" hx-target:inherited="this" hx-swap:inherited="outerHTML"
      hx-indicator:inherited="#organization-list" hx-sync:inherited="this:replace">
@@ -41,13 +48,37 @@
     </div>
     <div class="busy-bar"></div>
 
+    @* An empty list says why, naming the view: the filter matched nothing in it, or the view has nothing in it, as
+       when the last archived organization is restored. Its heading takes the keyboard when an action took the last
+       row away. *@
     @if (list.Matching.Value == 0)
     {
+        string which = current.Status == RecordStatus.All ? "organizations" : $"{current.Status.ToString().ToLowerInvariant()} organizations";
         <div class="empty">
-            <svg class="icon" aria-hidden="true"><use href="/icons.svg#filter"></use></svg>
-            <h3>No organizations match “@current.Filter?.Value”</h3>
-            <p>Check the spelling, or filter by another word.</p>
-            <a class="btn" asp-page="./Index" asp-all-route-data="Model.RouteValues(withoutFilter: true)">Clear filter</a>
+            @if (current.Filter is FilterText filter)
+            {
+                <svg class="icon" aria-hidden="true"><use href="/icons.svg#filter"></use></svg>
+                <h3 tabindex="-1" autofocus="@Model.EmptyFocused">No @which match “@filter.Value”</h3>
+                <p>Check the spelling, or filter by another word.</p>
+                <a class="btn" asp-page="./Index" asp-all-route-data="Model.RouteValues(withoutFilter: true)">Clear filter</a>
+            }
+            else
+            {
+                <svg class="icon" aria-hidden="true"><use href="/icons.svg#building"></use></svg>
+                <h3 tabindex="-1" autofocus="@Model.EmptyFocused">No @which</h3>
+                @switch (current.Status)
+                {
+                    case RecordStatus.Archived:
+                        <p>An organization shows here once it is archived.</p>
+                        break;
+                    case RecordStatus.All:
+                        <p>An organization shows here once it is added.</p>
+                        break;
+                    default:
+                        <p>Archived organizations show under Archived.</p>
+                        break;
+                }
+            }
         </div>
     }
     else
@@ -70,11 +101,14 @@
                         <th scope="col" aria-sort="@Model.AriaSort(OrganizationSortColumn.Updated)">
                             <a asp-page="./Index" asp-all-route-data="Model.SortRouteValues(OrganizationSortColumn.Updated)">Updated <partial name="_SortIcon" model="Model.AriaSort(OrganizationSortColumn.Updated)" /></a>
                         </th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (OrganizationSummary organization in list.Items)
                     {
+                        string action = Model.RowAction(organization);
+                        string menu = $"organization-{organization.Id.Value}-menu";
                         @* Archived rows are muted only among active ones, in the All view. *@
                         <tr class="@(current.Status == RecordStatus.All && organization.ArchivedOn is not null ? "archived" : null)">
                             <td class="title">
@@ -98,6 +132,26 @@
                                 }
                             </td>
                             <td><time datetime="@organization.LastModifiedOn.ToString("O", CultureInfo.InvariantCulture)">@organization.LastModifiedOn.ToLocalTime().ToString("d MMM yyyy", CultureInfo.CurrentCulture)</time></td>
+                            @* The row's menu, a popover with an id built from the organization's. *@
+                            <td class="actions">
+                                <button class="btn ghost icon-only" type="button" popovertarget="@menu"
+                                        aria-label="Actions for @organization.Name.Value"
+                                        autofocus="@(Model.Focused == organization.Id)">
+                                    <svg class="icon" aria-hidden="true"><use href="/icons.svg#more"></use></svg>
+                                </button>
+                                <div class="menu" id="@menu" popover>
+                                    <form method="post" action="@action" asp-antiforgery="true" hx-post="@action">
+                                        @if (organization.ArchivedOn is null)
+                                        {
+                                            <button type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>Archive</button>
+                                        }
+                                        else
+                                        {
+                                            <button type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Restore</button>
+                                        }
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                     }
                 </tbody>

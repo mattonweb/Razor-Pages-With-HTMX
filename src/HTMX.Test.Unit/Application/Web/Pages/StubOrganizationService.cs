@@ -1,5 +1,6 @@
 namespace HTMX.Test.Unit.Application.Web.Pages;
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -7,13 +8,18 @@ using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 
 /// <summary>
-/// Stands in for the organization service in page tests: it keeps each request the page sends and answers with an
-/// empty page for a list, with the one organization, the versions and the choices it was given for a lookup, and with
-/// the outcomes it was given for a change, an archive or restore, a roll-back, a new organization, a delete and a check
-/// of a name, so a test sees what the page asked for without a database.
+/// Stands in for the organization service in page tests: it keeps each request the page sends and answers a page of
+/// the list with the organizations it was given that have the status the request asks for, with the one
+/// organization, the versions and the choices it was given for a lookup, and with the outcomes it was given for a
+/// change, an archive or restore, a roll-back, a new organization, a delete and a check of a name, so a test sees what
+/// the page asked for without a database. An organization it answered an archive or a restore of with Saved has that
+/// status in every page after.
 /// </summary>
 internal sealed class StubOrganizationService : IOrganizationService
 {
+    // When an organization the stand-in archives was archived.
+    private static readonly DateTime ArchiveTime = new DateTime(2026, 11, 11, 9, 0, 0, DateTimeKind.Utc);
+
     private readonly List<OrganizationCollectionRequest> _received = [];
     private readonly List<OrganizationId> _looked = [];
     private readonly List<OrganizationUpdateRequest> _updates = [];
@@ -29,6 +35,7 @@ internal sealed class StubOrganizationService : IOrganizationService
     private readonly OrganizationReference[] _choices;
     private readonly DeleteOutcome _deletion;
     private readonly bool _nameTaken;
+    private readonly OrganizationSummary[] _organizations;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StubOrganizationService"/> class.
@@ -41,6 +48,8 @@ internal sealed class StubOrganizationService : IOrganizationService
     /// <param name="choices">The organizations a list of choices answers with.</param>
     /// <param name="deletion">What a delete is answered with.</param>
     /// <param name="nameTaken">Whether a check of a name finds another organization with it.</param>
+    /// <param name="organizations">The organizations every page of the list holds, active and archived, in
+    /// order.</param>
     public StubOrganizationService(
         OrganizationSingleResponse? found = null,
         UpdateOutcome outcome = UpdateOutcome.Saved,
@@ -48,7 +57,8 @@ internal sealed class StubOrganizationService : IOrganizationService
         OrganizationVersionResponse[]? versions = null,
         OrganizationReference[]? choices = null,
         DeleteOutcome deletion = DeleteOutcome.Deleted,
-        bool nameTaken = false)
+        bool nameTaken = false,
+        OrganizationSummary[]? organizations = null)
     {
         this._found = found;
         this._outcome = outcome;
@@ -57,6 +67,7 @@ internal sealed class StubOrganizationService : IOrganizationService
         this._choices = choices ?? [];
         this._deletion = deletion;
         this._nameTaken = nameTaken;
+        this._organizations = organizations ?? [];
     }
 
     /// <summary>
@@ -148,14 +159,17 @@ internal sealed class StubOrganizationService : IOrganizationService
         CancellationToken cancellationToken = default)
     {
         this._received.Add(request);
+        OrganizationSummary[] all = [.. this._organizations.Select(this.AsNow)];
+        OrganizationSummary[] shown = [.. all.Where(organization => Shows(request.Status, organization))];
+        int active = all.Count(static organization => organization.ArchivedOn is null);
         OrganizationCollectionResponse response = new OrganizationCollectionResponse
         {
             Request = request,
-            Items = [],
-            Matching = new RecordCount(0),
-            Active = new RecordCount(0),
-            Archived = new RecordCount(0),
-            All = new RecordCount(0),
+            Items = shown,
+            Matching = new RecordCount(shown.Length),
+            Active = new RecordCount(active),
+            Archived = new RecordCount(all.Length - active),
+            All = new RecordCount(all.Length),
         };
         return Task.FromResult(response);
     }
@@ -241,5 +255,63 @@ internal sealed class StubOrganizationService : IOrganizationService
             Id = this._creation == CreateOutcome.Created ? new OrganizationId(11001) : null,
         };
         return Task.FromResult(response);
+    }
+
+    /// <summary>
+    /// Says whether a page of the list with a status shows an organization.
+    /// </summary>
+    /// <param name="status">The status the page asks for.</param>
+    /// <param name="organization">The organization, as it is now.</param>
+    /// <returns><see langword="true"/> when the page shows it.</returns>
+    private static bool Shows(RecordStatus status, OrganizationSummary organization)
+    {
+        return status switch
+        {
+            RecordStatus.Active =>
+                organization.ArchivedOn is null,
+            RecordStatus.Archived =>
+                organization.ArchivedOn is not null,
+            _ =>
+                true,
+        };
+    }
+
+    /// <summary>
+    /// Gives an organization as an archive or a restore leaves it.
+    /// </summary>
+    /// <param name="organization">The organization, as it was given.</param>
+    /// <param name="change">Archived or Restored.</param>
+    /// <returns>The organization, archived since it was given or since the stand-in archived it, or active.</returns>
+    private static OrganizationSummary WithStatus(OrganizationSummary organization, ChangeKind change)
+    {
+        DateTime? archivedOn = change == ChangeKind.Archived ? organization.ArchivedOn ?? ArchiveTime : null;
+        return organization with { ArchivedOn = archivedOn };
+    }
+
+    /// <summary>
+    /// Gives an organization as it is now: archived or active as the last archive or restore of it the stand-in
+    /// answered with Saved left it, or as it was given when there was none.
+    /// </summary>
+    /// <param name="organization">The organization, as it was given.</param>
+    /// <returns>The organization, as it is now.</returns>
+    private OrganizationSummary AsNow(OrganizationSummary organization)
+    {
+        if (this._outcome != UpdateOutcome.Saved)
+        {
+            return organization;
+        }
+
+        ChangeKind[] changes =
+        [
+            .. this._statusChanges
+                .Where(change => change.Request.Id == organization.Id)
+                .Select(static change => change.Change),
+        ];
+        if (changes.Length == 0)
+        {
+            return organization;
+        }
+
+        return WithStatus(organization, changes[changes.Length - 1]);
     }
 }

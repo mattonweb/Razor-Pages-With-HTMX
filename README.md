@@ -21,7 +21,14 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
 ## Pages
 
 - **`/organizations`** — the list: filter, status, sort and key-based paging, each view its own URL, swapped in place
-  by HTMX and working without it.
+  by HTMX and working without it. Each row's menu archives or restores its organization at once, with a toast whose
+  **Undo** does the opposite. The row's form posts to the list's own address with the handler and the organization
+  added (`?organization=10216&handler=Archive`), so the answer is the same view of the list: with HTMX the list's
+  card, its counts included, and without it a redirect to the same view. In the Active view an archived row leaves
+  the list and the keyboard goes to the row now in its place, or to the empty list's heading; Undo puts the row back
+  and the keyboard on it. The toast stays while the list pages or filters, so every answer names the view it drew in
+  an `HX-Replace-Url` header, and an Undo pressed after **Next** shows the page the row came back on, with the
+  address to match.
 - **`/organizations/create`** — a new organization: the same fields, rules and answers as the edit form below. It is
   saved at version 1, with a Created version in its history, at the next identifier (11001 on a fresh start), and
   the save goes to its page. A name another organization has, however it is capitalized, is refused with 422.

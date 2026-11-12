@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
@@ -277,42 +276,354 @@ public sealed class IndexModelTests
             "Only a whole page that HTMX asked for should put the keyboard on its heading.");
     }
 
+    /// <summary>
+    /// Unit test to verify that an archive HTMX sent from a row asks for that organization, as the signed-in user, and
+    /// answers with the list's card and a toast whose Undo restores it from the same view, with the list's address
+    /// for the address bar.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostArchiveAsync_ArchivedByHtmx_AnswersTheCardAndAToastWithUndo()
+    {
+        // Arrange (Given)
+        StubOrganizationService service = CreateService(10003);
+        IndexModel page = CreatePage(service, HtmxRequest.Partial);
+        page.Input = new ListInput { After = 10001 };
+
+        // Act (When)
+        IActionResult result = await page.OnPostArchiveAsync(10003, CancellationToken.None).ConfigureAwait(false);
+        (ChangeKind Change, OrganizationStatusRequest Request)? sent = service.LastStatusChange();
+        IHeaderDictionary headers = page.Response.Headers;
+
+        // Assert (Then)
+        PartialViewResult partial = Assert.IsInstanceOfType<PartialViewResult>(
+            result,
+            "HTMX should get the list's card to swap in place.");
+        Assert.AreEqual(
+            "_OrganizationListChanged",
+            partial.ViewName,
+            "The answer should hold the list's card and the toast.");
+        Assert.AreEqual(
+            (ChangeKind.Archived, new OrganizationId(10003), new UserId(10001)),
+            (sent?.Change, sent?.Request.Id, sent?.Request.ChangedBy),
+            "The page should archive Placeholder Logistics as the signed-in user.");
+        Assert.AreEqual(
+            "Placeholder Logistics archived.",
+            page.Toast?.Message,
+            "The toast should say which organization was archived.");
+        Assert.AreEqual(
+            ("/Organizations/Index?handler=Restore&after=10001&organization=10003", "#organization-list"),
+            (page.Toast?.UndoAction, page.Toast?.UndoTarget),
+            "Undo should restore it from the same view, and replace the list's card again.");
+        Assert.AreEqual(
+            "/Organizations/Index?after=10001",
+            headers["HX-Replace-Url"].ToString(),
+            "The answer should name the view of the list it draws, for the address bar.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a restore sent without HTMX is redirected back to the same view of the list, and leaves
+    /// its toast, and what its Undo replaces, in TempData.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostRestoreAsync_RestoredWithoutHtmx_RedirectsToTheSameView()
+    {
+        // Arrange (Given)
+        IndexModel page = CreatePage(CreateService(10005), HtmxRequest.None);
+        page.Input = new ListInput { Status = "archived", After = 10001 };
+
+        // Act (When)
+        IActionResult result = await page.OnPostRestoreAsync(10005, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        RedirectToPageResult redirect = Assert.IsInstanceOfType<RedirectToPageResult>(
+            result,
+            "A restore without HTMX should be redirected.");
+        Assert.AreEqual(
+            ("./Index", "archived", "10001"),
+            (redirect.PageName, redirect.RouteValues?["status"], redirect.RouteValues?["after"]),
+            "The redirect should go back to the same view of the list.");
+        Assert.AreEqual(
+            ("Mockup Media restored.", "#organization-list"),
+            (page.TempData["ToastMessage"], page.TempData["ToastUndoTarget"]),
+            "The toast, and the card its Undo replaces, should wait in TempData.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an archive that takes its row out of the Active view puts the keyboard on the row now
+    /// in its place: the next row, which moves up, or the row before when the archived one was last.
+    /// </summary>
+    /// <param name="archived">The organization archived.</param>
+    /// <param name="focused">The organization whose menu button should take the focus.</param>
+    [TestMethod]
+    [DataRow(10003L, 10004L, DisplayName = "The first row: the next one moves up")]
+    [DataRow(10004L, 10003L, DisplayName = "The last row: the one before")]
+    public async Task OnPostArchiveAsync_RowLeavesTheView_FocusesTheRowNowInItsPlace(long archived, long focused)
+    {
+        // Arrange (Given)
+        IndexModel page = CreatePage(CreateService(archived), HtmxRequest.Partial);
+
+        // Act (When)
+        await page.OnPostArchiveAsync(archived, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            ((OrganizationId?)new OrganizationId(focused), false),
+            (page.Focused, page.EmptyFocused),
+            "The row now in the archived one's place should take the focus.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a restore that takes the last row out of the Archived view puts the keyboard on the
+    /// empty list's heading.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostRestoreAsync_LastRowLeavesTheView_FocusesTheEmptyHeading()
+    {
+        // Arrange (Given)
+        IndexModel page = CreatePage(CreateService(10005), HtmxRequest.Partial);
+        page.Input = new ListInput { Status = "archived" };
+
+        // Act (When)
+        await page.OnPostRestoreAsync(10005, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            ((OrganizationId?)null, true),
+            (page.Focused, page.EmptyFocused),
+            "With no row left, the empty list's heading should take the focus.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an archive in the All view, which keeps its row, puts the keyboard back on that row's
+    /// menu button.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostArchiveAsync_RowStaysInTheView_FocusesItsOwnRow()
+    {
+        // Arrange (Given)
+        IndexModel page = CreatePage(CreateService(10003), HtmxRequest.Partial);
+        page.Input = new ListInput { Status = "all" };
+
+        // Act (When)
+        await page.OnPostArchiveAsync(10003, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            ((OrganizationId?)new OrganizationId(10003), false),
+            (page.Focused, page.EmptyFocused),
+            "The archived row's menu button should take the focus.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that the toast's Undo of an archive, a restore sent from the toast for a row the Active view
+    /// no longer shows, puts the keyboard on that row's menu button once the row is back.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostRestoreAsync_UndoBringsTheRowBack_FocusesItsRow()
+    {
+        // Arrange (Given)
+        IndexModel page = CreatePage(CreateService(10005), HtmxRequest.Partial);
+
+        // Act (When)
+        await page.OnPostRestoreAsync(10005, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            ((OrganizationId?)new OrganizationId(10005), false),
+            (page.Focused, page.EmptyFocused),
+            "The row that came back should take the focus from the toast.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an Undo sent from the toast for a row that is on neither the page shown nor the page
+    /// read again, as after the list has moved on, takes the keyboard nowhere, so that it stays on the toast.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostRestoreAsync_RowOnNeitherPage_LeavesTheFocusAlone()
+    {
+        // Arrange (Given)
+        IndexModel page = CreatePage(CreateService(10009), HtmxRequest.Partial);
+
+        // Act (When)
+        await page.OnPostRestoreAsync(10009, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            ((OrganizationId?)null, false),
+            (page.Focused, page.EmptyFocused),
+            "No row and no heading should take the focus.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an archive or a restore that changed nothing says why, with no Undo.
+    /// </summary>
+    /// <param name="outcome">What the service answered.</param>
+    /// <param name="expected">The toast's message.</param>
+    [TestMethod]
+    [DataRow(
+        UpdateOutcome.Unchanged,
+        "Placeholder Logistics was already archived.",
+        DisplayName = "Already archived")]
+    [DataRow(
+        UpdateOutcome.NotFound,
+        "That organization no longer exists.",
+        DisplayName = "Gone")]
+    [DataRow(
+        UpdateOutcome.Overtaken,
+        "Placeholder Logistics was changed by someone else at the same moment. Try again.",
+        DisplayName = "Changed at the same moment")]
+    public async Task OnPostArchiveAsync_NothingChanged_SaysWhyWithoutUndo(UpdateOutcome outcome, string expected)
+    {
+        // Arrange (Given)
+        StubOrganizationService service = new StubOrganizationService(
+            CreateFound(10003),
+            outcome,
+            organizations: CreateOrganizations());
+        IndexModel page = CreatePage(service, HtmxRequest.Partial);
+
+        // Act (When)
+        await page.OnPostArchiveAsync(10003, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (expected, (string?)null),
+            (page.Toast?.Message, page.Toast?.UndoAction),
+            "The toast should say why, and offer no Undo.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that an identifier that cannot be an organization's is refused with 400, and nothing is
+    /// sent.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostArchiveAsync_ImpossibleIdentifier_AnswersBadRequest()
+    {
+        // Arrange (Given)
+        StubOrganizationService service = CreateService(10003);
+        IndexModel page = CreatePage(service, HtmxRequest.Partial);
+
+        // Act (When)
+        IActionResult result = await page.OnPostArchiveAsync(0, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsInstanceOfType<BadRequestResult>(
+            result,
+            "An organization identifier below 1 should be refused.");
+        Assert.IsNull(
+            service.LastStatusChange(),
+            "Nothing should be sent.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
 
     /// <summary>
-    /// Creates the page as the framework would for one request, with the headers HTMX 4 sends for that kind of request.
+    /// Creates a stand-in service whose list holds the three organizations, and whose lookup answers with one of them.
+    /// </summary>
+    /// <param name="found">The identifier of the organization a lookup answers with.</param>
+    /// <returns>The service.</returns>
+    private static StubOrganizationService CreateService(long found)
+    {
+        return new StubOrganizationService(CreateFound(found), organizations: CreateOrganizations());
+    }
+
+    /// <summary>
+    /// Creates two active organizations and one archived one, with invented values, in name order within each status.
+    /// </summary>
+    /// <returns>The organizations: Placeholder Logistics and Sample &amp; Sons, active, and Mockup Media,
+    /// archived.</returns>
+    private static OrganizationSummary[] CreateOrganizations()
+    {
+        DateTime updated = new DateTime(2026, 11, 8, 9, 30, 0, DateTimeKind.Utc);
+        return
+        [
+            new OrganizationSummary
+            {
+                Id = new OrganizationId(10003),
+                Name = new OrganizationName("Placeholder Logistics"),
+                Industry = Industry.Shipping,
+                Contacts = new RecordCount(18),
+                LastModifiedOn = updated,
+            },
+            new OrganizationSummary
+            {
+                Id = new OrganizationId(10004),
+                Name = new OrganizationName("Sample & Sons"),
+                Industry = Industry.Retail,
+                Contacts = new RecordCount(3),
+                LastModifiedOn = updated,
+            },
+            new OrganizationSummary
+            {
+                Id = new OrganizationId(10005),
+                Name = new OrganizationName("Mockup Media"),
+                Industry = Industry.Media,
+                Contacts = new RecordCount(2),
+                LastModifiedOn = updated,
+                ArchivedOn = updated.AddDays(-22),
+            },
+        ];
+    }
+
+    /// <summary>
+    /// Creates one organization as a lookup would answer with it: one of the three, or another the list does not hold.
+    /// </summary>
+    /// <param name="id">The organization's identifier.</param>
+    /// <returns>The organization, with invented values.</returns>
+    private static OrganizationSingleResponse CreateFound(long id)
+    {
+        string name = id switch
+        {
+            10003 =>
+                "Placeholder Logistics",
+            10004 =>
+                "Sample & Sons",
+            10005 =>
+                "Mockup Media",
+            _ =>
+                "Draft Distribution",
+        };
+        RecordChange change = new RecordChange
+        {
+            On = new DateTime(2026, 11, 8, 9, 30, 0, DateTimeKind.Utc),
+            By = new UserReference { Id = new UserId(10001), Name = new DisplayName("Demo User") },
+        };
+        return new OrganizationSingleResponse
+        {
+            Id = new OrganizationId(id),
+            Name = new OrganizationName(name),
+            Industry = Industry.Shipping,
+            Contacts = new RecordCount(0),
+            Version = new VersionNumber(1),
+            Created = change,
+            LastModified = change,
+        };
+    }
+
+    /// <summary>
+    /// Creates the page as the framework would for one request: Demo User signed in, the headers HTMX 4 sends for that
+    /// kind of request, and stand-ins for routing and TempData.
     /// </summary>
     /// <param name="service">The organization service the page reads through.</param>
     /// <param name="kind">What sent the request.</param>
     /// <returns>The page, ready for its handler to run.</returns>
     private static IndexModel CreatePage(StubOrganizationService service, HtmxRequest kind)
     {
-        DefaultHttpContext http = new DefaultHttpContext();
-        IHeaderDictionary headers = http.Request.Headers;
-        if (kind != HtmxRequest.None)
-        {
-            headers["HX-Request"] = "true";
-            headers["HX-Request-Type"] = kind == HtmxRequest.Partial ? "partial" : "full";
-        }
-
+        PageContext context = PageRequests.Create(kind, "/Organizations/Index");
         if (kind == HtmxRequest.HistoryRestore)
         {
+            HttpRequest request = context.HttpContext.Request;
+            IHeaderDictionary headers = request.Headers;
             headers["HX-History-Restore-Request"] = "true";
         }
 
-        EmptyModelMetadataProvider metadata = new EmptyModelMetadataProvider();
-        ActionContext action = new ActionContext(http, new RouteData(), new CompiledPageActionDescriptor());
-        PageContext context = new PageContext(action)
-        {
-            ViewData = new ViewDataDictionary(metadata, new ModelStateDictionary()),
-        };
         return new IndexModel(service)
         {
             PageContext = context,
-            MetadataProvider = metadata,
-            TempData = new TempDataDictionary(http, new StubTempDataProvider()),
+            MetadataProvider = new EmptyModelMetadataProvider(),
+            Url = new StubUrlHelper(context),
+            TempData = new TempDataDictionary(context.HttpContext, new StubTempDataProvider()),
         };
     }
 

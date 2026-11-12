@@ -6,7 +6,7 @@ using Microsoft.Net.Http.Headers;
 
 /// <summary>
 /// The HTMX 4 headers the pages read and write: whether HTMX sent a request, whether it will swap part of the page,
-/// and how to send the browser to another page after a save.
+/// how to send the browser to another page after a save, and which address an action's answer draws.
 /// </summary>
 public static class HtmxHeaders
 {
@@ -21,6 +21,9 @@ public static class HtmxHeaders
     // Asks HTMX to load another page as a boosted link would: a GET whose answer replaces the body, with its URL
     // pushed into the history.
     private const string Location = "HX-Location";
+
+    // Asks HTMX to put an address in place of the current one in the history, loading nothing and adding no entry.
+    private const string ReplaceUrl = "HX-Replace-Url";
 
     /// <summary>
     /// Says whether HTMX sent a request, for part of a page or for the whole of one, rather than the browser on its
@@ -73,5 +76,20 @@ public static class HtmxHeaders
         ArgumentException.ThrowIfNullOrWhiteSpace(url);
         IHeaderDictionary headers = response.Headers;
         headers[Location] = url;
+    }
+
+    /// <summary>
+    /// Asks HTMX to show an address in the address bar in place of the current one, without loading it or adding to
+    /// the history: the address of what the answer draws. An answer to a toast's Undo needs it, because the Undo can be
+    /// sent after the user has moved the page on, and its answer draws the page where the action ran.
+    /// </summary>
+    /// <param name="response">The response.</param>
+    /// <param name="url">The address of what the answer draws.</param>
+    public static void ReplaceAddress(HttpResponse response, string url)
+    {
+        ArgumentNullException.ThrowIfNull(response);
+        ArgumentException.ThrowIfNullOrWhiteSpace(url);
+        IHeaderDictionary headers = response.Headers;
+        headers[ReplaceUrl] = url;
     }
 }
