@@ -89,6 +89,15 @@ internal sealed class OrganizationService : IOrganizationService
     }
 
     /// <inheritdoc/>
+    public Task<bool> IsNameTakenAsync(
+        OrganizationName name,
+        OrganizationId? except,
+        CancellationToken cancellationToken = default)
+    {
+        return this._provider.IsNameTakenAsync(name, except, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     /// <remarks>
     /// The new organization is at version 1, created and last changed by the same user at the same moment, and its
     /// first version, a Created one, holds the same values. Its identifier carries on from the highest the database has

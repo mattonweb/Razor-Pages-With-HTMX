@@ -9,8 +9,8 @@ using HTMX.Adapter.Customers.Contracts;
 /// <summary>
 /// Stands in for the organization service in page tests: it keeps each request the page sends and answers with an
 /// empty page for a list, with the one organization, the versions and the choices it was given for a lookup, and with
-/// the outcomes it was given for a change, an archive or restore, a roll-back, a new organization and a delete, so a
-/// test sees what the page asked for without a database.
+/// the outcomes it was given for a change, an archive or restore, a roll-back, a new organization, a delete and a check
+/// of a name, so a test sees what the page asked for without a database.
 /// </summary>
 internal sealed class StubOrganizationService : IOrganizationService
 {
@@ -21,12 +21,14 @@ internal sealed class StubOrganizationService : IOrganizationService
     private readonly List<(ChangeKind Change, OrganizationStatusRequest Request)> _statusChanges = [];
     private readonly List<OrganizationRollBackRequest> _rollBacks = [];
     private readonly List<OrganizationDeleteRequest> _deletions = [];
+    private readonly List<(OrganizationName Name, OrganizationId? Except)> _nameChecks = [];
     private readonly OrganizationSingleResponse? _found;
     private readonly UpdateOutcome _outcome;
     private readonly CreateOutcome _creation;
     private readonly OrganizationVersionResponse[] _versions;
     private readonly OrganizationReference[] _choices;
     private readonly DeleteOutcome _deletion;
+    private readonly bool _nameTaken;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StubOrganizationService"/> class.
@@ -38,13 +40,15 @@ internal sealed class StubOrganizationService : IOrganizationService
     /// <param name="versions">The versions a lookup of the history answers with, newest first.</param>
     /// <param name="choices">The organizations a list of choices answers with.</param>
     /// <param name="deletion">What a delete is answered with.</param>
+    /// <param name="nameTaken">Whether a check of a name finds another organization with it.</param>
     public StubOrganizationService(
         OrganizationSingleResponse? found = null,
         UpdateOutcome outcome = UpdateOutcome.Saved,
         CreateOutcome creation = CreateOutcome.Created,
         OrganizationVersionResponse[]? versions = null,
         OrganizationReference[]? choices = null,
-        DeleteOutcome deletion = DeleteOutcome.Deleted)
+        DeleteOutcome deletion = DeleteOutcome.Deleted,
+        bool nameTaken = false)
     {
         this._found = found;
         this._outcome = outcome;
@@ -52,6 +56,7 @@ internal sealed class StubOrganizationService : IOrganizationService
         this._versions = versions ?? [];
         this._choices = choices ?? [];
         this._deletion = deletion;
+        this._nameTaken = nameTaken;
     }
 
     /// <summary>
@@ -116,6 +121,25 @@ internal sealed class StubOrganizationService : IOrganizationService
     public OrganizationRollBackRequest? LastRollBack()
     {
         return this._rollBacks.LastOrDefault();
+    }
+
+    /// <summary>
+    /// Gives the last name the page asked about, and the organization whose own name was not to count.
+    /// </summary>
+    /// <returns>The name and the organization left out, or <see langword="null"/> before the page asks.</returns>
+    public (OrganizationName Name, OrganizationId? Except)? LastNameCheck()
+    {
+        return this._nameChecks.Count == 0 ? null : this._nameChecks[^1];
+    }
+
+    /// <inheritdoc/>
+    public Task<bool> IsNameTakenAsync(
+        OrganizationName name,
+        OrganizationId? except,
+        CancellationToken cancellationToken = default)
+    {
+        this._nameChecks.Add((name, except));
+        return Task.FromResult(this._nameTaken);
     }
 
     /// <inheritdoc/>

@@ -691,6 +691,35 @@ public sealed class OrganizationServiceTests
     }
 
     /// <summary>
+    /// Unit test to verify that a name counts as taken when another organization has it, however it is capitalized and
+    /// whether that organization is active or archived, and never because of the organization left out.
+    /// </summary>
+    /// <param name="name">The name asked about.</param>
+    /// <param name="except">The identifier of the organization whose own name does not count, if any.</param>
+    /// <param name="expected">Whether the name should count as taken.</param>
+    [TestMethod]
+    [DataRow("SAMPLE & SONS", null, true, DisplayName = "Another's name in capitals")]
+    [DataRow("mockup media", null, true, DisplayName = "An archived organization's name")]
+    [DataRow("PLACEHOLDER LOGISTICS", 10003L, false, DisplayName = "The name of the one left out")]
+    [DataRow("Placeholder Logistics", 10004L, true, DisplayName = "Another's name, with a third left out")]
+    [DataRow("Nobody Holdings", null, false, DisplayName = "A name no organization has")]
+    public async Task IsNameTakenAsync_Name_SaysWhetherAnotherHasIt(string name, long? except, bool expected)
+    {
+        // Arrange (Given)
+        OrganizationName asked = new OrganizationName(name);
+        OrganizationId? leftOut = except is long id ? new OrganizationId(id) : null;
+
+        // Act (When)
+        bool taken = await OrganizationServiceCalls.IsNameTakenAsync(asked, leftOut).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            taken,
+            expected ? "Another organization should have the name." : "No other organization should have the name.");
+    }
+
+    /// <summary>
     /// Unit test to verify that archiving an active organization saves an Archived version that says who archived it
     /// and when, keeps its values, and leaves the organization archived at that version.
     /// </summary>

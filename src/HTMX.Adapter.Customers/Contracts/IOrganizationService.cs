@@ -45,6 +45,22 @@ public interface IOrganizationService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Says whether an organization other than the one given already has a name, however it is capitalized and
+    /// whether it is active or archived: the rule a new organization and a change to one must pass, asked on its own,
+    /// as a form asks while the name is typed. The answer can be out of date as soon as it is given, so only a save
+    /// enforces the rule.
+    /// </summary>
+    /// <param name="name">The name to look for.</param>
+    /// <param name="except">The organization whose own name does not count, or <see langword="null"/> when every
+    /// organization's does, as for a new one.</param>
+    /// <param name="cancellationToken">Signals that the caller no longer needs the answer.</param>
+    /// <returns><see langword="true"/> when another organization has the name.</returns>
+    Task<bool> IsNameTakenAsync(
+        OrganizationName name,
+        OrganizationId? except,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Creates an organization, with its first version, unless another organization already has its name.
     /// </summary>
     /// <param name="request">The new organization's values, and who is creating it.</param>

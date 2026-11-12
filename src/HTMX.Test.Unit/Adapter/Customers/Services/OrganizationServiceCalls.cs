@@ -65,6 +65,24 @@ internal static class OrganizationServiceCalls
     }
 
     /// <summary>
+    /// Asks the service whether an organization other than the one given has a name.
+    /// </summary>
+    /// <param name="name">The name to ask about.</param>
+    /// <param name="except">The organization whose own name does not count, or <see langword="null"/> for none.</param>
+    /// <returns><see langword="true"/> when another organization has the name.</returns>
+    internal static async Task<bool> IsNameTakenAsync(OrganizationName name, OrganizationId? except)
+    {
+        using (ServiceProvider services = await TestServices.CreateStartedAsync().ConfigureAwait(false))
+        {
+            using (IServiceScope scope = services.CreateScope())
+            {
+                IOrganizationService organizations = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
+                return await organizations.IsNameTakenAsync(name, except).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
     /// Sends changes to one organization one after another, each in a request of its own as two browser tabs would,
     /// then reads the organization and every version of it.
     /// </summary>
