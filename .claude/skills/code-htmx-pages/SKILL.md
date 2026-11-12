@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, and the patterns still open (expired sign-ins and answers a page did not plan for, polling, more rows as a list scrolls). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.16.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, and the patterns still open (expired sign-ins and answers a page did not plan for, polling, more rows as a list scrolls, a Content Security Policy, a form with a file). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.17.0
 visibility: public
 ---
 
@@ -759,10 +759,25 @@ workshop names its chapter.
   as it was ([hx-status](https://four.htmx.org/reference/attributes/hx-status)); that page does not say whether it
   can be inherited from a container. What the user is told then, how they try again and where the keyboard goes,
   after an error, a timeout (60 seconds, section 1) or a lost connection, is not yet worked out.
+- **A Content Security Policy.** HTMX 4 compiles code with JavaScript's `Function` constructor for `hx-on`, for
+  trigger filters such as `click[shiftKey]`, for `js:` values in `hx-vals`, `hx-headers` and `hx-confirm`, and for a
+  `js:` request address (4.0.1 source, `#executeJavaScript` and the methods that call it). A policy without
+  `'unsafe-eval'` stops exactly those, so a page that uses none of them, and loads HTMX and its own script from files,
+  needs nothing relaxed in `script-src` for HTMX's sake. A `<script>` in swapped content is created again, and takes
+  a nonce only from `htmx.config.inlineScriptNonce` (`#processScripts`); an extension can supply its own compiler and
+  a Trusted Types policy (`initSecurity`). Not yet worked out: what `style-src` needs for the indicator styles HTMX
+  adds through a constructed stylesheet unless `includeIndicatorCSS` is false (`#initRequestIndicatorCss`). None of
+  this has been tried under a real policy.
 - **Rows added to and removed from a form.** For a list of plain values, every row's input has the same name, such
   as `name="Input.Tags"`, which binds to a `List<string>` with no index numbers. The server renders one new row as a
   fragment that `hx-swap="beforeend"` appends, and removing a row only removes its element (workshop, Lab 5). A list
   of objects needs indexed names (`Input.Lines[0].Name`), and so more care when a row leaves.
+- **A form with a file.** HTMX 4 sends a form URL-encoded unless the form says `enctype="multipart/form-data"` or the
+  element says `hx-encoding` (4.0.1 source, `#handleTriggerEvent`), so a form that uploads a file, which needs that
+  `enctype` without HTMX anyway, posts through HTMX unchanged, and the handler binds the file as an `IFormFile`. HTMX
+  4 sends with `fetch`, which reports no upload progress, and 4.0.1 raises no progress event, so a large upload shows
+  only the busy state. Not yet worked out: a refused save draws the form again, and no page can put the chosen file
+  into a new file input, so the user would have to choose it again.
 - **An `HX-Trigger` response header** raises a client-side event, and an element elsewhere can listen for it and load
   itself again: `hx-get="?handler=Messages" hx-trigger="showMessage from:body"`. That is how the workshop shows a
   message after a save (Lab 3). It costs a second request for each message, where section 8's `<hx-partial>` arrives
