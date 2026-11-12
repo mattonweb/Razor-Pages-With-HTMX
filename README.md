@@ -47,13 +47,14 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   archived ones muted among the rest, ten to a page, paged by key as the list is (`?after=10017`). Each row's menu
   archives or restores its contact at once, with a toast whose Undo does the opposite. The row's form posts to the
   list's own address with the handler and the contact added (`?after=10017&contact=10018&handler=ArchiveContact`), so
-  the answer is the same page of the list: with HTMX the list's card alone, with the keyboard back on that row's menu
-  button; without it, a redirect to the same page. An archived contact's menu ends with **Delete permanently**, which
-  asks first in a confirm dialog that posts the version the row shows. The list is read again from the same cursor,
-  so the rows after the deleted one move up, the keyboard goes to the row now in its place, and the toast has no
-  Undo; a delete that leaves no row on the page shows the first page. A delete changes the count on the Contacts
-  tab's label, so with HTMX it redraws the whole tab, not the list alone. Previous and Next redraw the whole tab, header
-  included, because the header's Archive and Restore post to the page's address too. An archived organization's
+  the answer is the same page of the list: with HTMX the tab's whole content, header included, with the keyboard back
+  on that row's menu button; without it, a redirect to the same page. The answer names that page's address in
+  `HX-Replace-Url`, so an Undo pressed after **Next** shows the page the contact came back on, with the address to
+  match. An archived contact's menu ends with **Delete permanently**, which asks first in a confirm dialog that posts
+  the version the row shows. The list is read again from the same cursor, so the rows after the deleted one move up,
+  the keyboard goes to the row now in its place, and the toast has no Undo; a delete that leaves no row on the page
+  shows the first page. Previous and Next redraw the whole tab too: the header's Archive and Restore post to the
+  page's address, and a delete changes the count on the Contacts tab's label. An archived organization's
   contacts can be seen but not changed until it is restored, and offers no **New contact**. Each name links to the
   contact's own page.
 - **`/organizations/{id}/history`** — the History tab: every version, newest first, in a timeline, each with the fields
@@ -199,6 +200,11 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   version's row, in one transaction. If another save got there first, from someone else or from the same person in
   another tab, nothing is written and the form comes back with 409, the values being edited, and the saved value under
   each field that differs; saving again then replaces the newer version on purpose.
+- **A Content Security Policy on every answer**, set in `Security/ContentSecurityPolicy.cs`: scripts, stylesheets and
+  images only from the application's own files, requests and form posts only to the application, no frames, and
+  nothing inline or compiled from a string. HTMX needs nothing relaxed for it, because no page uses `hx-on`, a trigger
+  filter or a `js:` value. In Development the policy also lets hot reload's WebSocket reach `dotnet watch` or Visual
+  Studio on another port of `localhost`.
 - **Who is signed in.** There is no sign-in page: `DemoAuthenticationHandler` signs every request in as Demo User
   (10001), and a page reads who made a change from its `User`, as it would behind a real sign-in.
 
