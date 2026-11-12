@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Application.Web.Pages.Organizations;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -94,10 +95,11 @@ public sealed class ContactsModelTests
 
     /// <summary>
     /// Unit test to verify that an archive HTMX sent from a row asks for that contact among the organization's, as the
-    /// signed-in user, and answers with the list alone and a toast whose Undo restores them from the same page.
+    /// signed-in user, and answers with the tab's whole content, whose header carries the page too, and a toast whose
+    /// Undo restores them from the same page.
     /// </summary>
     [TestMethod]
-    public async Task OnPostArchiveContactAsync_ArchivedByHtmx_AnswersTheListAndAToastWithUndo()
+    public async Task OnPostArchiveContactAsync_ArchivedByHtmx_AnswersTheTabAndAToastWithUndo()
     {
         // Arrange (Given)
         StubContactService contacts = new StubContactService(CreateContacts());
@@ -112,11 +114,11 @@ public sealed class ContactsModelTests
         // Assert (Then)
         PartialViewResult partial = Assert.IsInstanceOfType<PartialViewResult>(
             result,
-            "HTMX should get the list to swap in place.");
+            "HTMX should get the tab's content to swap in place.");
         Assert.AreEqual(
-            "_ContactListChanged",
+            "_RecordChanged",
             partial.ViewName,
-            "The answer should hold the list and the toast, not the rest of the tab.");
+            "The answer should hold the tab's content and the toast.");
         Assert.AreEqual(
             (ChangeKind.Archived, new ContactId(10018), new OrganizationId(10003), new UserId(10001)),
             (sent?.Change, sent?.Request.Id, sent?.Request.Organization, sent?.Request.ChangedBy),
@@ -130,9 +132,31 @@ public sealed class ContactsModelTests
             page.Toast?.UndoAction,
             "Undo should restore them from the same page.");
         Assert.AreEqual(
-            ("#contact-list", (ContactId?)new ContactId(10018)),
+            ("#organization", (ContactId?)new ContactId(10018)),
             (page.Toast?.UndoTarget, page.Focused),
-            "Undo should replace the list again, and the row's menu button should take the focus.");
+            "Undo should replace the tab's content again, and the row's menu button should take the focus.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a row's Undo, pressed from the toast after the list has moved to the next page, names
+    /// the page it draws, the one the action ran on, for the address bar.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostRestoreContactAsync_UndoAfterNext_NamesThePageItDraws()
+    {
+        // Arrange (Given)
+        ContactsModel page = CreatePage(new StubContactService(CreateContacts()), HtmxRequest.Partial);
+        page.Paging = new ContactsModel.PagingInputModel();
+
+        // Act (When)
+        await page.OnPostRestoreContactAsync(10018, CancellationToken.None).ConfigureAwait(false);
+        IHeaderDictionary headers = page.Response.Headers;
+
+        // Assert (Then)
+        Assert.AreEqual(
+            "/Organizations/Contacts/10003",
+            headers["HX-Replace-Url"].ToString(),
+            "The answer should name the first page, where the archive ran, not the page the address bar shows.");
     }
 
     /// <summary>
@@ -159,9 +183,9 @@ public sealed class ContactsModelTests
             (redirect.PageName, redirect.RouteValues?["after"]),
             "The redirect should go back to the same page of the Contacts tab.");
         Assert.AreEqual(
-            ("Florian Fallback restored.", "#contact-list"),
+            ("Florian Fallback restored.", "#organization"),
             (page.TempData["ToastMessage"], page.TempData["ToastUndoTarget"]),
-            "The toast, and the list its Undo replaces, should wait in TempData.");
+            "The toast, and the tab's content its Undo replaces, should wait in TempData.");
     }
 
     /// <summary>

@@ -6,20 +6,20 @@
     the card loads over HTMX; in HTMX 4 an attribute reaches the card's descendants only when it says :inherited.
     Previous and Next are boosted links, so the URL follows them, and they replace the tab's whole content,
     #organization: the header's Archive and Restore post to the URL's values, so they must be drawn again whenever the
-    URL changes. A row's form leaves the URL as it is and replaces only this card; it says hx-post, which HTMX sets up
-    before it boosts anything, so the post is not boosted. Every request in the card joins one queue on the card, and
-    the newest replaces the one running, so a slow answer never lands after a newer one. Without HTMX they are plain
-    links and forms that post.
+    URL changes. A row's form replaces #organization too, because its toast's Undo can be pressed after Next and draws
+    the page where the action ran, which changes the URL back. It says hx-post, which HTMX sets up before it boosts
+    anything, so the post is not boosted. Every request in the card joins one queue on the card, and the newest
+    replaces the one running, so a slow answer never lands after a newer one. Without HTMX they are plain links and
+    forms that post.
 
     New contact, the card's one action, opens the create form with this organization chosen. It leaves the list, so it
     is a normal link, not a swap, and an archived organization, which takes no one in, does not offer it.
 
     An archived contact's menu ends with Delete permanently, which cannot be undone, so it opens a confirm dialog whose
     own form posts to the list's address with the version the row shows. A delete changes the count on the Contacts
-    tab's label, so the form replaces the tab's whole content, #organization, which the card's links already target,
-    not this card alone. The dialogs come after the table: after a swap HTMX focuses only the first element that says
-    autofocus, and each dialog's Cancel says it, so the row's menu button, or the heading once a delete leaves no row,
-    must come first.
+    tab's label, which the tab's whole content, #organization, holds. The dialogs come after the table: after a swap
+    HTMX focuses only the first element that says autofocus, and each dialog's Cancel says it, so the row's menu
+    button, or the heading once a delete leaves no row, must come first.
 *@
 @{
     OrganizationSingleResponse organization = Model.Organization
@@ -113,7 +113,7 @@
                                     </button>
                                     <div class="menu" id="@menu" popover>
                                         <form method="post" action="@action" asp-antiforgery="true"
-                                              hx-post="@action" hx-target="#contact-list">
+                                              hx-post="@action" hx-target="#organization">
                                             @if (archived)
                                             {
                                                 <button type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Restore</button>

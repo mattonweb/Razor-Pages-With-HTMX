@@ -22,11 +22,11 @@ using Microsoft.AspNetCore.Mvc;
 /// Previous and Next change the URL, and the header's Archive and Restore post to the URL's values too, so with HTMX
 /// they answer with the tab's whole content, header and all. An action on a row posts to the list's own address with
 /// the handler and the contact added, so the POST binds where the list is just as the GET does, and reads the same
-/// page again. It leaves the URL as it is, so with HTMX it answers with the list alone, and the rest of the tab stays;
-/// without HTMX, the redirect goes back to the same page of the list. A delete reads the page from the same cursor
-/// too: the rows after the deleted one move up, and a page left with no row is the service's to answer, with the
-/// first page. It also changes the count on the Contacts tab's label, so with HTMX it answers with the tab's whole
-/// content.
+/// page again. With HTMX it answers with the tab's whole content too, and names the page's address for the address
+/// bar: the toast's Undo can be pressed after Next, and its answer draws the page where the action ran, header and
+/// all, so the header's forms and the address agree with the list. Without HTMX, the redirect goes back to the same
+/// page of the list. A delete reads the page from the same cursor too: the rows after the deleted one move up, and a
+/// page left with no row is the service's to answer, with the first page.
 /// </remarks>
 public sealed class ContactsModel : OrganizationPageModel
 {
@@ -43,10 +43,6 @@ public sealed class ContactsModel : OrganizationPageModel
     private const string ArchiveContactHandler = "ArchiveContact";
     private const string RestoreContactHandler = "RestoreContact";
     private const string DeleteContactHandler = "DeleteContact";
-    private const string ListChangedPartial = "_ContactListChanged";
-
-    // What an action on a row, and its Undo, replaces: the list's card.
-    private const string ListTarget = "#contact-list";
 
     // The query string name of the contact a row's action is for; the handlers' parameter has the same name.
     private const string ContactKey = "contact";
@@ -103,8 +99,8 @@ public sealed class ContactsModel : OrganizationPageModel
     /// </summary>
     /// <param name="contact">The contact's identifier, from the row's address.</param>
     /// <param name="cancellationToken">Signals that the browser has gone away.</param>
-    /// <returns>The list and the toast for HTMX; a redirect back to the same page of the list otherwise; 400 for an
-    /// identifier that cannot be one.</returns>
+    /// <returns>The tab's content and the toast for HTMX; a redirect back to the same page of the list otherwise; 400
+    /// for an identifier that cannot be one.</returns>
     public Task<IActionResult> OnPostArchiveContactAsync(long contact, CancellationToken cancellationToken)
     {
         return this.ChangeContactAsync(contact, ChangeKind.Archived, cancellationToken);
@@ -115,8 +111,8 @@ public sealed class ContactsModel : OrganizationPageModel
     /// </summary>
     /// <param name="contact">The contact's identifier, from the row's address.</param>
     /// <param name="cancellationToken">Signals that the browser has gone away.</param>
-    /// <returns>The list and the toast for HTMX; a redirect back to the same page of the list otherwise; 400 for an
-    /// identifier that cannot be one.</returns>
+    /// <returns>The tab's content and the toast for HTMX; a redirect back to the same page of the list otherwise; 400
+    /// for an identifier that cannot be one.</returns>
     public Task<IActionResult> OnPostRestoreContactAsync(long contact, CancellationToken cancellationToken)
     {
         return this.ChangeContactAsync(contact, ChangeKind.Restored, cancellationToken);
@@ -128,8 +124,8 @@ public sealed class ContactsModel : OrganizationPageModel
     /// gone from the page read again, so the keyboard goes to the row now in its place.
     /// </summary>
     /// <remarks>
-    /// Unlike archiving, a delete changes how many contacts the organization has, which the Contacts tab's label
-    /// counts, so with HTMX it answers with the tab's whole content, header and all, not the list alone.
+    /// A delete also changes how many contacts the organization has, which the Contacts tab's label counts; the tab's
+    /// whole content, which HTMX gets, holds the label.
     /// </remarks>
     /// <param name="contact">The contact's identifier, from the row's address.</param>
     /// <param name="version">The version the dialog showed them at, from its form.</param>
@@ -281,7 +277,8 @@ public sealed class ContactsModel : OrganizationPageModel
     /// <param name="contact">The contact's identifier, as sent.</param>
     /// <param name="change">Archived or Restored.</param>
     /// <param name="cancellationToken">Signals that the browser has gone away.</param>
-    /// <returns>The list and the toast for HTMX; a redirect back to the same page of the list otherwise.</returns>
+    /// <returns>The tab's content and the toast for HTMX; a redirect back to the same page of the list
+    /// otherwise.</returns>
     private async Task<IActionResult> ChangeContactAsync(
         long contact,
         ChangeKind change,
@@ -319,7 +316,7 @@ public sealed class ContactsModel : OrganizationPageModel
         }
 
         string message = ContactMessages.Status(change, outcome, this.NameOf(request.Id), organization.Name);
-        return this.Answer(message, undo, ListChangedPartial, ListTarget);
+        return this.Answer(message, undo);
     }
 
     /// <summary>

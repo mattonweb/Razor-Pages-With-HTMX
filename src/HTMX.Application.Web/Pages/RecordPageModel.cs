@@ -20,7 +20,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 /// HTMX the answer is the tab's content and the toast together; without it, a redirect back to the tab, which shows the
 /// toast the action left in TempData. Razor Pages finds the handlers declared on a base page model on each tab that
 /// inherits them. A tab that holds a list keeps where the list is in its query string, and every form and redirect
-/// here carries it, so an action leaves the list where it was.
+/// here carries it, so an action leaves the list where it was. The header's forms carry it too, so an action on a row
+/// of the list answers with the tab's whole content, as an action on the record does.
 /// </remarks>
 public abstract class RecordPageModel : PageModel
 {
@@ -116,39 +117,30 @@ public abstract class RecordPageModel : PageModel
     }
 
     /// <summary>
-    /// Answers an action on the record. HTMX gets the tab's content and the toast, to swap in place. A browser without
-    /// HTMX is redirected back to the tab, so that refreshing it does not post again, and the toast waits in TempData
-    /// for the tab to show.
+    /// Answers an action on the record, or on a row of the tab's list. HTMX gets the tab's content and the toast, to
+    /// swap in place, and the tab's address to put in the address bar: the toast's Undo can be sent after the user has
+    /// moved to another tab, or to another page of the list, and its answer draws the tab where the action ran. A
+    /// browser without HTMX is redirected back to the tab, so that refreshing it does not post again, and the toast
+    /// waits in TempData for the tab to show.
     /// </summary>
     /// <param name="message">The toast's message.</param>
     /// <param name="undoAction">The address Undo posts to, or <see langword="null"/> for no Undo.</param>
     /// <returns>The content and toast, or the redirect.</returns>
     protected IActionResult Answer(string message, string? undoAction)
     {
-        return this.Answer(message, undoAction, ChangedPartial, this.ContentTarget);
-    }
-
-    /// <summary>
-    /// Answers an action on one part of the tab, such as a row of its list: HTMX gets that part and the toast, and the
-    /// toast's Undo replaces that part again. Without HTMX it is the redirect back to the tab, as for an action on the
-    /// record.
-    /// </summary>
-    /// <param name="message">The toast's message.</param>
-    /// <param name="undoAction">The address Undo posts to, or <see langword="null"/> for no Undo.</param>
-    /// <param name="changedPartial">The partial that holds the part and the toast.</param>
-    /// <param name="undoTarget">The element the part replaces, which an Undo that HTMX sends replaces too.</param>
-    /// <returns>The part and toast, or the redirect.</returns>
-    protected IActionResult Answer(string message, string? undoAction, string changedPartial, string undoTarget)
-    {
-        Toast toast = CreateToast(message, undoAction, undoTarget);
-        if (HtmxHeaders.IsPartialRequest(this.Request))
+        Toast toast = CreateToast(message, undoAction, this.ContentTarget);
+        Dictionary<string, string> values = this.TabValues();
+        if (!HtmxHeaders.IsPartialRequest(this.Request))
         {
-            this.Toast = toast;
-            return this.Partial(changedPartial, this);
+            TempDataToasts.Leave(this.TempData, toast);
+            return this.RedirectToPage(this.PageName, values);
         }
 
-        TempDataToasts.Leave(this.TempData, toast);
-        return this.RedirectToPage(this.PageName, this.TabValues());
+        string address = this.Url.Page(this.PageName, values)
+            ?? throw new InvalidOperationException($"The tab {this.PageName} has no address.");
+        HtmxHeaders.ReplaceAddress(this.Response, address);
+        this.Toast = toast;
+        return this.Partial(ChangedPartial, this);
     }
 
     /// <summary>
