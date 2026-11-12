@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, and the patterns still open (expired sign-ins and answers a page did not plan for, polling, more rows as a list scrolls, a Content Security Policy, a form with a file). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.17.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, and the patterns still open (expired sign-ins and answers a page did not plan for, polling, more rows as a list scrolls, a Content Security Policy, a form with a file, boosting every link). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.18.0
 visibility: public
 ---
 
@@ -131,8 +131,13 @@ Not yet tried on a Razor project.
   [quirks](https://four.htmx.org/docs/quirks) page warns that loading HTMX other than by a plain blocking tag is
   unreliable, mostly where a bundler is involved; `defer` has given no trouble so far.
 - **A page's `Scripts` section is in the body.** The default layout renders `@RenderSectionAsync("Scripts")` at the
-  end of `<body>`, so a script a page puts there runs again on each body swap. Move it into `<head>`, or write it so
-  that running twice does no harm.
+  end of `<body>`, so a script a page puts there runs again on each body swap. Move it into the layout's `<head>`
+  (below), or write it so that running twice does no harm.
+- **A swapped page's `<head>` is dropped.** When Back, Forward or a boosted link brings a page, HTMX takes the
+  answer's `<title>` for the document's title and drops the rest of its `<head>` (4.0.1 source, `#makeFragment` and
+  `swap`): the document keeps the head of the page the browser itself loaded. A stylesheet or script that only one
+  page's `<head>` names, such as one a page adds through a section, loads only when the browser loads that page
+  itself, so whatever any page needs goes in the layout's `<head>`, the same on every page.
 - **The application's own script listens on `document`.** A listener on an element is lost when a swap replaces the
   element. Delegate events from `document`, and refresh any state the script keeps on `htmx:after:swap`. A control
   that only this script makes work, such as a menu toggle, says so with an attribute, and CSS takes it off the page
@@ -795,6 +800,13 @@ workshop names its chapter.
   screen, when a URL names one page and Back returns to it (Principles); how a screen reader learns that rows were
   added; where the keyboard goes; and how anyone reaches what follows the list, such as its pager. A "Load more"
   button that the user presses answers most of these better than loading as the list scrolls.
+- **Boosting every link.** `hx-boost:inherited="true"` on the layout's `<body>` would load every page in place.
+  HTMX 4 boosts a link to the same origin that opens in the same tab, downloads nothing and does not point to `#`,
+  and a form that does not say `method="dialog"` (4.0.1 source, `#shouldBoost`). It swaps the answer's body in, sets
+  the title, scrolls to the top and pushes the URL (`swap`, `#processMainSwap` and `#resolveHistoryAction`), and
+  moves the keyboard nowhere. So the page's heading says `autofocus` when HTMX asked for the whole page, as after
+  Previous and Next (section 4); without it, nothing tells a screen reader that a new page has arrived. And every
+  page must need nothing but the layout's `<head>` (section 2). Not yet tried across a whole application.
 - **A confirmation page for a browser without invoker commands.** A link to a page the server draws, holding the
   dialog's form, would reach an action behind a dialog on any browser and still give a chance to look before acting.
   A page cannot offer the link to one browser and the dialog to another without script, so where that line falls is
