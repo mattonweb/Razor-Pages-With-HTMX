@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
 description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, and the patterns still open (expired sign-ins and answers a page did not plan for, polling, more rows as a list scrolls). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.15.0
+version: 0.16.0
 visibility: public
 ---
 
@@ -43,7 +43,10 @@ Every section below applies these, and says why where it does.
   cannot be skipped either. Which browsers a repository supports is its own decision, stated in its README.
 - **The address holds the view.** Everything that decides what a page shows, such as a list's filter, sort and place,
   is in its URL, and that URL loads the whole page on its own. HTMX pushes it into the history, Back and Forward
-  fetch it again, and an action on the page posts to it and reads it again (sections 4, 5 and 9).
+  fetch it again, and an action on the page posts to it and reads it again (sections 4, 5 and 9). Session state holds
+  none of it, since every tab of the browser shares the session and a link cannot carry it. And a handler learns
+  where the page is from its own address, never from the `HX-Current-URL` or `HX-Target` headers HTMX sends
+  (4.0.1 source, `#createCoreHeaders` and `#createRequestContext`), which a request without HTMX does not carry.
 - **One partial draws both answers.** The page renders the same partials that its handlers return to HTMX, so the
   whole page and the part that is swapped cannot disagree, and the browser holds nothing of its own that a swap could
   lose (sections 3 and 8).
@@ -87,7 +90,7 @@ built.
 | Back restores a snapshot from local storage | Back and Forward fetch the URL again and swap it into `<body>`, or into `[hx-history-elt]`; nothing is stored | [Browser history](https://four.htmx.org/docs#browser-history-support) |
 | `htmx:afterSwap`, `htmx:afterOnLoad`, `htmx:load`, `htmx:configRequest` | `htmx:after:swap`, `htmx:after:request`, `htmx:after:process`, `htmx:config:request`: every event is named `htmx:phase:action` | [Events](https://four.htmx.org/reference/events) |
 | The `HX-Trigger` request header names the element | `HX-Source`, written `tag#id`; `HX-Target` is `tag#id` too; `HX-Trigger-Name` is gone. New: `HX-Request-Type` (section 3) | [Request headers](https://four.htmx.org/reference/headers) |
-| `HX-Trigger-After-Swap` and `HX-Trigger-After-Settle` response headers | Gone; `HX-Trigger` remains | [HX-Trigger](https://four.htmx.org/reference/headers/HX-Trigger) |
+| `HX-Trigger-After-Swap` and `HX-Trigger-After-Settle` response headers | Gone; `HX-Trigger` remains, and its events fire once the swap has settled, as `HX-Trigger-After-Settle`'s did (4.0.1 source, `#issueRequest`) | [HX-Trigger](https://four.htmx.org/reference/headers/HX-Trigger) |
 | `hx-disable` skips processing; `hx-disabled-elt` disables controls during a request | `hx-ignore` skips processing; `hx-disable` disables controls during a request. Rename `hx-disable` first, then `hx-disabled-elt` | [What's new](https://four.htmx.org/docs/whats-new-in-htmx-4) |
 | `hx-ext`, `hx-vars`, `hx-params`, `hx-prompt`, `hx-request`, `hx-history` | Removed. An extension loads from its own `<script>` tag; `hx-vals` with a `js:` prefix replaces `hx-vars` | [What's new](https://four.htmx.org/docs/whats-new-in-htmx-4) |
 | `from:(closest form)`; `click queue:all` | `from:'closest form'`, in single quotes; queuing belongs to `hx-sync` alone | [hx-trigger](https://four.htmx.org/reference/attributes/hx-trigger) |
@@ -170,7 +173,10 @@ with the whole page otherwise.
   whether HTMX asked for part of the page, and keeps the header names private, so that no page decides on
   `HX-Request` by mistake and a version that renames a header changes one file (section 2). A test writes the names
   itself, so a name the class misspells fails the test instead of agreeing with it. The class reads and writes those
-  headers and decides nothing else: who may ask, and what a request may change, stay with the handler.
+  headers and decides nothing else: who may ask, and what a request may change, stay with the handler. A package
+  that wraps the headers can stand in for the class if it decides the same way. The 2.x line of
+  [Htmx.Net](https://github.com/khalidabuhakmeh/Htmx.Net), written for HTMX 4, does it with `Request.IsHtmxPartial()`,
+  which reads `HX-Request-Type`; its `IsHtmx()` is true whenever `HX-Request` is sent, Back and Forward included.
 
 ```csharp
 public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
