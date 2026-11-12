@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, and the patterns still open (expired sign-ins and answers a page did not plan for, polling). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.14.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, and the patterns still open (expired sign-ins and answers a page did not plan for, polling, more rows as a list scrolls). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.15.0
 visibility: public
 ---
 
@@ -63,8 +63,10 @@ Every section below applies these, and says why where it does.
   antiforgery check and model binding as any other, so a handler that only HTMX calls is guarded as any handler is,
   and what it binds, from the query string or a hidden field, is checked as any input is. What HTMX adds is HTML that
   acts: it processes every `hx-` attribute in the content it swaps in. Razor encodes what a page writes, which keeps a
-  user's text inert; HTML from users that must be written raw sits inside an element that says `hx-ignore`, which
-  nothing inside it can turn off ([Security considerations](https://four.htmx.org/docs#security-considerations)).
+  user's text inert, and a handler answers with a partial for the same reason: HTML it builds as a string, as with
+  `Content("<p>…</p>")`, is written as it is, so an `hx-` attribute in a user's text would act. HTML from users that
+  must be written raw sits inside an element that says `hx-ignore`, which nothing inside it can turn off
+  ([Security considerations](https://four.htmx.org/docs#security-considerations)).
 
 A departure from any of these, or from a pattern below, is made out loud: a comment where the page departs names
 what it departs from and says why, so that the next reader does not put it back. A repository that departs from one
@@ -90,6 +92,7 @@ built.
 | `hx-ext`, `hx-vars`, `hx-params`, `hx-prompt`, `hx-request`, `hx-history` | Removed. An extension loads from its own `<script>` tag; `hx-vals` with a `js:` prefix replaces `hx-vars` | [What's new](https://four.htmx.org/docs/whats-new-in-htmx-4) |
 | `from:(closest form)`; `click queue:all` | `from:'closest form'`, in single quotes; queuing belongs to `hx-sync` alone | [hx-trigger](https://four.htmx.org/reference/attributes/hx-trigger) |
 | A request never times out | It times out after 60 seconds (`htmx.config.defaultTimeout`) | [What's new](https://four.htmx.org/docs/whats-new-in-htmx-4) |
+| `htmx.logAll()` logs every event | No such function; set `htmx.config.logAll = true` (section 6) | 4.0.1 source, `#trigger` |
 | Out-of-band content swaps before the main content | The main content swaps first, then out-of-band content and `<hx-partial>` elements, in document order | [Multi-target updates](https://four.htmx.org/docs#multi-target-updates) |
 
 Unchanged, and worth knowing: the default swap is still `innerHTML`; a boosted link or form with no target still
@@ -327,9 +330,13 @@ public static class HtmxHeaders
 - **What a unit test cannot see is checked in the browser:** which element a swap replaces, inheritance, focus, and
   the URL that is pushed. Read the request headers and the response body in the developer tools' network panel: the
   body holds the target's own outer element, and the target's `id` appears once on the page (workshop, "Checkpoint:
-  Troubleshooting + Pattern Review"). Then press Back and Forward after a few swaps. To see answers land out of
-  order, wrap `window.fetch` in the page first: HTMX looks it up for each request (4.0.1 source, `#issueRequest`), so
-  the wrapper can hold one answer back and release it after a newer one has landed.
+  Troubleshooting + Pattern Review"). To see what HTMX did with a request, set `htmx.config.logAll = true` in the
+  console: it then logs every event it raises, with the element and the event's detail, until the page is loaded
+  again. Errors and warnings are logged whether it is set or not (4.0.1 source, `#trigger`). One filter typed into a
+  list logged 70 events, so set it just before the request in question and back to `false` after it. Then press
+  Back and Forward after a few swaps. To see answers land out of order, wrap `window.fetch` in the page first: HTMX
+  looks it up for each request (4.0.1 source, `#issueRequest`), so the wrapper can hold one answer back and release
+  it after a newer one has landed.
 - **Without HTMX is tried two ways.** Once with HTMX's script left out and the application's own still running, as
   when the file fails to load, and once with script turned off in the browser, which takes the application's own
   away too. A page reaches every action both ways. Removing a page's `<script>` elements stops the scripts but not
@@ -637,11 +644,11 @@ without it, and the Undo that puts the row back.
   its Undo, sent from the toast, can be for a row that neither page shows.
 - **The keyboard goes to the row now in its place.** The row's menu button, where the keyboard was before the menu
   opened, went with the row, so the answer marks `autofocus` on the menu button of the row now at the same place, or
-  of the last row when the page is shorter (section 9). When no row is left it marks a heading inside the target, made focusable with
-  `tabindex="-1"`: the list's own, or the empty list's when the page's heading is outside the target, since HTMX
-  looks for `[autofocus]` only in the new content (below). An action that leaves its row on the page, such as an
-  archive in a view that shows archived records too, or a refused one, keeps the keyboard on the row's own menu
-  button, wherever the row now is.
+  of the last row when the page is shorter (section 9). When no row is left it marks a heading inside the target,
+  made focusable with `tabindex="-1"`: the list's own, or the empty list's when the page's heading is outside the
+  target, since HTMX looks for `[autofocus]` only in the new content (below). An action that leaves its row on the
+  page, such as an archive in a view that shows archived records too, or a refused one, keeps the keyboard on the
+  row's own menu button, wherever the row now is.
 - **After Undo, the keyboard goes to the row that came back.** Undo was pressed in the toast, so HTMX first puts the
   keyboard back on the new toast's Undo by `id` (section 8), then moves it to the `[autofocus]` the answer marks
   (section 9): the menu button of the row that came back, which the handler finds on the page read again, whether or
@@ -760,6 +767,13 @@ workshop names its chapter.
   and the polling stops (workshop, Lab 5). HTMX 4 still reads `every`
   ([hx-trigger](https://four.htmx.org/reference/attributes/hx-trigger)). Without HTMX the status needs a link that
   loads the page again.
+- **More rows as the list scrolls.** HTMX 4 still has the `revealed` trigger, which fires once when its element
+  scrolls into view, where `intersect` fires each time it does (4.0.1 source, `#onTrigger`). On a list paged by key
+  (section 4) the Next link is the version that works without HTMX, and with `hx-trigger="revealed"` it could add the
+  next page's rows as it comes into view. Not yet worked out: what the address holds once several pages are on the
+  screen, when a URL names one page and Back returns to it (Principles); how a screen reader learns that rows were
+  added; where the keyboard goes; and how anyone reaches what follows the list, such as its pager. A "Load more"
+  button that the user presses answers most of these better than loading as the list scrolls.
 - **A confirmation page for a browser without invoker commands.** A link to a page the server draws, holding the
   dialog's form, would reach an action behind a dialog on any browser and still give a chance to look before acting.
   A page cannot offer the link to one browser and the dialog to another without script, so where that line falls is
