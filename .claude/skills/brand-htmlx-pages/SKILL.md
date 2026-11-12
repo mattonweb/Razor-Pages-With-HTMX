@@ -2,7 +2,7 @@
 name: brand-htmlx-pages
 description: The HTMLX Pages component library for the Razor Pages and HTMX application in this repository. Use whenever writing, styling or reviewing its markup, CSS, partial views or page layouts. Covers the design tokens (color, type, space, shape) taken from the DevExtreme UI Template Gallery and MudBlazor, light and dark mode, the class naming rule, buttons and icons, and a catalog of components by family, each with its markup, variants, states, accessibility and when to use it — layout (app shell, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, busy bar, bulk bar, alert, toast). Draft; the status table says which components are settled.
 owner: Matt
-version: 0.5.1
+version: 0.5.2
 visibility: public
 ---
 
@@ -18,7 +18,7 @@ The layout patterns come from the [DevExtreme UI Template Gallery](https://githu
 code, CSS or artwork is copied from either: the gallery runs on DevExtreme, which has its own commercial license, and
 this repository is public. Everything in this skill was written for this repository.
 
-## Status: draft 0.5.1
+## Status: draft 0.5.2
 
 | Family | Components | State |
 |---|---|---|
@@ -63,8 +63,9 @@ Everything under `assets/` goes into the application; nothing outside it does.
 - `scripts/serve_specimens.py`: serves the skill folder with browser caching off, so an edited stylesheet or a new
   icon shows on a plain reload.
 
-**Open question:** how the application takes `assets/`, as a copy in `wwwroot` with this folder as the source, or
-through a build step that links them.
+An application takes the files it needs from `assets/` by copying them, unchanged, into its own `wwwroot`. Nothing
+links the copy to this folder or keeps the two in step: a later change here reaches an application only when it
+copies the file again.
 
 ## Foundations
 
