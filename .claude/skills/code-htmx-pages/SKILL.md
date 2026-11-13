@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, and the patterns still open (expired sign-ins, polling, more rows as a list scrolls, a form with a file, boosting every link). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.20.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, and the patterns still open (expired sign-ins, polling, more rows as a list scrolls, a form with a file). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.21.0
 visibility: public
 ---
 
@@ -14,9 +14,9 @@ in step. It is written for HTMX 4.0.1 and ASP.NET Core 10, and every sentence is
 application on those versions, not only the one it was built in; how one application uses HTMX belongs in its own
 code, tests and README.
 
-The evidence differs by part. The patterns in sections 2 to 15 have been built and tried in a browser; where a
+The evidence differs by part. The patterns in sections 2 to 16 have been built and tried in a browser; where a
 section also covers a case that was not built, such as output caching, its citation is the only evidence.
-Section 1's rows were read in the source and the reference, not all built, and nothing in section 16 is built.
+Section 1's rows were read in the source and the reference, not all built, and nothing in section 17 is built.
 Every HTMX fact cites the reference page or the 4.0.1 source method it came from, and the two kinds of citation
 carry different weight. A reference page is what HTMX documents. A method in the 4.0.1 source is what that release
 happens to do: the method is private, a later release may change it, and section 2 checks each one again before
@@ -182,7 +182,8 @@ with the whole page otherwise.
   headers and decides nothing else: who may ask, and what a request may change, stay with the handler. A package
   that wraps the headers can stand in for the class if it decides the same way. The 2.x line of
   [Htmx.Net](https://github.com/khalidabuhakmeh/Htmx.Net), written for HTMX 4, does it with `Request.IsHtmxPartial()`,
-  which reads `HX-Request-Type`; its `IsHtmx()` is true whenever `HX-Request` is sent, Back and Forward included.
+  which reads `HX-Request-Type`; its `IsHtmx()` is true whenever `HX-Request` is sent, which HTMX 4.0.1 leaves off
+  Back and Forward (section 5).
 
 ```csharp
 public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
@@ -308,8 +309,14 @@ public static class HtmxHeaders
   ([Browser history](https://four.htmx.org/docs#browser-history-support)), sending `HX-Request-Type: full` and
   `HX-History-Restore-Request: true` (4.0.1 source, `#restoreHistory`). The handler in section 3 already answers
   with the whole page; nothing more is needed.
-- Use `HX-History-Restore-Request` only to skip a side effect, such as counting a page view, never to send different
-  HTML ([HX-History-Restore-Request](https://four.htmx.org/reference/headers/HX-History-Restore-Request)).
+- HTMX 4.0.1 sends no `HX-Request` with it. `#restoreHistory` hands `ajax` a `request` of its own, and `ajax` copies
+  it over the request it built with `Object.assign`, which replaces the headers HTMX sends on every other request:
+  `HX-Request`, `HX-Source`, `HX-Current-URL` and `Accept` (4.0.1 source, `#restoreHistory` and `ajax`). Tried in a
+  browser by wrapping `fetch`. So a handler that asks whether HTMX sent the request, as a page's heading does to take
+  the keyboard (section 16), reads `HX-History-Restore-Request` too, and answers Back as it answers a boosted link.
+- Beyond that, use `HX-History-Restore-Request` only to skip a side effect, such as counting a page view, never to
+  send HTML that differs from what a boosted link gets
+  ([HX-History-Restore-Request](https://four.htmx.org/reference/headers/HX-History-Restore-Request)).
 - Because the body is replaced, everything in it loses its listeners and runs its scripts again: section 2.
 - Three alternatives exist, and a server-rendered page needs none of them: `hx-history-elt` restores one element
   instead of the body, `htmx.config.history = "reload"` reloads the page, and the
@@ -318,14 +325,15 @@ public static class HtmxHeaders
 ## 6. Testing
 
 - **A page model's HTMX branch is a unit test.** Give the page model a `PageContext` over a `DefaultHttpContext`, set
-  the headers HTMX would send, call the handler and assert on the result. Three kinds of request cover it, and an enum
-  of the three keeps each kind's headers in one place:
+  the headers HTMX would send, call the handler and assert on the result. Four kinds of request cover it, and an enum
+  of the four keeps each kind's headers in one place, as HTMX 4.0.1 sends them:
 
   | Kind | Headers | Result |
   |---|---|---|
   | None | no HTMX headers | `PageResult` |
   | Partial | `HX-Request: true`, `HX-Request-Type: partial` | `PartialViewResult` with the partial's name |
-  | History restore | `HX-Request: true`, `HX-Request-Type: full`, `HX-History-Restore-Request: true` | `PageResult` |
+  | Boosted | `HX-Request: true`, `HX-Request-Type: full`, `HX-Boosted: true` | `PageResult` |
+  | History restore | `HX-Request-Type: full`, `HX-History-Restore-Request: true`; no `HX-Request` | `PageResult` |
 
   One more test starts the response with a `Vary` value already set, and checks that the header then names both it
   and `HX-Request-Type`. `this.Partial(…)` reads the page's `ViewData` and `MetadataProvider`, so the test sets both:
@@ -901,7 +909,49 @@ can neither run a script nor send what the page holds to another site
   `<style>` element were refused, a trigger filter threw, an inline script in a swapped answer did not run, and an
   `hx-on` handler ran, as above.
 
-## 16. Still open
+## 16. Every link boosted
+
+`hx-boost:inherited="true"` on the layout's `<body>` loads every page of the application in place: HTMX fetches the
+page a link or form leads to and swaps its body into this one. Nothing else in the markup has to change, and without
+HTMX the attribute does nothing.
+
+- **What HTMX boosts.** A link to the same origin that opens in the same tab, downloads nothing and does not point to
+  `#`, and a form that does not say `method="dialog"` (4.0.1 source, `#shouldBoost`). So a skip link to `#main`, a
+  `mailto:` link, a link to another site and one that opens a new tab stay as they are. A form that says `hx-post` is
+  never boosted, since HTMX sets it up before it boosts anything, and it keeps its own target (section 7).
+- **What a boosted link does.** It sends `HX-Request: true`, `HX-Request-Type: full` and `HX-Boosted: true`, swaps
+  the answer's body into `<body>`, takes its `<title>`, drops the rest of its `<head>` (section 2), scrolls to the top
+  and pushes the URL; after a redirect it pushes the address it ended at (4.0.1 source, `#createCoreHeaders`,
+  `#issueRequest`, `swap` and `#resolveHistoryAction`). The handler in section 3 already answers a `full` request
+  with the whole page.
+- **Every page puts the keyboard on its heading when HTMX loaded it.** HTMX moves the keyboard nowhere after a boosted
+  link, so nothing would tell a screen reader that a new page had arrived. Each page model's GET handler sets a flag
+  when HTMX sent the request, and the page's `<h1 tabindex="-1">` says `autofocus` from it, as the lists already do
+  after Previous and Next (section 4). Only GET sets it, so a refused save, which draws the form and its heading
+  again, still puts the keyboard on the field to fix (section 7). The page that says a record was not found does it
+  too, so its partial takes the flag beside the identifier. A page with no handlers of its own, such as a home page,
+  gets a page model for this one flag. A unit test for each page model covers a boosted link, Back and the browser on
+  its own.
+- **Back and Forward count as HTMX's requests.** HTMX 4.0.1 sends them without `HX-Request` (section 5), so the flag
+  asks for either header. Tried in a browser: before it did, Back left the keyboard on the body.
+- **A link inside a part with its own target says where it goes.** A list's card sets `hx-target:inherited` and
+  `hx-swap:inherited` for its filter, sort and paging (section 4), so a link in it to another page, such as a row's
+  name, would swap that page into the card. It says `hx-target="body" hx-swap="innerHTML"` and loads the whole page
+  as the layout's links do. `hx-boost="false"` would also stop it, but loads the page without HTMX.
+- **An address the application doesn't have** answers 404 with no body, an answer the page did not plan for: a
+  boosted link to one keeps the page and shows section 14's toast, where the browser on its own would show its own
+  error page. Tried with a link to `/no-such-page`. The application's own links never lead to one.
+- **What the body held starts again on each page.** A toast on screen goes with the old body, and state the
+  application's script keeps in it, such as a side nav switched to its narrow rail, returns to its default, as when
+  the browser loads a page itself. The script keeps its listeners, which are on `document` (section 2).
+- **Tried in a browser**, Chromium 156: the home page, both lists, a record's tabs, a row's name, a contact, Edit and
+  Cancel, New organization, New contact from a Contacts tab, the brand link, a breadcrumb and the side nav, each in
+  the same window with its address, title, current nav item and the keyboard on its heading; Back and Forward the
+  same; a save's `HX-Location` and a delete's, with its toast; a refused save, with the keyboard on its field; a
+  boosted link to a record that has gone, which drew the not-found page with 404; and the skip link, the link that
+  opens a new tab and `mailto:` left alone. No Content Security Policy violation (section 15).
+
+## 17. Still open
 
 Nothing in this section is built yet, so none of it is a rule. What is known, to start from; an idea taken from the
 workshop names its chapter.
@@ -916,7 +966,8 @@ workshop names its chapter.
   request with 204 and `HX-Redirect` naming the page instead. `HX-Redirect` loads it with a full reload, for a page
   outside the application's own flow, where `HX-Location` loads a page as a boosted link would; HTMX reads it only
   on a 2xx answer ([HX-Redirect](https://four.htmx.org/reference/headers/HX-Redirect)). That holds for every request
-  HTMX sends, a `full` one too, so the event tests `HX-Request`, not `HX-Request-Type` (section 3).
+  HTMX sends, a `full` one too, so the event asks whether HTMX sent the request, by `HX-Request` or, for Back and
+  Forward, `HX-History-Restore-Request` (section 5), not which kind it is (section 3).
 - **A policy past `'self'` (section 15).** Trusted Types, `require-trusted-types-for 'script'`, makes every string
   that becomes HTML pass through a policy the page names. HTMX 4 parses each answer through one that an extension
   supplies with `initSecurity`, and otherwise through a plain object that hands the string on (4.0.1 source,
@@ -950,13 +1001,6 @@ workshop names its chapter.
   screen, when a URL names one page and Back returns to it (Principles); how a screen reader learns that rows were
   added; where the keyboard goes; and how anyone reaches what follows the list, such as its pager. A "Load more"
   button that the user presses answers most of these better than loading as the list scrolls.
-- **Boosting every link.** `hx-boost:inherited="true"` on the layout's `<body>` would load every page in place.
-  HTMX 4 boosts a link to the same origin that opens in the same tab, downloads nothing and does not point to `#`,
-  and a form that does not say `method="dialog"` (4.0.1 source, `#shouldBoost`). It swaps the answer's body in, sets
-  the title, scrolls to the top and pushes the URL (`swap`, `#processMainSwap` and `#resolveHistoryAction`), and
-  moves the keyboard nowhere. So the page's heading says `autofocus` when HTMX asked for the whole page, as after
-  Previous and Next (section 4); without it, nothing tells a screen reader that a new page has arrived. And every
-  page must need nothing but the layout's `<head>` (section 2). Not yet tried across a whole application.
 - **A confirmation page for a browser without invoker commands.** A link to a page the server draws, holding the
   dialog's form, would reach an action behind a dialog on any browser and still give a chance to look before acting.
   A page cannot offer the link to one browser and the dialog to another without script, so where that line falls is
@@ -985,8 +1029,8 @@ workshop names its chapter.
   comment that states each partial's contract, what each request gets back, handlers named for what they do, a row
   action that draws the list again, checking a field as you type, form rows added by the server, polling the server
   stops, and what to look for in the network panel. It is written for htmx 1.9.12, and some of its central code does
-  not carry over to 4. Its `IsHtmx()` tests `HX-Request`, which HTMX 4 also sends when Back and Forward need the
-  whole page (section 3). It answers errors with 200 and `HX-Retarget`, because htmx 1 would not swap a 4xx
+  not carry over to 4. Its `IsHtmx()` tests `HX-Request`, which HTMX 4 also sends when it wants the whole page, as
+  for a boosted link (section 3). It answers errors with 200 and `HX-Retarget`, because htmx 1 would not swap a 4xx
   (section 7). Its scripts load at the end of `<body>` (section 2), and its `Fragment()` helper repeats what
   `PageModel.Partial` already does. Take the Razor Pages shape from it and the HTMX details from this skill.
 
