@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests and integration tests that run the whole application, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, a form with a file, which keeps the chosen file across a refused save with hx-preserve, and the patterns still open (expired sign-ins, polling, more rows as a list scrolls). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.24.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests and integration tests that run the whole application, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, a form with a file, which keeps the chosen file across a refused save with hx-preserve, a job whose card polls its progress until it has finished, and the patterns still open (expired sign-ins, more rows as a list scrolls). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.25.0
 visibility: public
 ---
 
@@ -14,9 +14,9 @@ in step. It is written for HTMX 4.0.1 and ASP.NET Core 10, and every sentence is
 application on those versions, not only the one it was built in; how one application uses HTMX belongs in its own
 code, tests and README.
 
-The evidence differs by part. The patterns in sections 2 to 18 have been built and tried in a browser; where a
+The evidence differs by part. The patterns in sections 2 to 19 have been built and tried in a browser; where a
 section also covers a case that was not built, such as output caching, its citation is the only evidence.
-Section 1's rows were read in the source and the reference, not all built, and nothing in section 19 is built.
+Section 1's rows were read in the source and the reference, not all built, and nothing in section 20 is built.
 Every HTMX fact cites the reference page or the 4.0.1 source method it came from, and the two kinds of citation
 carry different weight. A reference page is what HTMX documents. A method in the 4.0.1 source is what that release
 happens to do: the method is private, a later release may change it, and section 2 checks each one again before
@@ -1007,7 +1007,7 @@ Remove button, and an Add button after the rows, all inside the form that saves 
   wrong number answered 422 with only that row marked and the keyboard in it, and a save kept the rows' order and left
   out the empty ones. Without HTMX's script, Add and Remove posted natively and the whole page came back with the same
   rows and the same `autofocus`. Integration tests post Add with HTMX and without it, and save numbers in a new order
-  through the whole application (section 6). Not built: rows of objects (section 19).
+  through the whole application (section 6). Not built: rows of objects (section 20).
 
 ## 18. A form with a file
 
@@ -1044,7 +1044,34 @@ A form that sends a file, such as a document with its title.
   form came back asking for the file again, and a received one redirected with its toast. Integration tests post a
   file as multipart, with a title and without one (section 6).
 
-## 19. Still open
+## 19. A job that reports its progress by polling
+
+A job that takes a while, started from a page that shows how far it has got and stops asking once it has finished.
+
+- **The job has an address, which loads its progress on its own.** Starting it answers with that address: without
+  HTMX a redirect to it, so that a refresh starts nothing; with HTMX the job's card and `HX-Push-Url` with the
+  address, so Back leaves the job for the page it started from. The address holds the view (Principles), and a
+  number no job has answers 404, with the card saying so.
+- **While the job runs, its card polls its own address.** The card says `hx-get` with the job's address,
+  `hx-trigger="every 1s"` and `hx-swap="outerHTML"`, and the handler that draws the page answers HTMX's poll with the
+  card alone (section 3). HTMX runs the trigger on a timer, which stops by itself once the element leaves the page,
+  and clears it when a swap replaces the element (4.0.1 source, `#onTrigger` and `#cleanup`). So the card for a
+  finished job, drawn without those three attributes, stops the polling: no request went out after it (workshop,
+  Lab 5).
+- **The poll that finds the job finished brings a toast** in an `<hx-partial>` for the toast region (section 8),
+  which is how a screen reader hears that it has finished: the progress text is not a live region, which would speak
+  every second. `aria-busy` on the card shows a busy state while the job runs.
+- **A poll moves no keyboard.** Nothing in the card says `autofocus`, since nobody asked for that answer (Principles),
+  and the link in it keeps its `id`, which HTMX gives the focus back to after the swap (section 8).
+- **Without HTMX the card has a link to the job's address**, which loads the page as the job stands then. With HTMX
+  the same link is boosted, and loads it in place.
+- **Tried in a browser**, Chromium 156: Start pushed the job's address and the card counted up each second; at the
+  end it lost its trigger and busy state, its toast came once, and no poll went out after. Back brought the earlier
+  job's finished card, with the keyboard on the page's heading (section 16). Without HTMX's script, Start redirected
+  to the job's address. Unit tests run the job against a fake clock, and integration tests start one and poll it
+  through the whole application (section 6).
+
+## 20. Still open
 
 Nothing in this section is built yet, so none of it is a rule. What is known, to start from; an idea taken from the
 workshop names its chapter.
@@ -1079,11 +1106,6 @@ workshop names its chapter.
   message after a save (Lab 3). It costs a second request for each message, where section 8's `<hx-partial>` arrives
   with the first; it suits an element that reloads itself for reasons of its own. In HTMX 4 a `from:` selector that
   holds a space needs single quotes (section 1); `from:body` does not.
-- **A long job reports its progress by polling.** While the job runs, its status element carries `hx-get` and
-  `hx-trigger="every 1s"`, and each answer replaces the element. The answer for a finished job leaves the trigger out,
-  and the polling stops (workshop, Lab 5). HTMX 4 still reads `every`
-  ([hx-trigger](https://four.htmx.org/reference/attributes/hx-trigger)). Without HTMX the status needs a link that
-  loads the page again.
 - **More rows as the list scrolls.** HTMX 4 still has the `revealed` trigger, which fires once when its element
   scrolls into view, where `intersect` fires each time it does (4.0.1 source, `#onTrigger`). On a list paged by key
   (section 4) the Next link is the version that works without HTMX, and with `hx-trigger="revealed"` it could add the
@@ -1112,7 +1134,7 @@ workshop names its chapter.
   published version change; citations in this skill to "4.0.1 source" name a method in that file, so anyone can read
   what each one read. Another version's is at the same address with its own number.
 - **Chris Woodruff's [htmx Razor Pages workshop](https://github.com/cwoodruff/htmx-razor-workshop)**, MIT. Good on the
-  Razor Pages side, and sections 3, 6 to 9, 13 and 14 take several ideas from it, each credited by chapter: a
+  Razor Pages side, and sections 3, 6 to 9, 13, 14, 17 and 19 take several ideas from it, each credited by chapter: a
   comment that states each partial's contract, what each request gets back, handlers named for what they do, a row
   action that draws the list again, checking a field as you type, form rows added by the server, polling the server
   stops, and what to look for in the network panel. It is written for htmx 1.9.12, and some of its central code does
