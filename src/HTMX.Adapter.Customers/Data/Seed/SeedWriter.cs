@@ -168,7 +168,7 @@ internal sealed class SeedWriter
             Id = latest.ContactId,
             Name = latest.Name,
             Email = latest.Email,
-            Phone = latest.Phone,
+            PhoneNumbers = latest.PhoneNumbers,
             JobTitle = latest.JobTitle,
             OrganizationId = latest.OrganizationId,
             Notes = latest.Notes,

@@ -1,6 +1,7 @@
 namespace HTMX.Test.Unit.Application.Web.Pages.Contacts;
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
@@ -267,6 +268,32 @@ public sealed class CreateModelTests
             ("/Contacts/Create?handler=OrganizationChoices", "/Contacts/Create?handler=OrganizationField"),
             (page.Picker?.ChoicesAction, page.Picker?.FieldAction),
             "The picker should answer to the create page, naming no contact.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that Add on the create form posts back to the create page with the organization it was
+    /// opened from, so that the redrawn page still leads back to it, and answers HTMX with the field: the one empty
+    /// row a new form starts with, and the new one.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostAddPhoneNumberAsync_ByHtmx_KeepsTheOrganizationItWasOpenedFrom()
+    {
+        // Arrange (Given)
+        StubOrganizationService organizations = CreateOrganizations(CreatePlaceholderLogistics(archived: false));
+        CreateModel page = CreatePage(new StubContactService(), HtmxRequest.Partial, organizations);
+        page.Input = CreateInput(organization: 10003);
+        page.Input.PhoneNumbers = [null];
+
+        // Act (When)
+        IActionResult result = await page.OnPostAddPhoneNumberAsync(10003, CancellationToken.None)
+            .ConfigureAwait(false);
+        PhoneNumberField? field = (result as PartialViewResult)?.Model as PhoneNumberField;
+
+        // Assert (Then)
+        Assert.AreEqual(
+            ("/Contacts/Create?handler=AddPhoneNumber&organization=10003", 2),
+            (field?.AddAction, field?.Rows.Length),
+            "Add should post back to the create page opened from Placeholder Logistics, with one more row.");
     }
 
     #endregion Public Methods

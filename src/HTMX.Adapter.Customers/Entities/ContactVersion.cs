@@ -55,9 +55,9 @@ internal sealed record ContactVersion
     public EmailAddress? Email { get; init; }
 
     /// <summary>
-    /// Gets the contact's telephone number as this version left it, if they had one.
+    /// Gets the contact's telephone numbers as this version left them, which may be none.
     /// </summary>
-    public PhoneNumber? Phone { get; init; }
+    public PhoneNumbers PhoneNumbers { get; init; } = PhoneNumbers.None;
 
     /// <summary>
     /// Gets the contact's job title as this version left it, if they had one.

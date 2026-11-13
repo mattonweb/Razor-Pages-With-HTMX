@@ -79,7 +79,7 @@ internal sealed class ContactProvider
                 Name = contact.Name,
                 JobTitle = contact.JobTitle,
                 Email = contact.Email,
-                Phone = contact.Phone,
+                PhoneNumbers = contact.PhoneNumbers,
                 Notes = contact.Notes,
                 Organization = new OrganizationReference
                 {
@@ -188,7 +188,7 @@ internal sealed class ContactProvider
                 Name = contact.Name,
                 JobTitle = contact.JobTitle,
                 Email = contact.Email,
-                Phone = contact.Phone,
+                PhoneNumbers = contact.PhoneNumbers,
                 ArchivedOn = contact.ArchivedOn,
                 Version = contact.Version,
             })

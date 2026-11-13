@@ -1,0 +1,73 @@
+@model HTMX.Application.Web.Pages.Contacts.PhoneNumberField
+@using HTMX.Application.Web.TagHelpers
+@*
+    A contact's telephone numbers: a row for each, in order, and Add after them. Every row's field is named
+    Input.PhoneNumbers, so the rows post as one list with no index numbers, and a row's position is only its place in
+    the list the page drew. The form's page draws this field, and Add and Remove answer HTMX with it alone.
+
+    Add and Remove are submit buttons that post the whole form somewhere other than Save: to the page's AddPhoneNumber
+    and RemovePhoneNumber handlers, which save nothing and draw the field again with a row more or a row less. Without
+    HTMX, formaction sends the form there and the whole page comes back. With HTMX, the button's own hx-post sends it
+    there instead, since inside a form that says hx-post HTMX ignores formaction and would send the form to Save; the
+    field that comes back replaces this one. Either way the new row, or the row now in the place of the one removed,
+    says autofocus, so the keyboard lands in it, and formnovalidate lets the form go even when a save would refuse it.
+
+    Remove is drawn only when there is more than one row: the last number goes by emptying its field. Add is not drawn
+    once the form holds the most a contact can have. After a refused save the field's message names what is wrong, and
+    the rows whose number is wrong are marked; the first takes the keyboard unless a field above it already has.
+*@
+@{
+    string errorId = ValidationMessageIdTagHelper.IdFor("Input.PhoneNumbers");
+    const string SavedId = "phone-numbers-saved";
+    bool several = Model.Rows.Length > 1;
+}
+<fieldset class="field" id="phone-numbers" aria-describedby="@(Model.Error is null ? null : errorId)">
+    <legend>Phone numbers</legend>
+    <ul class="field-rows">
+        @foreach (PhoneNumberRow row in Model.Rows)
+        {
+            int number = row.Position + 1;
+            bool focused = row.Focused || (row.Invalid && InvalidControlTagHelper.TryTakeFocus(Context));
+            List<string> describedBy = [];
+            if (row.Invalid)
+            {
+                describedBy.Add(errorId);
+            }
+
+            if (Model.Saved is not null)
+            {
+                describedBy.Add(SavedId);
+            }
+
+            <li>
+                <input type="tel" name="Input.PhoneNumbers" value="@row.Value" autocomplete="tel"
+                       aria-label="Phone number @number" autofocus="@focused"
+                       class="@(row.Invalid ? "input-validation-error" : null)"
+                       aria-invalid="@(row.Invalid ? "true" : null)"
+                       aria-describedby="@(describedBy.Count == 0 ? null : string.Join(' ', describedBy))" />
+                @if (several)
+                {
+                    <button class="btn ghost icon-only" type="submit" name="removePhoneNumber" value="@row.Position"
+                            formaction="@Model.RemoveAction" formnovalidate
+                            hx-post="@Model.RemoveAction" hx-target="#phone-numbers" hx-swap="outerHTML"
+                            aria-label="Remove phone number @number"><svg class="icon" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button>
+                }
+            </li>
+        }
+    </ul>
+    @if (Model.Saved is not null)
+    {
+        <p class="hint" id="@SavedId">Saved as @Model.Saved</p>
+    }
+    @if (Model.Error is not null)
+    {
+        <span class="field-validation-error" id="@errorId">@Model.Error</span>
+    }
+    @if (Model.CanAdd)
+    {
+        <div>
+            <button class="btn ghost" type="submit" formaction="@Model.AddAction" formnovalidate
+                    hx-post="@Model.AddAction" hx-target="#phone-numbers" hx-swap="outerHTML"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>Add a phone number</button>
+        </div>
+    }
+</fieldset>

@@ -56,7 +56,7 @@ internal static class ContactSeed
             ChangedBy = UserSeed.SamSample,
             Name = new DisplayName("Ainsley Archetype"),
             Email = new EmailAddress("ainsley.archetype@fictional-freight.example"),
-            Phone = new PhoneNumber("+1 555-0142"),
+            PhoneNumbers = new PhoneNumbers([new PhoneNumber("+1 555-0142")]),
             JobTitle = new JobTitle("Head of Samples"),
             OrganizationId = new OrganizationId(10002),
         },
@@ -69,7 +69,7 @@ internal static class ContactSeed
             ChangedBy = UserSeed.TaylorDummy,
             Name = new DisplayName("Ainsley Archetype"),
             Email = new EmailAddress("ainsley.archetype@placeholder.example"),
-            Phone = new PhoneNumber("+1 555-0142"),
+            PhoneNumbers = new PhoneNumbers([new PhoneNumber("+1 555-0142")]),
             JobTitle = new JobTitle("Head of Examples"),
             OrganizationId = OrganizationSeed.PlaceholderLogistics,
         },
@@ -82,7 +82,7 @@ internal static class ContactSeed
             ChangedBy = UserSeed.PatExample,
             Name = new DisplayName("Ainsley Archetype"),
             Email = new EmailAddress("ainsley.archetype@placeholder.example"),
-            Phone = new PhoneNumber("+1 555-0142"),
+            PhoneNumbers = new PhoneNumbers([new PhoneNumber("+1 555-0142")]),
             JobTitle = new JobTitle("Head of Examples"),
             OrganizationId = OrganizationSeed.PlaceholderLogistics,
             Notes = new Notes("Prefers email to phone. Follow up in January about the placeholder order."),
@@ -99,7 +99,7 @@ internal static class ContactSeed
             ChangedBy = UserSeed.DemoUser,
             Name = new DisplayName("Bellamy Benchmark"),
             Email = new EmailAddress("bellamy.benchmark@mockup-media.example"),
-            Phone = new PhoneNumber("+1 555-0117"),
+            PhoneNumbers = new PhoneNumbers([new PhoneNumber("+1 555-0117")]),
             JobTitle = new JobTitle("Template Designer"),
             OrganizationId = OrganizationSeed.MockupMedia,
         },
@@ -126,7 +126,7 @@ internal static class ContactSeed
             ChangedBy = UserSeed.DemoUser,
             Name = new DisplayName("Darcy Dataset"),
             Email = new EmailAddress("darcy.dataset@testcase-tools.example"),
-            Phone = new PhoneNumber("+1 555-0163"),
+            PhoneNumbers = new PhoneNumbers([new PhoneNumber("+1 555-0163")]),
             JobTitle = new JobTitle("Test Case Planner"),
             OrganizationId = new OrganizationId(10005),
         },
@@ -139,7 +139,7 @@ internal static class ContactSeed
             ChangedBy = UserSeed.DemoUser,
             Name = new DisplayName("Darcy Dataset"),
             Email = new EmailAddress("darcy.dataset@testcase-tools.example"),
-            Phone = new PhoneNumber("+1 555-0163"),
+            PhoneNumbers = new PhoneNumbers([new PhoneNumber("+1 555-0163")]),
             JobTitle = new JobTitle("Test Case Planner"),
             OrganizationId = new OrganizationId(10005),
             ArchivedOn = startedOn.AddDays(-40),
@@ -172,7 +172,8 @@ internal static class ContactSeed
             OrganizationId = new OrganizationId(10004),
         },
 
-        // Hadley Handout: notes in three paragraphs, which the details page must keep apart.
+        // Hadley Handout: notes in three paragraphs, which the details page must keep apart, and two telephone
+        // numbers, the office's first.
         new ContactVersion
         {
             ContactId = new ContactId(10007),
@@ -182,7 +183,7 @@ internal static class ContactSeed
             ChangedBy = UserSeed.PatExample,
             Name = new DisplayName("Hadley Handout"),
             Email = new EmailAddress("hadley.handout@demo-dairy.example"),
-            Phone = new PhoneNumber("+1 555-0188"),
+            PhoneNumbers = new PhoneNumbers([new PhoneNumber("+1 555-0188"), new PhoneNumber("+1 555-0189")]),
             JobTitle = new JobTitle("Chief Demonstration Officer"),
             OrganizationId = new OrganizationId(10001),
             Notes = new Notes(

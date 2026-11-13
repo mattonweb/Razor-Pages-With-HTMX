@@ -56,6 +56,18 @@ public sealed class InvalidControlTagHelper : TagHelper
     }
 
     /// <summary>
+    /// Claims the response's one <c>autofocus</c> for an invalid control that is not drawn with <c>asp-for</c>, such as
+    /// one of several rows that share a name. Only the first invalid control in the response gets it, as here.
+    /// </summary>
+    /// <param name="context">The request the response answers.</param>
+    /// <returns><see langword="true"/> when no control had taken it, and the caller now has.</returns>
+    public static bool TryTakeFocus(HttpContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        return context.Items.TryAdd(FocusTaken, true);
+    }
+
+    /// <summary>
     /// Marks the control when its field has a validation error, and leaves it alone otherwise.
     /// </summary>
     /// <param name="context">The element as Razor read it.</param>

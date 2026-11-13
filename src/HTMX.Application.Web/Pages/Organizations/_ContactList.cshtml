@@ -90,7 +90,8 @@
                                     <a href="mailto:@email.Value">@email.Value</a>
                                 }
                             </td>
-                            <td>@contact.Phone?.Value</td>
+                            @* The first number, the one to try first; the contact's page lists them all. *@
+                            <td>@(contact.PhoneNumbers.Values.Length == 0 ? null : contact.PhoneNumbers.Values[0].Value)</td>
                             <td>
                                 @if (archived)
                                 {

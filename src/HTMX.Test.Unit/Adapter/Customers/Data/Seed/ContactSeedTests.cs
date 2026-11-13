@@ -243,7 +243,7 @@ public sealed class ContactSeedTests
             .Last();
         return latest.Name == contact.Name
             && latest.Email == contact.Email
-            && latest.Phone == contact.Phone
+            && latest.PhoneNumbers == contact.PhoneNumbers
             && latest.JobTitle == contact.JobTitle
             && latest.OrganizationId == contact.OrganizationId
             && latest.Notes == contact.Notes

@@ -58,7 +58,7 @@ public static class ContactChanges
                 new FieldValue { Field = "Organization", Value = OrganizationOf(version) },
                 new FieldValue { Field = "Job title", Value = version.JobTitle?.Value },
                 new FieldValue { Field = "Email", Value = version.Email?.Value },
-                new FieldValue { Field = "Phone", Value = version.Phone?.Value },
+                new FieldValue { Field = "Phone numbers", Value = PhoneNumbersOf(version) },
                 new FieldValue { Field = "Notes", Value = version.Notes?.Value },
             ],
         };
@@ -114,5 +114,17 @@ public static class ContactChanges
     private static string OrganizationOf(ContactVersionResponse version)
     {
         return version.Organization?.Name.Value ?? $"Deleted organization {version.OrganizationId.Value}";
+    }
+
+    /// <summary>
+    /// Writes the telephone numbers a version holds as one value, in their order, so that adding, removing or
+    /// reordering a number shows as a change to it.
+    /// </summary>
+    /// <param name="version">The version.</param>
+    /// <returns>The numbers, separated by commas, or <see langword="null"/> for none.</returns>
+    private static string? PhoneNumbersOf(ContactVersionResponse version)
+    {
+        PhoneNumber[] numbers = version.PhoneNumbers.Values;
+        return numbers.Length == 0 ? null : string.Join(", ", Array.ConvertAll(numbers, static number => number.Value));
     }
 }

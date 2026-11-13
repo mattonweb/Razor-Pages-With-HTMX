@@ -51,12 +51,13 @@
                     }
                 </div>
                 <div>
-                    <dt>Phone</dt>
-                    @if (contact.Phone is PhoneNumber phone)
+                    @* One term, and a description for each number, in the order they were written. *@
+                    <dt>Phone numbers</dt>
+                    @foreach (PhoneNumber phone in contact.PhoneNumbers.Values)
                     {
                         <dd>@phone.Value</dd>
                     }
-                    else
+                    @if (contact.PhoneNumbers.Values.Length == 0)
                     {
                         <dd><span class="unset">Not set</span></dd>
                     }

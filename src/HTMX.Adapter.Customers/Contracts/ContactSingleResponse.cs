@@ -27,9 +27,9 @@ public sealed record ContactSingleResponse
     public EmailAddress? Email { get; init; }
 
     /// <summary>
-    /// Gets the person's telephone number, or <see langword="null"/> when it is not on record.
+    /// Gets the person's telephone numbers, in the order they were written; none when none is on record.
     /// </summary>
-    public PhoneNumber? Phone { get; init; }
+    public PhoneNumbers PhoneNumbers { get; init; } = PhoneNumbers.None;
 
     /// <summary>
     /// Gets free text about the person, or <see langword="null"/> when there is none.

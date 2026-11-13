@@ -75,6 +75,9 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
     /// <inheritdoc/>
     protected override string PageName => "./Edit";
 
+    /// <inheritdoc/>
+    protected override object FormValues => new { id = this.Id };
+
     /// <summary>
     /// Fills the form from the contact the route names.
     /// </summary>
@@ -128,6 +131,36 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
     }
 
     /// <summary>
+    /// Adds a row for a telephone number, ready to type in, and saves nothing. HTMX gets the telephone number field
+    /// alone; without HTMX the form posts here and gets the whole page back, as it was posted, with the new row.
+    /// </summary>
+    /// <param name="id">The contact's identifier, from the route.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The field or the page, or the contact's page when they no longer exist.</returns>
+    public async Task<IActionResult> OnPostAddPhoneNumberAsync(long id, CancellationToken cancellationToken)
+    {
+        this.AddPhoneNumberRow();
+        return await this.RedrawAsync(id, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Takes a telephone number's row away, and saves nothing; the number goes when the form is saved. HTMX gets the
+    /// telephone number field alone; without HTMX the form posts here and gets the whole page back.
+    /// </summary>
+    /// <param name="id">The contact's identifier, from the route.</param>
+    /// <param name="removePhoneNumber">The row's position, from 0, which its Remove button posts.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The field or the page, or the contact's page when they no longer exist.</returns>
+    public async Task<IActionResult> OnPostRemovePhoneNumberAsync(
+        long id,
+        int removePhoneNumber,
+        CancellationToken cancellationToken)
+    {
+        this.RemovePhoneNumberRow(removePhoneNumber);
+        return await this.RedrawAsync(id, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Fills the form from the contact as they are saved.
     /// </summary>
     /// <param name="contact">The contact.</param>
@@ -140,7 +173,7 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
             Name = contact.Name.Value,
             JobTitle = contact.JobTitle?.Value,
             Email = contact.Email?.Value,
-            Phone = contact.Phone?.Value,
+            PhoneNumbers = Array.ConvertAll(contact.PhoneNumbers.Values, static number => (string?)number.Value),
             Notes = contact.Notes?.Value,
             OrganizationId = contact.Organization.Id.Value,
         };
@@ -159,7 +192,6 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
             ?? throw new InvalidOperationException("A valid form always has an organization.");
         string? jobTitle = Optional(input.JobTitle);
         string? email = Optional(input.Email);
-        string? phone = Optional(input.Phone);
         string? notes = Optional(input.Notes);
         return new ContactUpdateRequest
         {
@@ -168,7 +200,7 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
             Name = new DisplayName(input.Name.Trim()),
             JobTitle = jobTitle is null ? null : new JobTitle(jobTitle),
             Email = email is null ? null : new EmailAddress(email),
-            Phone = phone is null ? null : new PhoneNumber(phone),
+            PhoneNumbers = this.WrittenPhoneNumbers(),
             Notes = notes is null ? null : new Notes(notes),
             Organization = new OrganizationId(organization),
             ChangedBy = SignedInUser.Of(this.User),
@@ -314,5 +346,29 @@ public sealed class EditModel : ContactFormModel<EditModel.InputModel>
         /// </summary>
         [Range(1, int.MaxValue)]
         public int Version { get; set; }
+    }
+
+    /// <summary>
+    /// Draws the form again after Add or Remove, as it was posted: the telephone number field alone when HTMX sent the
+    /// request, and the whole page otherwise, with the organization as the select, since HTMX is not there.
+    /// </summary>
+    /// <param name="id">The contact's identifier.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The field or the page, or the contact's page when they no longer exist.</returns>
+    private async Task<IActionResult> RedrawAsync(long id, CancellationToken cancellationToken)
+    {
+        ContactSingleResponse? contact = await this.ReadAsync(id, cancellationToken).ConfigureAwait(false);
+        if (contact is null)
+        {
+            return this.ShowContact(id);
+        }
+
+        if (HtmxHeaders.IsPartialRequest(this.Request))
+        {
+            return this.PhoneNumberFieldAnswer();
+        }
+
+        await this.PrepareFieldsAsync(enhanced: false, cancellationToken).ConfigureAwait(false);
+        return this.Page();
     }
 }

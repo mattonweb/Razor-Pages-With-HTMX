@@ -139,7 +139,7 @@ internal sealed class ContactService : IContactService
             Name = earlier.Name,
             JobTitle = earlier.JobTitle,
             Email = earlier.Email,
-            Phone = earlier.Phone,
+            PhoneNumbers = earlier.PhoneNumbers,
             Notes = earlier.Notes,
             Organization = earlier.OrganizationId,
             ChangedBy = request.ChangedBy,
@@ -213,7 +213,7 @@ internal sealed class ContactService : IContactService
     {
         return current.Name == request.Name
             && current.Email == request.Email
-            && current.Phone == request.Phone
+            && current.PhoneNumbers == request.PhoneNumbers
             && current.JobTitle == request.JobTitle
             && current.OrganizationId == request.Organization
             && current.Notes == request.Notes;

@@ -7,7 +7,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
+using HTMX.Application.Web.Validation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -35,6 +37,18 @@ public abstract class ContactFormModel<TInput> : PageModel
 
     // The form's name for the organization field, as ModelState keys it.
     private const string OrganizationKey = nameof(Input) + "." + nameof(ContactInput.OrganizationId);
+
+    // The telephone number field's partial, and the handlers its Add and Remove post the form to.
+    private const string PhoneNumbersPartial = "_PhoneNumberField";
+    private const string AddPhoneNumberHandler = "AddPhoneNumber";
+    private const string RemovePhoneNumberHandler = "RemovePhoneNumber";
+
+    // The form's name for the telephone numbers, as ModelState keys it.
+    private const string PhoneNumbersKey = nameof(Input) + "." + nameof(ContactInput.PhoneNumbers);
+
+    // The row that takes the keyboard when the field is drawn: the row Add just made, or the row in the place of the
+    // one Remove just took away. None when the field is drawn for any other reason.
+    private int? _focusedPhoneNumber;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ContactFormModel{TInput}"/> class.
@@ -73,6 +87,12 @@ public abstract class ContactFormModel<TInput> : PageModel
     /// Gets the form's page, such as <c>./Edit</c>, which the field's handlers belong to.
     /// </summary>
     protected abstract string PageName { get; }
+
+    /// <summary>
+    /// Gets the route's and query string's values the form posts with, such as the contact's identifier, which the
+    /// telephone number field's Add and Remove post with too.
+    /// </summary>
+    protected abstract object FormValues { get; }
 
     /// <summary>
     /// Gets the service the form reads the organizations through.
@@ -172,7 +192,62 @@ public abstract class ContactFormModel<TInput> : PageModel
             Relation = enhanced ? this.Relation : null,
             OrganizationOptions = options,
             EnhanceAction = enhance,
+            PhoneNumbers = this.CreatePhoneNumberField(saved),
         };
+    }
+
+    /// <summary>
+    /// Gives the form one more empty row for a telephone number, which takes the keyboard, unless the form already
+    /// holds the most a contact can have. Nothing is saved, so nothing is checked: the messages from model binding go.
+    /// </summary>
+    protected void AddPhoneNumberRow()
+    {
+        this.ModelState.Clear();
+        string?[] numbers = this.Input.PhoneNumbers;
+        if (numbers.Length < TelephoneNumbersAttribute.Most)
+        {
+            this.Input.PhoneNumbers = [.. numbers, null];
+        }
+
+        this._focusedPhoneNumber = this.Input.PhoneNumbers.Length - 1;
+    }
+
+    /// <summary>
+    /// Takes a row away from the form and gives the keyboard to the row now in its place, or to the new last row when
+    /// it was last. As with Add, nothing is saved or checked.
+    /// </summary>
+    /// <param name="position">The row's position, from 0, which its Remove button posted.</param>
+    protected void RemovePhoneNumberRow(int position)
+    {
+        this.ModelState.Clear();
+        List<string?> numbers = [.. this.Input.PhoneNumbers];
+        if (position >= 0 && position < numbers.Count)
+        {
+            numbers.RemoveAt(position);
+        }
+
+        this.Input.PhoneNumbers = [.. numbers];
+        this._focusedPhoneNumber = Math.Clamp(position, 0, Math.Max(numbers.Count - 1, 0));
+    }
+
+    /// <summary>
+    /// Answers HTMX's Add or Remove with the telephone number field alone, to swap in place of the field the page
+    /// shows.
+    /// </summary>
+    /// <returns>The field.</returns>
+    protected IActionResult PhoneNumberFieldAnswer()
+    {
+        return this.Partial(PhoneNumbersPartial, this.CreatePhoneNumberField(saved: null));
+    }
+
+    /// <summary>
+    /// Reads the telephone numbers a save sends: each row's number trimmed, in order, with rows left empty left out.
+    /// </summary>
+    /// <returns>The numbers.</returns>
+    protected PhoneNumbers WrittenPhoneNumbers()
+    {
+        string[] written = [.. this.Input.PhoneNumbers.Select(Optional).OfType<string>()];
+        return new PhoneNumbers(Array.ConvertAll(written, static number => new PhoneNumber(number)));
     }
 
     /// <summary>
@@ -196,6 +271,30 @@ public abstract class ContactFormModel<TInput> : PageModel
         this.ModelState.AddModelError(
             OrganizationKey,
             "That organization is archived or no longer exists. Choose an active one.");
+    }
+
+    /// <summary>
+    /// Joins numbers as the form shows them under the field after another save: trimmed, rows left empty left out.
+    /// </summary>
+    /// <param name="numbers">The numbers, as written or as saved.</param>
+    /// <returns>The numbers, separated by commas, or <see langword="null"/> for none.</returns>
+    private static string? Joined(IEnumerable<string?> numbers)
+    {
+        string joined = string.Join(", ", numbers.Select(Optional).OfType<string>());
+        return joined.Length == 0 ? null : joined;
+    }
+
+    /// <summary>
+    /// Gives the saved numbers to show under the field after another save, or nothing when they are the ones being
+    /// edited.
+    /// </summary>
+    /// <param name="saved">The numbers the other save left.</param>
+    /// <param name="edited">The numbers being edited, as the rows hold them.</param>
+    /// <returns>The numbers to show, or <see langword="null"/> when there is nothing to compare.</returns>
+    private static string? SavedHint(PhoneNumbers saved, string?[] edited)
+    {
+        string?[] savedValues = Array.ConvertAll(saved.Values, static number => (string?)number.Value);
+        return SavedValue.Hint(Joined(savedValues), Joined(edited), "no telephone numbers");
     }
 
     /// <summary>
@@ -291,5 +390,44 @@ public abstract class ContactFormModel<TInput> : PageModel
                 organization.Name.Value,
                 organization.Id.Value.ToString(CultureInfo.InvariantCulture))),
         ];
+    }
+
+    /// <summary>
+    /// Makes the telephone number field from the form's values: a row for each, or one empty row when there are none,
+    /// with the row that takes the keyboard marked and, after a save refused for its numbers, the rows that are wrong.
+    /// </summary>
+    /// <param name="saved">The contact as another save left them, or <see langword="null"/> when none overtook this
+    /// one.</param>
+    /// <returns>The field.</returns>
+    private PhoneNumberField CreatePhoneNumberField(ContactSingleResponse? saved)
+    {
+        string?[] numbers = this.Input.PhoneNumbers.Length == 0 ? [null] : this.Input.PhoneNumbers;
+        string? error = this.ModelState.TryGetValue(PhoneNumbersKey, out ModelStateEntry? entry)
+            && entry.Errors.Count > 0
+                ? entry.Errors[0].ErrorMessage
+                : null;
+        bool refused = error is not null;
+        PhoneNumberRow[] rows = new PhoneNumberRow[numbers.Length];
+        for (int position = 0; position < numbers.Length; position++)
+        {
+            rows[position] = new PhoneNumberRow
+            {
+                Value = numbers[position],
+                Position = position,
+                Focused = position == this._focusedPhoneNumber,
+                Invalid = refused && !TelephoneNumbersAttribute.IsWellFormed(numbers[position]),
+            };
+        }
+
+        string? savedNumbers = saved is null ? null : SavedHint(saved.PhoneNumbers, numbers);
+        return new PhoneNumberField
+        {
+            Rows = rows,
+            AddAction = this.HandlerAddress(AddPhoneNumberHandler, this.FormValues),
+            RemoveAction = this.HandlerAddress(RemovePhoneNumberHandler, this.FormValues),
+            CanAdd = numbers.Length < TelephoneNumbersAttribute.Most,
+            Saved = savedNumbers,
+            Error = error,
+        };
     }
 }

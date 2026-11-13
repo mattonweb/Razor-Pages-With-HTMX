@@ -1,6 +1,7 @@
 namespace HTMX.Test.Unit.Application.Web.Pages.Contacts;
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers.Contracts;
@@ -270,6 +271,174 @@ public sealed class EditModelTests
             "The list should hold the first ten active organizations that match the filter.");
     }
 
+    /// <summary>
+    /// Unit test to verify that the form starts with a row for each of the contact's telephone numbers, in order, with
+    /// room for more and no row taking the keyboard.
+    /// </summary>
+    [TestMethod]
+    public async Task OnGetAsync_KnownContact_FillsARowForEachNumber()
+    {
+        // Arrange (Given)
+        EditModel page = CreatePage(new StubContactService(found: CreateContact()), HtmxRequest.None);
+
+        // Act (When)
+        await page.OnGetAsync(10001, CancellationToken.None).ConfigureAwait(false);
+        PhoneNumberField? field = page.Fields?.PhoneNumbers;
+
+        // Assert (Then)
+        CollectionAssert.AreEqual(
+            new[] { "+1 555-0142", "+1 555-0199" },
+            page.Input.PhoneNumbers,
+            "The form should hold the contact's numbers, in order.");
+        Assert.AreEqual(
+            (2, true, false),
+            (field?.Rows.Length, field?.CanAdd, field?.Rows.Any(static row => row.Focused)),
+            "There should be a row for each number, room for another, and no row taking the keyboard.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a save sends the rows' numbers trimmed and in order, leaving out a row left empty.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostAsync_SavedByHtmx_SendsTheNumbersInOrder()
+    {
+        // Arrange (Given)
+        StubContactService contacts = new StubContactService(found: CreateContact());
+        EditModel page = CreatePage(contacts, HtmxRequest.Partial);
+        page.Input = CreateInput(organization: 10003);
+        page.Input.PhoneNumbers = [" +1 555-0199 ", null, "+1 555-0142"];
+
+        // Act (When)
+        await page.OnPostAsync(10001, CancellationToken.None).ConfigureAwait(false);
+        ContactUpdateRequest? sent = contacts.LastUpdate();
+
+        // Assert (Then)
+        Assert.AreEqual(
+            new PhoneNumbers([new PhoneNumber("+1 555-0199"), new PhoneNumber("+1 555-0142")]),
+            sent?.PhoneNumbers,
+            "The numbers should be sent trimmed, in the rows' order, without the empty row.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that Add draws the form again with one more row, which takes the keyboard, and with none of
+    /// the messages a save would give: HTMX gets the telephone number field alone, the browser on its own the page.
+    /// </summary>
+    /// <param name="kind">What sent the request, by its name in <see cref="HtmxRequest"/>.</param>
+    /// <param name="fieldAlone">Whether the answer should be the field alone.</param>
+    [TestMethod]
+    [DataRow(nameof(HtmxRequest.Partial), true, DisplayName = "With HTMX")]
+    [DataRow(nameof(HtmxRequest.None), false, DisplayName = "Without HTMX")]
+    public async Task OnPostAddPhoneNumberAsync_EachKindOfRequest_DrawsAnotherFocusedRow(string kind, bool fieldAlone)
+    {
+        // Arrange (Given)
+        EditModel page = CreatePage(new StubContactService(found: CreateContact()), Enum.Parse<HtmxRequest>(kind));
+        page.Input = CreateInput(organization: 10003);
+        page.Input.PhoneNumbers = ["+1 555-0142"];
+        page.ModelState.AddModelError("Input.Name", "Enter a name.");
+
+        // Act (When)
+        IActionResult result = await page.OnPostAddPhoneNumberAsync(10001, CancellationToken.None)
+            .ConfigureAwait(false);
+        PhoneNumberField? field = fieldAlone
+            ? (result as PartialViewResult)?.Model as PhoneNumberField
+            : page.Fields?.PhoneNumbers;
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (fieldAlone, !fieldAlone, true),
+            (result is PartialViewResult, result is PageResult, page.ModelState.IsValid),
+            "The answer should be the field or the page, with no message from the post.");
+        CollectionAssert.AreEqual(
+            new[] { false, true },
+            field?.Rows.Select(static row => row.Focused).ToArray(),
+            "The new row, last, should take the keyboard.");
+        Assert.AreEqual(
+            "/Contacts/Edit/10001?handler=AddPhoneNumber",
+            field?.AddAction,
+            "Add should post the form back to this contact's edit page.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that Add makes no row once the form holds the most a contact can have, and offers no Add.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostAddPhoneNumberAsync_FiveRows_AddsNoneAndOffersNoAdd()
+    {
+        // Arrange (Given)
+        EditModel page = CreatePage(new StubContactService(found: CreateContact()), HtmxRequest.Partial);
+        page.Input = CreateInput(organization: 10003);
+        page.Input.PhoneNumbers = ["+1 555-0101", "+1 555-0102", "+1 555-0103", "+1 555-0104", "+1 555-0105"];
+
+        // Act (When)
+        IActionResult result = await page.OnPostAddPhoneNumberAsync(10001, CancellationToken.None)
+            .ConfigureAwait(false);
+        PhoneNumberField? field = (result as PartialViewResult)?.Model as PhoneNumberField;
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (5, false),
+            (field?.Rows.Length, field?.CanAdd),
+            "The field should keep its five rows and offer no Add.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that Remove takes its row away and gives the keyboard to the row now in its place, or to
+    /// the new last row when the removed row was last.
+    /// </summary>
+    /// <param name="position">The position of the row removed.</param>
+    /// <param name="left">The numbers left, joined by a space.</param>
+    /// <param name="focused">The position of the row that should take the keyboard.</param>
+    [TestMethod]
+    [DataRow(0, "+1 555-0102 +1 555-0103", 0, DisplayName = "The first row")]
+    [DataRow(1, "+1 555-0101 +1 555-0103", 1, DisplayName = "A middle row")]
+    [DataRow(2, "+1 555-0101 +1 555-0102", 1, DisplayName = "The last row")]
+    public async Task OnPostRemovePhoneNumberAsync_ByHtmx_TakesTheRowAway(int position, string left, int focused)
+    {
+        // Arrange (Given)
+        EditModel page = CreatePage(new StubContactService(found: CreateContact()), HtmxRequest.Partial);
+        page.Input = CreateInput(organization: 10003);
+        page.Input.PhoneNumbers = ["+1 555-0101", "+1 555-0102", "+1 555-0103"];
+
+        // Act (When)
+        IActionResult result = await page.OnPostRemovePhoneNumberAsync(10001, position, CancellationToken.None)
+            .ConfigureAwait(false);
+        PhoneNumberField? field = (result as PartialViewResult)?.Model as PhoneNumberField;
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (left, focused),
+            (string.Join(' ', page.Input.PhoneNumbers), Array.FindIndex(field?.Rows ?? [], static row => row.Focused)),
+            "The row should go, and the row in its place, or the last, take the keyboard.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that a save refused for its numbers answers 422 with the field's message and the wrong row
+    /// marked, and the right row left alone.
+    /// </summary>
+    [TestMethod]
+    public async Task OnPostAsync_WrongNumber_MarksItsRow()
+    {
+        // Arrange (Given)
+        EditModel page = CreatePage(new StubContactService(found: CreateContact()), HtmxRequest.Partial);
+        page.Input = CreateInput(organization: 10003);
+        page.Input.PhoneNumbers = ["+1 555-0142", "call me"];
+        page.ModelState.AddModelError("Input.PhoneNumbers", "Enter each telephone number as a number.");
+
+        // Act (When)
+        await page.OnPostAsync(10001, CancellationToken.None).ConfigureAwait(false);
+        PhoneNumberField? field = page.Fields?.PhoneNumbers;
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (StatusCodes.Status422UnprocessableEntity, "Enter each telephone number as a number."),
+            (page.Response.StatusCode, field?.Error),
+            "The save should be refused with 422 and the field's message.");
+        CollectionAssert.AreEqual(
+            new[] { false, true },
+            field?.Rows.Select(static row => row.Invalid).ToArray(),
+            "Only the row whose number is wrong should be marked.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods
@@ -291,6 +460,7 @@ public sealed class EditModelTests
             Id = new ContactId(10001),
             Name = new DisplayName("Ainsley Archetype"),
             JobTitle = new JobTitle("Head of Examples"),
+            PhoneNumbers = new PhoneNumbers([new PhoneNumber("+1 555-0142"), new PhoneNumber("+1 555-0199")]),
             Organization = new OrganizationReference
             {
                 Id = new OrganizationId(10003),

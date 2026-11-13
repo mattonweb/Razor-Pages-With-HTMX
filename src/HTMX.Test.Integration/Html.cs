@@ -58,9 +58,12 @@ internal static class Html
     /// Builds a form's fields, the antiforgery token first.
     /// </summary>
     /// <param name="token">The antiforgery token.</param>
-    /// <param name="fields">The form's other fields, by name.</param>
+    /// <param name="fields">The form's other fields, by name; a name may come more than once, as rows that share a
+    /// name post.</param>
     /// <returns>The fields, ready to post.</returns>
-    internal static IEnumerable<KeyValuePair<string, string>> Form(string token, IDictionary<string, string> fields)
+    internal static IEnumerable<KeyValuePair<string, string>> Form(
+        string token,
+        IEnumerable<KeyValuePair<string, string>> fields)
     {
         List<KeyValuePair<string, string>> form = [new KeyValuePair<string, string>("__RequestVerificationToken", token)];
         form.AddRange(fields);

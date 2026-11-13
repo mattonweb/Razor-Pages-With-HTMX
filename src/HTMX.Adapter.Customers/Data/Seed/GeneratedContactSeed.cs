@@ -155,7 +155,9 @@ internal static class GeneratedContactSeed
             ChangedBy = ChooseCreator(index, startedOn - joinedOn),
             Name = new DisplayName($"{first} {last}"),
             Email = index % NoEmailEvery == NoEmailEvery - 1 ? null : CreateEmail(first, last, organization),
-            Phone = index % NoPhoneEvery == NoPhoneEvery - 1 ? null : new PhoneNumber($"+1 555-01{index % 100:00}"),
+            PhoneNumbers = index % NoPhoneEvery == NoPhoneEvery - 1
+                ? PhoneNumbers.None
+                : new PhoneNumbers([new PhoneNumber($"+1 555-01{index % 100:00}")]),
             JobTitle = index % NoJobTitleEvery == NoJobTitleEvery - 1 ? null : ChooseJobTitle(index),
             OrganizationId = organization.Id,
         };

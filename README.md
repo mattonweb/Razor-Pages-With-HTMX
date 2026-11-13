@@ -76,13 +76,17 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   404. **Delete permanently**, beside Restore on an archived contact's page, works as a user's does, with the same
   confirm dialog, and goes to the organization's Contacts tab, which shows the toast. Nothing but their own history
   names a contact, so any archived contact can be deleted while their organization is active, as Darcy Dataset can.
-- **`/contacts/{id}/edit`** — the contact's edit form: name, organization, job title, email, phone and notes, saved as
-  the next version, with the same answers as an organization's edit form (422, 409 with the saved values beside the
-  edited ones, and a 204 with `HX-Location` after a save). The organization starts as a select of every active
+- **`/contacts/{id}/edit`** — the contact's edit form: name, organization, job title, email, phone numbers and notes,
+  saved as the next version, with the same answers as an organization's edit form (422, 409 with the saved values beside
+  the edited ones, and a 204 with `HX-Location` after a save). The organization starts as a select of every active
   organization, which works without HTMX. As the page loads, HTMX swaps it (`hx-trigger="load"`) for the brand's
   relation field, whose **Change** opens a picker that filters the organizations as you type, ten at a time; a refused
   save that HTMX sent draws the relation field straight away. An organization archived while the form was open is
-  refused with 422, under its field.
+  refused with 422, under its field. A contact has up to five telephone numbers, a row each in the form: **Add a phone
+  number** and each row's **Remove** post the form to their own handlers (`?handler=AddPhoneNumber`), which save nothing
+  and draw the field again, alone for HTMX and as the whole page without it, with the keyboard in the new row or in the
+  row that took the removed one's place. Every row's field is named `Input.PhoneNumbers`, so the rows bind to one list,
+  which the contact keeps in order as a JSON array in one column. Hadley Handout has two numbers.
 - **`/contacts/{id}/history`** — the contact's History tab, in the same timeline as an organization's. A roll-back saves
   an earlier version's values, the organization among them: rolling Ainsley Archetype back to version 2 moves them back
   to Fictional Freight. A version whose organization has since been archived or deleted can't be rolled back to, and

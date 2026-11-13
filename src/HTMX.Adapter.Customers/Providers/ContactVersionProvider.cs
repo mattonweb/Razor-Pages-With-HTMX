@@ -68,7 +68,7 @@ internal sealed class ContactVersionProvider
                 Name = version.Name,
                 JobTitle = version.JobTitle,
                 Email = version.Email,
-                Phone = version.Phone,
+                PhoneNumbers = version.PhoneNumbers,
                 Notes = version.Notes,
                 OrganizationId = version.OrganizationId,
                 Organization = organization == null

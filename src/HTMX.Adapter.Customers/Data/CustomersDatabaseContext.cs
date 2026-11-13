@@ -42,7 +42,7 @@ internal sealed class CustomersDatabaseContext : DbContext
         configurationBuilder.Properties<OrganizationName>().HaveConversion<OrganizationNameConverter>();
         configurationBuilder.Properties<WebAddress>().HaveConversion<WebAddressConverter>();
         configurationBuilder.Properties<ContactId>().HaveConversion<ContactIdConverter>();
-        configurationBuilder.Properties<PhoneNumber>().HaveConversion<PhoneNumberConverter>();
+        configurationBuilder.Properties<PhoneNumbers>().HaveConversion<PhoneNumbersConverter>();
         configurationBuilder.Properties<JobTitle>().HaveConversion<JobTitleConverter>();
         configurationBuilder.Properties<Notes>().HaveConversion<NotesConverter>();
         configurationBuilder.Properties<VersionNumber>().HaveConversion<VersionNumberConverter>();

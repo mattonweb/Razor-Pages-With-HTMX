@@ -39,4 +39,9 @@ public sealed record ContactFields
     /// Gets the address HTMX loads the relation field and its picker from, in place of the select.
     /// </summary>
     required public string EnhanceAction { get; init; }
+
+    /// <summary>
+    /// Gets the telephone number field: its rows, and where Add and Remove post the form.
+    /// </summary>
+    required public PhoneNumberField PhoneNumbers { get; init; }
 }

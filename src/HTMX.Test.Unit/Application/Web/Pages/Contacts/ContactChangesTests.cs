@@ -32,7 +32,7 @@ public sealed class ContactChangesTests
 
         // Assert (Then)
         CollectionAssert.AreEqual(
-            new[] { "Name", "Organization", "Job title", "Email", "Phone", "Notes" },
+            new[] { "Name", "Organization", "Job title", "Email", "Phone numbers", "Notes" },
             described.Values.Select(static value => value.Field).ToArray(),
             "The fields should be the Details tab's, in its order.");
         Assert.AreEqual(

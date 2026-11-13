@@ -55,6 +55,9 @@ public sealed class CreateModel : ContactFormModel<ContactInput>
     /// <inheritdoc/>
     protected override string PageName => "./Create";
 
+    /// <inheritdoc/>
+    protected override object FormValues => new { organization = this.OpenedFrom?.Id.Value };
+
     /// <summary>
     /// Starts an empty form. When it was opened from an organization that takes people in, that organization is
     /// chosen; an archived one is not, since saving would refuse it.
@@ -103,6 +106,36 @@ public sealed class CreateModel : ContactFormModel<ContactInput>
     }
 
     /// <summary>
+    /// Adds a row for a telephone number, ready to type in, and saves nothing. HTMX gets the telephone number field
+    /// alone; without HTMX the form posts here and gets the whole page back, as it was posted, with the new row.
+    /// </summary>
+    /// <param name="organization">The organization the form was opened from, which its address keeps, if any.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The field or the page.</returns>
+    public async Task<IActionResult> OnPostAddPhoneNumberAsync(long? organization, CancellationToken cancellationToken)
+    {
+        this.AddPhoneNumberRow();
+        return await this.RedrawAsync(organization, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Takes a telephone number's row away, and saves nothing; the number goes when the form is saved. HTMX gets the
+    /// telephone number field alone; without HTMX the form posts here and gets the whole page back.
+    /// </summary>
+    /// <param name="organization">The organization the form was opened from, which its address keeps, if any.</param>
+    /// <param name="removePhoneNumber">The row's position, from 0, which its Remove button posts.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The field or the page.</returns>
+    public async Task<IActionResult> OnPostRemovePhoneNumberAsync(
+        long? organization,
+        int removePhoneNumber,
+        CancellationToken cancellationToken)
+    {
+        this.RemovePhoneNumberRow(removePhoneNumber);
+        return await this.RedrawAsync(organization, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Turns the form into a new contact, once it has passed validation: the values trimmed, an empty value as none,
     /// and the signed-in user as who created them.
     /// </summary>
@@ -114,14 +147,13 @@ public sealed class CreateModel : ContactFormModel<ContactInput>
             ?? throw new InvalidOperationException("A valid form always has an organization.");
         string? jobTitle = Optional(input.JobTitle);
         string? email = Optional(input.Email);
-        string? phone = Optional(input.Phone);
         string? notes = Optional(input.Notes);
         return new ContactCreateRequest
         {
             Name = new DisplayName(input.Name.Trim()),
             JobTitle = jobTitle is null ? null : new JobTitle(jobTitle),
             Email = email is null ? null : new EmailAddress(email),
-            Phone = phone is null ? null : new PhoneNumber(phone),
+            PhoneNumbers = this.WrittenPhoneNumbers(),
             Notes = notes is null ? null : new Notes(notes),
             Organization = new OrganizationId(organization),
             CreatedBy = SignedInUser.Of(this.User),
@@ -161,5 +193,25 @@ public sealed class CreateModel : ContactFormModel<ContactInput>
         bool enhanced = HtmxHeaders.IsPartialRequest(this.Request);
         this.Fields = await this.CreateFieldsAsync(saved: null, enhanced, cancellationToken).ConfigureAwait(false);
         return HtmxAnswers.PartOrPage(this, FormPartial);
+    }
+
+    /// <summary>
+    /// Draws the form again after Add or Remove, as it was posted: the telephone number field alone when HTMX sent the
+    /// request, and the whole page otherwise, with the organization as the select, since HTMX is not there.
+    /// </summary>
+    /// <param name="organization">The organization the form was opened from, if any.</param>
+    /// <param name="cancellationToken">Signals that the browser has gone away.</param>
+    /// <returns>The field or the page.</returns>
+    private async Task<IActionResult> RedrawAsync(long? organization, CancellationToken cancellationToken)
+    {
+        await this.ReadOpenedFromAsync(organization, cancellationToken).ConfigureAwait(false);
+        if (HtmxHeaders.IsPartialRequest(this.Request))
+        {
+            return this.PhoneNumberFieldAnswer();
+        }
+
+        this.Fields = await this.CreateFieldsAsync(saved: null, enhanced: false, cancellationToken)
+            .ConfigureAwait(false);
+        return this.Page();
     }
 }

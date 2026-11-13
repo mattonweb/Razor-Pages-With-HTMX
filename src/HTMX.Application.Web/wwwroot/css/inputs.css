@@ -4,6 +4,7 @@
     .field         a label, the control, an optional .hint and the validation message
     .switch        a yes-or-no value
     .choices       several values from a short fixed list, as pills
+    .field-rows    several values of one kind that the user writes, a row each, with Remove and Add
     .relation      the chosen record and a button that opens a picker
     .form-actions  the bar that ends a form
 
@@ -85,6 +86,13 @@ fieldset.field { margin: 0; padding: 0; border: 0; }
 .choices label:has(:checked) { background: var(--accent-subtle); border-color: var(--accent); color: var(--accent); }
 .choices label:has(:focus-visible) { box-shadow: var(--focus-ring); }
 .choices input:focus-visible { box-shadow: none; }
+
+/* Rows: several values of one kind that the user writes, such as telephone numbers. A fieldset.field holds a
+   ul.field-rows with a li for each value, its control and its Remove button (.btn.ghost.icon-only), and after the
+   list an Add button (.btn.ghost). Every row's control has the same name, so the rows post as one list. */
+.field-rows { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.field-rows li { display: flex; align-items: center; gap: var(--space-2); }
+.field-rows li :is(input, select) { flex: 1; min-width: 0; }
 
 /* Relation: the chosen record as a related-record link, and a Change button that opens a picker dialog.
    <fieldset class="field"><legend>Owner</legend><div class="relation">…</div></fieldset> */

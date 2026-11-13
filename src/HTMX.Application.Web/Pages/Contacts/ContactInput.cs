@@ -1,6 +1,7 @@
 namespace HTMX.Application.Web.Pages.Contacts;
 
 using System.ComponentModel.DataAnnotations;
+using HTMX.Application.Web.Validation;
 
 /// <summary>
 /// A contact's values as a form posts them, and the rules each must pass, shared by the forms that create and edit
@@ -32,12 +33,13 @@ public class ContactInput
     public string? Email { get; set; }
 
     /// <summary>
-    /// Gets or sets the person's telephone number, or <see langword="null"/> when the field is left empty.
+    /// Gets or sets the person's telephone numbers as the form's rows post them, in order, a row left empty as
+    /// <see langword="null"/>. Every row's field has the same name, <c>Input.PhoneNumbers</c>, so the rows bind to this
+    /// array with no index numbers.
     /// </summary>
-    [Display(Name = "Phone")]
-    [Phone(ErrorMessage = "Enter a telephone number, such as +1 555-0142.")]
-    [StringLength(40, ErrorMessage = "Keep the telephone number to 40 characters or fewer.")]
-    public string? Phone { get; set; }
+    [Display(Name = "Phone numbers")]
+    [TelephoneNumbers]
+    public string?[] PhoneNumbers { get; set; } = [];
 
     /// <summary>
     /// Gets or sets free text about the person, or <see langword="null"/> when the field is left empty.

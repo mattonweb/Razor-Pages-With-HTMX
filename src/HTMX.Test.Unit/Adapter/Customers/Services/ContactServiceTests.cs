@@ -509,6 +509,28 @@ public sealed class ContactServiceTests
     }
 
     /// <summary>
+    /// Unit test to verify that a contact's telephone numbers are saved in the order given, read back from the
+    /// database the same, and recorded in the new version; reordering numbers is a change.
+    /// </summary>
+    [TestMethod]
+    public async Task UpdateAsync_NumbersAddedAndReordered_SavesThemInOrder()
+    {
+        // Arrange (Given)
+        PhoneNumbers numbers = new PhoneNumbers([new PhoneNumber("+1 555-0199"), new PhoneNumber("+1 555-0142")]);
+        ContactUpdateRequest request = CreateUpdate(10001, version: 4, organization: 10003, "Head of Examples", numbers);
+
+        // Act (When)
+        (UpdateOutcome outcome, Contact? after, ContactVersion[] history) =
+            await ContactServiceCalls.UpdateAsync(request).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (UpdateOutcome.Saved, numbers, numbers),
+            (outcome, after?.PhoneNumbers, history[history.Length - 1].PhoneNumbers),
+            "The numbers should be saved, read back and recorded in the order given.");
+    }
+
+    /// <summary>
     /// Unit test to verify that a change that is refused, or that sends the values the contact already holds, saves
     /// nothing and says why.
     /// </summary>
@@ -702,8 +724,15 @@ public sealed class ContactServiceTests
     /// <param name="version">The version the change started from.</param>
     /// <param name="organization">The organization the change names.</param>
     /// <param name="jobTitle">The job title the change sends.</param>
+    /// <param name="phoneNumbers">The telephone numbers the change sends, or <see langword="null"/> for the one
+    /// Ainsley Archetype has.</param>
     /// <returns>The change.</returns>
-    private static ContactUpdateRequest CreateUpdate(long contact, int version, long organization, string jobTitle)
+    private static ContactUpdateRequest CreateUpdate(
+        long contact,
+        int version,
+        long organization,
+        string jobTitle,
+        PhoneNumbers? phoneNumbers = null)
     {
         return new ContactUpdateRequest
         {
@@ -712,7 +741,7 @@ public sealed class ContactServiceTests
             Name = new DisplayName("Ainsley Archetype"),
             JobTitle = new JobTitle(jobTitle),
             Email = new EmailAddress("ainsley.archetype@placeholder.example"),
-            Phone = new PhoneNumber("+1 555-0142"),
+            PhoneNumbers = phoneNumbers ?? new PhoneNumbers([new PhoneNumber("+1 555-0142")]),
             Notes = new Notes("Prefers email to phone. Follow up in January about the placeholder order."),
             Organization = new OrganizationId(organization),
             ChangedBy = UserSeed.DemoUser,
