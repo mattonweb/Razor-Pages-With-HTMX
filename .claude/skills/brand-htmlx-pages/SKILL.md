@@ -1,8 +1,8 @@
 ---
 name: brand-htmlx-pages
-description: The HTMLX Pages component library for the Razor Pages and HTMX application in this repository. Use whenever writing, styling or reviewing its markup, CSS, partial views or page layouts. Covers the design tokens (color, type, space, shape) taken from the DevExtreme UI Template Gallery and MudBlazor, light and dark mode, the class naming rule, buttons and icons, and a catalog of components by family, each with its markup, variants, states, accessibility and when to use it — layout (app shell, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, busy bar, bulk bar, alert, toast). Draft; the status table says which components are settled.
+description: The HTMLX Pages component library for the Razor Pages and HTMX application in this repository. Use whenever writing, styling or reviewing its markup, CSS, partial views or page layouts. Covers the design tokens (color, type, space, shape) taken from the DevExtreme UI Template Gallery and MudBlazor, light and dark mode, the class naming rule, buttons and icons, and a catalog of components by family, each with its markup, variants, states, accessibility and when to use it — layout (app shell, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, rows, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, busy bar, bulk bar, alert, toast). Draft; the status table says which components are settled.
 owner: Matt
-version: 0.5.2
+version: 0.6.0
 visibility: public
 ---
 
@@ -18,7 +18,7 @@ The layout patterns come from the [DevExtreme UI Template Gallery](https://githu
 code, CSS or artwork is copied from either: the gallery runs on DevExtreme, which has its own commercial license, and
 this repository is public. Everything in this skill was written for this repository.
 
-## Status: draft 0.5.2
+## Status: draft 0.6.0
 
 | Family | Components | State |
 |---|---|---|
@@ -31,7 +31,7 @@ this repository is public. Everything in this skill was written for this reposit
 | Data display | grid (title cell, sort header, archived row), chip, empty state, fields, related-record link, side panel | Settled for review |
 | Data display, added | selection column, read-only grid, version badge, timeline, diff | Ready for review |
 | Inputs | filter box | Settled for review |
-| Inputs, added | field and validation (checked as you type too), switch, choices, relation field and picker, form action bar | Ready for review |
+| Inputs, added | field and validation (checked as you type too), switch, choices, rows, relation field and picker, form action bar | Ready for review |
 | Feedback | dialog, busy bar | Settled for review |
 | Feedback, added | confirm dialog, preview dialog, bulk bar, alert, toast | Ready for review |
 
@@ -49,7 +49,8 @@ Everything under `assets/` goes into the application; nothing outside it does.
 - `assets/css/navigation.css`: side nav and rail, breadcrumbs, menu, segmented control and pager.
 - `assets/css/data-display.css`: grid, chip, empty state, fields, related-record link, side panel, version badge,
   timeline and diff.
-- `assets/css/inputs.css`: filter box, field and validation, switch, choices, relation field and form action bar.
+- `assets/css/inputs.css`: filter box, field and validation, switch, choices, rows, relation field and form action
+  bar.
 - `assets/css/feedback.css`: dialog, busy bar, bulk bar, alert, toast, confirm dialog and preview dialog.
 
   A page links the stylesheets in the order above, tokens first and feedback last.
@@ -278,6 +279,19 @@ value keeps its place between reading and editing.
 **Choices** (ready for review, `inputs.css`). Several values from a short fixed list:
 `<fieldset class="field choices">` with its `legend` and a `.options` row of checkbox labels, drawn as pills. For one
 value from a list, use a select.
+
+**Rows** (ready for review, `inputs.css`). Several values of one kind that the user writes, such as telephone
+numbers: in a `fieldset.field` whose `legend` names them, a `ul.field-rows` with an `li` for each value, holding its
+control and its Remove button, then an Add button after the list.
+- Every row's control has the same `name`, so the rows post as one list. A control's `aria-label` counts it ("Phone
+  number 2") and its Remove button says which it removes ("Remove phone number 2"), a `.btn.ghost.icon-only` with the
+  `x` icon.
+- Add is a `.btn.ghost` with the `plus` icon that names what it adds ("Add a phone number"), in a `div` after the list.
+  It goes once the field holds the most it may; Remove shows only when there is more than one row.
+- *Invalid:* the message belongs to the whole field, after the list, named in the fieldset's `aria-describedby`; each
+  row whose value is wrong is marked as an invalid control and names the message too.
+- Use it for values the user types, any number of them up to a limit. For values chosen from a short fixed list, use
+  choices.
 
 **Relation field** (ready for review, `inputs.css`). Another record as a value: in a `fieldset.field`, a `.relation`
 holding a hidden input with the chosen record's id, the chosen record as a related-record link, and a Change button

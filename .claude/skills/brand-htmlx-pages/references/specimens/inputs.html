@@ -188,6 +188,33 @@
       </div>
     </section>
 
+    <section class="spec" aria-labelledby="rows">
+      <h2 id="rows">Rows</h2>
+      <p class="spec-lead">Several values of one kind that the user writes, such as telephone numbers: a row for each, its control
+        and its Remove button, and Add after the rows. Every row's control has the same name. Remove shows only when there is more
+        than one row, and Add only while there is room for another. A wrong value marks its row and names the field's message.</p>
+      <div class="card card-body fields">
+        <fieldset class="field">
+          <legend>Numbers</legend>
+          <ul class="field-rows">
+            <li><input type="tel" name="Numbers" value="+1 555-0100" aria-label="Number 1"><button class="btn ghost icon-only" type="button" aria-label="Remove number 1"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></li>
+            <li><input type="tel" name="Numbers" value="+1 555-0101" aria-label="Number 2"><button class="btn ghost icon-only" type="button" aria-label="Remove number 2"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></li>
+          </ul>
+          <div><button class="btn ghost" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#plus"></use></svg>Add a number</button></div>
+        </fieldset>
+        <fieldset class="field" aria-describedby="rows-error">
+          <legend>Numbers, one wrong</legend>
+          <ul class="field-rows">
+            <li><input type="tel" name="Numbers" value="+1 555-0100" aria-label="Number 1"><button class="btn ghost icon-only" type="button" aria-label="Remove number 1"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></li>
+            <li><input type="tel" name="Numbers" value="call me" aria-label="Number 2" class="input-validation-error"
+                aria-invalid="true" aria-describedby="rows-error"><button class="btn ghost icon-only" type="button" aria-label="Remove number 2"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#x"></use></svg></button></li>
+          </ul>
+          <span class="field-validation-error" id="rows-error">Enter each number as a number, such as +1 555-0100.</span>
+          <div><button class="btn ghost" type="button"><svg class="icon" aria-hidden="true"><use href="../../assets/icons.svg#plus"></use></svg>Add a number</button></div>
+        </fieldset>
+      </div>
+    </section>
+
     <section class="spec" aria-labelledby="relation">
       <h2 id="relation">Relation field</h2>
       <p class="spec-lead">Another record as a value: the chosen record as a related-record link, and a Change button that opens a

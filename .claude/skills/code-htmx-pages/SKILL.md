@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests and integration tests that run the whole application, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, and the patterns still open (expired sign-ins, polling, more rows as a list scrolls, a form with a file). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.22.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests and integration tests that run the whole application, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, and the patterns still open (expired sign-ins, polling, more rows as a list scrolls, a form with a file). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.23.0
 visibility: public
 ---
 
@@ -14,9 +14,9 @@ in step. It is written for HTMX 4.0.1 and ASP.NET Core 10, and every sentence is
 application on those versions, not only the one it was built in; how one application uses HTMX belongs in its own
 code, tests and README.
 
-The evidence differs by part. The patterns in sections 2 to 16 have been built and tried in a browser; where a
+The evidence differs by part. The patterns in sections 2 to 17 have been built and tried in a browser; where a
 section also covers a case that was not built, such as output caching, its citation is the only evidence.
-Section 1's rows were read in the source and the reference, not all built, and nothing in section 17 is built.
+Section 1's rows were read in the source and the reference, not all built, and nothing in section 18 is built.
 Every HTMX fact cites the reference page or the 4.0.1 source method it came from, and the two kinds of citation
 carry different weight. A reference page is what HTMX documents. A method in the 4.0.1 source is what that release
 happens to do: the method is private, a later release may change it, and section 2 checks each one again before
@@ -971,7 +971,45 @@ HTMX the attribute does nothing.
   boosted link to a record that has gone, which drew the not-found page with 404; and the skip link, the link that
   opens a new tab and `mailto:` left alone. No Content Security Policy violation (section 15).
 
-## 17. Still open
+## 17. Rows added to and removed from a form
+
+Several values of one kind that the user writes, such as a person's telephone numbers: a row for each, with its own
+Remove button, and an Add button after the rows, all inside the form that saves them.
+
+- **Every row's field has the same name.** `name="Input.PhoneNumbers"` on each binds to a `string?[]` in the rows'
+  order, with no index numbers, and a row left empty binds as `null`, which the save leaves out. One validation
+  attribute checks the list, how many and each value, so its message belongs to the whole field: it goes after the
+  rows and is named in the fieldset's `aria-describedby`, and each wrong row is marked `aria-invalid` and names it
+  too. The rows have no `asp-for`, so the first wrong one claims the response's one `autofocus` through the same flag
+  the tag helper that marks invalid controls sets (section 7).
+- **Add and Remove post the form to handlers of their own, which save nothing.** Each is a submit button with
+  `formaction` naming its handler, such as `?handler=AddPhoneNumber`, and `formnovalidate`; Remove's button names its
+  row with `name` and `value`, its position. The handler clears the messages model binding left, changes the rows and
+  draws the form again: with HTMX the field's partial alone, without it the whole page, as it was posted. So the server
+  keeps everything about the rows. Add goes once the field holds the most it may, Remove is drawn only beside two rows
+  or more, and the partial marks `autofocus` on the new row, or on the row now in the removed one's place.
+- **Inside a form that says `hx-post`, each button needs its own `hx-post`.** HTMX reads a submitter's `formaction`
+  only for a boosted form (4.0.1 source, `#determineMethodAndAction`), so in a form that says `hx-post` a plain
+  submit button sends the form to that address: to Save. With its own `hx-post`, the button sends the whole form, its
+  own name and value included (`#collectFormData`), and HTMX cancels the click's submit (`#shouldCancel`). Its
+  `hx-target` is the field and its `hx-swap` is `outerHTML`.
+- **The field is drawn again, not a row appended.** The workshop (Lab 5) appends a row the server renders with
+  `hx-swap="beforeend"` and removes a row by removing its element. That leaves the rows' count, their positions and
+  the keyboard to script on the page, and removing a row too, since a Content Security Policy rules out `hx-on`
+  (section 15). Drawing the field again keeps all of that on the server, in one partial that both answers draw
+  (Principles), at the cost of posting the form for each change, which is the round trip the page makes without HTMX
+  anyway.
+- **Without HTMX the page comes back at the handler's address**, such as `…/edit?handler=AddPhoneNumber`, so a refresh
+  there asks to post the form again, which adds or removes a row and saves nothing. The form still saves to its own
+  address.
+- **Tried in a browser**, Chromium 156. With HTMX: Add put the keyboard in the new row and kept what had been typed,
+  Remove put it in the row that took the removed one's place, Add went at the most the field may hold, a save with a
+  wrong number answered 422 with only that row marked and the keyboard in it, and a save kept the rows' order and left
+  out the empty ones. Without HTMX's script, Add and Remove posted natively and the whole page came back with the same
+  rows and the same `autofocus`. Integration tests post Add with HTMX and without it, and save numbers in a new order
+  through the whole application (section 6). Not built: rows of objects (section 18).
+
+## 18. Still open
 
 Nothing in this section is built yet, so none of it is a rule. What is known, to start from; an idea taken from the
 workshop names its chapter.
@@ -994,10 +1032,10 @@ workshop names its chapter.
   `#parseHTML`), which a browser enforcing Trusted Types would refuse. And a policy built on a nonce for each
   response, with `'strict-dynamic'`, suits an application whose own origin also serves files it did not write, such
   as uploads, where `'self'` would let one of them run as a script. Neither has been tried.
-- **Rows added to and removed from a form.** For a list of plain values, every row's input has the same name, such
-  as `name="Input.Tags"`, which binds to a `List<string>` with no index numbers. The server renders one new row as a
-  fragment that `hx-swap="beforeend"` appends, and removing a row only removes its element (workshop, Lab 5). A list
-  of objects needs indexed names (`Input.Lines[0].Name`), and so more care when a row leaves.
+- **Rows of objects in a form (section 17).** A row that holds several fields, such as a line's product and
+  quantity, binds by indexed names (`Input.Lines[0].Name`), and a gap in the numbers stops the binding there. Drawing
+  the field again after each Add and Remove (section 17) numbers the rows afresh every time, which is what a removal
+  from the middle needs. Not yet built.
 - **A form with a file.** HTMX 4 sends a form URL-encoded unless the form says `enctype="multipart/form-data"` or the
   element says `hx-encoding` (4.0.1 source, `#handleTriggerEvent`), so a form that uploads a file, which needs that
   `enctype` without HTMX anyway, posts through HTMX unchanged, and the handler binds the file as an `IFormFile`. HTMX
