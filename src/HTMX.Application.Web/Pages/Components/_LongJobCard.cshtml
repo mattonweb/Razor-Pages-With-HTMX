@@ -1,0 +1,51 @@
+@model HTMX.Application.Web.Pages.Components.LongJobModel
+@*
+    The job's card, in one of three states: the Start button before a job, the job's progress while it runs, and the
+    job finished. Start posts the card's form, and HTMX replaces the card with the answer (outerHTML).
+
+    While the job runs, the card itself polls: hx-get with the page's own address for this job, hx-trigger="every 1s",
+    and hx-swap="outerHTML", so each answer is the card again, still polling. HTMX runs the trigger on a timer, and
+    clears it when an answer replaces the card, so the answer for a finished job, drawn without those attributes,
+    stops the polling. aria-busy shows the brand's busy bar while the job runs. The progress text is not a live region,
+    which would speak every second; the toast that comes with the finished card says the job is done.
+
+    A poll is not something the user did, so nothing in the card takes the keyboard; the Check again link keeps its id,
+    which HTMX puts the focus back on after a swap. Without HTMX it loads the page, as the job stands then.
+*@
+@{
+    string? self = Model.Job is long job ? Url.Page("./LongJob", new { job }) : null;
+    string? action = Url.Page("./LongJob");
+    bool running = Model.Running;
+    string heading = Model.Job is long number ? $"Job {number}" : "No job yet";
+    string start = Model.StepsDone is null ? "Start the job" : "Start another job";
+}
+<section class="card" id="job" aria-labelledby="job-heading" aria-busy="@(running ? "true" : null)"
+         hx-get="@(running ? self : null)" hx-trigger="@(running ? "every 1s" : null)"
+         hx-swap="@(running ? "outerHTML" : null)">
+    <header class="card-header"><h2 id="job-heading">@heading</h2></header>
+    <div class="busy-bar"></div>
+    <div class="card-body">
+        @if (Model.Missing)
+        {
+            <p>No job has the number @Model.Job. It may be older than the jobs kept, or the link may be mistyped.</p>
+        }
+
+        @if (running)
+        {
+            <p>Working: step @Model.StepsDone of @LongJobs.Steps.</p>
+            <p><a id="job-check" href="@self">Check again</a></p>
+        }
+        else if (Model.StepsDone is not null)
+        {
+            <p>Finished: all @LongJobs.Steps steps are done.</p>
+        }
+
+        @if (!running)
+        {
+            <form method="post" action="@action" asp-antiforgery="true"
+                  hx-post="@action" hx-target="#job" hx-swap="outerHTML">
+                <button class="btn primary" type="submit">@start</button>
+            </form>
+        }
+    </div>
+</section>

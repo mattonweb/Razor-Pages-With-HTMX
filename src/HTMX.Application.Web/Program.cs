@@ -1,15 +1,18 @@
 namespace HTMX.Application.Web;
 
+using System;
 using System.Threading.Tasks;
 using HTMX.Adapter.Customers;
 using HTMX.Adapter.Customers.Configuration;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Application.Web.Authentication;
+using HTMX.Application.Web.Pages.Components;
 using HTMX.Application.Web.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 /// <summary>
@@ -63,8 +66,8 @@ public sealed class Program
     }
 
     /// <summary>
-    /// Registers Razor Pages, with every URL they write in lower case, the sign-in scheme, and the customers adapter,
-    /// which owns the database.
+    /// Registers Razor Pages, with every URL they write in lower case, the sign-in scheme, the customers adapter, which
+    /// owns the database, and the Long job page's jobs.
     /// </summary>
     /// <param name="services">The application's service collection.</param>
     /// <param name="configuration">The application's configuration, which may name the database.</param>
@@ -89,6 +92,10 @@ public sealed class Program
             DatabaseName = configuredName is null ? DefaultCustomersDatabaseName : new DatabaseName(configuredName),
         };
         services.AddCustomersAdapter(customers);
+
+        // The Long job page's pretend jobs, one set for the application, counted by the system clock.
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton<LongJobs>();
     }
 
     /// <summary>

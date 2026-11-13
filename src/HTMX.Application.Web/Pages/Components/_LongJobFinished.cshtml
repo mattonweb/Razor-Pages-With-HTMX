@@ -1,0 +1,10 @@
+@model HTMX.Application.Web.Pages.Components.LongJobModel
+@*
+    What the poll that finds the job finished answers HTMX with: the card, drawn without hx-trigger, which stops the
+    polling, and, for the layout's toast region, the toast that says the job has finished.
+*@
+<partial name="_LongJobCard" model="Model" />
+@if (Model.Toast is Toast toast)
+{
+    <partial name="_ToastUpdate" model="toast" />
+}

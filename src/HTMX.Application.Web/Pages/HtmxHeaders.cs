@@ -29,6 +29,9 @@ public static class HtmxHeaders
     // Asks HTMX to put an address in place of the current one in the history, loading nothing and adding no entry.
     private const string ReplaceUrl = "HX-Replace-Url";
 
+    // Asks HTMX to add an address to the history after the swap, as a new entry that Back leaves.
+    private const string PushUrl = "HX-Push-Url";
+
     /// <summary>
     /// Says whether HTMX sent a request, for part of a page or for the whole of one, Back and Forward included, rather
     /// than the browser on its own.
@@ -95,5 +98,19 @@ public static class HtmxHeaders
         ArgumentException.ThrowIfNullOrWhiteSpace(url);
         IHeaderDictionary headers = response.Headers;
         headers[ReplaceUrl] = url;
+    }
+
+    /// <summary>
+    /// Asks HTMX to add the address of what the answer draws to the history, as a new entry: an action that starts
+    /// something new, whose page has an address of its own, which Back leaves for the page it started from.
+    /// </summary>
+    /// <param name="response">The response.</param>
+    /// <param name="url">The address of what the answer draws.</param>
+    public static void PushAddress(HttpResponse response, string url)
+    {
+        ArgumentNullException.ThrowIfNull(response);
+        ArgumentException.ThrowIfNullOrWhiteSpace(url);
+        IHeaderDictionary headers = response.Headers;
+        headers[PushUrl] = url;
     }
 }

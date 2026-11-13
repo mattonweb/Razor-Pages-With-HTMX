@@ -1,0 +1,18 @@
+@page "/components/long-job"
+@model HTMX.Application.Web.Pages.Components.LongJobModel
+@{
+    ViewData["Title"] = Model.Job is long job ? $"Job {job}" : "Long job";
+    ViewData["Section"] = "Components";
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Long job</span></li></ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Long job</h1>
+    </div>
+    <p class="muted">A pretend job that takes ten seconds, a step a second, and a card that asks how far it has got.</p>
+</header>
+
+@* The card is a partial: the page draws it here, and HTMX's Start and each of its polls get it alone. *@
+<partial name="_LongJobCard" model="Model" />

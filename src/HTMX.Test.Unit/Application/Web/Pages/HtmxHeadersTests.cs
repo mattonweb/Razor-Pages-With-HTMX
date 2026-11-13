@@ -70,5 +70,26 @@ public sealed class HtmxHeadersTests
             "The response should keep the Vary already set and add HX-Request-Type after it.");
     }
 
+    /// <summary>
+    /// Unit test to verify that pushing an address writes it in HX-Push-Url, for HTMX to add to the history.
+    /// </summary>
+    [TestMethod]
+    public void PushAddress_Address_WritesHxPushUrl()
+    {
+        // Arrange (Given)
+        DefaultHttpContext http = new DefaultHttpContext();
+        HttpResponse response = http.Response;
+
+        // Act (When)
+        HtmxHeaders.PushAddress(response, "/components/long-job?job=10001");
+
+        // Assert (Then)
+        IHeaderDictionary headers = response.Headers;
+        Assert.AreEqual(
+            "/components/long-job?job=10001",
+            headers["HX-Push-Url"].ToString(),
+            "The address should go in HX-Push-Url.");
+    }
+
     #endregion Public Methods
 }

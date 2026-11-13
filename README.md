@@ -138,6 +138,12 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   title keeps the chosen file: with HTMX the answer's file input says `hx-preserve`, and HTMX keeps the one on the
   page; without HTMX the page asks for the file again. The page caps a request at 10 MB: a larger one is refused before
   it is read, and the browser sees the connection lost.
+- **`/components/long-job`** — a pretend job that takes ten seconds, a step a second, counted from when it started.
+  **Start the job** goes to the job's own address, `?job=10001`: by a redirect without HTMX, and with HTMX by the job's
+  card and `HX-Push-Url`. While the job runs, the card polls that address every second (`hx-trigger="every 1s"`) and
+  shows the brand's busy bar; the card for a finished job is drawn without the trigger, which stops the polling, and
+  comes with a toast. Without HTMX the card's **Check again** link loads the page. The application keeps the newest
+  hundred jobs.
 
 ## Sample data
 
