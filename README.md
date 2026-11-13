@@ -144,6 +144,12 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   shows the brand's busy bar; the card for a finished job is drawn without the trigger, which stops the polling, and
   comes with a toast. Without HTMX the card's **Check again** link loads the page. The application keeps the newest
   hundred jobs.
+- **`/components/load-more`** — the active organizations by name, ten at first, and **Load more** for the next ten,
+  up to a hundred. The address says how many rows show, `?shown=20`. Without HTMX, Load more is a link to that
+  address, at the first new row (`#more-11`). With HTMX it asks for the ten after the last row, by key, adds them to
+  the table (`hx-swap="beforeend"`), draws the footer again in the same answer through an `<hx-partial>`, names the new
+  address in `HX-Replace-Url`, and puts the keyboard on the first new row; `hx-sync="this:drop"` drops a second press
+  while the first is on its way.
 
 ## Sample data
 

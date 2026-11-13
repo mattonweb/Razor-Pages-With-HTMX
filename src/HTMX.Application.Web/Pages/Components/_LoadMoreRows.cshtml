@@ -1,0 +1,22 @@
+@model HTMX.Application.Web.Pages.Components.LoadMoreModel
+@using System.Globalization
+@using HTMX.Adapter.Customers.Contracts
+@using HTMX.Application.Web.Pages.Organizations
+@*
+    The rows one answer draws. Each has an id by its position, more-1 and on, which the link Load more is without HTMX
+    goes to, so the browser shows the first new row. With HTMX the first row Load more added says autofocus on its
+    link, and HTMX puts the keyboard there after the swap, ready to read on from the new rows.
+*@
+@for (int index = 0; index < Model.Rows.Length; index++)
+{
+    OrganizationSummary organization = Model.Rows[index];
+    int position = Model.FirstPosition + index;
+    <tr id="more-@position">
+        <td class="title">
+            <a asp-page="/Organizations/Details" asp-route-id="@organization.Id.Value"
+               autofocus="@(Model.FirstRowFocused && index == 0)">@organization.Name.Value</a>
+        </td>
+        <td>@IndustryNames.Of(organization.Industry)</td>
+        <td>@organization.Contacts.Value.ToString("N0", CultureInfo.CurrentCulture)</td>
+    </tr>
+}

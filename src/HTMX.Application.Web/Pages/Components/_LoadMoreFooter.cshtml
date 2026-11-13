@@ -1,0 +1,33 @@
+@model HTMX.Application.Web.Pages.Components.LoadMoreModel
+@using System.Globalization
+@using HTMX.Adapter.Customers.Contracts
+@*
+    The card's footer: how many rows show, of how many, and the way to the next ten. Without HTMX, Load more is a link
+    to the address that shows ten more, at the first of them. With HTMX it asks for the ten after the last row and adds
+    them to the table; hx-sync drops a second press while the first is on its way, which would add the same ten twice.
+    The list stops at a hundred rows, where the footer says where the rest are. The footer has an id, so the answer to
+    Load more can replace it.
+*@
+@{
+    int next = Model.Shown + LoadMoreModel.Step;
+    string? page = Url.Page("./LoadMore", new { shown = next });
+    string? more = Url.Page("./LoadMore", new { shown = next, after = Model.Last });
+    bool room = next <= PageSize.Largest;
+    string shown = Model.Shown.ToString("N0", CultureInfo.CurrentCulture);
+    string matching = Model.Matching.ToString("N0", CultureInfo.CurrentCulture);
+}
+<footer class="pager" id="more-footer">
+    <p class="summary">Showing <strong>@shown</strong> of <strong>@matching</strong></p>
+    @if (Model.More && room)
+    {
+        <a class="btn" href="@(page)#more-@(Model.Shown + 1)"
+           hx-get="@more" hx-target="#more-rows" hx-swap="beforeend" hx-sync="this:drop">Load more</a>
+    }
+    else if (Model.More)
+    {
+        <p class="summary">
+            The list stops at @PageSize.Largest; <a asp-page="/Organizations/Index">the organizations list</a> pages through
+            them all.
+        </p>
+    }
+</footer>

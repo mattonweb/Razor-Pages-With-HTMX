@@ -1,0 +1,10 @@
+@model HTMX.Application.Web.Pages.Components.LoadMoreModel
+@*
+    What HTMX's Load more gets: the new rows, which its hx-swap="beforeend" adds to the table's tbody, and the footer,
+    drawn again with the new count and the next link, which HTMX 4 swaps after the rows into the element its
+    hx-partial names. HTMX parses an answer like this one inside a template, so rows reach the table as rows.
+*@
+<partial name="_LoadMoreRows" model="Model" />
+<hx-partial hx-target="#more-footer" hx-swap="outerHTML">
+    <partial name="_LoadMoreFooter" model="Model" />
+</hx-partial>

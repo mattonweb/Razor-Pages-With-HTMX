@@ -1,0 +1,42 @@
+@page "/components/load-more"
+@model HTMX.Application.Web.Pages.Components.LoadMoreModel
+@{
+    ViewData["Title"] = "Load more";
+    ViewData["Section"] = "Components";
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Load more</span></li></ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Load more</h1>
+    </div>
+    <p class="muted">
+        The active organizations by name, ten at a time, each Load more adding the next ten under the rest.
+    </p>
+</header>
+
+@*
+    The rows are in their own tbody, which HTMX's Load more adds to (beforeend), and the footer, which holds the count
+    and the link, is drawn again by the same answer, through an hx-partial (_LoadMoreAnswer). Both are partials, so the
+    page and the answer draw them alike.
+*@
+<section class="card" aria-labelledby="more-heading">
+    <header class="card-header"><h2 id="more-heading">Organizations</h2></header>
+    <div class="grid-wrap">
+        <table class="grid">
+            <caption class="visually-hidden">Active organizations, by name</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Industry</th>
+                    <th scope="col">Contacts</th>
+                </tr>
+            </thead>
+            <tbody id="more-rows">
+                <partial name="_LoadMoreRows" model="Model" />
+            </tbody>
+        </table>
+    </div>
+    <partial name="_LoadMoreFooter" model="Model" />
+</section>
