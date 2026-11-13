@@ -2,6 +2,9 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-12 (attended session with Matt): integration tests exist, in `HTMX.Test.Integration`.** The stack, the
+  layout and the solution-architecture paragraph name the project, and the `tests` scope covers it. `Program` is now
+  a sealed class, so the tests can start it, and reads the database's name from `Customers:DatabaseName`.
 - **2026-11-10, later (attended session with Matt): `code-htmx-pages` now stands on its own in any repository.** It
   names nothing in this one, and it has no status table: its intro names HTMX 4.0.1, section 1 says it was read in the
   source, and section 13 holds what is still open. Older entries that say to read its status table predate this.
@@ -69,7 +72,8 @@ decline it and say why.
   version and record it in `README.md`.
 - Persistence is whatever the presentation needs and nothing more. Chosen 2026-11-07: Entity Framework Core over an
   in-memory SQLite database, created when the application starts and seeded from code; see `README.md`.
-- Tests: MSTest, written as the `code-csharp-mstest` skill describes.
+- Tests: MSTest. Unit tests are written as the `code-csharp-mstest` skill describes. That skill does not cover
+  integration tests, which take the unit tests' shape and `code-htmx-pages` section 6.
 
 ## Layout (created 2026-11-07)
 
@@ -79,6 +83,7 @@ src/
   Directory.Build.props             house build settings for every project (code-csharp-standards, section 1)
   HTMX.Adapter.Customers/           the in-memory customer database, its entities and their data access
   HTMX.Application.Web/             the Razor Pages application
+  HTMX.Test.Integration/            the integration tests: the whole application, in memory
   HTMX.Test.Unit/                   the unit tests
   .editorconfig                     house copy, see below
 ```
@@ -108,9 +113,9 @@ unattended session that finds one wrong reports the defect and leaves it.
 
 **Commit scopes (`devops-git-conventions` section 3): one scope per drafted commit, from this list, or none when the
 change spans the repository.** `web` (the Razor Pages application), `htmx` (the client-side interaction layer and
-its partials), `data` (the store and its models), `tests` (the unit tests), `deps` (package updates), `docs`
-(`README.md` and presentation notes), `skills` (the `brand-htmlx-pages` and `code-htmx-pages` skills, the
-junctions and their gitignore lines), `charter` (this file). A scope
+its partials), `data` (the store and its models), `tests` (the unit and integration tests), `deps` (package
+updates), `docs` (`README.md` and presentation notes), `skills` (the `brand-htmlx-pages` and `code-htmx-pages` skills,
+the junctions and their gitignore lines), `charter` (this file). A scope
 that is not here is added to this list in its own commit before the commit that uses it; never invented in the
 message.
 
@@ -119,9 +124,10 @@ EMPTY**, and the repository starts with no files over it. A file that needs to e
 here, with its line count and a reason, in the same session that creates it.
 
 **Solution architecture (`dotnet-solution-architecture` section 7): adoption state `conforming`.** The solution holds
-one Application (`HTMX.Application.Web`), one Adapter (`HTMX.Adapter.Customers`) and one optional test project
-(`HTMX.Test.Unit`). **One Adapter per data store it owns:** a database, or a schema where the engine groups tables
-that way. `HTMX.Adapter.Customers` owns the in-memory `Customers` database and every entity in it (organizations,
+one Application (`HTMX.Application.Web`), one Adapter (`HTMX.Adapter.Customers`) and both optional test projects
+(`HTMX.Test.Unit` and `HTMX.Test.Integration`). **One Adapter per data store it owns:** a database, or a schema
+where the engine groups tables that way. `HTMX.Adapter.Customers` owns the in-memory `Customers` database and every
+entity in it (organizations,
 their contacts, and the internal users who manage them), with each entity's provider (its Entity Framework queries)
 and service (its rules) beside it; a new entity type joins this Adapter,
 never a new one. A data source or an external system that earns its own
