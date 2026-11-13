@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Target framework, language version and analyzers come from src/Directory.Build.props. -->
+
+  <PropertyGroup>
+    <!-- An async test returns Task only because the framework requires it; code-csharp-mstest says not to document it. -->
+    <NoWarn>$(NoWarn);SA1615</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Starts the application in memory, on a test server, as WebApplicationFactory; its version follows ASP.NET Core's. -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
+    <PackageReference Include="MSTest" Version="4.5.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HTMX.Application.Web\HTMX.Application.Web.csproj" />
+  </ItemGroup>
+
+</Project>

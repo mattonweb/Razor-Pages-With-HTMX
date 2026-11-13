@@ -5,8 +5,9 @@ interactive with [HTMX](https://htmx.org/). Built as the worked example for a pr
 with HTMX, and kept small enough to read on a screen.
 
 - `src/HTMX Pages Solution.slnx` — the solution: the Razor Pages application in `src/HTMX.Application.Web/`, the
-  customer database and everything that reads and writes it in `src/HTMX.Adapter.Customers/`, and the unit tests in
-  `src/HTMX.Test.Unit/`.
+  customer database and everything that reads and writes it in `src/HTMX.Adapter.Customers/`, the unit tests in
+  `src/HTMX.Test.Unit/`, and the integration tests, which run the whole application in memory, in
+  `src/HTMX.Test.Integration/`.
 - `CLAUDE.md` — the working agreement for AI coding sessions in this repository.
 - `src/.editorconfig` — the house C# style, a verbatim copy of the one in [Signalbox](https://github.com/mattonweb/Signalbox).
 
@@ -165,7 +166,12 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   disappears when the application stops. Nothing is written to
   disk, so a clone needs no setup, and every run starts from the same known data. Restarting the application resets
   the demo.
-- **Tests:** MSTest 4.5.2.
+- **Tests:** MSTest 4.5.2. The integration tests start the whole application in memory with `WebApplicationFactory`
+  (Microsoft.AspNetCore.Mvc.Testing 10.0.13, the version of the ASP.NET Core it runs on) and send requests as the
+  browser and HTMX would: each kind of request's answer, the antiforgery check, the Content Security Policy, and what
+  an archive and a create answer. Each test's application has a database of its own, named through the
+  `Customers:DatabaseName` setting that `Program` reads; nothing sets it when the application runs, so its database
+  is `Customers`.
 - **Look:** the HTMLX Pages brand. Its stylesheets and icon sprite were copied from
   `.claude/skills/brand-htmlx-pages/assets/` into `wwwroot`, and the pages use its components' markup. The home page's
   robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from

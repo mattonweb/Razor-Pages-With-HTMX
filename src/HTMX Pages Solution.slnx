@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="HTMX.Adapter.Customers/HTMX.Adapter.Customers.csproj" />
   <Project Path="HTMX.Application.Web/HTMX.Application.Web.csproj" />
+  <Project Path="HTMX.Test.Integration/HTMX.Test.Integration.csproj" />
   <Project Path="HTMX.Test.Unit/HTMX.Test.Unit.csproj" />
 </Solution>
