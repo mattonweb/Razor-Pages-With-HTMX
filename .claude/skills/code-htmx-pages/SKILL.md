@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, and the patterns still open (expired sign-ins, polling, more rows as a list scrolls, a form with a file). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.21.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests and integration tests that run the whole application, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, and the patterns still open (expired sign-ins, polling, more rows as a list scrolls, a form with a file). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.22.0
 visibility: public
 ---
 
@@ -124,7 +124,8 @@ Not yet tried on a Razor project.
      checksum in the README.
   5. In the browser, try each pattern that rests on a cited method, as section 6 says: Back and Forward, the focus
      after a swap, a save's `HX-Location`, an answer with an `<hx-partial>`, a refused save's 422, and the others.
-     The page models' unit tests set HTMX's headers by hand, so they pass whatever the new version sends.
+     The page models' unit tests and the integration tests set HTMX's headers by hand, so they pass whatever the new
+     version sends.
 - **Every script goes in `<head>`, with `defer`.** Back and Forward, and a boosted link with no target, swap a new
   `<body>` in, and HTMX runs every `<script>` in swapped content (4.0.1 source, `#processScripts`). A script in the
   body runs again on each such swap, and HTMX itself would load a second time. `defer` keeps the scripts from
@@ -347,16 +348,35 @@ public static class HtmxHeaders
     resolves a relative name such as `./Details` against it, and throws without it.
   - A value the test posts and means to be valid: `ModelState.SetModelValue` leaves its entry unvalidated, and
     `ModelState.IsValid` is false while any entry is, so mark it with `MarkFieldValid`.
-- **What a unit test cannot see is checked in the browser:** which element a swap replaces, inheritance, focus, and
-  the URL that is pushed. Read the request headers and the response body in the developer tools' network panel: the
+- **An integration test sends real requests through the whole application.** `WebApplicationFactory<Program>`, from
+  the `Microsoft.AspNetCore.Mvc.Testing` package, starts the application in memory on a test server, and its client's
+  requests pass through routing, binding, the antiforgery check and every middleware
+  ([Integration tests](https://learn.microsoft.com/aspnet/core/test/integration-tests)). So it checks what a unit
+  test cannot: that each kind of request in the table above gets its answer, `Vary` included; that a post without the
+  antiforgery token gets 400 and no body (section 14); that the Content Security Policy is on every answer, a static
+  file's too (section 15); and that a row's action, posted with the page's token and cookie, answers with the card,
+  the toast and `HX-Replace-Url`. It sends the headers HTMX 4.0.1 sends, as the unit tests do, so it says nothing
+  about what HTMX does with the answer.
+- **What it needs from the application.** The factory's type argument is a class in the application, and a static
+  class cannot be one, so `Program` is a sealed class with a private constructor. A database kept in memory under a
+  name is shared by every host in the test process that uses the name, so the application reads the name from
+  configuration, and each test's factory sets one of its own with `UseSetting` in `ConfigureWebHost`: a test that
+  changes a record changes it for itself alone, and the tests can run side by side. One test proves it, by archiving
+  an organization in one application and finding it still active in another.
+- **A post carries the page's antiforgery token.** The factory's client keeps cookies, as a browser does. The test
+  loads the page, which sets the antiforgery cookie, reads the token from the form's hidden field in the HTML, and
+  posts it with the form's other fields. `AllowAutoRedirect = false` hands a redirect back as it came, so the test
+  sees the 302 that a post without HTMX gets.
+- **What neither kind of test can see is checked in the browser:** which element a swap replaces, inheritance, focus,
+  and the URL that is pushed. Read the request headers and the response body in the developer tools' network panel: the
   body holds the target's own outer element, and the target's `id` appears once on the page (workshop, "Checkpoint:
   Troubleshooting + Pattern Review"). To see what HTMX did with a request, set `htmx.config.logAll = true` in the
-  console: it then logs every event it raises, with the element and the event's detail, until the page is loaded
-  again. Errors and warnings are logged whether it is set or not (4.0.1 source, `#trigger`). One filter typed into a
-  list logged 70 events, so set it just before the request in question and back to `false` after it. Then press
-  Back and Forward after a few swaps. To see answers land out of order, wrap `window.fetch` in the page first: HTMX
-  looks it up for each request (4.0.1 source, `#issueRequest`), so the wrapper can hold one answer back and release
-  it after a newer one has landed.
+  console: it then logs every event it raises, with the element and the event's detail, until the page is loaded again.
+  Errors and warnings are logged whether it is set or not (4.0.1 source, `#trigger`). One filter typed into a list
+  logged 70 events, so set it just before the request in question and back to `false` after it. Then press Back and
+  Forward after a few swaps. To see answers land out of order, wrap `window.fetch` in the page first: HTMX looks it up
+  for each request (4.0.1 source, `#issueRequest`), so the wrapper can hold one answer back and release it after a newer
+  one has landed.
 - **Without HTMX is tried two ways.** Once with HTMX's script left out and the application's own still running, as
   when the file fails to load, and once with script turned off in the browser, which takes the application's own
   away too. A page reaches every action both ways. Removing a page's `<script>` elements stops the scripts but not
@@ -1005,13 +1025,10 @@ workshop names its chapter.
   dialog's form, would reach an action behind a dialog on any browser and still give a chance to look before acting.
   A page cannot offer the link to one browser and the dialog to another without script, so where that line falls is
   not yet worked out.
-- **Tests that drive the pages.** Two layers sit between a page model's unit test and a person at a browser, and
-  neither is built. An integration test over `WebApplicationFactory` sends real requests through routing, binding
-  and the antiforgery check and reads the HTML that comes back
-  ([Integration tests](https://learn.microsoft.com/aspnet/core/test/integration-tests)). A browser test, with a tool
-  such as Playwright, loads the pinned `htmx.min.js` and checks swaps, history, focus, dialogs and both ways of
-  working without HTMX (section 6), and holds answers back to test requests that overlap. With them, step 5 of
-  section 2 runs the suite instead of a person.
+- **Tests in a browser.** The integration tests (section 6) send HTMX's headers by hand and read the HTML that comes
+  back, so nothing yet tests what HTMX does with it. A browser test, with a tool such as Playwright, loads the pinned
+  `htmx.min.js` and checks swaps, history, focus, dialogs and both ways of working without HTMX (section 6), and
+  holds answers back to test requests that overlap. With it, step 5 of section 2 runs a suite instead of a person.
 
 ## References
 
