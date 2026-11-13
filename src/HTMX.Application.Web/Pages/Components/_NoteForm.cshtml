@@ -1,0 +1,28 @@
+@model HTMX.Application.Web.Pages.Components.ReloadOnEventModel
+@*
+    The form that writes a note, in its card. HTMX replaces the card (outerHTML) with what the post answers: the card
+    with 422 when the note is refused, or, once it is written, the card empty again with the field ready for the next,
+    and HX-Trigger in the answer's headers. The form says nothing about the list, which hears the event on its own.
+*@
+@{
+    string? action = Url.Page("./ReloadOnEvent");
+}
+<section class="card" id="note-form" aria-labelledby="note-form-heading">
+    <header class="card-header"><h2 id="note-form-heading">Write a note</h2></header>
+    <form method="post" action="@action" asp-antiforgery="true" novalidate
+          hx-post="@action" hx-target="#note-form" hx-swap="outerHTML"
+          hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+        <div class="card-body fields">
+            <div class="field wide">
+                <label asp-for="Input.Text"></label>
+                <input asp-for="Input.Text" autocomplete="off" autofocus="@Model.TextFocused" />
+                <span asp-validation-for="Input.Text"></span>
+            </div>
+        </div>
+        <div class="form-actions">
+            <div class="end">
+                <button class="btn primary" type="submit">Write the note</button>
+            </div>
+        </div>
+    </form>
+</section>

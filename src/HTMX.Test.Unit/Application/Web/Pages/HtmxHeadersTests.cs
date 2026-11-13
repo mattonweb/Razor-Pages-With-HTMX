@@ -91,5 +91,26 @@ public sealed class HtmxHeadersTests
             "The address should go in HX-Push-Url.");
     }
 
+    /// <summary>
+    /// Unit test to verify that raising an event writes its name in HX-Trigger, for HTMX to raise on the page.
+    /// </summary>
+    [TestMethod]
+    public void RaiseEvent_Name_WritesHxTrigger()
+    {
+        // Arrange (Given)
+        DefaultHttpContext http = new DefaultHttpContext();
+        HttpResponse response = http.Response;
+
+        // Act (When)
+        HtmxHeaders.RaiseEvent(response, "notes-changed");
+
+        // Assert (Then)
+        IHeaderDictionary headers = response.Headers;
+        Assert.AreEqual(
+            "notes-changed",
+            headers["HX-Trigger"].ToString(),
+            "The event's name should go in HX-Trigger.");
+    }
+
     #endregion Public Methods
 }

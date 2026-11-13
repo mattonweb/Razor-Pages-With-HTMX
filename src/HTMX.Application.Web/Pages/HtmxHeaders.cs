@@ -32,6 +32,9 @@ public static class HtmxHeaders
     // Asks HTMX to add an address to the history after the swap, as a new entry that Back leaves.
     private const string PushUrl = "HX-Push-Url";
 
+    // Asks HTMX to raise events on the page once the answer is swapped in, for elements that listen for them.
+    private const string Trigger = "HX-Trigger";
+
     /// <summary>
     /// Says whether HTMX sent a request, for part of a page or for the whole of one, Back and Forward included, rather
     /// than the browser on its own.
@@ -112,5 +115,19 @@ public static class HtmxHeaders
         ArgumentException.ThrowIfNullOrWhiteSpace(url);
         IHeaderDictionary headers = response.Headers;
         headers[PushUrl] = url;
+    }
+
+    /// <summary>
+    /// Asks HTMX to raise an event once the answer is swapped in, so that an element elsewhere on the page that listens
+    /// for it, such as a list that loads itself again, can act without the answer knowing it is there.
+    /// </summary>
+    /// <param name="response">The response.</param>
+    /// <param name="eventName">The event's name, such as <c>notes-changed</c>.</param>
+    public static void RaiseEvent(HttpResponse response, string eventName)
+    {
+        ArgumentNullException.ThrowIfNull(response);
+        ArgumentException.ThrowIfNullOrWhiteSpace(eventName);
+        IHeaderDictionary headers = response.Headers;
+        headers[Trigger] = eventName;
     }
 }

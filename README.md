@@ -150,6 +150,11 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   the table (`hx-swap="beforeend"`), draws the footer again in the same answer through an `<hx-partial>`, names the new
   address in `HX-Replace-Url`, and puts the keyboard on the first new row; `hx-sync="this:drop"` drops a second press
   while the first is on its way.
+- **`/components/reload-on-event`** — a form that writes a note and a list of the newest ten, on one board shared by
+  everyone who opens the page. With HTMX the form's answer is the form, empty again, and `HX-Trigger: notes-changed`;
+  the list, which listens with `hx-trigger="notes-changed from:document"`, asks for itself again at the page's own
+  address and moves no keyboard. The form knows nothing of the list. A refused note raises nothing. Without HTMX the
+  form posts and the redirect back draws the list as it is then.
 
 ## Sample data
 

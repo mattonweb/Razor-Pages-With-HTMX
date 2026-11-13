@@ -1,0 +1,41 @@
+@model HTMX.Application.Web.Pages.Components.ReloadOnEventModel
+@*
+    The newest notes, in their card, which loads itself again when it hears that the notes changed. The card asks for
+    the page's own address (hx-get), which answers HTMX with this card alone, and replaces itself (outerHTML).
+
+    It listens with from:document. HTMX raises an answer's HX-Trigger events once the answer is swapped in, on the
+    element that sent the request or, when the swap replaced it, as the form's answer replaces the form's card, on
+    the element the answer put in its place; from there they bubble up to the body and the document. Only when
+    neither is on the page does HTMX raise them on the document itself, which a listener on the body would miss.
+    The card's answer says no autofocus: a list that loads itself was asked for by nobody, so it moves no keyboard.
+    Without HTMX the card is drawn with the page, as the notes are then.
+*@
+@using System.Globalization
+@{
+    string? self = Url.Page("./ReloadOnEvent");
+    string trigger = $"{ReloadOnEventModel.NotesChanged} from:document";
+    string count = Model.Notes.Length.ToString("N0", CultureInfo.CurrentCulture);
+}
+<section class="card" id="note-list" aria-labelledby="note-list-heading"
+         hx-get="@self" hx-trigger="@trigger" hx-swap="outerHTML">
+    <header class="card-header"><h2 id="note-list-heading">Notes (@count)</h2></header>
+    @if (Model.Notes.Length == 0)
+    {
+        <div class="empty">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#inbox"></use></svg>
+            <h3>No notes yet</h3>
+            <p>A note written in the form above shows here.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card-body">
+            <ul>
+                @foreach (Note note in Model.Notes)
+                {
+                    <li><strong>Note @note.Number</strong>: @note.Text</li>
+                }
+            </ul>
+        </div>
+    }
+</section>

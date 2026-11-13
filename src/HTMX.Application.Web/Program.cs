@@ -67,7 +67,7 @@ public sealed class Program
 
     /// <summary>
     /// Registers Razor Pages, with every URL they write in lower case, the sign-in scheme, the customers adapter, which
-    /// owns the database, and the Long job page's jobs.
+    /// owns the database, and the Components pages' jobs and notes.
     /// </summary>
     /// <param name="services">The application's service collection.</param>
     /// <param name="configuration">The application's configuration, which may name the database.</param>
@@ -93,9 +93,11 @@ public sealed class Program
         };
         services.AddCustomersAdapter(customers);
 
-        // The Long job page's pretend jobs, one set for the application, counted by the system clock.
+        // The Components pages' own state, one of each for the application: the Long job page's pretend jobs,
+        // counted by the system clock, and the Reload on event page's notes.
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<LongJobs>();
+        services.AddSingleton<NoteBoard>();
     }
 
     /// <summary>
