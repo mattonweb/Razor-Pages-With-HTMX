@@ -8,7 +8,8 @@
 
 @if (Model.Account is null)
 {
-    <partial name="_UserNotFound" model="Model.Input.Id" />
+    <partial name="_UserNotFound"
+             model="new MissingRecord { Id = Model.Input.Id, HeadingFocused = Model.HeadingFocused }" />
 }
 else
 {

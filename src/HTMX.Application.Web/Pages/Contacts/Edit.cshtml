@@ -8,7 +8,8 @@
 
 @if (Model.Contact is null)
 {
-    <partial name="_ContactNotFound" model="Model.Id.GetValueOrDefault()" />
+    <partial name="_ContactNotFound"
+             model="new MissingRecord { Id = Model.Id.GetValueOrDefault(), HeadingFocused = Model.HeadingFocused }" />
 }
 else
 {

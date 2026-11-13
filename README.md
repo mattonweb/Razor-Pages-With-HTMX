@@ -183,6 +183,12 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   record's page does the same when HTMX loads it, as after a save or for another page of its Contacts tab. Two HTMX 4
   rules shape the markup: an attribute reaches an element's descendants only when written with `:inherited`
   (`hx-boost:inherited="true"`), and the scripts load in `<head>`, because the back button swaps in a whole new body.
+- **Every link is boosted.** The layout's `<body>` says `hx-boost:inherited="true"`, so every link to another page of
+  the application, and every form without an `hx-post` of its own, loads the page in place: HTMX fetches it, swaps its
+  body in, takes its title and pushes its address. Every page's heading takes the keyboard when HTMX loaded the page,
+  Back and Forward included, the home page and the not-found pages too. HTMX 4.0.1 sends Back's request without
+  `HX-Request`, so `HtmxHeaders.IsHtmxRequest` also reads `HX-History-Restore-Request`. A link to another site, one
+  that opens a new tab, `mailto:` and the skip link work as they always did.
 - **Paging is key-based** (also called keyset or seek paging), the pattern that stays fast however deep a list goes.
   Next and Previous name the organization the page starts after or ends before, `?after=10459` or `?before=10001`,
   never a page number. The database seeks to that organization through an index on the sorted column and the

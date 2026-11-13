@@ -112,8 +112,9 @@
                         @* Archived rows are muted only among active ones, in the All view. *@
                         <tr class="@(current.Status == RecordStatus.All && organization.ArchivedOn is not null ? "archived" : null)">
                             <td class="title">
-                                @* A link to the organization leaves the list, so it is a normal link, not a swap. *@
-                                <a asp-page="./Details" asp-route-id="@organization.Id.Value" hx-boost="false">@organization.Name.Value</a>
+                                @* A link to the organization leaves the list, so it loads the whole page, as the
+                                   layout's links do, rather than replacing the card. *@
+                                <a asp-page="./Details" asp-route-id="@organization.Id.Value" hx-target="body" hx-swap="innerHTML">@organization.Name.Value</a>
                                 @if (organization.Website is WebAddress website)
                                 {
                                     <span class="sub">@IndexModel.WebsiteHost(website)</span>

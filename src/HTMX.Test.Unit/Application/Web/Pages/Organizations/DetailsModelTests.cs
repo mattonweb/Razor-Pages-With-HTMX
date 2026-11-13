@@ -109,6 +109,29 @@ public sealed class DetailsModelTests
     }
 
     /// <summary>
+    /// Unit test to verify that a boosted link to an organization that has gone gets the whole page saying so, with
+    /// 404, and the keyboard on its heading, as on any page HTMX loads.
+    /// </summary>
+    [TestMethod]
+    public async Task OnGetAsync_GoneByBoostedLink_FocusesTheNotFoundHeading()
+    {
+        // Arrange (Given)
+        DetailsModel page = CreatePage(new StubOrganizationService(), 10003, HtmxRequest.Boosted);
+
+        // Act (When)
+        IActionResult result = await page.OnGetAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.IsInstanceOfType<PageResult>(
+            result,
+            "A boosted link should get the whole page, which says the organization was not found.");
+        Assert.AreEqual(
+            (StatusCodes.Status404NotFound, true),
+            (page.Response.StatusCode, page.HeadingFocused),
+            "The page should answer 404 and take the keyboard to its heading.");
+    }
+
+    /// <summary>
     /// Unit test to verify that the page shows the toast an action left in TempData before the redirect, with an Undo
     /// that posts to the address it left.
     /// </summary>

@@ -45,6 +45,13 @@ public sealed class CreateModel : ContactFormModel<ContactInput>
     /// </summary>
     public ContactFields? Fields { get; private set; }
 
+    /// <summary>
+    /// Gets a value indicating whether the page's heading takes the focus: when HTMX loaded the page, as by a link,
+    /// since HTMX moves the keyboard nowhere itself, and not when the browser loaded it on its own or a refused save
+    /// drew the form again.
+    /// </summary>
+    public bool HeadingFocused { get; private set; }
+
     /// <inheritdoc/>
     protected override string PageName => "./Create";
 
@@ -57,6 +64,7 @@ public sealed class CreateModel : ContactFormModel<ContactInput>
     /// <returns>The page.</returns>
     public async Task<IActionResult> OnGetAsync(long? organization, CancellationToken cancellationToken)
     {
+        this.HeadingFocused = HtmxHeaders.IsHtmxRequest(this.Request);
         await this.ReadOpenedFromAsync(organization, cancellationToken).ConfigureAwait(false);
         bool welcome = this.OpenedFrom is OrganizationSingleResponse from && from.Archived is null;
         this.Input = new ContactInput { OrganizationId = welcome ? organization : null };

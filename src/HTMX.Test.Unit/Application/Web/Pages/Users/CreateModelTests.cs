@@ -21,6 +21,31 @@ public sealed class CreateModelTests
     #region Public Methods
 
     /// <summary>
+    /// Unit test to verify that the form's heading takes the focus when HTMX loaded the page, as a boosted link or Back
+    /// does, since HTMX moves the keyboard nowhere itself, and not when the browser loaded it on its own.
+    /// </summary>
+    /// <param name="kind">What sent the request, by its name in <see cref="HtmxRequest"/>.</param>
+    /// <param name="focused">Whether the heading should take the focus.</param>
+    [TestMethod]
+    [DataRow(nameof(HtmxRequest.None), false, DisplayName = "Loaded by the browser")]
+    [DataRow(nameof(HtmxRequest.Boosted), true, DisplayName = "Loaded by a boosted link")]
+    [DataRow(nameof(HtmxRequest.HistoryRestore), true, DisplayName = "Loaded by Back")]
+    public void OnGet_LoadedByHtmx_FocusesTheHeading(string kind, bool focused)
+    {
+        // Arrange (Given)
+        CreateModel page = CreatePage(new StubUserService(), Enum.Parse<HtmxRequest>(kind));
+
+        // Act (When)
+        page.OnGet();
+
+        // Assert (Then)
+        Assert.AreEqual(
+            focused,
+            page.HeadingFocused,
+            "Only a page that HTMX loaded should put the keyboard on its heading.");
+    }
+
+    /// <summary>
     /// Unit test to verify that a new user the browser sent without HTMX is redirected to their own page, and that
     /// what is sent is the form's values, trimmed, from the signed-in user.
     /// </summary>

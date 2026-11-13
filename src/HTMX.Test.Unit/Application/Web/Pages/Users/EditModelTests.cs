@@ -21,6 +21,31 @@ public sealed class EditModelTests
     #region Public Methods
 
     /// <summary>
+    /// Unit test to verify that the form's heading takes the focus when HTMX loaded the page, as a boosted link or Back
+    /// does, since HTMX moves the keyboard nowhere itself, and not when the browser loaded it on its own.
+    /// </summary>
+    /// <param name="kind">What sent the request, by its name in <see cref="HtmxRequest"/>.</param>
+    /// <param name="focused">Whether the heading should take the focus.</param>
+    [TestMethod]
+    [DataRow(nameof(HtmxRequest.None), false, DisplayName = "Loaded by the browser")]
+    [DataRow(nameof(HtmxRequest.Boosted), true, DisplayName = "Loaded by a boosted link")]
+    [DataRow(nameof(HtmxRequest.HistoryRestore), true, DisplayName = "Loaded by Back")]
+    public async Task OnGetAsync_LoadedByHtmx_FocusesTheHeading(string kind, bool focused)
+    {
+        // Arrange (Given)
+        EditModel page = CreatePage(new StubUserService(CreateUser(5)), Enum.Parse<HtmxRequest>(kind));
+
+        // Act (When)
+        await page.OnGetAsync(10007, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            focused,
+            page.HeadingFocused,
+            "Only a page that HTMX loaded should put the keyboard on its heading.");
+    }
+
+    /// <summary>
     /// Unit test to verify that the form starts from the user as they are saved, version included.
     /// </summary>
     [TestMethod]

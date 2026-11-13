@@ -13,6 +13,10 @@ public static class HtmxHeaders
     // HTMX sends this, set to "true", on every request it makes; a browser loading a page on its own does not.
     private const string Request = "HX-Request";
 
+    // HTMX sends this, set to "true", when Back or Forward needs a page it pushed into the history. HTMX 4.0.1 sends it
+    // without HX-Request: the request it builds for Back replaces the one that holds the usual headers.
+    private const string HistoryRestoreRequest = "HX-History-Restore-Request";
+
     // HTMX 4 says on every request whether it will swap part of the page ("partial") or the whole body ("full"), as
     // when the back button restores a page, or a page's part that hx-select picks from it.
     private const string RequestType = "HX-Request-Type";
@@ -26,8 +30,8 @@ public static class HtmxHeaders
     private const string ReplaceUrl = "HX-Replace-Url";
 
     /// <summary>
-    /// Says whether HTMX sent a request, for part of a page or for the whole of one, rather than the browser on its
-    /// own.
+    /// Says whether HTMX sent a request, for part of a page or for the whole of one, Back and Forward included, rather
+    /// than the browser on its own.
     /// </summary>
     /// <param name="request">The request.</param>
     /// <returns><see langword="true"/> when HTMX sent it.</returns>
@@ -35,7 +39,7 @@ public static class HtmxHeaders
     {
         ArgumentNullException.ThrowIfNull(request);
         IHeaderDictionary headers = request.Headers;
-        return headers[Request] == "true";
+        return headers[Request] == "true" || headers[HistoryRestoreRequest] == "true";
     }
 
     /// <summary>

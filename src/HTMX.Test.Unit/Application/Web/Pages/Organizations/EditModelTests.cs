@@ -21,6 +21,52 @@ public sealed class EditModelTests
     #region Public Methods
 
     /// <summary>
+    /// Unit test to verify that the form's heading takes the focus when HTMX loaded the page, as a boosted link or Back
+    /// does, since HTMX moves the keyboard nowhere itself, and not when the browser loaded it on its own.
+    /// </summary>
+    /// <param name="kind">What sent the request, by its name in <see cref="HtmxRequest"/>.</param>
+    /// <param name="focused">Whether the heading should take the focus.</param>
+    [TestMethod]
+    [DataRow(nameof(HtmxRequest.None), false, DisplayName = "Loaded by the browser")]
+    [DataRow(nameof(HtmxRequest.Boosted), true, DisplayName = "Loaded by a boosted link")]
+    [DataRow(nameof(HtmxRequest.HistoryRestore), true, DisplayName = "Loaded by Back")]
+    public async Task OnGetAsync_LoadedByHtmx_FocusesTheHeading(string kind, bool focused)
+    {
+        // Arrange (Given)
+        StubOrganizationService service = new StubOrganizationService(CreateOrganization(2));
+        EditModel page = CreatePage(service, Enum.Parse<HtmxRequest>(kind));
+
+        // Act (When)
+        await page.OnGetAsync(10003, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            focused,
+            page.HeadingFocused,
+            "Only a page that HTMX loaded should put the keyboard on its heading.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that the page saying no organization has the identifier puts the keyboard on its heading
+    /// when HTMX loaded it, as a boosted link to a deleted organization's form does, with 404.
+    /// </summary>
+    [TestMethod]
+    public async Task OnGetAsync_UnknownIdentifierLoadedByHtmx_FocusesTheHeading()
+    {
+        // Arrange (Given)
+        EditModel page = CreatePage(new StubOrganizationService(), HtmxRequest.Boosted);
+
+        // Act (When)
+        await page.OnGetAsync(99999, CancellationToken.None).ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (StatusCodes.Status404NotFound, true),
+            (page.Response.StatusCode, page.HeadingFocused),
+            "The page that says the organization was not found should take the keyboard to its heading.");
+    }
+
+    /// <summary>
     /// Unit test to verify that the form starts from the organization as it is saved, version included.
     /// </summary>
     [TestMethod]

@@ -217,6 +217,7 @@ public sealed class IndexModelTests
     [TestMethod]
     [DataRow(nameof(HtmxRequest.None), false, DisplayName = "The whole page, loaded by the browser")]
     [DataRow(nameof(HtmxRequest.HistoryRestore), true, DisplayName = "The whole page, asked for by HTMX")]
+    [DataRow(nameof(HtmxRequest.Boosted), true, DisplayName = "The whole page, from a boosted link")]
     [DataRow(nameof(HtmxRequest.Partial), false, DisplayName = "A swap of the card")]
     public async Task OnGetAsync_WholePageForHtmx_FocusesTheHeading(string kind, bool focused)
     {

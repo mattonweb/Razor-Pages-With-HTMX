@@ -260,6 +260,7 @@ public sealed class IndexModelTests
     [TestMethod]
     [DataRow(nameof(HtmxRequest.None), false, DisplayName = "The whole page, loaded by the browser")]
     [DataRow(nameof(HtmxRequest.HistoryRestore), true, DisplayName = "The whole page, asked for by HTMX")]
+    [DataRow(nameof(HtmxRequest.Boosted), true, DisplayName = "The whole page, from a boosted link")]
     [DataRow(nameof(HtmxRequest.Partial), false, DisplayName = "A swap of the card")]
     public async Task OnGetAsync_WholePageForHtmx_FocusesTheHeading(string kind, bool focused)
     {
@@ -611,13 +612,6 @@ public sealed class IndexModelTests
     private static IndexModel CreatePage(StubOrganizationService service, HtmxRequest kind)
     {
         PageContext context = PageRequests.Create(kind, "/Organizations/Index");
-        if (kind == HtmxRequest.HistoryRestore)
-        {
-            HttpRequest request = context.HttpContext.Request;
-            IHeaderDictionary headers = request.Headers;
-            headers["HX-History-Restore-Request"] = "true";
-        }
-
         return new IndexModel(service)
         {
             PageContext = context,

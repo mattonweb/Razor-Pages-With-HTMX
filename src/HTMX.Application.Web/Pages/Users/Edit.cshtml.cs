@@ -71,6 +71,13 @@ public sealed class EditModel : PageModel
     public bool ArchivedMeanwhile { get; private set; }
 
     /// <summary>
+    /// Gets a value indicating whether the page's heading takes the focus: when HTMX loaded the page, as by a link,
+    /// since HTMX moves the keyboard nowhere itself, and not when the browser loaded it on its own or a refused save
+    /// drew the form again.
+    /// </summary>
+    public bool HeadingFocused { get; private set; }
+
+    /// <summary>
     /// Fills the form from the user the route names.
     /// </summary>
     /// <param name="id">The user's identifier, from the route.</param>
@@ -79,6 +86,7 @@ public sealed class EditModel : PageModel
     public async Task<IActionResult> OnGetAsync(long id, CancellationToken cancellationToken)
     {
         UserSingleResponse? account = await this.ReadAsync(id, cancellationToken).ConfigureAwait(false);
+        this.HeadingFocused = HtmxHeaders.IsHtmxRequest(this.Request);
         if (account is null)
         {
             this.Response.StatusCode = StatusCodes.Status404NotFound;

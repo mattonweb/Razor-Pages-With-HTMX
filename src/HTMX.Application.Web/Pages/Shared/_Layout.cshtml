@@ -20,7 +20,15 @@
     <script src="~/js/htmx.min.js" defer></script>
     <script src="~/js/app.js" defer></script>
 </head>
-<body>
+@*
+    Every link and form in the application loads over HTMX: a link to another page of it fetches that page and swaps
+    its body into this one, keeps the address bar and Back in step, and takes the new page's title. HTMX leaves alone a
+    link to another site, one that opens a new tab, one to a part of this page (#main) and a form that says
+    method="dialog". A form that posts says hx-post, which HTMX sets up before boosting, so it keeps its own target. A
+    page that HTMX loaded puts the keyboard on its heading, as each page model says, since HTMX moves it nowhere.
+    Without HTMX every link and form works as it always did.
+*@
+<body hx-boost:inherited="true">
     <a class="skip-link" href="#main">Skip to content</a>
     <div class="app">
         <header class="app-header">

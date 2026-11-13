@@ -8,7 +8,8 @@
 
 @if (Model.Organization is null)
 {
-    <partial name="_OrganizationNotFound" model="Model.Id" />
+    <partial name="_OrganizationNotFound"
+             model="new MissingRecord { Id = Model.Id, HeadingFocused = Model.HeadingFocused }" />
 }
 else
 {

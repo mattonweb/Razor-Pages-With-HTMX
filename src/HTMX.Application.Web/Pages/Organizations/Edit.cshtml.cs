@@ -70,6 +70,13 @@ public sealed class EditModel : PageModel
     public bool ArchivedMeanwhile { get; private set; }
 
     /// <summary>
+    /// Gets a value indicating whether the page's heading takes the focus: when HTMX loaded the page, as by a link,
+    /// since HTMX moves the keyboard nowhere itself, and not when the browser loaded it on its own or a refused save
+    /// drew the form again.
+    /// </summary>
+    public bool HeadingFocused { get; private set; }
+
+    /// <summary>
     /// Gets the address the form's name is checked at as it is typed: this page's own, with the CheckName handler.
     /// </summary>
     public string? CheckNameAddress => this.Url.Page(EditPage, CheckNameHandler, new { id = this.Id });
@@ -83,6 +90,7 @@ public sealed class EditModel : PageModel
     public async Task<IActionResult> OnGetAsync(long id, CancellationToken cancellationToken)
     {
         OrganizationSingleResponse? organization = await this.ReadAsync(id, cancellationToken).ConfigureAwait(false);
+        this.HeadingFocused = HtmxHeaders.IsHtmxRequest(this.Request);
         if (organization is null)
         {
             this.Response.StatusCode = StatusCodes.Status404NotFound;

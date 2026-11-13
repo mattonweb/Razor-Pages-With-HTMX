@@ -79,8 +79,9 @@
                         @* Archived rows are muted only among active ones, in the All view. *@
                         <tr class="@(current.Status == RecordStatus.All && user.ArchivedOn is not null ? "archived" : null)">
                             <td class="title">
-                                @* A link to the user leaves the list, so it is a normal link, not a swap. *@
-                                <a asp-page="./Details" asp-route-id="@user.Id.Value" hx-boost="false">@user.DisplayName.Value</a>
+                                @* A link to the user leaves the list, so it loads the whole page, as the layout's
+                                   links do, rather than replacing the card. *@
+                                <a asp-page="./Details" asp-route-id="@user.Id.Value" hx-target="body" hx-swap="innerHTML">@user.DisplayName.Value</a>
                             </td>
                             <td class="mono">@user.Username.Value</td>
                             <td><a href="mailto:@user.Email.Value">@user.Email.Value</a></td>

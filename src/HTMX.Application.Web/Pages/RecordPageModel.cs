@@ -41,8 +41,9 @@ public abstract class RecordPageModel : PageModel
 
     /// <summary>
     /// Gets a value indicating whether the page's heading takes the focus: when HTMX asked for the tab, as a list's
-    /// Previous and Next do, or for the whole page, as after a save, rather than the browser loading it on its own. An
-    /// action leaves it alone: its answer puts the focus back where the action was.
+    /// Previous and Next do, or for the whole page, as a link or a save does, rather than the browser loading it on its
+    /// own. The heading of the page that says no record was found takes it too. An action leaves it alone: its answer
+    /// puts the focus back where the action was.
     /// </summary>
     public bool HeadingFocused { get; private set; }
 
@@ -74,6 +75,7 @@ public abstract class RecordPageModel : PageModel
         // One URL answers with two different bodies, so a cache must keep them apart by the header that chooses.
         HtmxHeaders.VaryByRequestType(this.Response);
         bool found = await this.FindRecordAsync(cancellationToken).ConfigureAwait(false);
+        this.HeadingFocused = HtmxHeaders.IsHtmxRequest(this.Request);
         if (!found && HtmxHeaders.IsPartialRequest(this.Request))
         {
             // The record went while the page showed it, so there is no tab content to swap in, and the page that says
@@ -89,7 +91,6 @@ public abstract class RecordPageModel : PageModel
         }
 
         this.Toast = TempDataToasts.Take(this.TempData, this.ContentTarget);
-        this.HeadingFocused = HtmxHeaders.IsHtmxRequest(this.Request);
         return HtmxAnswers.PartOrPage(this, this.ContentPartial);
     }
 

@@ -14,6 +14,40 @@ public sealed class HtmxHeadersTests
     #region Public Methods
 
     /// <summary>
+    /// Unit test to verify that a request counts as HTMX's when it says HX-Request, and when it is HTMX 4.0.1's
+    /// request for Back or Forward, which says HX-History-Restore-Request without HX-Request.
+    /// </summary>
+    /// <param name="htmxRequest">The HX-Request header's value, or <see langword="null"/> for none.</param>
+    /// <param name="historyRestore">The HX-History-Restore-Request header's value, or <see langword="null"/> for
+    /// none.</param>
+    /// <param name="expected">Whether the request should count as HTMX's.</param>
+    [TestMethod]
+    [DataRow(null, null, false, DisplayName = "The browser on its own")]
+    [DataRow("true", null, true, DisplayName = "A request HTMX sent")]
+    [DataRow(null, "true", true, DisplayName = "Back or Forward, as HTMX 4.0.1 sends it")]
+    public void IsHtmxRequest_EachKindOfRequest_TellsHtmxFromTheBrowser(
+        string? htmxRequest,
+        string? historyRestore,
+        bool expected)
+    {
+        // Arrange (Given)
+        DefaultHttpContext http = new DefaultHttpContext();
+        HttpRequest request = http.Request;
+        IHeaderDictionary headers = request.Headers;
+        headers["HX-Request"] = htmxRequest;
+        headers["HX-History-Restore-Request"] = historyRestore;
+
+        // Act (When)
+        bool htmx = HtmxHeaders.IsHtmxRequest(request);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            htmx,
+            "A request should count as HTMX's when either header says so.");
+    }
+
+    /// <summary>
     /// Unit test to verify that saying the response varies by HX-Request-Type keeps a Vary that another part of the
     /// application set first, so its cache variation survives.
     /// </summary>

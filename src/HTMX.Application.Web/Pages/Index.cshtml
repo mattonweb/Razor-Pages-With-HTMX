@@ -1,4 +1,5 @@
 ﻿@page
+@model HomeModel
 @{
     ViewData["Title"] = "Home";
 }
@@ -9,7 +10,7 @@
 *@
 <header class="page-header">
     <div class="title-row">
-        <h1>HTMLX Pages</h1>
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">HTMLX Pages</h1>
     </div>
     <p class="muted">A Razor Pages application whose create, read, update, delete and list pages are made interactive with HTMX.</p>
 </header>

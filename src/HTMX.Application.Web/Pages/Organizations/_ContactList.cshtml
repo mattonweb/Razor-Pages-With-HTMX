@@ -13,7 +13,8 @@
     forms that post.
 
     New contact, the card's one action, opens the create form with this organization chosen. It leaves the list, so it
-    is a normal link, not a swap, and an archived organization, which takes no one in, does not offer it.
+    loads the whole page, as the layout's links do, rather than replacing #organization; an archived organization,
+    which takes no one in, does not offer it.
 
     An archived contact's menu ends with Delete permanently, which cannot be undone, so it opens a confirm dialog whose
     own form posts to the list's address with the version the row shows. A delete changes the count on the Contacts
@@ -38,7 +39,7 @@
         <h2 id="contacts-heading" tabindex="-1" autofocus="@Model.ListHeadingFocused">Contacts</h2>
         @if (changeable)
         {
-            <a class="btn ghost" asp-page="/Contacts/Create" asp-route-organization="@organization.Id.Value" hx-boost="false"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>New contact</a>
+            <a class="btn ghost" asp-page="/Contacts/Create" asp-route-organization="@organization.Id.Value" hx-target="body" hx-swap="innerHTML"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>New contact</a>
         }
     </header>
     <div class="busy-bar"></div>
@@ -74,9 +75,10 @@
                         bool archived = contact.ArchivedOn is not null;
                         string menu = $"contact-{contact.Id.Value}-menu";
                         <tr class="@(archived ? "archived" : null)">
-                            @* A link to the contact leaves the list, so it is a normal link, not a swap. *@
+                            @* A link to the contact leaves the list, so it loads the whole page, as New contact
+                               does. *@
                             <td class="title">
-                                <a asp-page="/Contacts/Details" asp-route-id="@contact.Id.Value" hx-boost="false">@contact.Name.Value</a>
+                                <a asp-page="/Contacts/Details" asp-route-id="@contact.Id.Value" hx-target="body" hx-swap="innerHTML">@contact.Name.Value</a>
                                 @if (contact.JobTitle is JobTitle jobTitle)
                                 {
                                     <span class="sub">@jobTitle.Value</span>

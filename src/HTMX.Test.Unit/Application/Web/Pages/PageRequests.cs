@@ -28,10 +28,24 @@ internal static class PageRequests
             User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test")),
         };
         IHeaderDictionary headers = http.Request.Headers;
-        if (kind != HtmxRequest.None)
+        if (kind == HtmxRequest.Partial || kind == HtmxRequest.Boosted)
         {
             headers["HX-Request"] = "true";
+        }
+
+        if (kind != HtmxRequest.None)
+        {
             headers["HX-Request-Type"] = kind == HtmxRequest.Partial ? "partial" : "full";
+        }
+
+        if (kind == HtmxRequest.HistoryRestore)
+        {
+            headers["HX-History-Restore-Request"] = "true";
+        }
+
+        if (kind == HtmxRequest.Boosted)
+        {
+            headers["HX-Boosted"] = "true";
         }
 
         RouteData route = new RouteData();

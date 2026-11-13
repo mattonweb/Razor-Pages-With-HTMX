@@ -43,6 +43,21 @@ public sealed class CreateModel : PageModel
     public UserInput Input { get; set; } = new UserInput();
 
     /// <summary>
+    /// Gets a value indicating whether the page's heading takes the focus: when HTMX loaded the page, as by a link,
+    /// since HTMX moves the keyboard nowhere itself, and not when the browser loaded it on its own or a refused save
+    /// drew the form again.
+    /// </summary>
+    public bool HeadingFocused { get; private set; }
+
+    /// <summary>
+    /// Starts an empty form.
+    /// </summary>
+    public void OnGet()
+    {
+        this.HeadingFocused = HtmxHeaders.IsHtmxRequest(this.Request);
+    }
+
+    /// <summary>
     /// Creates the user. A form that fails validation, or gives a username or an email address another user has,
     /// comes back with 422 and the messages.
     /// </summary>
