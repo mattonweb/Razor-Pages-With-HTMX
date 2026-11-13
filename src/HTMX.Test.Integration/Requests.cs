@@ -51,6 +51,38 @@ internal static class Requests
     }
 
     /// <summary>
+    /// Posts a form that sends a file, as multipart form data, as a browser and HTMX send a form that says
+    /// <c>enctype="multipart/form-data"</c>, with the headers HTMX sends for the kind of request.
+    /// </summary>
+    /// <param name="browser">The client, which keeps cookies as a browser does.</param>
+    /// <param name="address">The form's action.</param>
+    /// <param name="kind">What sends the request.</param>
+    /// <param name="fields">The form's other fields, the antiforgery token among them.</param>
+    /// <param name="file">The file's field, its file name and its bytes.</param>
+    /// <returns>The answer, read in full.</returns>
+    internal static async Task<Answer> PostFileAsync(
+        HttpClient browser,
+        string address,
+        HtmxRequest kind,
+        IEnumerable<KeyValuePair<string, string>> fields,
+        FilePart file)
+    {
+        using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, new Uri(address, UriKind.Relative)))
+        {
+            MultipartFormDataContent content = new MultipartFormDataContent();
+            foreach (KeyValuePair<string, string> field in fields)
+            {
+                content.Add(new StringContent(field.Value), field.Key);
+            }
+
+            content.Add(new ByteArrayContent(file.Content), file.Field, file.FileName);
+            request.Content = content;
+            AddHeaders(request, kind);
+            return await SendAsync(browser, request).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
     /// Loads a page as the browser does and reads the antiforgery token its forms post. Loading it also sets the
     /// antiforgery cookie, which the client sends back with the form.
     /// </summary>

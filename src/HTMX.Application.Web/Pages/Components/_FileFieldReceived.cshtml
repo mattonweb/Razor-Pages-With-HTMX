@@ -1,0 +1,10 @@
+@model HTMX.Application.Web.Pages.Components.FileFieldModel
+@*
+    What a received file answers HTMX with: the form's card, empty again with the title ready for the next file, and,
+    for the layout's toast region, the toast that says what was received.
+*@
+<partial name="_FileFieldForm" model="Model" />
+@if (Model.Toast is Toast toast)
+{
+    <partial name="_ToastUpdate" model="toast" />
+}

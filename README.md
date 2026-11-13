@@ -130,6 +130,14 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   with `HX-Location` after a save). A username takes letters, digits, dots, hyphens and underscores. A username or an
   email address another user has, however it is capitalized, is refused with 422 under its own field. An archived user
   can't be edited, so their page offers no Edit and their edit page says why.
+- **`/components`** — the Components section, in the side nav: pages that each show one pattern on its own, apart
+  from the records, with HTMX and without it.
+- **`/components/file-field`** — a form that sends a title and a file, a PNG or JPEG image or a PDF document of 1 MB
+  or less, and says what it received in a toast; it keeps nothing. The form says `enctype="multipart/form-data"`, so
+  HTMX sends it as it is. The handler tells the file's kind by its first bytes, not its name. A form refused for its
+  title keeps the chosen file: with HTMX the answer's file input says `hx-preserve`, and HTMX keeps the one on the
+  page; without HTMX the page asks for the file again. The page caps a request at 10 MB: a larger one is refused before
+  it is read, and the browser sees the connection lost.
 
 ## Sample data
 

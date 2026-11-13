@@ -1,0 +1,46 @@
+@model HTMX.Application.Web.Pages.Components.FileFieldModel
+@*
+    The File field page's form, in its card. The form says enctype="multipart/form-data", which a file needs without
+    HTMX, and HTMX 4 then sends the form as it is, file included, instead of URL-encoding it. HTMX replaces the card
+    (outerHTML) with what a post answers: the card again with 422 when the form is refused, or the empty card and a
+    toast when the file was received. Send is busy while the request runs; HTMX 4 reports no upload progress.
+
+    A refused form drawn again cannot hold the file the user chose. When the file itself was fine, the answer to HTMX
+    marks the file input hx-preserve, and HTMX keeps the input already on the page, with its file, in place of the new
+    one; the input's id is how HTMX finds it. Without HTMX the whole page comes back without the file, and the field
+    says to choose it again. A file that was wrong comes back empty, and marked.
+*@
+@{
+    string? action = Url.Page("./FileField");
+    string describedBy = Model.ChooseFileAgain ? "file-hint file-again" : "file-hint";
+}
+<section class="card" id="file-form" aria-labelledby="file-form-heading">
+    <header class="card-header"><h2 id="file-form-heading">Send a file</h2></header>
+    <form method="post" action="@action" enctype="multipart/form-data" asp-antiforgery="true" novalidate
+          hx-post="@action" hx-target="#file-form" hx-swap="outerHTML"
+          hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+        <div class="card-body fields">
+            <div class="field">
+                <label asp-for="Input.Title"></label>
+                <input asp-for="Input.Title" autofocus="@Model.TitleFocused" />
+                <span asp-validation-for="Input.Title"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.File"></label>
+                <input asp-for="Input.File" accept=".png,.jpg,.jpeg,.pdf,image/png,image/jpeg,application/pdf"
+                       aria-describedby="@describedBy" hx-preserve="@(Model.FileKept ? "true" : null)" />
+                <p class="hint" id="file-hint">A PNG or JPEG image, or a PDF document, of 1 MB or less.</p>
+                @if (Model.ChooseFileAgain)
+                {
+                    <p class="hint" id="file-again">Choose the file again: a page that comes back cannot keep it.</p>
+                }
+                <span asp-validation-for="Input.File"></span>
+            </div>
+        </div>
+        <div class="form-actions">
+            <div class="end">
+                <button class="btn primary" type="submit">Send</button>
+            </div>
+        </div>
+    </form>
+</section>

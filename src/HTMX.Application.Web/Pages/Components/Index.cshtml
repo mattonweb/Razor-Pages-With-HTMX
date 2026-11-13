@@ -1,0 +1,43 @@
+@page
+@model HTMX.Application.Web.Pages.Components.IndexModel
+@{
+    ViewData["Title"] = "Components";
+    ViewData["Section"] = "Components";
+}
+@*
+    The Components section: one page for each pattern that needs a page of its own to show, apart from the records,
+    with HTMX and without it. Each page names what it shows in the table, and its own comments say how.
+*@
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><span aria-current="page">Components</span></li></ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Components</h1>
+    </div>
+    <p class="muted">Pages that each show one pattern, working with HTMX and without it.</p>
+</header>
+
+<section class="card" aria-labelledby="components-heading">
+    <header class="card-header"><h2 id="components-heading">Pages</h2></header>
+    <div class="grid-wrap">
+        <table class="grid">
+            <caption class="visually-hidden">The component pages, with what each shows</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Component</th>
+                    <th scope="col">What it shows</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="title"><a asp-page="./FileField">File field</a></td>
+                    <td>
+                        A form that sends a file, which keeps the chosen file when a save is refused for something
+                        else.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
