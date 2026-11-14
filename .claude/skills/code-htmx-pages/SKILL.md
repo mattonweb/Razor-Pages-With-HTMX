@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests, integration tests that run the whole application, and browser tests that drive Edge with Playwright three ways, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, rows that hold several fields, numbered afresh by each Add and Remove with ModelState cleared, a request with no form around it, from a field tied to a form in another table cell by the form attribute or with the antiforgery token in a header from hx-headers on a container in the page, a request whose sign-in has expired, sent to sign in with HX-Redirect and back to the page HX-Current-URL names, a form with a file, which keeps the chosen file across a refused save with hx-preserve, a job whose card polls its progress until it has finished, a list that grows by Load more with the address saying how many rows show, an element that reloads itself when an answer's HX-Trigger says something changed, and the patterns still open (a request that is not allowed, progress for a large upload). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.31.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests, integration tests that run the whole application, and browser tests that drive Edge with Playwright three ways, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, rows that hold several fields, numbered afresh by each Add and Remove with ModelState cleared, a request with no form around it, from a field tied to a form in another table cell by the form attribute or with the antiforgery token in a header from hx-headers on a container in the page, a request whose sign-in has expired, sent to sign in with HX-Redirect and back to the page HX-Current-URL names, an action the user may no longer take, refused with 403, the target drawn as the user may now use it and a toast, a form with a file, which keeps the chosen file across a refused save with hx-preserve, a job whose card polls its progress until it has finished, a list that grows by Load more with the address saying how many rows show, an element that reloads itself when an answer's HX-Trigger says something changed, and the patterns still open (a page the user may not see at all, progress for a large upload). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.32.0
 visibility: public
 ---
 
@@ -14,9 +14,9 @@ in step. It is written for HTMX 4.0.1 and ASP.NET Core 10, and every sentence is
 application on those versions, not only the one it was built in; how one application uses HTMX belongs in its own
 code, tests and README.
 
-The evidence differs by part. The patterns in sections 2 to 24 have been built and tried in a browser; where a
+The evidence differs by part. The patterns in sections 2 to 25 have been built and tried in a browser; where a
 section also covers a case that was not built, such as output caching, its citation is the only evidence.
-Section 1's rows were read in the source and the reference, not all built, and nothing in section 25 is built.
+Section 1's rows were read in the source and the reference, not all built, and nothing in section 26 is built.
 Every HTMX fact cites the reference page or the 4.0.1 source method it came from, and the two kinds of citation
 carry different weight. A reference page is what HTMX documents. A method in the 4.0.1 source is what that release
 happens to do: the method is private, a later release may change it, and section 2 checks each one again before
@@ -385,7 +385,9 @@ public static class HtmxHeaders
 - **Each browser test also checks the console.** A Content Security Policy violation and a script's error are both
   reported to it as errors, so a test that finds no error has met neither. A browser asks for `/favicon.ico` on its
   own, and an application that names no icon gets a 404 logged on every page: name one, or answer that request in
-  the test. Tried: the first browser test found that 404.
+  the test. The browser logs every answer of 400 or more there too, a planned one such as a refusal's 403 (section
+  25) included, so a test that expects one allows that line and no other. Tried: the first browser test found that
+  404.
 - **It holds answers back.** A route handler that waits before `ContinueAsync` holds a request's answer, and
   `IPage.RequestFailed` names the requests the page gave up. Tried: a filter typed twice while the first answer was
   held passed with the list's `hx-sync:inherited="this:replace"` (section 4), and failed with it taken out, since
@@ -818,11 +820,12 @@ A request that gets an error the page has no content for, such as a 500 or the 4
 or no answer at all, because the server took too long or the connection was lost.
 
 - **A planned answer has content made for its target.** Every answer a handler means to give is content for the
-  request's target, a refused save's 422 or 409 among them (section 7). Anything else was not planned: an error status
-  with an empty body, such as `BadRequest()` or the 400 for a missing or stale antiforgery token (section 7), and any
-  5xx, whose body, if it has one, is an error page built for the whole window, or in Development the developer
-  exception page. HTMX 4 swaps those like any other answer (section 1): an empty one empties the target, or with
-  `outerHTML` removes it, and an error page lands inside the target, layout and all.
+  request's target, a refused save's 422 or 409 (section 7) and a refused action's 403 (section 25) among them.
+  Anything else was not planned: an error status with an empty body, such as `BadRequest()` or the 400 for a missing
+  or stale antiforgery token (section 7), and any 5xx, whose body, if it has one, is an error page built for the
+  whole window, or in Development the developer exception page. HTMX 4 swaps those like any other answer (section
+  1): an empty one empties the target, or with `outerHTML` removes it, and an error page lands inside the target,
+  layout and all.
 - **A handler answers HTMX with content for the target, a missing record included.** A record's tab that HTMX asks
   for, as by its list's Next, may find the record gone, and the page that says so is a whole page. So the handler
   answers 204 with `HX-Location` naming the tab's address, as a save does (section 7), and HTMX loads that page in
@@ -1118,7 +1121,7 @@ A list that grows ten rows at a time under a Load more button, in place of pagin
   twice, so the link says `hx-sync="this:drop"`. Tried: a double press added ten rows.
 - **The keyboard goes to the first new row.** Its link says `autofocus` in the answer, so the user reads on from where
   the list grew and a screen reader says what arrived; Load more itself goes with the old footer. The footer, and
-  whatever follows the list, stay within reach, which loading as the list scrolls would not keep (section 25).
+  whatever follows the list, stay within reach, which loading as the list scrolls would not keep (section 26).
 - **Tried in a browser**, Chromium 156: Load more added ten rows with the keyboard on the first and the address at
   `?shown=20`; a double press added ten; at a hundred the link went and the footer pointed to the paged list; Back from
   another page drew the hundred rows again. Without HTMX's script the link loaded `?shown=20#more-11`, scrolled to the
@@ -1288,16 +1291,60 @@ cookie sign-in's challenge answers.
   request, and integration tests run the redirect, the HTMX answer and the sign-in's return address through the
   whole application (section 6).
 
-## 25. Still open
+## 25. An action the user may no longer take
+
+An action a page offered when it was drawn, such as Publish on a list's row, sent after the user's permission to take
+it was withdrawn, as an administrator does on another page.
+
+- **The page offers only what its user may do.** Before it draws the action it asks the policy the action's handler
+  asks, through `IAuthorizationService.AuthorizeAsync(User, policyName)`, and the handler asks it again before it
+  acts. The policy's requirement is met by an authorization handler that reads the permission where the application
+  keeps it, on every request, rather than from a claim the sign-in wrote once, so a permission withdrawn after the
+  page was drawn refuses the page's next request. A page that hides what its user may not do meets the refusal only
+  then, or from a request nobody sent from it.
+- **The handler refuses the action itself, not with `Forbid()`.** `Forbid()`, as ASP.NET Core's resource-based
+  authorization examples use it, hands the request to the sign-in, whose answer is made for a whole window. A cookie
+  sign-in redirects it to its access-denied page (`CookieAuthenticationEvents.OnRedirectToAccessDenied`), the
+  redirect section 24 met with sign-in, which HTMX would draw inside the target; a scheme that keeps
+  `AuthenticationHandler`'s own answer gives 403 with nothing in it, which section 14's script stops. Either way the
+  page stays as it was drawn, still offering what was refused. Tried: with `Forbid()` in the refusal's place, under a
+  scheme of the second kind, section 14's toast said the action may not have been done and asked for a reload, and
+  the list still offered Publish.
+- **The refusal is 403, with the target drawn as the user may now use it.** It is content for the request's target,
+  as a refused save's 422 is (sections 7 and 14): the target without what the user may no longer do, saying so, and
+  a toast that says why (section 8). HTMX 4 swaps a 4xx like any other answer (section 1). The target is the smallest
+  element that holds everything a refusal changes, which is every place the page offers what was withdrawn, such as
+  the whole list rather than the row; a form names one target for all its answers, so the action's own answer draws
+  that element too.
+- **Without HTMX the answer is the whole page with 403**, drawn the same way, with the toast in the layout's region,
+  as a refused save's 422 is, rather than a redirect, so that the status says what happened. A reload offers to post
+  the form again, which is refused again.
+- **The keyboard goes to the target's heading.** The button pressed is not in the answer, so HTMX finds nothing to
+  give the focus back to by `id` (section 8); the answer marks `autofocus` on the target's heading, made focusable
+  with `tabindex="-1"`, as section 12 does when no row is left, and HTMX focuses it (section 9). Without HTMX the same
+  `autofocus` takes the keyboard as the page loads. An action that runs keeps the keyboard where it was: a row's
+  Publish and Unpublish share an `id` (section 8).
+- **Tried in a browser**, Chromium 156, with a list of three rows, each with Publish or Unpublish behind a policy
+  that reads the permission on every request, and a page in a second tab that withdraws it: Publish then answered
+  403, the list came back without its buttons and saying the user may not publish, the toast said why, the keyboard
+  was on the list's heading, and nothing was published. With the permission, Publish answered the list with the row's
+  Unpublish, which kept the keyboard. Without HTMX's script the browser posted the form and got the whole page with
+  403, drawn the same way with the toast. Browser tests in Edge, with script on and off, check the toast, the buttons
+  and the keyboard, which with script off the heading took as the page loaded (section 6). Unit tests check the
+  handlers' answers against an authorization service that meets the policy or does not, and the requirement's
+  handler; integration tests withdraw the permission and post Publish through the whole application, with HTMX and
+  without it.
+
+## 26. Still open
 
 Nothing in this section is built yet, so none of it is a rule. What is known, to start from; an idea taken from the
 workshop names its chapter.
 
-- **A request that is not allowed.** Cookie authentication answers a signed-in user who may not do something by
-  redirecting to its access-denied page (`CookieAuthenticationEvents.OnRedirectToAccessDenied`), which meets the
-  redirect's problem and takes section 24's answer. But a page that offers only what its user may do meets it only
-  when the user's permissions changed after the page was drawn, and then a toast that says so may serve better than
-  the access-denied page in place of the whole page. Not yet built.
+- **A page the user may not see at all.** `[Authorize]` with a policy refuses a request before any handler runs and
+  hands it to the sign-in: a cookie sign-in redirects it to its access-denied page
+  (`CookieAuthenticationEvents.OnRedirectToAccessDenied`), which meets section 24's problem for a request for part of
+  a page and would take its answer, `HX-Redirect` to that page. Section 25 keeps that answer from a page the user may
+  still see. Not yet built.
 - **A policy past `'self'` (section 15).** Trusted Types, `require-trusted-types-for 'script'`, makes every string
   that becomes HTML pass through a policy the page names. HTMX 4 parses each answer through one that an extension
   supplies with `initSecurity`, and otherwise through a plain object that hands the string on (4.0.1 source,
