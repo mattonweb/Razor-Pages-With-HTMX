@@ -2,6 +2,8 @@ namespace HTMX.Test.Integration;
 
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 /// <summary>
@@ -12,6 +14,12 @@ internal static class Html
     // The hidden field Razor writes in every form that posts, which holds the antiforgery token.
     private static readonly Regex TokenField = new Regex(
         "<input[^>]*name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"",
+        RegexOptions.CultureInvariant,
+        TimeSpan.FromSeconds(1));
+
+    // The headers an element and those inside it send, as JSON in an inherited hx-headers, which Razor writes encoded.
+    private static readonly Regex InheritedHeaders = new Regex(
+        "hx-headers:inherited=\"([^\"]+)\"",
         RegexOptions.CultureInvariant,
         TimeSpan.FromSeconds(1));
 
@@ -52,6 +60,25 @@ internal static class Html
         return match.Success
             ? match.Groups[1].Value
             : throw new InvalidOperationException("The page has no form that posts, so no antiforgery token.");
+    }
+
+    /// <summary>
+    /// Reads the headers the first element on a page that says <c>hx-headers:inherited</c> sends with every request
+    /// from inside it.
+    /// </summary>
+    /// <param name="html">The page's HTML.</param>
+    /// <returns>The headers, by name.</returns>
+    internal static Dictionary<string, string> InheritedHxHeaders(string html)
+    {
+        Match match = InheritedHeaders.Match(html);
+        if (!match.Success)
+        {
+            throw new InvalidOperationException("The page has no element that says hx-headers:inherited.");
+        }
+
+        string json = WebUtility.HtmlDecode(match.Groups[1].Value);
+        return JsonSerializer.Deserialize<Dictionary<string, string>>(json)
+            ?? throw new InvalidOperationException("The element's hx-headers holds no headers.");
     }
 
     /// <summary>

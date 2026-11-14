@@ -1,0 +1,13 @@
+@model HTMX.Application.Web.Pages.Components.StockTableModel
+@*
+    What a save answers HTMX with: the row, as saved, and, for the layout's toast region, the toast that says what is
+    on hand. HTMX parses an answer that is not a whole page inside a template, so the bare tr survives.
+*@
+@if (Model.Row is StockRow row)
+{
+    <partial name="_StockRow" model="row" />
+}
+@if (Model.Toast is Toast toast)
+{
+    <partial name="_ToastUpdate" model="toast" />
+}

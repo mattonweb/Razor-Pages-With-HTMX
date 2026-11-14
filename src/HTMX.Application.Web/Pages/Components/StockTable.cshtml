@@ -1,0 +1,49 @@
+@page "/components/stock-table"
+@model HTMX.Application.Web.Pages.Components.StockTableModel
+@{
+    ViewData["Title"] = "Stock table";
+    ViewData["Section"] = "Components";
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Stock table</span></li></ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Stock table</h1>
+    </div>
+    <p class="muted">
+        A table whose rows each save how many of an item are on hand. The shelf is shared by everyone who opens the
+        page.
+    </p>
+</header>
+
+@* Each row is a partial, with its form in its last cell: the page draws every row, and a save gets its row alone. *@
+<section class="card" id="stock" aria-labelledby="stock-heading">
+    <header class="card-header"><h2 id="stock-heading">On hand</h2></header>
+    <div class="grid-wrap">
+        <table class="grid">
+            <caption class="visually-hidden">Items, with how many of each are on hand</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Item</th>
+                    <th scope="col">On hand</th>
+                    <th scope="col"><span class="visually-hidden">Save</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (StockRow row in Model.Rows)
+                {
+                    <partial name="_StockRow" model="row" />
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@* A save without HTMX is redirected back here, and the toast it left shows. *@
+@section Toasts {
+    @if (Model.Toast is Toast toast)
+    {
+        <partial name="_Toast" model="toast" />
+    }
+}

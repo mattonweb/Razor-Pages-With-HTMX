@@ -161,6 +161,16 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   clear ModelState and draw the lines again, numbered afresh: the lines alone with HTMX, the page without it. The new
   line, or the line in the removed one's place, takes the keyboard. A refused order answers 422 with each wrong field
   marked and its message under the lines, with its line's number.
+- **`/components/stock-table`** — four invented items and how many of each are on hand, on one shelf shared by
+  everyone, each row saving its own count from 0 to 999. A form can't hold a table row's cells, so each row's form
+  sits in its last cell around **Save**, and the count's field names it with the `form` attribute; the browser and
+  HTMX both post the field with that form, antiforgery token included. With HTMX the answer is the row alone and a
+  toast; without it, a redirect back with the toast. A refused count answers 422 with only its row marked.
+- **`/components/seen-notices`** — sixteen invented notices on one board shared by everyone, each marking itself
+  seen as it scrolls into view (`hx-trigger="revealed"`), which answers 204; its New chip goes the next time the
+  list is drawn. That request has no form around it, so the list sends the antiforgery token in the
+  `RequestVerificationToken` header through `hx-headers:inherited`. Without HTMX nothing marks itself, and **Mark all
+  as seen** and **Mark all as new** are forms that work either way.
 
 ## Sample data
 

@@ -1,0 +1,21 @@
+@page "/components/seen-notices"
+@model HTMX.Application.Web.Pages.Components.SeenNoticesModel
+@{
+    ViewData["Title"] = "Seen notices";
+    ViewData["Section"] = "Components";
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Seen notices</span></li></ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Seen notices</h1>
+    </div>
+    <p class="muted">
+        Notices that mark themselves seen as they scroll into view, and lose their New chip the next time the list is
+        drawn. The board is shared by everyone who opens the page.
+    </p>
+</header>
+
+@* The list's card is a partial: the page draws it here, and each of its buttons gets it alone. *@
+<partial name="_NoticeList" model="Model" />

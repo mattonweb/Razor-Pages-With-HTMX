@@ -51,6 +51,34 @@ internal static class Requests
     }
 
     /// <summary>
+    /// Posts from an element with no form around it, as HTMX does: no fields, and the headers the element names in
+    /// <c>hx-headers</c>, such as the antiforgery token's, with the headers HTMX sends for the kind of request.
+    /// </summary>
+    /// <param name="browser">The client, which keeps cookies as a browser does.</param>
+    /// <param name="address">The element's <c>hx-post</c>.</param>
+    /// <param name="kind">What sends the request.</param>
+    /// <param name="headers">The element's own headers.</param>
+    /// <returns>The answer, read in full.</returns>
+    internal static async Task<Answer> PostWithoutFormAsync(
+        HttpClient browser,
+        string address,
+        HtmxRequest kind,
+        IReadOnlyDictionary<string, string> headers)
+    {
+        using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, new Uri(address, UriKind.Relative)))
+        {
+            request.Content = new FormUrlEncodedContent([]);
+            AddHeaders(request, kind);
+            foreach (KeyValuePair<string, string> header in headers)
+            {
+                request.Headers.Add(header.Key, header.Value);
+            }
+
+            return await SendAsync(browser, request).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
     /// Posts a form that sends a file, as multipart form data, as a browser and HTMX send a form that says
     /// <c>enctype="multipart/form-data"</c>, with the headers HTMX sends for the kind of request.
     /// </summary>

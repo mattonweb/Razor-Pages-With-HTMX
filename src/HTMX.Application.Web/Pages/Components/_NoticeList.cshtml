@@ -1,0 +1,59 @@
+@model HTMX.Application.Web.Pages.Components.SeenNoticesModel
+@using System.Globalization
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+@*
+    The notices, in their card. A new notice says hx-post with its own address and hx-trigger="revealed", so HTMX
+    marks it seen once it comes into view, and hx-swap="none", since the answer, 204, has nothing to draw. Its New chip
+    stays until the list is drawn again, so a notice does not change while it is being read.
+
+    That request has no form around it, so no form brings the antiforgery token, and Razor Pages refuses a post
+    without one with 400. The list sends the token in a header instead: hx-headers:inherited on the list reaches
+    every notice in it. The value is JSON, which HTMX reads as it is; a js: value would be run as script, which the
+    Content Security Policy refuses. The token sits on the list, not on the body: a boosted page swaps the body's
+    content and leaves the body's own attributes as the first page drew them, while the list is drawn with every page
+    and every answer that draws it.
+
+    The two buttons are forms, which work without HTMX, as nothing that marks itself does. With HTMX each replaces
+    the card (outerHTML), and keeps its id, so HTMX gives the keyboard back to it.
+*@
+@{
+    string headers = AntiforgeryHeader.HxHeaders(Antiforgery, Context);
+    int fresh = Array.FindAll(Model.Notices, static notice => !notice.Seen).Length;
+    string count = fresh.ToString("N0", CultureInfo.CurrentCulture);
+    string? allSeen = Url.Page("./SeenNotices", "AllSeen");
+    string? allNew = Url.Page("./SeenNotices", "AllNew");
+}
+<section class="card" id="notice-list" aria-labelledby="notice-list-heading">
+    <header class="card-header"><h2 id="notice-list-heading">Notices, @count new</h2></header>
+    <div class="card-body">
+        <ul hx-headers:inherited="@headers">
+            @foreach (Notice notice in Model.Notices)
+            {
+                if (notice.Seen)
+                {
+                    <li id="notice-@notice.Number">@notice.Text</li>
+                }
+                else
+                {
+                    string? seen = Url.Page("./SeenNotices", "Seen", new { notice = notice.Number });
+                    <li id="notice-@notice.Number" hx-post="@seen" hx-trigger="revealed" hx-swap="none">
+                        <span class="chip info">New</span> @notice.Text
+                    </li>
+                }
+            }
+        </ul>
+    </div>
+    <div class="form-actions">
+        <div class="end">
+            <form method="post" action="@allNew" asp-antiforgery="true"
+                  hx-post="@allNew" hx-target="#notice-list" hx-swap="outerHTML">
+                <button class="btn ghost" type="submit" id="notices-all-new">Mark all as new</button>
+            </form>
+            <form method="post" action="@allSeen" asp-antiforgery="true"
+                  hx-post="@allSeen" hx-target="#notice-list" hx-swap="outerHTML">
+                <button class="btn" type="submit" id="notices-all-seen">Mark all as seen</button>
+            </form>
+        </div>
+    </div>
+</section>

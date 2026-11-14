@@ -1,0 +1,46 @@
+@model HTMX.Application.Web.Pages.Components.StockRow
+@using HTMX.Application.Web.TagHelpers
+@*
+    One row of the stock table. A form cannot hold a row's cells, so the row's form sits in its last cell, around
+    Save, and the field in the cell before names the form with the form attribute. The field then belongs to that form
+    wherever it is: the browser posts it with the form, Enter in it submits the form, and HTMX, which takes a field's
+    form from the field as the browser does, sends it too. The form brings the antiforgery token, so nothing else has
+    to. Every row's field has the same name, since only the form a row's Save submits posts.
+
+    With HTMX the form replaces its row (closest tr, outerHTML) with what Save answers: the row with 422 and its field
+    marked, or the row as saved and a toast. The field and Save keep their ids, by the item's number, so HTMX gives
+    the keyboard back to whichever had it. A refused field takes the keyboard itself. Save is not disabled while the
+    request runs, since a disabled button loses the keyboard and HTMX could not give it back; a second Save sends
+    the same count again, which changes nothing.
+*@
+@{
+    long number = Model.Item.Number;
+    string formId = $"stock-{number}-form";
+    string fieldId = $"on-hand-{number}";
+    string errorId = $"{fieldId}-error";
+    bool refused = Model.Message is not null;
+    bool focused = refused && InvalidControlTagHelper.TryTakeFocus(Context);
+    string? action = Url.Page("./StockTable", "Save", new { item = number });
+}
+<tr id="stock-@number">
+    <td class="title">@Model.Item.Name</td>
+    <td>
+        <input type="number" id="@fieldId" name="Input.OnHand" form="@formId" value="@Model.Value" min="0" max="999"
+               aria-label="On hand, @Model.Item.Name" autofocus="@focused"
+               class="@(refused ? "input-validation-error" : null)"
+               aria-invalid="@(refused ? "true" : null)"
+               aria-describedby="@(refused ? errorId : null)" />
+        @if (refused)
+        {
+            <span class="field-validation-error" id="@errorId">@Model.Message</span>
+        }
+    </td>
+    <td class="actions">
+        <form id="@formId" method="post" action="@action" asp-antiforgery="true" novalidate
+              hx-post="@action" hx-target="closest tr" hx-swap="outerHTML" hx-indicator="find button">
+            <button class="btn" type="submit" id="save-@number">
+                Save<span class="visually-hidden"> @Model.Item.Name</span>
+            </button>
+        </form>
+    </td>
+</tr>
