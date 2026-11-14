@@ -1,0 +1,33 @@
+@page "/components/not-allowed"
+@model HTMX.Application.Web.Pages.Components.NotAllowedModel
+@{
+    ViewData["Title"] = "Not allowed";
+    ViewData["Section"] = "Components";
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Not allowed</span></li></ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Not allowed</h1>
+    </div>
+    <p class="muted">
+        Articles that only a user who may publish can publish. Withdraw that permission on the
+        <a asp-page="./PublishingPermission">Publishing permission</a> page in another tab, as an administrator would,
+        and this page still offers Publish until it is drawn again.
+    </p>
+</header>
+
+@* The list is a partial: the page draws it here, and each action's answer draws it alone. *@
+<partial name="_ArticleList" model="Model" />
+
+@*
+    An action without HTMX is redirected back here, and the toast it left shows. A refused one is answered with this
+    page, its toast saying why.
+*@
+@section Toasts {
+    @if (Model.Toast is Toast toast)
+    {
+        <partial name="_Toast" model="toast" />
+    }
+}

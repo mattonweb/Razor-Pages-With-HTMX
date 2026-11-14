@@ -178,6 +178,13 @@ need Microsoft Edge installed; on a machine without it, leave them out with `--f
   expired, the browser on its own is redirected to the sign-in page, and HTMX gets 204 and `HX-Redirect` instead, so
   that it loads the sign-in page with a reload rather than drawing it inside the card; either way the sign-in comes
   back to the page, and only to a page of this site.
+- **`/components/not-allowed`** — three invented articles on one desk shared by everyone, each row with **Publish**
+  or **Unpublish** for a user the Publishing policy lets publish. Its authorization handler reads who may publish on
+  every request, and the page asks the policy as it draws the list, so it offers only what the user may do.
+  **Withdraw the permission** at `/components/publishing-permission`, in another tab as an administrator would, and
+  the list still offers Publish until it is drawn again; Publish then answers 403 with the list drawn without its
+  buttons, the keyboard on its heading and a toast that says why: the list alone with HTMX, the whole page without
+  it. The handler refuses the action itself rather than with `Forbid()`, whose answer is the sign-in's.
 
 ## Sample data
 
@@ -227,7 +234,8 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   drive the installed Microsoft Edge, headless, with Playwright (Microsoft.Playwright 1.64.1), so no browser is
   downloaded. Each checks the console for errors and runs on its own, and some run again without HTMX's script or
   with script off: the keyboard after Remove on Order lines, Enter in a Stock table row, notices marked seen as they
-  scroll into view, a boosted link and Back, and a filter typed again while the first answer is held back.
+  scroll into view, a boosted link and Back, a filter typed again while the first answer is held back, and Publish
+  refused once the permission was withdrawn.
 - **Look:** the HTMLX Pages brand. Its stylesheets and icon sprite were copied from
   `.claude/skills/brand-htmlx-pages/assets/` into `wwwroot`, and the pages use its components' markup. The home page's
   robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from

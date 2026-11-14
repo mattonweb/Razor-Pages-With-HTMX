@@ -1,0 +1,10 @@
+@model HTMX.Application.Web.Pages.Components.PublishingPermissionModel
+@*
+    What a change answers HTMX with: the permission's card, as it is now, and, for the layout's toast region, the toast
+    that says what changed.
+*@
+<partial name="_PermissionCard" model="Model" />
+@if (Model.Toast is Toast toast)
+{
+    <partial name="_ToastUpdate" model="toast" />
+}

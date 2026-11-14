@@ -60,6 +60,49 @@ public sealed class SignedInUserTests
             "The exception should say what is missing.");
     }
 
+    /// <summary>
+    /// Unit test to verify that looking for the signed-in user's identifier finds it in the name-identifier claim.
+    /// </summary>
+    [TestMethod]
+    public void Find_NameIdentifierClaim_ReturnsTheUser()
+    {
+        // Arrange (Given)
+        ClaimsPrincipal user = CreateUser(new Claim(ClaimTypes.NameIdentifier, "10002"));
+
+        // Act (When)
+        UserId? id = SignedInUser.Find(user);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            new UserId(10002),
+            id,
+            "The identifier should come from the name-identifier claim.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that looking for the identifier of a request with no user's identifier finds none and does
+    /// not throw, so that a check such as an authorization handler's can answer no.
+    /// </summary>
+    /// <param name="claim">The name-identifier claim's value, or <see langword="null"/> for no claim.</param>
+    [TestMethod]
+    [DataRow(null, DisplayName = "No claim")]
+    [DataRow("pat@example.com", DisplayName = "Not a number")]
+    public void Find_NoUserIdentifier_ReturnsNull(string? claim)
+    {
+        // Arrange (Given)
+        ClaimsPrincipal user = claim is null
+            ? new ClaimsPrincipal(new ClaimsIdentity())
+            : CreateUser(new Claim(ClaimTypes.NameIdentifier, claim));
+
+        // Act (When)
+        UserId? id = SignedInUser.Find(user);
+
+        // Assert (Then)
+        Assert.IsNull(
+            id,
+            "A request with no user's identifier should find none.");
+    }
+
     #endregion Public Methods
 
     #region Private Methods

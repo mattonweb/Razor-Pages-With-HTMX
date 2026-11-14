@@ -1,0 +1,73 @@
+@model HTMX.Application.Web.Pages.Components.NotAllowedModel
+@*
+    The articles, in their card, as the signed-in user may use them: a row's Publish or Unpublish shows only when the
+    Publishing policy says the user may publish, which the page model asks once for each request. Each is a one-button
+    form that posts with HTMX or without it. With HTMX it replaces this card (outerHTML), the smallest element that
+    holds everything its answer can change, since a refusal changes every row. A row's Publish and Unpublish share an
+    id, so HTMX gives the keyboard back to the one that takes its place.
+
+    A permission withdrawn after the card was drawn leaves its buttons here until it is drawn again. Pressing one then
+    is refused with 403: the answer is this card without them, and a toast that says why. The button that had the
+    keyboard is gone, so the card's heading takes it.
+*@
+<section class="card" id="articles" aria-labelledby="articles-heading">
+    <header class="card-header">
+        <h2 id="articles-heading" tabindex="-1" autofocus="@Model.ListHeadingFocused">Articles</h2>
+    </header>
+    <div class="card-body">
+        @if (Model.MayPublish)
+        {
+            <p>You may publish articles, and make a published one a draft again.</p>
+        }
+        else
+        {
+            <p>You may not publish articles, so the list offers no Publish.</p>
+        }
+    </div>
+    <div class="grid-wrap">
+        <table class="grid">
+            <caption class="visually-hidden">Articles, with whether each is published</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Article</th>
+                    <th scope="col">Status</th>
+                    @if (Model.MayPublish)
+                    {
+                        <th scope="col"><span class="visually-hidden">Publish</span></th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Article article in Model.Articles)
+                {
+                    <tr id="article-@article.Number">
+                        <td class="title">@article.Title</td>
+                        <td>
+                            @if (article.Published)
+                            {
+                                <span class="chip success">Published</span>
+                            }
+                            else
+                            {
+                                <span class="chip">Draft</span>
+                            }
+                        </td>
+                        @if (Model.MayPublish)
+                        {
+                            string handler = article.Published ? "Unpublish" : "Publish";
+                            string? action = Url.Page("./NotAllowed", handler, new { article = article.Number });
+                            <td class="actions">
+                                <form method="post" action="@action" asp-antiforgery="true"
+                                      hx-post="@action" hx-target="#articles" hx-swap="outerHTML">
+                                    <button class="btn" type="submit" id="publish-@article.Number">
+                                        @handler<span class="visually-hidden"> @article.Title</span>
+                                    </button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

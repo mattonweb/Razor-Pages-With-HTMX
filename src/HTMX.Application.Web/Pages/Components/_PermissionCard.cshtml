@@ -1,0 +1,31 @@
+@model HTMX.Application.Web.Pages.Components.PublishingPermissionModel
+@*
+    Whether the signed-in user may publish, with the one-button form that changes it. With HTMX the form replaces this
+    card (outerHTML) with the card as it is now and a toast; without it, the browser is redirected back to the page,
+    with the toast. Withdraw and Grant share an id, so HTMX gives the keyboard back to the one that takes its place.
+*@
+@{
+    string handler = Model.MayPublish ? "Withdraw" : "Grant";
+    string? action = Url.Page("./PublishingPermission", handler);
+}
+<section class="card" id="permission" aria-labelledby="permission-heading">
+    <header class="card-header"><h2 id="permission-heading">Publishing</h2></header>
+    <div class="card-body">
+        @if (Model.MayPublish)
+        {
+            <p>You may publish articles.</p>
+        }
+        else
+        {
+            <p>You may not publish articles.</p>
+        }
+    </div>
+    <div class="form-actions">
+        <div class="end">
+            <form method="post" action="@action" asp-antiforgery="true"
+                  hx-post="@action" hx-target="#permission" hx-swap="outerHTML">
+                <button class="btn" type="submit" id="permission-change">@handler the permission</button>
+            </form>
+        </div>
+    </div>
+</section>

@@ -6,9 +6,11 @@ using HTMX.Adapter.Customers;
 using HTMX.Adapter.Customers.Configuration;
 using HTMX.Adapter.Customers.Contracts;
 using HTMX.Application.Web.Authentication;
+using HTMX.Application.Web.Authorization;
 using HTMX.Application.Web.Pages.Components;
 using HTMX.Application.Web.Security;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -87,9 +89,12 @@ public sealed class Program
             configureOptions: null);
 
         // The Sign-in expiry page's own sign-in, a cookie that lasts thirty seconds, and the authorization that sends a
-        // request without it to the sign-in page.
+        // request without it to the sign-in page. The Publishing policy, which the Not allowed page asks before it
+        // offers or runs an action that publishes, is met for the users the Publishing permission page says may.
         authentication.AddCookie(VisitorSignIn.SchemeName, VisitorSignIn.Configure);
-        services.AddAuthorization();
+        services.AddAuthorization(PublishingPolicy.Configure);
+        services.AddSingleton<Publishers>();
+        services.AddSingleton<IAuthorizationHandler, PublishingHandler>();
 
         string? configuredName = configuration[CustomersDatabaseKey];
         CustomersOptions customers = new CustomersOptions
@@ -99,13 +104,14 @@ public sealed class Program
         services.AddCustomersAdapter(customers);
 
         // The Components pages' own state, one of each for the application: the Long job page's pretend jobs,
-        // counted by the system clock, the Reload on event page's notes, the Stock table page's shelf and the Seen
-        // notices page's board.
+        // counted by the system clock, the Reload on event page's notes, the Stock table page's shelf, the Seen
+        // notices page's board and the Not allowed page's articles.
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<LongJobs>();
         services.AddSingleton<NoteBoard>();
         services.AddSingleton<StockShelf>();
         services.AddSingleton<NoticeBoard>();
+        services.AddSingleton<ArticleDesk>();
     }
 
     /// <summary>

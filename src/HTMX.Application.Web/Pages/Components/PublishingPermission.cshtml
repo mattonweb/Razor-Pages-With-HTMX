@@ -1,0 +1,34 @@
+@page "/components/publishing-permission"
+@model HTMX.Application.Web.Pages.Components.PublishingPermissionModel
+@{
+    ViewData["Title"] = "Publishing permission";
+    ViewData["Section"] = "Components";
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+            <li><a asp-page="/Index">Home</a></li>
+            <li><a asp-page="./Index">Components</a></li>
+            <li><a asp-page="./NotAllowed">Not allowed</a></li>
+            <li><span aria-current="page">Publishing permission</span></li>
+        </ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Publishing permission</h1>
+    </div>
+    <p class="muted">
+        Whether you may publish the Not allowed page's articles, as an administrator's page would say. Changing it here
+        changes nothing on that page, if it is open in another tab, until that page is drawn again.
+    </p>
+</header>
+
+@* The card is a partial: the page draws it here, and its button's answer draws it alone. *@
+<partial name="_PermissionCard" model="Model" />
+
+@* A change without HTMX is redirected back here, and the toast it left shows. *@
+@section Toasts {
+    @if (Model.Toast is Toast toast)
+    {
+        <partial name="_Toast" model="toast" />
+    }
+}
