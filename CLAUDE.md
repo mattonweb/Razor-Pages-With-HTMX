@@ -2,6 +2,10 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-13 (attended session with Matt): browser tests exist, in `HTMX.Test.Integration`.** They drive the
+  installed Microsoft Edge with Playwright, against the application on Kestrel, and carry `[TestCategory("Browser")]`
+  and `[DoNotParallelize]`. The stack and the layout say so. Microsoft.Playwright 1.64.1 came from the local NuGet
+  cache, and Playwright downloads no browser; a machine without Edge leaves the category out.
 - **2026-11-12 (attended session with Matt): integration tests exist, in `HTMX.Test.Integration`.** The stack, the
   layout and the solution-architecture paragraph name the project, and the `tests` scope covers it. `Program` is now
   a sealed class, so the tests can start it, and reads the database's name from `Customers:DatabaseName`.
@@ -73,7 +77,8 @@ decline it and say why.
 - Persistence is whatever the presentation needs and nothing more. Chosen 2026-11-07: Entity Framework Core over an
   in-memory SQLite database, created when the application starts and seeded from code; see `README.md`.
 - Tests: MSTest. Unit tests are written as the `code-csharp-mstest` skill describes. That skill does not cover
-  integration tests, which take the unit tests' shape and `code-htmx-pages` section 6.
+  integration tests, which take the unit tests' shape and `code-htmx-pages` section 6, nor the browser tests among
+  them, which drive the installed Microsoft Edge with Playwright (`Microsoft.Playwright`, no MSTest adapter).
 
 ## Layout (created 2026-11-07)
 
@@ -83,7 +88,8 @@ src/
   Directory.Build.props             house build settings for every project (code-csharp-standards, section 1)
   HTMX.Adapter.Customers/           the in-memory customer database, its entities and their data access
   HTMX.Application.Web/             the Razor Pages application
-  HTMX.Test.Integration/            the integration tests: the whole application, in memory
+  HTMX.Test.Integration/            the integration tests: the whole application, in memory or, for a browser test,
+                                    on Kestrel, driven in Edge
   HTMX.Test.Unit/                   the unit tests
   .editorconfig                     house copy, see below
 ```
