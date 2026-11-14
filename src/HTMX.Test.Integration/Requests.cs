@@ -28,6 +28,33 @@ internal static class Requests
     }
 
     /// <summary>
+    /// Sends a GET, with the headers HTMX sends for the kind of request and more of HTMX's own, such as
+    /// <c>HX-Current-URL</c>, which names the page the request comes from.
+    /// </summary>
+    /// <param name="browser">The client, which keeps cookies as a browser does.</param>
+    /// <param name="address">The page's address.</param>
+    /// <param name="kind">What sends the request.</param>
+    /// <param name="headers">The other headers.</param>
+    /// <returns>The answer, read in full.</returns>
+    internal static async Task<Answer> GetAsync(
+        HttpClient browser,
+        string address,
+        HtmxRequest kind,
+        IReadOnlyDictionary<string, string> headers)
+    {
+        using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, new Uri(address, UriKind.Relative)))
+        {
+            AddHeaders(request, kind);
+            foreach (KeyValuePair<string, string> header in headers)
+            {
+                request.Headers.Add(header.Key, header.Value);
+            }
+
+            return await SendAsync(browser, request).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
     /// Posts a form's fields, URL-encoded as a browser and HTMX send them, with the headers HTMX sends for the kind of
     /// request.
     /// </summary>

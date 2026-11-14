@@ -1,0 +1,42 @@
+@page "/components/visitor-sign-in"
+@model HTMX.Application.Web.Pages.Components.VisitorSignInModel
+@{
+    ViewData["Title"] = "Sign in as a visitor";
+    ViewData["Section"] = "Components";
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+            <li><a asp-page="/Index">Home</a></li>
+            <li><a asp-page="./Index">Components</a></li>
+            <li><a asp-page="./SignInExpiry">Sign-in expiry</a></li>
+            <li><span aria-current="page">Sign in</span></li>
+        </ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Sign in as a visitor</h1>
+    </div>
+    <p class="muted">
+        The Sign-in expiry page needs a visitor. A visitor's sign-in asks for nothing, and lasts thirty seconds.
+    </p>
+</header>
+
+@*
+    The form posts the address to come back to, which the sign-in's redirect put in the query string, as a hidden
+    field. It is boosted, as every form is: with HTMX the answer is 204 and HX-Location naming that page, and without
+    it, a redirect there.
+*@
+<section class="card" aria-labelledby="visitor-heading">
+    <header class="card-header"><h2 id="visitor-heading">Sign in</h2></header>
+    <form method="post" asp-page="./VisitorSignIn">
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div class="card-body">
+            <p>Sign in as a visitor for thirty seconds.</p>
+        </div>
+        <div class="form-actions">
+            <div class="end">
+                <button class="btn primary" type="submit">Sign in</button>
+            </div>
+        </div>
+    </form>
+</section>

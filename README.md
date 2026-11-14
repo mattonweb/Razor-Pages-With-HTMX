@@ -171,6 +171,12 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   list is drawn. That request has no form around it, so the list sends the antiforgery token in the
   `RequestVerificationToken` header through `hx-headers:inherited`. Without HTMX nothing marks itself, and **Mark all
   as seen** and **Mark all as new** are forms that work either way.
+- **`/components/sign-in-expiry`** — a page only a signed-in visitor may see, with a card whose **Check again** asks
+  the server for the time with `hx-get`. The visitor signs in at `/components/visitor-sign-in` with one button, for
+  thirty seconds that do not slide, through a cookie scheme of its own beside the Demo sign-in. Once the sign-in has
+  expired, the browser on its own is redirected to the sign-in page, and HTMX gets 204 and `HX-Redirect` instead, so
+  that it loads the sign-in page with a reload rather than drawing it inside the card; either way the sign-in comes
+  back to the page, and only to a page of this site.
 
 ## Sample data
 

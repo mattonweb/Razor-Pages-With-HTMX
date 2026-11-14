@@ -66,8 +66,8 @@ public sealed class Program
     }
 
     /// <summary>
-    /// Registers Razor Pages, with every URL they write in lower case, the sign-in scheme, the customers adapter, which
-    /// owns the database, and the Components pages' jobs and notes.
+    /// Registers Razor Pages, with every URL they write in lower case, the sign-in schemes and authorization, the
+    /// customers adapter, which owns the database, and the Components pages' own state.
     /// </summary>
     /// <param name="services">The application's service collection.</param>
     /// <param name="configuration">The application's configuration, which may name the database.</param>
@@ -85,6 +85,11 @@ public sealed class Program
         authentication.AddScheme<AuthenticationSchemeOptions, DemoAuthenticationHandler>(
             DemoAuthenticationHandler.SchemeName,
             configureOptions: null);
+
+        // The Sign-in expiry page's own sign-in, a cookie that lasts thirty seconds, and the authorization that sends a
+        // request without it to the sign-in page.
+        authentication.AddCookie(VisitorSignIn.SchemeName, VisitorSignIn.Configure);
+        services.AddAuthorization();
 
         string? configuredName = configuration[CustomersDatabaseKey];
         CustomersOptions customers = new CustomersOptions
@@ -104,8 +109,8 @@ public sealed class Program
     }
 
     /// <summary>
-    /// Builds the request pipeline: error handling, HTTPS, the Content Security Policy, static files, sign-in and the
-    /// Razor Pages.
+    /// Builds the request pipeline: error handling, HTTPS, the Content Security Policy, static files, sign-in, the
+    /// authorization that pages asking for a sign-in need, and the Razor Pages.
     /// </summary>
     /// <param name="application">The application being built.</param>
     private static void UsePipeline(WebApplication application)
@@ -122,6 +127,7 @@ public sealed class Program
         application.UseContentSecurityPolicy(application.Environment);
         application.MapStaticAssets();
         application.UseAuthentication();
+        application.UseAuthorization();
 
         PageActionEndpointConventionBuilder pages = application.MapRazorPages();
         pages.WithStaticAssets();

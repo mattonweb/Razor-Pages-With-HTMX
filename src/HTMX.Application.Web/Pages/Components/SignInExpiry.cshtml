@@ -1,0 +1,21 @@
+@page "/components/sign-in-expiry"
+@model HTMX.Application.Web.Pages.Components.SignInExpiryModel
+@{
+    ViewData["Title"] = "Sign-in expiry";
+    ViewData["Section"] = "Components";
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Sign-in expiry</span></li></ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Sign-in expiry</h1>
+    </div>
+    <p class="muted">
+        A page only a signed-in visitor may see. The sign-in lasts thirty seconds, and the card asks the server for the
+        time until it has ended.
+    </p>
+</header>
+
+@* The card is a partial: the page draws it here, and Check again gets it alone. *@
+<partial name="_SignInClock" model="Model" />

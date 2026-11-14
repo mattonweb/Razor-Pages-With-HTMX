@@ -1,0 +1,33 @@
+@model HTMX.Application.Web.Pages.Components.SignInExpiryModel
+@using System.Globalization
+@*
+    The card that says the time, which Check again asks the page's own address for (hx-get), and which the page answers
+    HTMX with alone (outerHTML). Check again keeps its id, so HTMX gives the keyboard back to it.
+
+    Once the visitor's sign-in has expired, that request meets the sign-in's challenge. HTMX gets 204 and HX-Redirect
+    naming the sign-in page, with this page, from HX-Current-URL, as the address to come back to, and loads it with a
+    reload. A redirect would put the whole sign-in page inside this card: fetch follows a redirect itself. Without
+    HTMX, Check again is a link to this page, and the browser follows the redirect as it would anywhere.
+*@
+@{
+    string? self = Url.Page("./SignInExpiry");
+    string now = Model.Now.ToString("T", CultureInfo.CurrentCulture);
+    string? ends = Model.Ends?.ToString("T", CultureInfo.CurrentCulture);
+}
+<section class="card" id="sign-in-clock" aria-labelledby="sign-in-clock-heading">
+    <header class="card-header"><h2 id="sign-in-clock-heading">Signed in as a visitor</h2></header>
+    <div class="card-body">
+        <p>The server's time is <strong>@now</strong>.</p>
+        @if (ends is not null)
+        {
+            <p>
+                The sign-in ends at <strong>@ends</strong>. After that, Check again goes to the sign-in page, and back
+                here.
+            </p>
+        }
+        <p>
+            <a id="sign-in-check" href="@self"
+               hx-get="@self" hx-target="#sign-in-clock" hx-swap="outerHTML">Check again</a>
+        </p>
+    </div>
+</section>

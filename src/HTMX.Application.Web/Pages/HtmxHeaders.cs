@@ -6,7 +6,8 @@ using Microsoft.Net.Http.Headers;
 
 /// <summary>
 /// The HTMX 4 headers the pages read and write: whether HTMX sent a request, whether it will swap part of the page,
-/// how to send the browser to another page after a save, and which address an action's answer draws.
+/// which page it came from, how to send the browser to another page after a save or to sign in, and which address an
+/// action's answer draws.
 /// </summary>
 public static class HtmxHeaders
 {
@@ -35,6 +36,12 @@ public static class HtmxHeaders
     // Asks HTMX to raise events on the page once the answer is swapped in, for elements that listen for them.
     private const string Trigger = "HX-Trigger";
 
+    // HTMX sends this on every request: the address the browser shows, the page the request comes from.
+    private const string CurrentUrl = "HX-Current-URL";
+
+    // Asks HTMX to load another page with a full reload, as the browser follows a link without HTMX.
+    private const string Redirect = "HX-Redirect";
+
     /// <summary>
     /// Says whether HTMX sent a request, for part of a page or for the whole of one, Back and Forward included, rather
     /// than the browser on its own.
@@ -58,6 +65,21 @@ public static class HtmxHeaders
         ArgumentNullException.ThrowIfNull(request);
         IHeaderDictionary headers = request.Headers;
         return headers[RequestType] == PartialRequestType;
+    }
+
+    /// <summary>
+    /// Reads the page a request comes from, as the address bar shows it, keeping only its path and query. A return
+    /// address built from it names a path on this site, but the page that sends the browser there still checks that it
+    /// is local, since the header is the sender's to write.
+    /// </summary>
+    /// <param name="request">The request.</param>
+    /// <returns>The path and query, such as <c>/components/sign-in-expiry</c>, or <see langword="null"/> when HTMX did
+    /// not name an absolute address.</returns>
+    public static string? CurrentPage(HttpRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        string? current = request.Headers[CurrentUrl];
+        return Uri.TryCreate(current, UriKind.Absolute, out Uri? address) ? address.PathAndQuery : null;
     }
 
     /// <summary>
@@ -86,6 +108,21 @@ public static class HtmxHeaders
         ArgumentException.ThrowIfNullOrWhiteSpace(url);
         IHeaderDictionary headers = response.Headers;
         headers[Location] = url;
+    }
+
+    /// <summary>
+    /// Asks HTMX to load another page with a full reload, as the browser follows a link, rather than swapping it in: a
+    /// page outside the application's own flow, such as a sign-in page, which may be another site's. The HTMX reference
+    /// asks for a 2xx answer with it, since HTMX never sees the headers of a 3xx, which <c>fetch</c> follows itself.
+    /// </summary>
+    /// <param name="response">The response.</param>
+    /// <param name="url">The page to load.</param>
+    public static void LoadPageWithReload(HttpResponse response, string url)
+    {
+        ArgumentNullException.ThrowIfNull(response);
+        ArgumentException.ThrowIfNullOrWhiteSpace(url);
+        IHeaderDictionary headers = response.Headers;
+        headers[Redirect] = url;
     }
 
     /// <summary>

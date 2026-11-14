@@ -112,5 +112,57 @@ public sealed class HtmxHeadersTests
             "The event's name should go in HX-Trigger.");
     }
 
+    /// <summary>
+    /// Unit test to verify that loading a page with a reload writes its address in HX-Redirect.
+    /// </summary>
+    [TestMethod]
+    public void LoadPageWithReload_Address_WritesHxRedirect()
+    {
+        // Arrange (Given)
+        DefaultHttpContext http = new DefaultHttpContext();
+        HttpResponse response = http.Response;
+
+        // Act (When)
+        HtmxHeaders.LoadPageWithReload(response, "/components/visitor-sign-in");
+
+        // Assert (Then)
+        IHeaderDictionary headers = response.Headers;
+        Assert.AreEqual(
+            "/components/visitor-sign-in",
+            headers["HX-Redirect"].ToString(),
+            "The address should go in HX-Redirect.");
+    }
+
+    /// <summary>
+    /// Unit test to verify that the page a request comes from is read from HX-Current-URL as its path and query alone,
+    /// and is nothing when the header is missing or not an absolute address.
+    /// </summary>
+    /// <param name="current">The HX-Current-URL header's value, or <see langword="null"/> for none.</param>
+    /// <param name="expected">The page expected, or <see langword="null"/>.</param>
+    [TestMethod]
+    [DataRow("http://localhost/components/clock?tab=2", "/components/clock?tab=2", DisplayName = "An address")]
+    [DataRow("https://elsewhere.example/organizations", "/organizations", DisplayName = "Another site's address")]
+    [DataRow("/organizations", null, DisplayName = "A path alone")]
+    [DataRow(null, null, DisplayName = "No header")]
+    public void CurrentPage_EachHeader_ReadsThePathAndQuery(string? current, string? expected)
+    {
+        // Arrange (Given)
+        DefaultHttpContext http = new DefaultHttpContext();
+        HttpRequest request = http.Request;
+        if (current is not null)
+        {
+            request.Headers["HX-Current-URL"] = current;
+        }
+
+        // Act (When)
+        string? page = HtmxHeaders.CurrentPage(request);
+
+        // Assert (Then)
+        Assert.AreEqual(
+            expected,
+            page,
+            "The page should be the address's path and query, or nothing.");
+    }
+
     #endregion Public Methods
 }
