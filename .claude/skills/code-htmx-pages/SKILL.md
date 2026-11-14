@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests and integration tests that run the whole application, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, rows that hold several fields, numbered afresh by each Add and Remove with ModelState cleared, a form with a file, which keeps the chosen file across a refused save with hx-preserve, a job whose card polls its progress until it has finished, a list that grows by Load more with the address saying how many rows show, an element that reloads itself when an answer's HX-Trigger says something changed, and the patterns still open (expired sign-ins, a request with no form around it). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.28.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests and integration tests that run the whole application, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy that HTMX needs nothing relaxed in and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, rows that hold several fields, numbered afresh by each Add and Remove with ModelState cleared, a request with no form around it, from a field tied to a form in another table cell by the form attribute or with the antiforgery token in a header from hx-headers on a container in the page, a form with a file, which keeps the chosen file across a refused save with hx-preserve, a job whose card polls its progress until it has finished, a list that grows by Load more with the address saying how many rows show, an element that reloads itself when an answer's HX-Trigger says something changed, and the patterns still open (expired sign-ins, progress for a large upload). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.29.0
 visibility: public
 ---
 
@@ -14,9 +14,9 @@ in step. It is written for HTMX 4.0.1 and ASP.NET Core 10, and every sentence is
 application on those versions, not only the one it was built in; how one application uses HTMX belongs in its own
 code, tests and README.
 
-The evidence differs by part. The patterns in sections 2 to 22 have been built and tried in a browser; where a
+The evidence differs by part. The patterns in sections 2 to 23 have been built and tried in a browser; where a
 section also covers a case that was not built, such as output caching, its citation is the only evidence.
-Section 1's rows were read in the source and the reference, not all built, and nothing in section 23 is built.
+Section 1's rows were read in the source and the reference, not all built, and nothing in section 24 is built.
 Every HTMX fact cites the reference page or the 4.0.1 source method it came from, and the two kinds of citation
 carry different weight. A reference page is what HTMX documents. A method in the 4.0.1 source is what that release
 happens to do: the method is private, a later release may change it, and section 2 checks each one again before
@@ -1091,7 +1091,7 @@ A list that grows ten rows at a time under a Load more button, in place of pagin
   twice, so the link says `hx-sync="this:drop"`. Tried: a double press added ten rows.
 - **The keyboard goes to the first new row.** Its link says `autofocus` in the answer, so the user reads on from where
   the list grew and a screen reader says what arrived; Load more itself goes with the old footer. The footer, and
-  whatever follows the list, stay within reach, which loading as the list scrolls would not keep (section 23).
+  whatever follows the list, stay within reach, which loading as the list scrolls would not keep (section 24).
 - **Tried in a browser**, Chromium 156: Load more added ten rows with the keyboard on the first and the address at
   `?shown=20`; a double press added ten; at a hundred the link went and the footer pointed to the paged list; Back from
   another page drew the hundred rows again. Without HTMX's script the link loaded `?shown=20#more-11`, scrolled to the
@@ -1167,15 +1167,64 @@ a quantity.
   (section 15). Unit tests check each handler, and integration tests remove a row and post a gap through the whole
   application (section 6).
 
-## 23. Still open
+## 23. A request with no form around it
+
+An element whose POST has no form around it, so that no form brings the antiforgery token, which Razor Pages checks
+on every POST handler, refusing a request without it with 400.
+
+- **Give it a form first.** What a person does to change something works without HTMX only from a form, and the form
+  brings the token (section 7): a one-button form around a lone button, as row actions have (section 9). A field
+  inside a form needs nothing more either: a POST from it sends the whole form (section 13).
+- **Where a form cannot go around the fields, the `form` attribute ties them to one.** HTML has no place for a form
+  between a table row and its cells: Chromium's parser leaves a form written around a row's cells empty, the cells
+  outside it. So the row's form goes in its last cell, around its Save button, and the field in another cell names
+  it, such as `form="row-7-form"`. The field then belongs to that form wherever it is: the browser posts it with the
+  form, and Enter in it submits the form. HTMX takes a request's form from the element as the browser does,
+  `elt.form || elt.closest("form")`, and sends `new FormData(form)`, which holds every field the form owns, the token
+  among them (4.0.1 source, `#handleTriggerEvent` and `#collectFormData`); a field that sends a request of its own
+  sends its form the same way. Every row's field can share a name, since only the form whose Save was pressed posts,
+  and the answer is the row alone (`hx-target="closest tr"`), which HTMX parses inside a `<template>` (section 20).
+  The row's form leaves `hx-disable` off, so that the keyboard comes back to Save by its `id` (section 7); a second
+  Save sends the same values again, which changes nothing.
+- **A request no form could send carries the token in a header.** That is a request no person sends from a form, one
+  HTMX sends on a trigger such as `revealed`, `every` or `load`. ASP.NET Core's antiforgery check also reads the token
+  from a header, `RequestVerificationToken` unless the application names another (`AntiforgeryTokenSet.HeaderName`).
+  `hx-headers:inherited` on an element sends its headers with every request from inside it, and its value is JSON
+  naming that header and the token `IAntiforgery.GetAndStoreTokens` gives
+  ([CSRF prevention](https://four.htmx.org/docs#csrf-prevention)). HTMX reads a JSON value as it is; a `js:` value
+  would run as script, which the Content Security Policy refuses (section 15).
+- **The header goes on a container in the page's content, not on `<body>`.** The reference suggests `<html>` or
+  `<body>`, but a boosted page (section 16) swaps the body's content and keeps the body element's own attributes as
+  the first page drew them: HTMX strips a whole-page answer's `<body>` unless the swap is `outerHTML` on the body
+  itself (4.0.1 source, `#insertContent`). A token there would stay the first page's for as long as the tab is open,
+  still sent once it no longer matches, as after a sign-in changes the user. A container in the content is drawn
+  with the page and with every answer that draws it, so its token is current, and only pages that need one ask the
+  antiforgery service for it.
+- **Such a request answers with what it changed and no more.** A notice that marks itself seen as it scrolls into
+  view says `hx-post`, `hx-trigger="revealed"` and `hx-swap="none"`, and the answer is 204. Its New chip stays until
+  the list is drawn again, so a notice does not change while it is being read, and nothing moves the keyboard.
+  `revealed` watches the element with an `IntersectionObserver`, and disconnects it after the first time the element
+  is in view (4.0.1 source, `#onTrigger`), so each notice sends one request.
+- **Without HTMX such a request never happens**, so what it does is something the page can go without, or that a
+  form does too, such as a Mark all as seen button.
+- **Tried in a browser.** The table, in Chromium 156: Save sent the field from its cell with the row's form, the
+  answer was the row and a toast, and the keyboard came back to Save; Enter in a field sent its row's form and left
+  the keyboard in the field; a value out of range answered 422 with only that row marked and the keyboard in its
+  field; with `hx-disable` on Save the keyboard was lost after a save. Without HTMX's script the browser posted the
+  field with its row's form and redirected with the toast, and a refused value came back as the whole page with only
+  its row marked. The notices, in headless Edge 157 at 800 by 600, since a browser pane that was not on screen ran no
+  `IntersectionObserver` at all: the ten notices in view sent one request each as the page loaded, scrolling down
+  sent one for each of the other six, and scrolling back sent none; each answered 204, and the list drawn again
+  showed them seen. A post without the header got 400. Without HTMX's script no notice marked itself, and Mark all
+  as seen posted and redirected. No Content Security Policy violation (section 15). Unit tests check the handlers
+  and the header's value, and integration tests post a row's field with its form and a notice with the list's header
+  and without it through the whole application (section 6).
+
+## 24. Still open
 
 Nothing in this section is built yet, so none of it is a rule. What is known, to start from; an idea taken from the
 workshop names its chapter.
 
-- **A request with no form around it** has to send the antiforgery token another way, such as in the
-  `RequestVerificationToken` header through an inherited `hx-headers`
-  ([CSRF prevention](https://four.htmx.org/docs#csrf-prevention)). An element inside a form needs none of this: a
-  POST from it sends the whole form, the token among it (section 13).
 - **A request whose sign-in has expired, or that is not allowed.** Cookie authentication answers it with a redirect
   to the sign-in or access-denied page, `fetch` follows the redirect (section 7), and HTMX swaps that page into the
   request's target. `CookieAuthenticationEvents.OnRedirectToLogin` and `OnRedirectToAccessDenied` can answer an HTMX
