@@ -1,10 +1,15 @@
 namespace HTMX.Test.Integration;
 
 using System;
+using System.Linq;
 using System.Net.Http;
 using HTMX.Application.Web;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Runs the whole application in memory for one test: its own routing, antiforgery check, Content Security Policy and
@@ -32,6 +37,20 @@ internal sealed class ApplicationFactory : WebApplicationFactory<Program>
             HandleCookies = true,
         };
         return this.CreateClient(options);
+    }
+
+    /// <summary>
+    /// Starts the application on Kestrel, at a port of its own on this machine, so that a real browser can reach it.
+    /// It stops with the factory. Call it before anything else starts the application, such as a client.
+    /// </summary>
+    /// <returns>The application's address, such as <c>http://127.0.0.1:54321</c>.</returns>
+    public Uri StartServerForBrowser()
+    {
+        this.UseKestrel(0);
+        this.StartServer();
+        IServer server = this.Services.GetRequiredService<IServer>();
+        IServerAddressesFeature addresses = server.Features.GetRequiredFeature<IServerAddressesFeature>();
+        return new Uri(addresses.Addresses.First());
     }
 
     /// <inheritdoc/>

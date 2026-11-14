@@ -1,10 +1,13 @@
 namespace HTMX.Test.Integration.Application.Web.Pages.Organizations;
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Playwright;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
@@ -132,6 +135,55 @@ public sealed class IndexTests : IDisposable
     }
 
     /// <summary>
+    /// Browser test to verify, in Edge, that when the filter is typed again while the answer to the first filter is
+    /// held back, the page gives the first request up at once and the list shows the newer filter's rows, with the
+    /// address naming it: the list's one request queue replaces the request on its way (hx-sync), where HTMX's own
+    /// queue would wait for the held answer, draw it, and only then send the newer request.
+    /// </summary>
+    [TestMethod]
+    [TestCategory("Browser")]
+    [DoNotParallelize]
+    public async Task Filter_TypedAgainWhileAnAnswerIsHeld_ShowsTheNewestAnswer()
+    {
+        // Arrange (Given)
+        Uri application = this._application.StartServerForBrowser();
+        BrowserSession edge = await BrowserSession.OpenAsync(application, Scripting.On).ConfigureAwait(false);
+        await using (edge.ConfigureAwait(false))
+        {
+            IPage page = edge.Page;
+            TaskCompletionSource held = new TaskCompletionSource();
+            ConcurrentQueue<string> givenUp = new ConcurrentQueue<string>();
+            page.RequestFailed += (sender, request) => givenUp.Enqueue(request.Url);
+            await page.RouteAsync(IsFirstFilter, route => HoldAsync(route, held)).ConfigureAwait(false);
+            await page.GotoAsync("/organizations").ConfigureAwait(false);
+            ILocator filter = page.Locator("#organization-filter");
+
+            // Act (When)
+            Task<IRequest> first = page.WaitForRequestAsync(request => IsFirstFilter(request.Url));
+            await filter.FillAsync("Mock").ConfigureAwait(false);
+            await first.ConfigureAwait(false);
+            Task<IResponse> second = page.WaitForResponseAsync(response => IsSecondFilter(response.Url));
+            await filter.FillAsync("Sample").ConfigureAwait(false);
+            await second.ConfigureAwait(false);
+            await held.Task.ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
+            string rows = await page.Locator("#organization-list tbody").InnerTextAsync().ConfigureAwait(false);
+            bool newer = rows.Contains("Sample & Sons", StringComparison.Ordinal);
+            bool older = rows.Contains("Mockup Media", StringComparison.Ordinal);
+            bool firstGivenUp = givenUp.Any(IsFirstFilter);
+
+            // Assert (Then)
+            Assert.AreEqual(
+                (true, true, false, true),
+                (firstGivenUp, newer, older, IsSecondFilter(page.Url)),
+                "The first request should be given up, and the list and the address be the newer filter's.");
+            Assert.IsEmpty(
+                edge.ConsoleErrors,
+                "The console should report no error: " + string.Join(" | ", edge.ConsoleErrors));
+        }
+    }
+
+    /// <summary>
     /// Stops the application and deletes its database.
     /// </summary>
     public void Dispose()
@@ -140,4 +192,51 @@ public sealed class IndexTests : IDisposable
     }
 
     #endregion Public Methods
+
+    #region Private Methods
+
+    /// <summary>
+    /// Says whether an address is the list filtered by the first filter the test types.
+    /// </summary>
+    /// <param name="url">The address.</param>
+    /// <returns><see langword="true"/> for the first filter.</returns>
+    private static bool IsFirstFilter(string url)
+    {
+        return url.Contains("filter=Mock", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Says whether an address is the list filtered by the second filter the test types.
+    /// </summary>
+    /// <param name="url">The address.</param>
+    /// <returns><see langword="true"/> for the second filter.</returns>
+    private static bool IsSecondFilter(string url)
+    {
+        return url.Contains("filter=Sample", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Holds a request's answer back for two seconds, then lets it go on, unless the page has given the request up.
+    /// </summary>
+    /// <param name="route">The request, as the browser routes it.</param>
+    /// <param name="held">Completed once the answer has been let go, or the request was given up.</param>
+    /// <returns>A task that completes with the hold.</returns>
+    private static async Task HoldAsync(IRoute route, TaskCompletionSource held)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+            await route.ContinueAsync().ConfigureAwait(false);
+        }
+        catch (PlaywrightException)
+        {
+            // The page gave the request up while it was held, so there is nothing left to let go.
+        }
+        finally
+        {
+            held.TrySetResult();
+        }
+    }
+
+    #endregion Private Methods
 }

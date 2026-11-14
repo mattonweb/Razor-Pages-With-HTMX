@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using HTMX.Application.Web.Pages.Components;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Playwright;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
@@ -79,6 +82,48 @@ public sealed class StockTableTests : IDisposable
             "aria-describedby=\"on-hand-10003-error\"",
             answer.Body,
             "The Mock mugs row's field should be the one marked, naming its message.");
+    }
+
+    /// <summary>
+    /// Browser test to verify, in Edge, that Enter in a row's field, which names a form in another cell, sends that
+    /// form: the count is saved and the toast says so, with HTMX and with script off, when the browser posts the form
+    /// itself and follows the redirect back. The console reports no error.
+    /// </summary>
+    /// <param name="scripting">How much script the page runs, by its name in <see cref="Scripting"/>.</param>
+    [TestMethod]
+    [TestCategory("Browser")]
+    [DoNotParallelize]
+    [DataRow(nameof(Scripting.On), DisplayName = "With HTMX")]
+    [DataRow(nameof(Scripting.Off), DisplayName = "With script off")]
+    public async Task Enter_InARowsField_SavesWithThatRowsForm(string scripting)
+    {
+        // Arrange (Given)
+        Uri application = this._application.StartServerForBrowser();
+        BrowserSession edge = await BrowserSession.OpenAsync(application, Enum.Parse<Scripting>(scripting))
+            .ConfigureAwait(false);
+        await using (edge.ConfigureAwait(false))
+        {
+            IPage page = edge.Page;
+            await page.GotoAsync(Address).ConfigureAwait(false);
+            ILocator field = page.Locator("#on-hand-10003");
+            ILocator toast = page.Locator(".toast .message");
+
+            // Act (When)
+            await field.FillAsync("15").ConfigureAwait(false);
+            await field.PressAsync("Enter").ConfigureAwait(false);
+            await toast.WaitForAsync().ConfigureAwait(false);
+            string? said = await toast.TextContentAsync().ConfigureAwait(false);
+
+            // Assert (Then)
+            StockShelf shelf = this._application.Services.GetRequiredService<StockShelf>();
+            Assert.AreEqual(
+                ("Mock mugs: 15 on hand.", 15),
+                (said?.Trim(), shelf.Find(10003)?.OnHand),
+                "The count should be saved, and the toast say so.");
+            Assert.IsEmpty(
+                edge.ConsoleErrors,
+                "The console should report no error: " + string.Join(" | ", edge.ConsoleErrors));
+        }
     }
 
     /// <summary>
