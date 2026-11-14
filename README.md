@@ -155,6 +155,12 @@ Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pag
   the list, which listens with `hx-trigger="notes-changed from:document"`, asks for itself again at the page's own
   address and moves no keyboard. The form knows nothing of the list. A refused note raises nothing. Without HTMX the
   form posts and the redirect back draws the list as it is then.
+- **`/components/order-lines`** — an order of up to five lines, each a product and a quantity of 1 to 99, which says
+  what it received in a toast; it keeps nothing. A line's fields post with its position in their names,
+  `Input.Lines[1].Quantity`. **Add a line** and each line's **Remove** post the form to handlers of their own, which
+  clear ModelState and draw the lines again, numbered afresh: the lines alone with HTMX, the page without it. The new
+  line, or the line in the removed one's place, takes the keyboard. A refused order answers 422 with each wrong field
+  marked and its message under the lines, with its line's number.
 
 ## Sample data
 

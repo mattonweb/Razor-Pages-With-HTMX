@@ -1,0 +1,64 @@
+@model HTMX.Application.Web.Pages.Components.OrderLinesModel
+@using Microsoft.AspNetCore.Mvc.ModelBinding
+@*
+    The order's lines: a row for each, its product and its quantity, and Add after them. A line's fields post with its
+    position in their names, Input.Lines[1].Product, so they are written with asp-for, and the tag helpers mark a
+    wrong field and give the first the keyboard as they do any other. A field's message goes under the list, with its
+    line's number, since a row holds the fields side by side.
+
+    Add and Remove work as a list of plain values' do: submit buttons that post the whole form to handlers of their
+    own, which save nothing and draw the lines again, alone for HTMX (hx-post on the button, since HTMX ignores
+    formaction inside a form that says hx-post) and as the whole page without it (formaction). Being drawn again, the
+    lines are numbered afresh, from 0, after every Add and Remove. The new line, or the line now in the removed one's
+    place, says autofocus on its product. Remove is drawn only beside two lines or more; Add goes at the most lines.
+*@
+@{
+    OrderLineInput[] lines = Model.Input.Lines;
+    string? add = Url.Page("./OrderLines", "AddLine");
+    string? remove = Url.Page("./OrderLines", "RemoveLine");
+    bool several = lines.Length > 1;
+    ModelStateDictionary state = ViewData.ModelState;
+}
+<fieldset class="field wide" id="order-lines">
+    <legend>Lines</legend>
+    <ul class="field-rows">
+        @for (int i = 0; i < lines.Length; i++)
+        {
+            int number = i + 1;
+            <li>
+                <select asp-for="Input.Lines[i].Product" asp-items="OrderLinesModel.ProductOptions"
+                        aria-label="Product, line @number" autofocus="@(Model.FocusedLine == i)">
+                    <option value="">Choose a product</option>
+                </select>
+                <input asp-for="Input.Lines[i].Quantity" min="1" max="99" aria-label="Quantity, line @number" />
+                @if (several)
+                {
+                    <button class="btn ghost icon-only" type="submit" name="removeLine" value="@i"
+                            formaction="@remove" formnovalidate
+                            hx-post="@remove" hx-target="#order-lines" hx-swap="outerHTML"
+                            aria-label="Remove line @number"><svg class="icon" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button>
+                }
+            </li>
+        }
+    </ul>
+    @for (int i = 0; i < lines.Length; i++)
+    {
+        int number = i + 1;
+        bool wrong = state.GetFieldValidationState($"Input.Lines[{i}].Product") == ModelValidationState.Invalid
+            || state.GetFieldValidationState($"Input.Lines[{i}].Quantity") == ModelValidationState.Invalid;
+        if (wrong)
+        {
+            <p class="field-validation-error">
+                Line @number: <span asp-validation-for="Input.Lines[i].Product"></span>
+                <span asp-validation-for="Input.Lines[i].Quantity"></span>
+            </p>
+        }
+    }
+    @if (lines.Length < OrderLinesModel.MostLines)
+    {
+        <div>
+            <button class="btn ghost" type="submit" formaction="@add" formnovalidate
+                    hx-post="@add" hx-target="#order-lines" hx-swap="outerHTML"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>Add a line</button>
+        </div>
+    }
+</fieldset>

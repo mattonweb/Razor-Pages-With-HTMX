@@ -1,0 +1,28 @@
+@page "/components/order-lines"
+@model HTMX.Application.Web.Pages.Components.OrderLinesModel
+@{
+    ViewData["Title"] = "Order lines";
+    ViewData["Section"] = "Components";
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Order lines</span></li></ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Order lines</h1>
+    </div>
+    <p class="muted">
+        A form of lines, each a product and a quantity, which says what order it received. It keeps nothing.
+    </p>
+</header>
+
+@* The form's card is a partial: the page draws it here, and a refused order that HTMX sent gets it alone. *@
+<partial name="_OrderForm" model="Model" />
+
+@* An order received without HTMX is redirected back here, and the toast it left shows. *@
+@section Toasts {
+    @if (Model.Toast is Toast toast)
+    {
+        <partial name="_Toast" model="toast" />
+    }
+}
