@@ -1,0 +1,27 @@
+@model HTMX.Application.Web.Pages.Components.VisitorsRoomModel
+@using System.Globalization
+@*
+    The card that says the time, which Check again asks the room's own address for (hx-get), and which the room answers
+    HTMX with alone (outerHTML). Check again keeps its id, so HTMX gives the keyboard back to it.
+
+    Once the visitor has no pass, as after signing in again without one in another tab, that request meets the
+    sign-in's forbid before the handler runs. HTMX gets 204 and HX-Redirect naming the access-denied page, with this
+    page, from HX-Current-URL, as the address to come back to, and loads it with a reload. A redirect would put the
+    whole access-denied page inside this card: fetch follows a redirect itself. Without HTMX, Check again is a link to
+    this page, and the browser follows the redirect as it would anywhere.
+*@
+@{
+    string? self = Url.Page("./VisitorsRoom");
+    string now = Model.Now.ToString("T", CultureInfo.CurrentCulture);
+}
+<section class="card" id="room-card" aria-labelledby="room-card-heading">
+    <header class="card-header"><h2 id="room-card-heading">In the room with a pass</h2></header>
+    <div class="card-body">
+        <p>The server's time is <strong>@now</strong>.</p>
+        <p>Without a pass, Check again goes to the access-denied page.</p>
+        <p>
+            <a id="room-check" href="@self"
+               hx-get="@self" hx-target="#room-card" hx-swap="outerHTML">Check again</a>
+        </p>
+    </div>
+</section>

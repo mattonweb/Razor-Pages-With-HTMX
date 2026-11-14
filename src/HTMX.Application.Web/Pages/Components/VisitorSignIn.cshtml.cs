@@ -1,6 +1,7 @@
 namespace HTMX.Application.Web.Pages.Components;
 
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using HTMX.Application.Web.Authentication;
 using Microsoft.AspNetCore.Authentication;
@@ -9,8 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 /// <summary>
-/// The visitor's sign-in page, at /components/visitor-sign-in: a button that signs a pretend visitor in for thirty
-/// seconds, with no name or password, and goes back to the page that asked for a sign-in.
+/// The visitor's sign-in page, at /components/visitor-sign-in: two buttons that sign a pretend visitor in for thirty
+/// seconds, with no name or password, one of them with a pass, and go back to the page that asked for a sign-in.
 /// </summary>
 public sealed class VisitorSignInModel : PageModel
 {
@@ -37,6 +38,13 @@ public sealed class VisitorSignInModel : PageModel
     public string? ReturnUrl { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the visitor signs in with a pass: posted by the button that says so, as
+    /// its name and value, and missing from a post by the other.
+    /// </summary>
+    [BindProperty]
+    public bool Pass { get; set; }
+
+    /// <summary>
     /// Gets a value indicating whether the page's heading takes the focus: when HTMX loaded the whole page.
     /// </summary>
     public bool HeadingFocused { get; private set; }
@@ -50,16 +58,17 @@ public sealed class VisitorSignInModel : PageModel
     }
 
     /// <summary>
-    /// Signs the visitor in, until thirty seconds from now, and goes back to the page that asked: by a redirect
-    /// without HTMX, and with HTMX by asking it to load that page.
+    /// Signs the visitor in, until thirty seconds from now, with a pass when that button was pressed, in place of any
+    /// visitor signed in before, and goes back to the page that asked: by a redirect without HTMX, and with HTMX by
+    /// asking it to load that page.
     /// </summary>
     /// <returns>The redirect, or 204 with the page to load.</returns>
     public async Task<IActionResult> OnPostAsync()
     {
         DateTimeOffset ends = this._clock.GetUtcNow() + VisitorSignIn.Lifetime;
         AuthenticationProperties properties = new AuthenticationProperties { ExpiresUtc = ends };
-        await this.HttpContext.SignInAsync(VisitorSignIn.SchemeName, VisitorSignIn.Visitor(ends), properties)
-            .ConfigureAwait(false);
+        ClaimsPrincipal visitor = VisitorSignIn.Visitor(ends, this.Pass);
+        await this.HttpContext.SignInAsync(VisitorSignIn.SchemeName, visitor, properties).ConfigureAwait(false);
         string? returnUrl = this.ReturnUrl;
         string next = returnUrl is not null && this.Url.IsLocalUrl(returnUrl) ? returnUrl : DefaultPage;
         if (!HtmxHeaders.IsHtmxRequest(this.Request))

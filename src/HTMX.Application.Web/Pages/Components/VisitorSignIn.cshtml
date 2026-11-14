@@ -17,24 +17,27 @@
         <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Sign in as a visitor</h1>
     </div>
     <p class="muted">
-        The Sign-in expiry page needs a visitor. A visitor's sign-in asks for nothing, and lasts thirty seconds.
+        The Sign-in expiry page and the Visitors' room need a visitor. A visitor's sign-in asks for nothing, and lasts
+        thirty seconds; only a visitor with a pass may enter the Visitors' room.
     </p>
 </header>
 
 @*
     The form posts the address to come back to, which the sign-in's redirect put in the query string, as a hidden
     field. It is boosted, as every form is: with HTMX the answer is 204 and HX-Location naming that page, and without
-    it, a redirect there.
+    it, a redirect there. Its two buttons post the same form, and the one pressed sends its own name and value as
+    well: Pass=true for a sign-in with a pass. The browser does so, and HTMX too (4.0.1 source, #collectFormData).
 *@
 <section class="card" aria-labelledby="visitor-heading">
     <header class="card-header"><h2 id="visitor-heading">Sign in</h2></header>
     <form method="post" asp-page="./VisitorSignIn">
         <input type="hidden" asp-for="ReturnUrl" />
         <div class="card-body">
-            <p>Sign in as a visitor for thirty seconds.</p>
+            <p>Sign in as a visitor for thirty seconds, with a pass or without one.</p>
         </div>
         <div class="form-actions">
             <div class="end">
+                <button class="btn" type="submit" name="Pass" value="true">Sign in with a pass</button>
                 <button class="btn primary" type="submit">Sign in</button>
             </div>
         </div>

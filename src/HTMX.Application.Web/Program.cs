@@ -88,11 +88,12 @@ public sealed class Program
             DemoAuthenticationHandler.SchemeName,
             configureOptions: null);
 
-        // The Sign-in expiry page's own sign-in, a cookie that lasts thirty seconds, and the authorization that sends a
-        // request without it to the sign-in page. The Publishing policy, which the Not allowed page asks before it
-        // offers or runs an action that publishes, is met for the users the Publishing permission page says may.
+        // The visitors' own sign-in, a cookie that lasts thirty seconds, and the authorization that sends a request
+        // without it to the sign-in page, and a visitor without a pass from the Visitors' room to the access-denied
+        // page. The Publishing policy, which the Not allowed page asks before it offers or runs an action that
+        // publishes, is met for the users the Publishing permission page says may.
         authentication.AddCookie(VisitorSignIn.SchemeName, VisitorSignIn.Configure);
-        services.AddAuthorization(PublishingPolicy.Configure);
+        services.AddAuthorization(AddPolicies);
         services.AddSingleton<Publishers>();
         services.AddSingleton<IAuthorizationHandler, PublishingHandler>();
 
@@ -112,6 +113,16 @@ public sealed class Program
         services.AddSingleton<StockShelf>();
         services.AddSingleton<NoticeBoard>();
         services.AddSingleton<ArticleDesk>();
+    }
+
+    /// <summary>
+    /// Adds the application's authorization policies: the Publishing policy, and the Visitors' room's pass.
+    /// </summary>
+    /// <param name="options">The application's authorization options.</param>
+    private static void AddPolicies(AuthorizationOptions options)
+    {
+        PublishingPolicy.Configure(options);
+        VisitorPassPolicy.Configure(options);
     }
 
     /// <summary>

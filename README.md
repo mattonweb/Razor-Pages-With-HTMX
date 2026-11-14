@@ -173,11 +173,17 @@ need Microsoft Edge installed; on a machine without it, leave them out with `--f
   `RequestVerificationToken` header through `hx-headers:inherited`. Without HTMX nothing marks itself, and **Mark all
   as seen** and **Mark all as new** are forms that work either way.
 - **`/components/sign-in-expiry`** — a page only a signed-in visitor may see, with a card whose **Check again** asks
-  the server for the time with `hx-get`. The visitor signs in at `/components/visitor-sign-in` with one button, for
-  thirty seconds that do not slide, through a cookie scheme of its own beside the Demo sign-in. Once the sign-in has
-  expired, the browser on its own is redirected to the sign-in page, and HTMX gets 204 and `HX-Redirect` instead, so
-  that it loads the sign-in page with a reload rather than drawing it inside the card; either way the sign-in comes
-  back to the page, and only to a page of this site.
+  the server for the time with `hx-get`. The visitor signs in at `/components/visitor-sign-in`, with a pass or
+  without one, for thirty seconds that do not slide, through a cookie scheme of its own beside the Demo sign-in. Once
+  the sign-in has expired, the browser on its own is redirected to the sign-in page, and HTMX gets 204 and
+  `HX-Redirect` instead, so that it loads the sign-in page with a reload rather than drawing it inside the card;
+  either way the sign-in comes back to the page, and only to a page of this site.
+- **`/components/visitors-room`** — a page only a visitor signed in with a pass may see, by a policy that names the
+  visitor's cookie sign-in, with a card whose **Check again** asks the server for the time. The sign-in page's
+  **Sign in with a pass** posts `Pass=true` as its own name and value, with HTMX or without it. A visitor who signs in
+  again without a pass, in another tab, is refused before the page's handler runs: the browser on its own is
+  redirected to `/components/visitor-access-denied`, and HTMX gets 204 and `HX-Redirect` instead, so that it loads
+  that page with a reload rather than drawing it inside the card. Its **Sign in again** comes back to the room.
 - **`/components/not-allowed`** — three invented articles on one desk shared by everyone, each row with **Publish**
   or **Unpublish** for a user the Publishing policy lets publish. Its authorization handler reads who may publish on
   every request, and the page asks the policy as it draws the list, so it offers only what the user may do.
@@ -234,8 +240,8 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   drive the installed Microsoft Edge, headless, with Playwright (Microsoft.Playwright 1.64.1), so no browser is
   downloaded. Each checks the console for errors and runs on its own, and some run again without HTMX's script or
   with script off: the keyboard after Remove on Order lines, Enter in a Stock table row, notices marked seen as they
-  scroll into view, a boosted link and Back, a filter typed again while the first answer is held back, and Publish
-  refused once the permission was withdrawn.
+  scroll into view, a boosted link and Back, a filter typed again while the first answer is held back, Publish
+  refused once the permission was withdrawn, and the Visitors' room's Check again once the visitor has no pass.
 - **Look:** the HTMLX Pages brand. Its stylesheets and icon sprite were copied from
   `.claude/skills/brand-htmlx-pages/assets/` into `wwwroot`, and the pages use its components' markup. The home page's
   robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from

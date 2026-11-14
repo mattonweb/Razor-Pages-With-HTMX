@@ -1,0 +1,32 @@
+@page "/components/visitor-access-denied"
+@model HTMX.Application.Web.Pages.Components.VisitorAccessDeniedModel
+@{
+    ViewData["Title"] = "Access denied";
+    ViewData["Section"] = "Components";
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Access denied</span></li></ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Access denied</h1>
+    </div>
+    <p class="muted">The page you asked for needs something your visitor's sign-in does not have.</p>
+</header>
+
+@*
+    The visitor's sign-in sends a visitor here who may not see the page they asked for: the browser on its own by a
+    redirect, and HTMX by HX-Redirect, which it loads with a reload. Sign in again passes the refused page on to the
+    sign-in page, which checks that it is a page of this site before it goes back there.
+*@
+<section class="card" aria-labelledby="denied-heading">
+    <header class="card-header"><h2 id="denied-heading">A pass is needed</h2></header>
+    <div class="card-body">
+        <p>Only a visitor signed in with a pass may enter the Visitors' room. Sign in again with a pass to go back.</p>
+    </div>
+    <div class="form-actions">
+        <div class="end">
+            <a class="btn primary" asp-page="./VisitorSignIn" asp-route-ReturnUrl="@Model.ReturnUrl">Sign in again</a>
+        </div>
+    </div>
+</section>

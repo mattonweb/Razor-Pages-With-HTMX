@@ -85,7 +85,7 @@ public sealed class SignInExpiryModelTests
         FakeTimeProvider clock = new FakeTimeProvider(Now);
         clock.SetLocalTimeZone(TimeZoneInfo.Utc);
         PageContext context = PageRequests.Create(kind, "/Components/SignInExpiry");
-        context.HttpContext.User = VisitorSignIn.Visitor(Ends);
+        context.HttpContext.User = VisitorSignIn.Visitor(Ends, pass: false);
         return new SignInExpiryModel(clock)
         {
             PageContext = context,

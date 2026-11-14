@@ -8,26 +8,55 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 
 /// <summary>
-/// What a cookie sign-in answers when a request needs a signed-in user and has none, as when the sign-in has expired:
-/// for the browser on its own, a redirect to the sign-in page; for HTMX, a request to load that page with a reload.
+/// What a cookie sign-in answers when a request needs a signed-in user and has none, as when the sign-in has expired,
+/// or has one who may not see what the request asks for: for the browser on its own, a redirect to the sign-in page or
+/// the access-denied page; for HTMX, a request to load that page with a reload.
 /// </summary>
 /// <remarks>
-/// A redirect is wrong for HTMX. <c>fetch</c> follows it itself, so HTMX gets the sign-in page as the answer and swaps
-/// it into the part of the page that sent the request: a whole page inside a card. And a sign-in page on another site
-/// cannot be fetched at all. So HTMX gets 204 and <c>HX-Redirect</c>, which it follows with a full page load.
+/// A redirect is wrong for HTMX. <c>fetch</c> follows it itself, so HTMX gets the sign-in or access-denied page as the
+/// answer and swaps it into the part of the page that sent the request: a whole page inside a card. And a page on
+/// another site cannot be fetched at all. So HTMX gets 204 and <c>HX-Redirect</c>, which it follows with a full page
+/// load.
 /// </remarks>
 public static class HtmxCookieEvents
 {
     /// <summary>
-    /// Sends the request to the sign-in page. For HTMX the return address is the page the user was on when HTMX asked
-    /// for part of it, which HTMX names in <c>HX-Current-URL</c>, rather than the address of the part; for a whole
-    /// page, as a boosted link or Back asks for, it is that page.
+    /// Sends a request with no signed-in user to the sign-in page. For HTMX the return address is the page the user was
+    /// on when HTMX asked for part of it, which HTMX names in <c>HX-Current-URL</c>, rather than the address of the
+    /// part; for a whole page, as a boosted link or Back asks for, it is that page.
     /// </summary>
     /// <param name="context">The cookie sign-in's redirect, with its options and the address it would send.</param>
     /// <returns>A task that is already complete.</returns>
     public static Task RedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)
     {
         ArgumentNullException.ThrowIfNull(context);
+        CookieAuthenticationOptions options = context.Options;
+        return SendTo(context, options.LoginPath);
+    }
+
+    /// <summary>
+    /// Sends a request whose signed-in user may not see the page it asks for to the access-denied page, as when the
+    /// user has lost a permission since the page they are on was drawn. The return address is chosen as for the
+    /// sign-in page, so that the access-denied page can offer to sign in as someone who may.
+    /// </summary>
+    /// <param name="context">The cookie sign-in's redirect, with its options and the address it would send.</param>
+    /// <returns>A task that is already complete.</returns>
+    public static Task RedirectToAccessDenied(RedirectContext<CookieAuthenticationOptions> context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        CookieAuthenticationOptions options = context.Options;
+        return SendTo(context, options.AccessDeniedPath);
+    }
+
+    /// <summary>
+    /// Sends the request to a page of the sign-in's: by the redirect the sign-in built for the browser on its own, and,
+    /// for HTMX, by 204 and <c>HX-Redirect</c> naming the page, with the page the user was on as its return address.
+    /// </summary>
+    /// <param name="context">The cookie sign-in's redirect.</param>
+    /// <param name="page">The page's path: the sign-in page or the access-denied page.</param>
+    /// <returns>A task that is already complete.</returns>
+    private static Task SendTo(RedirectContext<CookieAuthenticationOptions> context, PathString page)
+    {
         HttpRequest request = context.Request;
         HttpResponse response = context.Response;
         if (!HtmxHeaders.IsHtmxRequest(request))
@@ -41,7 +70,7 @@ public static class HtmxCookieEvents
         CookieAuthenticationOptions options = context.Options;
         QueryString returnTo = QueryString.Create(options.ReturnUrlParameter, current ?? requested);
         response.StatusCode = StatusCodes.Status204NoContent;
-        HtmxHeaders.LoadPageWithReload(response, request.PathBase + options.LoginPath + returnTo);
+        HtmxHeaders.LoadPageWithReload(response, request.PathBase + page + returnTo);
         return Task.CompletedTask;
     }
 }
