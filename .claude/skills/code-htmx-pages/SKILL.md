@@ -112,7 +112,13 @@ The HTMX package ships an upgrade checker that lists HTMX 2 attributes and event
 package, `dist/scripts/upgrade-check.py`, which uses Python's standard library alone and only reads, so with Python
 and no Node the script runs on its own: `python upgrade-check.py --ext .cshtml <folder>`. Its default file types
 are `.html`, `.php`, `.js`, `.ts`, `.jinja`, `.jinja2`, `.j2`, `.erb` and `.hbs`, which leave out Razor, and
-`--ext .cshtml` adds it (read in the 4.0.1 package). Not yet run on a Razor project.
+`--ext .cshtml` adds it to them (read in the 4.0.1 package). On Windows, with its output going to a file or a pipe,
+it needs `python -X utf8`, or it stops at its first report, unable to write the arrow in it. Tried on a Razor
+application written for 4.0.1: none of its 18 reports was a fault. Fifteen asked for `hx-disable` to become
+`hx-ignore`, though each was 4's `hx-disable`, which the checker cannot tell from 2's; following them would turn
+HTMX off for each form they name. Three asked for `:inherited` on an `hx-target` or `hx-swap` whose descendants name
+their own. It reads the markup as written, so an attribute Razor writes only some of the time counts as always
+there. On code already written for 4, its reports are a list to read, not to apply.
 
 ## 2. Loading HTMX
 
