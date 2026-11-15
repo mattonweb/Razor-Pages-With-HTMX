@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests, integration tests that run the whole application, and browser tests that drive Edge with Playwright three ways, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy with a nonce for each response and Trusted Types, which HTMX needs nothing relaxed in, and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, rows that hold several fields, numbered afresh by each Add and Remove with ModelState cleared, a request with no form around it, from a field tied to a form in another table cell by the form attribute or with the antiforgery token in a header from hx-headers on a container in the page, a request whose sign-in has expired, sent to sign in with HX-Redirect and back to the page HX-Current-URL names, an action the user may no longer take, refused with 403, the target drawn as the user may now use it and a toast, a page the user may not see, sent to the access-denied page with HX-Redirect by the cookie sign-in's event, a form with a file, which keeps the chosen file across a refused save with hx-preserve and shows how much has gone, sent by the application's script through ctx.fetch, a job whose card polls its progress until it has finished, a list that grows by Load more with the address saying how many rows show, and one that grows as its last row comes into view, moving no keyboard, saying what came in a status line, with nothing under it, an element that reloads itself when an answer's HX-Trigger says something changed, and the pattern still open (a confirmation page for a browser without invoker commands). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.36.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests, integration tests that run the whole application, and browser tests that drive Edge with Playwright three ways, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy with a nonce for each response and Trusted Types, which HTMX needs nothing relaxed in, and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, rows that hold several fields, numbered afresh by each Add and Remove with ModelState cleared, a request with no form around it, from a field tied to a form in another table cell by the form attribute or with the antiforgery token in a header from hx-headers on a container in the page, a request whose sign-in has expired, sent to sign in with HX-Redirect and back to the page HX-Current-URL names, an action the user may no longer take, refused with 403, the target drawn as the user may now use it and a toast, a page the user may not see, sent to the access-denied page with HX-Redirect by the cookie sign-in's event, a form with a file, which keeps the chosen file across a refused save with hx-preserve and shows how much has gone, sent by the application's script through ctx.fetch, a job whose card polls its progress until it has finished, a list that grows by Load more with the address saying how many rows show, and one that grows as its last row comes into view, moving no keyboard, saying what came in a status line, with nothing under it, an element that reloads itself when an answer's HX-Trigger says something changed, and an action behind a dialog that a browser without invoker commands reaches through a confirmation page, its link swapped for the dialog's button where the browser can use it. Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.37.0
 visibility: public
 ---
 
@@ -14,9 +14,9 @@ in step. It is written for HTMX 4.0.1 and ASP.NET Core 10, and every sentence is
 application on those versions, not only the one it was built in; how one application uses HTMX belongs in its own
 code, tests and README.
 
-The evidence differs by part. The patterns in sections 2 to 27 have been built and tried in a browser; where a
+The evidence differs by part. The patterns in sections 2 to 28 have been built and tried in a browser; where a
 section also covers a case that was not built, such as output caching, its citation is the only evidence.
-Section 1's rows were read in the source and the reference, not all built, and nothing in section 28 is built.
+Section 1's rows were read in the source and the reference, not all built, and nothing in section 29 is built.
 Every HTMX fact cites the reference page or the 4.0.1 source method it came from, and the two kinds of citation
 carry different weight. A reference page is what HTMX documents. A method in the 4.0.1 source is what that release
 happens to do: the method is private, a later release may change it, and section 2 checks each one again before
@@ -40,7 +40,8 @@ Every section below applies these, and says why where it does.
   `<dialog>`, popovers and invoker commands (`commandfor` and `command`), which current browsers have all had only
   since December 2025 ([Invoker Commands API](https://developer.mozilla.org/docs/Web/API/Invoker_Commands_API)). On
   an older browser a button that opens a dialog does nothing, so the action behind it cannot be reached, though it
-  cannot be skipped either. Which browsers a repository supports is its own decision, stated in its README.
+  cannot be skipped either. Which browsers a repository supports is its own decision, stated in its README; one that
+  must reach older browsers opens such a dialog from a link to a page that asks the same question (section 28).
 - **The address holds the view.** Everything that decides what a page shows, such as a list's filter, sort and place,
   is in its URL, and that URL loads the whole page on its own. HTMX pushes it into the history, Back and Forward
   fetch it again, and an action on the page posts to it and reads it again (sections 4, 5 and 9). Session state holds
@@ -665,8 +666,8 @@ not, and the list afterwards, with a toast.
   ([hx-confirm](https://four.htmx.org/reference/attributes/hx-confirm)), after a cancelable `htmx:confirm` event,
   and only when HTMX sends the request (4.0.1 source, `#issueRequest`), so without HTMX the form posts unasked. A
   `<dialog>` opened by a `type="button"` with `commandfor` and `command="show-modal"` asks with HTMX and without it,
-  and its form posts like any other (section 7). The safe choice says `autofocus`, which a modal dialog focuses as it
-  opens (HTML's
+  and its form posts like any other (section 7); on a browser without invoker commands, section 28 reaches the same
+  form through a page. The safe choice says `autofocus`, which a modal dialog focuses as it opens (HTML's
   [dialog focusing steps](https://html.spec.whatwg.org/multipage/interactive-elements.html#dialog-focusing-steps)),
   so a key pressed at once does no harm.
 - **A dialog opened from a menu gives the keyboard back to the menu's button.** A modal dialog that closes gives the
@@ -1477,15 +1478,46 @@ A list like section 20's that also loads its next rows as its last row comes int
   with the keyboard still on row 11 and the status line saying so. Unit tests check the two kinds of load, and
   integration tests check which rows ask for more and what each kind of load answers.
 
-## 28. Still open
+## 28. An action behind a dialog, on any browser
 
-Nothing in this section is built yet, so none of it is a rule. What is known, to start from; an idea taken from the
-workshop names its chapter.
+The confirm dialog of section 11 or 12 on a browser without invoker commands, which current browsers have all had
+only since December 2025, where a repository must reach such browsers too.
 
-- **A confirmation page for a browser without invoker commands.** A link to a page the server draws, holding the
-  dialog's form, would reach an action behind a dialog on any browser and still give a chance to look before acting.
-  A page cannot offer the link to one browser and the dialog to another without script, so where that line falls is
-  not yet worked out.
+- **The opener is a link to a page that asks the same question.** A link works on every browser, with script or
+  without it. It leads to the action's confirmation page, which the server draws: the dialog's question as a page of
+  its own, with a form that posts to the same handler and Cancel as a link back. The handler answers that form as it
+  answers any request not sent to swap part of the page: a redirect back, with the toast waiting in `TempData`
+  (section 8). Boosted, HTMX follows the redirect and draws the list as the page.
+- **The dialog's button waits in a `<template>` beside the link.** It is the `type="button"` with `commandfor` and
+  `command="show-modal"` that section 11 draws, with the link's `id` and classes, so that one taking the other's
+  place moves nothing on the screen. A template's content is inert markup (section 14): the page never holds both
+  openers live, and a browser that cannot use the button never meets it.
+- **The application's script draws the line.** Only script can tell whether the browser has invoker commands:
+  `"commandForElement" in HTMLButtonElement.prototype`. Where it does, the script puts each button in its link's
+  place, as the page loads and after each swap (`htmx:after:swap`), which brings links again; when the link had the
+  keyboard, as after a delete whose answer marks the next row's opener `autofocus` (section 12), the button takes
+  it. Everywhere else the link stays. So the dialog needs script and invoker commands both, and the page neither;
+  either way the question is asked before anything is done, so an action that cannot be undone is never taken
+  unasked, on any browser.
+- **A confirmation page for something already gone says so**, with 404 and a link back, as when the list was left
+  open in another tab; a delete posted for it says so in its toast.
+- **A repository that supports only browsers with invoker commands needs none of this**, and says so in its README
+  (Principles). The link is for one that must reach older browsers, or wants the action within reach with script
+  off on any browser.
+- **Tried in a browser**, Chromium 156: the links became buttons as the page loaded; Delete opened its dialog with
+  the keyboard on Cancel, Cancel gave the keyboard back to Delete, and Delete permanently took the row out with the
+  keyboard on the next row's Delete, the button the script had put in place; a file's confirmation page posted to
+  the same Delete, and HTMX drew the list it was redirected to, with its toast; a file already gone got the page
+  saying so, with 404. In headless Edge, through browser tests (section 6): with invoker commands the dialog asked;
+  with the property the script looks for taken away before the page's scripts ran, as in a browser from before
+  December 2025, and with script off, Delete stayed a link, and the confirmation page asked and deleted. Unit tests
+  check the handlers and the confirmation page, and integration tests check the markup and run the page's form
+  through the whole application.
+
+## 29. Still open
+
+Nothing is open now. A pattern not yet built and tried goes here, with what is known about it, and none of it is a
+rule until it is built.
 
 ## References
 
