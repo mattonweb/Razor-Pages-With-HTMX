@@ -138,7 +138,9 @@ need Microsoft Edge installed; on a machine without it, leave them out with `--f
   HTMX sends it as it is. The handler tells the file's kind by its first bytes, not its name. A form refused for its
   title keeps the chosen file: with HTMX the answer's file input says `hx-preserve`, and HTMX keeps the one on the
   page; without HTMX the page asks for the file again. The page caps a request at 10 MB: a larger one is refused before
-  it is read, and the browser sees the connection lost.
+  it is read, and the browser sees the connection lost. HTMX 4 sends with `fetch`, which reports no upload progress,
+  so `app.js` sends this form itself, with `XMLHttpRequest`, through the `ctx.fetch` HTMX sends each request with,
+  and fills in a progress bar that is hidden until then; HTMX does the rest as before.
 - **`/components/long-job`** — a pretend job that takes ten seconds, a step a second, counted from when it started.
   **Start the job** goes to the job's own address, `?job=10001`: by a redirect without HTMX, and with HTMX by the job's
   card and `HX-Push-Url`. While the job runs, the card polls that address every second (`hx-trigger="every 1s"`) and
@@ -242,7 +244,8 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   with script off: the keyboard after Remove on Order lines, Enter in a Stock table row, notices marked seen as they
   scroll into view, a boosted link and Back, a filter typed again while the first answer is held back, Publish
   refused once the permission was withdrawn, the Visitors' room's Check again once the visitor has no pass, and an
-  answer that holds a script, swapped in without running it.
+  answer that holds a script, swapped in without running it, and a file sent over a slowed connection, whose
+  progress bar shows part of it gone.
 - **Look:** the HTMLX Pages brand. Its stylesheets and icon sprite were copied from
   `.claude/skills/brand-htmlx-pages/assets/` into `wwwroot`, and the pages use its components' markup. The home page's
   robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from

@@ -1,6 +1,7 @@
 // The script the application keeps. The menu button switches the side nav between its full width and an icon rail,
 // a toast goes when Dismiss is pressed or when it has faded out, a dialog opened from a menu gives the keyboard back
-// to the menu's button, and a request HTMX sends that fails says so in a toast. Every listener is on the document
+// to the menu's button, a request HTMX sends that fails says so in a toast, and a form that sends a file shows how
+// much of it has gone. Every listener is on the document
 // rather than on an element, because when the back button restores a page, HTMX swaps in a new body and with it new
 // elements.
 (() => {
@@ -104,6 +105,80 @@
   document.addEventListener("htmx:error", (event) => {
     if (event.detail.ctx) {
       fail(event.detail.ctx);
+    }
+  });
+
+  // A form that sends a file says how much of it has gone, which HTMX 4 cannot: it sends with fetch, which reports
+  // nothing of an upload. HTMX sends each request through ctx.fetch, the browser's fetch unless a listener of
+  // htmx:before:request has put another there (4.0.1 source, #issueRequest). For a form that holds an element marked
+  // data-upload-progress, around a <progress>, the request goes by XMLHttpRequest instead, whose upload reports its
+  // progress, and HTMX gets a Response, as fetch would give it: rejected with a TypeError when the connection fails,
+  // and with an AbortError when HTMX gives the request up, as at its timeout. HTMX does everything else as before:
+  // the headers, the queue, the timeout, the busy button and the swap. The element is hidden until the upload starts,
+  // so without script or without HTMX it never shows, and the browser reports the upload itself.
+  const statusesWithoutBody = [101, 204, 205, 304];
+
+  const responseOf = (xhr) => {
+    const headers = new Headers();
+    for (const line of xhr.getAllResponseHeaders().split("\r\n")) {
+      const colon = line.indexOf(":");
+      if (colon > 0) {
+        headers.append(line.slice(0, colon), line.slice(colon + 1).trim());
+      }
+    }
+
+    const body = statusesWithoutBody.includes(xhr.status) ? null : xhr.responseText;
+    const response = new Response(body, { status: xhr.status, statusText: xhr.statusText, headers });
+    Object.defineProperty(response, "url", { value: xhr.responseURL });
+    return response;
+  };
+
+  const sendWithProgress = (url, request, progress) => new Promise((resolve, reject) => {
+    const givenUp = () => new DOMException("The request was given up.", "AbortError");
+    if (request.signal.aborted) {
+      reject(givenUp());
+      return;
+    }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open(request.method, url);
+    for (const [name, value] of Object.entries(request.headers)) {
+      xhr.setRequestHeader(name, value);
+    }
+
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        progress.value = event.loaded / event.total;
+      }
+    });
+    xhr.addEventListener("load", () => resolve(responseOf(xhr)));
+    xhr.addEventListener("error", () => reject(new TypeError("The connection failed.")));
+    xhr.addEventListener("abort", () => reject(givenUp()));
+    request.signal.addEventListener("abort", () => xhr.abort(), { once: true });
+    xhr.send(request.body);
+  });
+
+  const uploadProgressOf = (ctx) =>
+    ctx.sourceElement.closest("form")?.querySelector("[data-upload-progress]");
+
+  document.addEventListener("htmx:before:request", (event) => {
+    const { ctx } = event.detail;
+    const shown = uploadProgressOf(ctx);
+    const progress = shown?.querySelector("progress");
+    if (!progress || !(ctx.request.body instanceof FormData)) {
+      return;
+    }
+
+    progress.value = 0;
+    shown.hidden = false;
+    ctx.fetch = (url, request) => sendWithProgress(url, request, progress);
+  });
+
+  // The answer replaces the form, its progress with it; a request that failed leaves the form, so it hides again.
+  document.addEventListener("htmx:finally:request", (event) => {
+    const shown = uploadProgressOf(event.detail.ctx);
+    if (shown) {
+      shown.hidden = true;
     }
   });
 })();
