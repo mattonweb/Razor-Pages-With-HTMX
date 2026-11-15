@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests, integration tests that run the whole application, and browser tests that drive Edge with Playwright three ways, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy with a nonce for each response and Trusted Types, which HTMX needs nothing relaxed in, and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, rows that hold several fields, numbered afresh by each Add and Remove with ModelState cleared, a request with no form around it, from a field tied to a form in another table cell by the form attribute or with the antiforgery token in a header from hx-headers on a container in the page, a request whose sign-in has expired, sent to sign in with HX-Redirect and back to the page HX-Current-URL names, an action the user may no longer take, refused with 403, the target drawn as the user may now use it and a toast, a page the user may not see, sent to the access-denied page with HX-Redirect by the cookie sign-in's event, a form with a file, which keeps the chosen file across a refused save with hx-preserve, a job whose card polls its progress until it has finished, a list that grows by Load more with the address saying how many rows show, an element that reloads itself when an answer's HX-Trigger says something changed, and the patterns still open (progress for a large upload, loading as the list scrolls). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.34.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests, integration tests that run the whole application, and browser tests that drive Edge with Playwright three ways, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy with a nonce for each response and Trusted Types, which HTMX needs nothing relaxed in, and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, rows that hold several fields, numbered afresh by each Add and Remove with ModelState cleared, a request with no form around it, from a field tied to a form in another table cell by the form attribute or with the antiforgery token in a header from hx-headers on a container in the page, a request whose sign-in has expired, sent to sign in with HX-Redirect and back to the page HX-Current-URL names, an action the user may no longer take, refused with 403, the target drawn as the user may now use it and a toast, a page the user may not see, sent to the access-denied page with HX-Redirect by the cookie sign-in's event, a form with a file, which keeps the chosen file across a refused save with hx-preserve and shows how much has gone, sent by the application's script through ctx.fetch, a job whose card polls its progress until it has finished, a list that grows by Load more with the address saying how many rows show, an element that reloads itself when an answer's HX-Trigger says something changed, and the patterns still open (loading as the list scrolls, a confirmation page for a browser without invoker commands). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.35.0
 visibility: public
 ---
 
@@ -394,7 +394,9 @@ public static class HtmxHeaders
 - **It holds answers back.** A route handler that waits before `ContinueAsync` holds a request's answer, and
   `IPage.RequestFailed` names the requests the page gave up. Tried: a filter typed twice while the first answer was
   held passed with the list's `hx-sync:inherited="this:replace"` (section 4), and failed with it taken out, since
-  HTMX's own queue waits for the held answer instead of giving it up.
+  HTMX's own queue waits for the held answer instead of giving it up. A request that must take time, such as an
+  upload whose progress is under test (section 18), is slowed through the browser's own network emulation:
+  `Network.emulateNetworkConditions`, with an `uploadThroughput`, on a session from `NewCDPSessionAsync`.
 - **Browser tests run one at a time.** Eight at once, each starting Edge and the application, slowed one another past
   five-second waits; alone, each takes about five seconds. So each says `[DoNotParallelize]`, and
   `[TestCategory("Browser")]`, which a run on a machine without Edge leaves out with
@@ -1114,16 +1116,34 @@ A form that sends a file, such as a document with its title.
   `#restorePreservedElements`). When the file itself was wrong, the answer leaves the attribute off, and the new
   input, empty and marked, replaces it. Without HTMX the whole page comes back without the file, so the field says to
   choose it again, in a hint its input names in `aria-describedby`.
-- **HTMX 4.0.1 reports no upload progress.** It sends with `fetch`, which raises no upload progress events, and has no
-  event of its own for it, so the form shows only the busy state of its submit button (`hx-indicator`, section 7).
+- **HTMX 4.0.1 reports no upload progress, so the application's script sends the form.** HTMX sends with `fetch`,
+  which raises no upload progress events, and has no event of its own for it
+  ([File Upload](https://four.htmx.org/patterns/file-upload)). But it sends each request through `ctx.fetch`, the
+  browser's `fetch` unless a listener of `htmx:before:request` has put another there (4.0.1 source, `#issueRequest`).
+  So the application's script, listening for that event on `document`, gives a form that holds a progress bar a
+  function that sends the same request with `XMLHttpRequest`, whose `upload` raises `progress`. It resolves with a
+  `Response` built from the status, the headers and the text, its `url` the address the request ended at, and it
+  rejects with a `TypeError` when the connection fails and with an `AbortError` when the request's `signal` aborts,
+  as HTMX's timeout does, so section 14's toasts tell the same failures apart. HTMX does everything else as before:
+  the headers, the queue, the timeout, the busy button (section 7) and the swap.
+- **The bar is hidden until the upload starts.** A `<progress>` with its `<label>` sits in a container that says
+  `hidden`, with no class, since a class that sets `display` would show it anyway. The script shows it as it sends,
+  and hides it again when the request fails; an answer that replaces the form draws it hidden again. Without script,
+  or without HTMX, it never shows, and the browser reports the upload itself. The toast says when the file arrived.
+- **A long upload meets HTMX's timeout.** HTMX gives a request up after 60 seconds (section 1), however much of the
+  file has gone. A form whose uploads may take longer gives its request a timeout of its own, through `hx-config`,
+  which sets the request's `timeout` (4.0.1 source, `#createRequestContext` and `#initTimeout`). Not tried.
 - **A file received answers as a save does.** Without HTMX it is a redirect back to the page, with a toast in
   TempData; with HTMX it is the form, empty again, its first field taking the keyboard, and the toast in an
   `<hx-partial>` (section 8).
 - **Tried in a browser**, Chromium 156. With HTMX: a form refused for its title kept the same file input, file and
   all, and put the keyboard on the title; a text file named `.png` and a 1.5 MB file were refused under the field,
   the input emptied and marked; a 12 MB file, over the cap, lost the connection. Without HTMX's script, a refused
-  form came back asking for the file again, and a received one redirected with its toast. Integration tests post a
-  file as multipart, with a title and without one (section 6).
+  form came back asking for the file again, and a received one redirected with its toast. With the application's
+  script sending the form, a refused one and a received one answered as before, and a 12 MB file lost the connection
+  once about 2% of it had gone, with section 14's toast and the bar hidden again. Integration tests post a file as
+  multipart, with a title and without one, and a browser test sends a 600 KB file over a connection slowed to 300 KB
+  a second and finds the bar between none and all of the file; with HTMX's own `fetch`, it never moved (section 6).
 
 ## 19. A job that reports its progress by polling
 
@@ -1424,9 +1444,6 @@ another tab.
 Nothing in this section is built yet, so none of it is a rule. What is known, to start from; an idea taken from the
 workshop names its chapter.
 
-- **Progress for a large upload (section 18).** `XMLHttpRequest` reports upload progress and `fetch` does not, so a
-  progress bar needs the form sent by something other than HTMX 4's own request, such as an extension or the
-  application's script. Not yet tried.
 - **Loading as the list scrolls (section 20).** `hx-trigger="revealed"` on the last row would load the next rows
   as it comes into view; HTMX 4 still has it, firing once, where `intersect` fires each time (4.0.1 source,
   `#onTrigger`). It would have to answer again what section 20's button settles: where the keyboard goes, how a
