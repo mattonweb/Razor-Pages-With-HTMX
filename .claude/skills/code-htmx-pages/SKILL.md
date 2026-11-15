@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
 description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests, integration tests that run the whole application, and browser tests that drive Edge with Playwright three ways, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy with a nonce for each response and Trusted Types, which HTMX needs nothing relaxed in, and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, rows that hold several fields, numbered afresh by each Add and Remove with ModelState cleared, a request with no form around it, from a field tied to a form in another table cell by the form attribute or with the antiforgery token in a header from hx-headers on a container in the page, a request whose sign-in has expired, sent to sign in with HX-Redirect and back to the page HX-Current-URL names, an action the user may no longer take, refused with 403, the target drawn as the user may now use it and a toast, a page the user may not see, sent to the access-denied page with HX-Redirect by the cookie sign-in's event, a form with a file, which keeps the chosen file across a refused save with hx-preserve and shows how much has gone, sent by the application's script through ctx.fetch, a job whose card polls its progress until it has finished, a list that grows by Load more with the address saying how many rows show, and one that grows as its last row comes into view, moving no keyboard, saying what came in a status line, with nothing under it, an element that reloads itself when an answer's HX-Trigger says something changed, and an action behind a dialog that a browser without invoker commands reaches through a confirmation page, its link swapped for the dialog's button where the browser can use it. Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.37.0
+version: 0.38.0
 visibility: public
 ---
 
@@ -15,7 +15,8 @@ application on those versions, not only the one it was built in; how one applica
 code, tests and README.
 
 The evidence differs by part. The patterns in sections 2 to 28 have been built and tried in a browser; where a
-section also covers a case that was not built, such as output caching, its citation is the only evidence.
+section also covers a case that was not built, its citation is the only evidence, unless the section says it was
+tried, as output caching was, in a change made for the purpose and taken out again.
 Section 1's rows were read in the source and the reference, not all built, and nothing in section 29 is built.
 Every HTMX fact cites the reference page or the 4.0.1 source method it came from, and the two kinds of citation
 carry different weight. A reference page is what HTMX documents. A method in the 4.0.1 source is what that release
@@ -107,8 +108,11 @@ submit button pressed still posts its own `name` and `value` with its form, as t
 post one form two ways (4.0.1 source, `#collectFormData`; tried with a sign-in's two buttons, section 26).
 
 The HTMX package ships an upgrade checker that lists HTMX 2 attributes and event names in a folder of templates:
-`npx htmx.org@<version> upgrade-check -- <folder>`. Its default file types leave out Razor; `--ext .cshtml` adds it.
-Not yet tried on a Razor project.
+`npx htmx.org@<version> upgrade-check -- <folder>`. That command is a Node wrapper around a Python script in the same
+package, `dist/scripts/upgrade-check.py`, which uses Python's standard library alone and only reads, so with Python
+and no Node the script runs on its own: `python upgrade-check.py --ext .cshtml <folder>`. Its default file types
+are `.html`, `.php`, `.js`, `.ts`, `.jinja`, `.jinja2`, `.j2`, `.erb` and `.hbs`, which leave out Razor, and
+`--ext .cshtml` adds it (read in the 4.0.1 package). Not yet run on a Razor project.
 
 ## 2. Loading HTMX
 
@@ -168,6 +172,11 @@ with the whole page otherwise.
   on the URL alone must be told too: ASP.NET Core's output caching does, unless the page's policy adds the header with
   `SetVaryByHeader("HX-Request-Type")`
   ([Output caching](https://learn.microsoft.com/aspnet/core/performance/caching/output#specify-the-cache-key)).
+  Tried, with a policy keyed on the URL: the list's whole page was answered with the card stored for HTMX, though
+  that answer said `Vary: HX-Request-Type`, since output caching does not read the answer's `Vary`; with the policy
+  varying by the header, each request got its own answer. Output caching's own default policy caches no request
+  from a signed-in user and no answer that sets a cookie, such as the antiforgery cookie, so a page of an
+  application behind a sign-in is cached only under a policy of its own.
   Add the header to any `Vary` already set rather than replacing it, so that what another part of the application
   varies by survives. `Vary` keeps the two answers apart and does nothing more: whether a page may be cached at all,
   as one drawn for a signed-in user may not, is decided apart from it.
@@ -529,10 +538,14 @@ form itself.
   leave `hx-disable` off so that the focus comes back by `id`, and keep a repeat harmless in other ways. A busy style
   keyed on `htmx-request` shows that the request is running, and `pointer-events: none` in it stops a second click,
   but not a second Enter or Space on the focused button: that request joins the form's queue behind the first
-  (section 4). `hx-sync="this:drop"` on the form would drop it instead (4.0.1 source, `RequestQueue.admit`), which
-  is not yet tried. What makes a repeat safe is the server: the action names the state it leads to, so a repeat
-  finds the record already there and changes nothing, as an Archive of an archived record does, with no Undo to
-  offer, and an action that would do harm twice carries the record's version (section 11). No handler counts on a
+  (section 4), and is sent once the first has its answer. That answer has replaced the form and its target by then,
+  so the repeat's own answer is thrown away (4.0.1 source, `#issueRequest`, which returns when the target is no
+  longer in the page), but the server still gets it. `hx-sync="this:drop"` on the form drops it instead
+  (`RequestQueue.admit`). Tried: with Archive's first answer held, a second Enter sent a second Archive once the
+  first answered; with `hx-sync="this:drop"`, one only; either way the page showed Restore with the keyboard on it.
+  What makes a repeat safe is the server: the action names the state it leads to, so a repeat finds the record
+  already there and changes nothing, as an Archive of an archived record does, with no Undo to offer, and an action
+  that would do harm twice carries the record's version (section 11). No handler counts on a
   button being disabled.
 - **A button that acts on the record posts to a named handler**, named for what it does. A browser form can only GET
   or POST, so an action such as Archive is a one-button form posting to `?handler=Archive`, answered by
@@ -923,8 +936,10 @@ can neither run a script nor send what the page holds to another site
   `<script>` tags as `nonce`, so a script that got in without it never runs. The browser empties the attribute as
   the page loads, so no script can read the nonce to hand it on. A page HTMX loads, by Back, Forward or a boosted
   link, needs no new nonce: HTMX drops the answer's `<head>`, where the scripts are (section 2), so the page keeps
-  the scripts it first loaded. A page cached whole would carry an earlier response's nonce into a later response's
-  policy, so a page with a nonce is not output-cached; not tried.
+  the scripts it first loaded. A page with a nonce is not output-cached: an output cache answers with the response
+  it stored, its policy header included, so every request it answers gets the same nonce for as long as the page is
+  cached, and a nonce that does not change is no secret. Tried: the second request for a cached page got the first
+  one's nonce, in the header and on the scripts alike.
 - **No `'strict-dynamic'`.** It trusts every script that a trusted script creates, and HTMX creates one for each
   `<script>` in an answer it swaps in (4.0.1 source, `#processScripts`), so under it any script in an answer runs.
   Tried: under a nonce with `'strict-dynamic'`, a script in an answer that HTMX gave its text ran, and nothing was
@@ -1001,7 +1016,9 @@ can neither run a script nor send what the page holds to another site
   in the browser's console while the page is being built, not after it ships. Tried with `dotnet watch`: the script
   loaded, a changed stylesheet reached the page before a boosted link and after it, and a Razor change reloaded the
   page, with no violation. The script draws its own notice of changes applied with `innerHTML`, which Trusted Types
-  refuse; a Razor change reloads the page instead, so it did not show. Not tried from Visual Studio.
+  refuse; a Razor change reloads the page instead, so it did not show. Not tried from Visual Studio, whose Browser
+  Link, when it is on, also writes a `<script src="…" async>` of its own into each page, with no nonce (read in
+  Visual Studio 18's Browser Link runtime), which the policy would refuse.
 - **An existing application tries the policy first.** `Content-Security-Policy-Report-Only`, with the same value,
   enforces nothing and reports each violation, which lists what to fix before the real header is sent
   ([Report-Only](https://developer.mozilla.org/docs/Web/HTTP/Reference/Headers/Content-Security-Policy-Report-Only)).
@@ -1132,8 +1149,12 @@ A form that sends a file, such as a document with its title.
   and hides it again when the request fails; an answer that replaces the form draws it hidden again. Without script,
   or without HTMX, it never shows, and the browser reports the upload itself. The toast says when the file arrived.
 - **A long upload meets HTMX's timeout.** HTMX gives a request up after 60 seconds (section 1), however much of the
-  file has gone. A form whose uploads may take longer gives its request a timeout of its own, through `hx-config`,
-  which sets the request's `timeout` (4.0.1 source, `#createRequestContext` and `#initTimeout`). Not tried.
+  file has gone. A form whose uploads may take longer gives its request a timeout of its own, such as
+  `hx-config="timeout:5m"`, which sets the request's `timeout` (4.0.1 source, `#createRequestContext` and
+  `#initTimeout`).
+  Tried, with HTMX's timeout set to a second and the answer held for two and a half: the upload was given up, with
+  section 14's toast for no answer in time and the bar hidden again; with `hx-config="timeout:5s"` on the form, the
+  file arrived.
 - **A file received answers as a save does.** Without HTMX it is a redirect back to the page, with a toast in
   TempData; with HTMX it is the form, empty again, its first field taking the keyboard, and the toast in an
   `<hx-partial>` (section 8).
