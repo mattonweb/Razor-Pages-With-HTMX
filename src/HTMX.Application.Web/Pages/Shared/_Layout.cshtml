@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using HTMX.Application.Web.Security
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -15,10 +16,16 @@
     @*
         HTMX 4.0.1, the one version this application is built and tested with; README.md records it. The scripts sit in
         the head because HTMX 4 answers the back button by swapping a fresh page body in: a script in the body would
-        run again, and load a second HTMX.
+        run again, and load a second HTMX. Each carries this response's nonce, which its Content Security Policy names,
+        so the browser runs these scripts and no other. The second gives HTMX the Trusted Types policy that the
+        Content Security Policy asks for, before HTMX swaps anything in.
     *@
-    <script src="~/js/htmx.min.js" defer></script>
-    <script src="~/js/app.js" defer></script>
+    @{
+        string nonce = ContentSecurityPolicy.Nonce(Context);
+    }
+    <script src="~/js/htmx.min.js" defer nonce="@nonce"></script>
+    <script src="~/js/htmx-trusted-types.js" defer nonce="@nonce"></script>
+    <script src="~/js/app.js" defer nonce="@nonce"></script>
 </head>
 @*
     Every link and form in the application loads over HTMX: a link to another page of it fetches that page and swaps

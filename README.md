@@ -241,7 +241,8 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   downloaded. Each checks the console for errors and runs on its own, and some run again without HTMX's script or
   with script off: the keyboard after Remove on Order lines, Enter in a Stock table row, notices marked seen as they
   scroll into view, a boosted link and Back, a filter typed again while the first answer is held back, Publish
-  refused once the permission was withdrawn, and the Visitors' room's Check again once the visitor has no pass.
+  refused once the permission was withdrawn, the Visitors' room's Check again once the visitor has no pass, and an
+  answer that holds a script, swapped in without running it.
 - **Look:** the HTMLX Pages brand. Its stylesheets and icon sprite were copied from
   `.claude/skills/brand-htmlx-pages/assets/` into `wwwroot`, and the pages use its components' markup. The home page's
   robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from
@@ -282,11 +283,14 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   version's row, in one transaction. If another save got there first, from someone else or from the same person in
   another tab, nothing is written and the form comes back with 409, the values being edited, and the saved value under
   each field that differs; saving again then replaces the newer version on purpose.
-- **A Content Security Policy on every answer**, set in `Security/ContentSecurityPolicy.cs`: scripts, stylesheets and
-  images only from the application's own files, requests and form posts only to the application, no frames, and
-  nothing inline or compiled from a string. HTMX needs nothing relaxed for it, because no page uses `hx-on`, a trigger
-  filter or a `js:` value. In Development the policy also lets hot reload's WebSocket reach `dotnet watch` or Visual
-  Studio on another port of `localhost`.
+- **A Content Security Policy on every answer**, set in `Security/ContentSecurityPolicy.cs`: only the scripts that
+  carry the answer's nonce, new for each answer, which the layout writes on its three; stylesheets and images only
+  from the application's own files; requests and form posts only to the application; no frames; and nothing inline or
+  compiled from a string. It also asks for Trusted Types, so HTML is made from a string only through the policy
+  `wwwroot/js/htmx-trusted-types.js` gives HTMX, which passes each answer on and gives a script in one no text. HTMX
+  needs nothing relaxed for it, because no page uses `hx-on`, a trigger filter or a `js:` value. In Development the
+  policy also runs hot reload's script, which `dotnet watch` adds without a nonce, by its path, and lets its WebSocket
+  reach `dotnet watch` or Visual Studio on another port of `localhost`.
 - **Who is signed in.** There is no sign-in page: `DemoAuthenticationHandler` signs every request in as Demo User
   (10001), and a page reads who made a change from its `User`, as it would behind a real sign-in.
 
