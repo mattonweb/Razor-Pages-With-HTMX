@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
-description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests, integration tests that run the whole application, and browser tests that drive Edge with Playwright three ways, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy with a nonce for each response and Trusted Types, which HTMX needs nothing relaxed in, and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, rows that hold several fields, numbered afresh by each Add and Remove with ModelState cleared, a request with no form around it, from a field tied to a form in another table cell by the form attribute or with the antiforgery token in a header from hx-headers on a container in the page, a request whose sign-in has expired, sent to sign in with HX-Redirect and back to the page HX-Current-URL names, an action the user may no longer take, refused with 403, the target drawn as the user may now use it and a toast, a page the user may not see, sent to the access-denied page with HX-Redirect by the cookie sign-in's event, a form with a file, which keeps the chosen file across a refused save with hx-preserve and shows how much has gone, sent by the application's script through ctx.fetch, a job whose card polls its progress until it has finished, a list that grows by Load more with the address saying how many rows show, an element that reloads itself when an answer's HX-Trigger says something changed, and the patterns still open (loading as the list scrolls, a confirmation page for a browser without invoker commands). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.35.0
+description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests, integration tests that run the whole application, and browser tests that drive Edge with Playwright three ways, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy with a nonce for each response and Trusted Types, which HTMX needs nothing relaxed in, and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, rows that hold several fields, numbered afresh by each Add and Remove with ModelState cleared, a request with no form around it, from a field tied to a form in another table cell by the form attribute or with the antiforgery token in a header from hx-headers on a container in the page, a request whose sign-in has expired, sent to sign in with HX-Redirect and back to the page HX-Current-URL names, an action the user may no longer take, refused with 403, the target drawn as the user may now use it and a toast, a page the user may not see, sent to the access-denied page with HX-Redirect by the cookie sign-in's event, a form with a file, which keeps the chosen file across a refused save with hx-preserve and shows how much has gone, sent by the application's script through ctx.fetch, a job whose card polls its progress until it has finished, a list that grows by Load more with the address saying how many rows show, and one that grows as its last row comes into view, moving no keyboard, saying what came in a status line, with nothing under it, an element that reloads itself when an answer's HX-Trigger says something changed, and the pattern still open (a confirmation page for a browser without invoker commands). Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
+version: 0.36.0
 visibility: public
 ---
 
@@ -14,9 +14,9 @@ in step. It is written for HTMX 4.0.1 and ASP.NET Core 10, and every sentence is
 application on those versions, not only the one it was built in; how one application uses HTMX belongs in its own
 code, tests and README.
 
-The evidence differs by part. The patterns in sections 2 to 26 have been built and tried in a browser; where a
+The evidence differs by part. The patterns in sections 2 to 27 have been built and tried in a browser; where a
 section also covers a case that was not built, such as output caching, its citation is the only evidence.
-Section 1's rows were read in the source and the reference, not all built, and nothing in section 27 is built.
+Section 1's rows were read in the source and the reference, not all built, and nothing in section 28 is built.
 Every HTMX fact cites the reference page or the 4.0.1 source method it came from, and the two kinds of citation
 carry different weight. A reference page is what HTMX documents. A method in the 4.0.1 source is what that release
 happens to do: the method is private, a later release may change it, and section 2 checks each one again before
@@ -1192,7 +1192,8 @@ A list that grows ten rows at a time under a Load more button, in place of pagin
   twice, so the link says `hx-sync="this:drop"`. Tried: a double press added ten rows.
 - **The keyboard goes to the first new row.** Its link says `autofocus` in the answer, so the user reads on from where
   the list grew and a screen reader says what arrived; Load more itself goes with the old footer. The footer, and
-  whatever follows the list, stay within reach, which loading as the list scrolls would not keep (section 27).
+  whatever follows the list, stay within reach, which a list that grows as it scrolls keeps only by putting nothing
+  under the list (section 27).
 - **Tried in a browser**, Chromium 156: Load more added ten rows with the keyboard on the first and the address at
   `?shown=20`; a double press added ten; at a hundred the link went and the footer pointed to the paged list; Back from
   another page drew the hundred rows again. Without HTMX's script the link loaded `?shown=20#more-11`, scrolled to the
@@ -1439,15 +1440,48 @@ another tab.
   answers, the policy and the page's attribute, and integration tests run the challenge, the redirect and the HTMX
   answer through the whole application.
 
-## 27. Still open
+## 27. A list that grows as it scrolls
+
+A list like section 20's that also loads its next rows as its last row comes into view, with Load more still there.
+
+- **The last row asks for the next rows as it comes into view.** It says `hx-get` with the next ten's address,
+  `hx-trigger="revealed"`, `hx-target` the table's `tbody` and `hx-swap="beforeend"`. HTMX watches it with an
+  `IntersectionObserver` and stops after the first time it is in view (4.0.1 source, `#onTrigger`), so each last row
+  asks once, and the answer's own last row asks for the ten after. An earlier last row keeps its attributes and asks
+  nothing more; a list drawn whole, by its address or by Back, gives its last row alone the request. A window that
+  holds more rows than a load brings has the new last row in view at once, so the list grows until it fills the
+  window.
+- **Load more and the last row share one queue.** Both would ask for the same ten, so both say
+  `hx-sync="#more-rows:drop"`, naming the table's body, whose queue drops a request while another is on its way. A
+  selector in `hx-sync` may name any element (4.0.1 source, `#getRequestQueue`).
+- **A load the user did not ask for moves no keyboard.** The last row's request says so in its address
+  (`&scrolled=true`), which the handler reads to leave `autofocus` off the new rows; the address it names in
+  `HX-Replace-Url` leaves the marker out. The new rows come after the last row, so a keyboard on its link, which
+  brings it into view, goes on into them with Tab. Load more keeps its `id` in the answer, so a keyboard on it stays
+  there (section 8). Load more pressed still puts the keyboard on the first new row (section 20).
+- **A status line says what came.** A `role="status"` element sits empty in the page, outside anything a load
+  replaces, and a load the last row sent writes into it through an `<hx-partial>` with `innerHTML` (section 8), such
+  as "Organizations 11 to 20 added; 20 of 946 shown.", which a screen reader says without the keyboard moving. A
+  pressed load writes nothing there: the row that takes the keyboard says it.
+- **Nothing follows the list.** Anything under it would move further away with each load, out of reach until the
+  list stopped growing, and a link that skipped down to it would bring the last row into view and grow the list in
+  front of it. So the count and Load more go above the list, and the card ends with it; where a design system puts
+  them under a list, the page departs from it out loud (Principles). The ceiling on how many rows show (section 20)
+  still ends the growth, and the count then says where the rest are.
+- **Without HTMX** nothing loads as the list scrolls, and Load more is the link section 20 describes.
+- **Tried in a browser**, headless Edge at 800 by 600, through browser tests (section 6): scrolling the tenth row into
+  view added rows 11 to 20 after it, left the keyboard where it was, wrote the status line and replaced the address
+  with `?shown=20`; the keyboard on the tenth row's link went on to the eleventh with Tab; scrolling on stopped at a
+  hundred rows, the last asking for no more. With a scrolled load made to take the keyboard, both keyboard tests
+  failed. In Chromium 156, Load more pressed put the keyboard on row 11; row 20, then in view, grew the list to 30
+  with the keyboard still on row 11 and the status line saying so. Unit tests check the two kinds of load, and
+  integration tests check which rows ask for more and what each kind of load answers.
+
+## 28. Still open
 
 Nothing in this section is built yet, so none of it is a rule. What is known, to start from; an idea taken from the
 workshop names its chapter.
 
-- **Loading as the list scrolls (section 20).** `hx-trigger="revealed"` on the last row would load the next rows
-  as it comes into view; HTMX 4 still has it, firing once, where `intersect` fires each time (4.0.1 source,
-  `#onTrigger`). It would have to answer again what section 20's button settles: where the keyboard goes, how a
-  screen reader hears that rows arrived, and how anyone reaches what follows the list. Not yet built.
 - **A confirmation page for a browser without invoker commands.** A link to a page the server draws, holding the
   dialog's form, would reach an action behind a dialog on any browser and still give a chance to look before acting.
   A page cannot offer the link to one browser and the dialog to another without script, so where that line falls is
