@@ -9,7 +9,7 @@
     Load more can replace it.
 *@
 @{
-    int next = Model.Shown + LoadMoreModel.Step;
+    int next = Model.Shown + GrowingListModel.Step;
     string? page = Url.Page("./LoadMore", new { shown = next });
     string? more = Url.Page("./LoadMore", new { shown = next, after = Model.Last });
     bool room = next <= PageSize.Largest;

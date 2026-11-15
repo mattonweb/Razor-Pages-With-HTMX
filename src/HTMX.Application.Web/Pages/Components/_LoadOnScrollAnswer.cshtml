@@ -1,0 +1,23 @@
+@model HTMX.Application.Web.Pages.Components.LoadOnScrollModel
+@using System.Globalization
+@*
+    What a load gets: the new rows, which hx-swap="beforeend" adds to the table's tbody, and the pager, drawn again with
+    the new count and the next link, in an hx-partial. A load the last row sent as it came into view also writes what
+    came into the status line, whose content a screen reader says; a pressed Load more puts the keyboard on the first
+    new row instead, which says it.
+*@
+@{
+    string first = Model.FirstPosition.ToString("N0", CultureInfo.CurrentCulture);
+    string shown = Model.Shown.ToString("N0", CultureInfo.CurrentCulture);
+    string matching = Model.Matching.ToString("N0", CultureInfo.CurrentCulture);
+}
+<partial name="_LoadMoreRows" model="Model" />
+<hx-partial hx-target="#more-pager" hx-swap="outerHTML">
+    <partial name="_LoadOnScrollPager" model="Model" />
+</hx-partial>
+@if (!Model.FirstRowFocused)
+{
+    <hx-partial hx-target="#more-status" hx-swap="innerHTML">
+        Organizations @first to @shown added; @shown of @matching shown.
+    </hx-partial>
+}

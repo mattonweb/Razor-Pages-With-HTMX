@@ -1,0 +1,48 @@
+@page "/components/load-on-scroll"
+@model HTMX.Application.Web.Pages.Components.LoadOnScrollModel
+@{
+    ViewData["Title"] = "Load on scroll";
+    ViewData["Section"] = "Components";
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Load on scroll</span></li></ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Load on scroll</h1>
+    </div>
+    <p class="muted">
+        The active organizations by name, ten at a time, the next ten added as the last row comes into view, up to a
+        hundred. Load more, above the list, adds them as well.
+    </p>
+</header>
+
+@*
+    The list grows as its last row comes into view, so anything under it would move further away with each load, and
+    could not be reached until the list stopped growing. So nothing follows it: the pager, which the brand puts at the
+    bottom of a list's card, sits above the table here, and the card ends with the list.
+
+    The status line stays on the page, empty, and each load the user did not ask for writes into it what came, which a
+    screen reader says, since such a load moves no keyboard. The rows, the pager and the status line are each drawn by
+    the page and by the answer to a load (_LoadOnScrollAnswer) alike.
+*@
+<section class="card" aria-labelledby="more-heading">
+    <header class="card-header"><h2 id="more-heading">Organizations</h2></header>
+    <partial name="_LoadOnScrollPager" model="Model" />
+    <p class="visually-hidden" role="status" id="more-status"></p>
+    <div class="grid-wrap">
+        <table class="grid">
+            <caption class="visually-hidden">Active organizations, by name</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Industry</th>
+                    <th scope="col">Contacts</th>
+                </tr>
+            </thead>
+            <tbody id="more-rows">
+                <partial name="_LoadMoreRows" model="Model" />
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -153,6 +153,11 @@ need Microsoft Edge installed; on a machine without it, leave them out with `--f
   the table (`hx-swap="beforeend"`), draws the footer again in the same answer through an `<hx-partial>`, names the new
   address in `HX-Replace-Url`, and puts the keyboard on the first new row; `hx-sync="this:drop"` drops a second press
   while the first is on its way.
+- **`/components/load-on-scroll`** — the same list, which also grows as its last row comes into view
+  (`hx-trigger="revealed"`), sharing the table body's queue with Load more (`hx-sync="#more-rows:drop"`). A load the
+  user did not ask for, marked `&scrolled=true`, moves no keyboard and writes what came into a status line that a
+  screen reader says; its rows come after the last row, so Tab goes on into them. The count and Load more sit above
+  the list, so that nothing under it falls out of reach as it grows; it still stops at a hundred rows.
 - **`/components/reload-on-event`** — a form that writes a note and a list of the newest ten, on one board shared by
   everyone who opens the page. With HTMX the form's answer is the form, empty again, and `HX-Trigger: notes-changed`;
   the list, which listens with `hx-trigger="notes-changed from:document"`, asks for itself again at the page's own
@@ -244,8 +249,8 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   with script off: the keyboard after Remove on Order lines, Enter in a Stock table row, notices marked seen as they
   scroll into view, a boosted link and Back, a filter typed again while the first answer is held back, Publish
   refused once the permission was withdrawn, the Visitors' room's Check again once the visitor has no pass, and an
-  answer that holds a script, swapped in without running it, and a file sent over a slowed connection, whose
-  progress bar shows part of it gone.
+  answer that holds a script, swapped in without running it, a file sent over a slowed connection, whose progress
+  bar shows part of it gone, and the Load on scroll list growing as its last row comes into view, up to a hundred.
 - **Look:** the HTMLX Pages brand. Its stylesheets and icon sprite were copied from
   `.claude/skills/brand-htmlx-pages/assets/` into `wwwroot`, and the pages use its components' markup. The home page's
   robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from
