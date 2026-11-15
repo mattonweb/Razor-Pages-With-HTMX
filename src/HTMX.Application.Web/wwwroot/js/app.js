@@ -1,7 +1,8 @@
 // The script the application keeps. The menu button switches the side nav between its full width and an icon rail,
 // a toast goes when Dismiss is pressed or when it has faded out, a dialog opened from a menu gives the keyboard back
-// to the menu's button, a request HTMX sends that fails says so in a toast, and a form that sends a file shows how
-// much of it has gone. Every listener is on the document
+// to the menu's button, a dialog's button takes the place of the link that stands in for it where the browser can
+// use it, a request HTMX sends that fails says so in a toast, and a form that sends a file shows how much of it has
+// gone. Every listener is on the document
 // rather than on an element, because when the back button restores a page, HTMX swaps in a new body and with it new
 // elements.
 (() => {
@@ -50,6 +51,32 @@
       document.querySelector(`[popovertarget="${CSS.escape(menu.id)}"]`)?.focus();
     }
   });
+
+  // A link marked data-dialog-link leads to a page that asks what a dialog would ask, which any browser can show. The
+  // <template> after it holds the button that opens the dialog itself with commandfor, which only a browser with
+  // invoker commands can use. In such a browser the button takes the link's place, as the page loads and after each
+  // swap, which brings links again; the keyboard, if it was on the link, moves to the button. Elsewhere, and without
+  // script, the link stays.
+  const hasInvokerCommands = "commandForElement" in HTMLButtonElement.prototype;
+  const openDialogsInPlace = () => {
+    if (!hasInvokerCommands) {
+      return;
+    }
+
+    for (const link of document.querySelectorAll("a[data-dialog-link]")) {
+      const template = link.nextElementSibling;
+      if (template instanceof HTMLTemplateElement) {
+        const button = template.content.firstElementChild.cloneNode(true);
+        const focused = document.activeElement === link;
+        link.replaceWith(button);
+        if (focused) {
+          button.focus();
+        }
+      }
+    }
+  };
+  document.addEventListener("DOMContentLoaded", openDialogsInPlace);
+  document.addEventListener("htmx:after:swap", openDialogsInPlace);
 
   // An answer the page planned for has content made for the request's target, with whatever status the handler chose,
   // such as 422 for a form to correct. An error status with no content, such as the 400 a stale antiforgery token

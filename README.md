@@ -198,6 +198,13 @@ need Microsoft Edge installed; on a machine without it, leave them out with `--f
   the list still offers Publish until it is drawn again; Publish then answers 403 with the list drawn without its
   buttons, the keyboard on its heading and a toast that says why: the list alone with HTMX, the whole page without
   it. The handler refuses the action itself rather than with `Forbid()`, whose answer is the sign-in's.
+- **`/components/confirmation-page`** — three invented files on one list shared by everyone, each with a **Delete**
+  that asks first. Delete is a link to the file's page at `/components/confirmation-page/delete/{file}`, which asks
+  the same question and posts to the same handler, so it works on any browser, with script or without it. A
+  `<template>` beside it holds the button that opens the file's `<dialog>` with `commandfor`, and `app.js` puts that
+  button in the link's place when the browser has invoker commands. The dialog's form deletes with HTMX and leaves
+  the keyboard on the next row's Delete; the page's form goes back to the list with its toast. **Put them all back**
+  starts again.
 
 ## Sample data
 
@@ -233,6 +240,10 @@ The seed is written without logging its SQL, so the console shows only the SQL e
 ## Versions and choices
 
 - **.NET 10** (SDK 10.0.402) and **C# 14**.
+- **Browsers:** current Chrome, Edge, Firefox and Safari. The pages use `<dialog>`, popovers and invoker commands
+  (`commandfor`), which every current browser has had only since December 2025; on an older one, a button that opens a
+  dialog does nothing. The Confirmation page shows how a page reaches older browsers too, through a link to a page
+  that asks the dialog's question.
 - **Persistence: Entity Framework Core 10.0.14 over SQLite, in memory.** The database, named `Customers` and owned by
   `HTMX.Adapter.Customers`, is created when the application starts and filled from seed data written in C#; it
   disappears when the application stops. Nothing is written to
@@ -250,7 +261,9 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   scroll into view, a boosted link and Back, a filter typed again while the first answer is held back, Publish
   refused once the permission was withdrawn, the Visitors' room's Check again once the visitor has no pass, and an
   answer that holds a script, swapped in without running it, a file sent over a slowed connection, whose progress
-  bar shows part of it gone, and the Load on scroll list growing as its last row comes into view, up to a hundred.
+  bar shows part of it gone, the Load on scroll list growing as its last row comes into view, up to a hundred, and
+  the Confirmation page's Delete asking in its dialog with invoker commands, and on its own page without them or with
+  script off.
 - **Look:** the HTMLX Pages brand. Its stylesheets and icon sprite were copied from
   `.claude/skills/brand-htmlx-pages/assets/` into `wwwroot`, and the pages use its components' markup. The home page's
   robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from

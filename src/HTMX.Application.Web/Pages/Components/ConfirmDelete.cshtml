@@ -1,0 +1,54 @@
+@page "/components/confirmation-page/delete/{file:long}"
+@model HTMX.Application.Web.Pages.Components.ConfirmDeleteModel
+@{
+    ViewData["Title"] = Model.Asked is SavedFile asked ? $"Delete {asked.Name}" : "File not found";
+    ViewData["Section"] = "Components";
+    string heading = Model.Asked is null ? "File not found" : "Delete a file";
+}
+<header class="page-header">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+            <li><a asp-page="/Index">Home</a></li>
+            <li><a asp-page="./Index">Components</a></li>
+            <li><a asp-page="./ConfirmationPage">Confirmation page</a></li>
+            <li><span aria-current="page">Delete</span></li>
+        </ol>
+    </nav>
+    <div class="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">@heading</h1>
+    </div>
+</header>
+
+@*
+    The file's dialog, as a page of its own, for a browser without invoker commands or with script off: the same
+    question, and a form that posts to the same Delete. It is boosted, as every form is: with HTMX, Delete's redirect
+    back to the list is followed and drawn as the page, and the list shows the toast Delete left in TempData. Cancel
+    is a link back to the list.
+*@
+@if (Model.Asked is SavedFile file)
+{
+    string? delete = Url.Page("./ConfirmationPage", "Delete", new { file = file.Number });
+    <section class="card" aria-labelledby="confirm-heading" aria-describedby="confirm-text">
+        <header class="card-header"><h2 id="confirm-heading">Delete @file.Name for good?</h2></header>
+        <form method="post" action="@delete" asp-antiforgery="true">
+            <div class="card-body">
+                <p id="confirm-text">This removes @file.Name for good. It cannot be undone.</p>
+            </div>
+            <div class="form-actions">
+                <div class="end">
+                    <a class="btn" asp-page="./ConfirmationPage">Cancel</a>
+                    <button class="btn danger" type="submit">Delete permanently</button>
+                </div>
+            </div>
+        </form>
+    </section>
+}
+else
+{
+    <section class="card" aria-labelledby="gone-heading">
+        <header class="card-header"><h2 id="gone-heading">That file is already deleted</h2></header>
+        <div class="card-body">
+            <p>There is nothing to delete. <a asp-page="./ConfirmationPage">Back to the files</a>.</p>
+        </div>
+    </section>
+}

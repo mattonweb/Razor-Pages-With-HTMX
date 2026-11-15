@@ -106,13 +106,14 @@ public sealed class Program
 
         // The Components pages' own state, one of each for the application: the Long job page's pretend jobs,
         // counted by the system clock, the Reload on event page's notes, the Stock table page's shelf, the Seen
-        // notices page's board and the Not allowed page's articles.
+        // notices page's board, the Not allowed page's articles and the Confirmation page's files.
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<LongJobs>();
         services.AddSingleton<NoteBoard>();
         services.AddSingleton<StockShelf>();
         services.AddSingleton<NoticeBoard>();
         services.AddSingleton<ArticleDesk>();
+        services.AddSingleton<SavedFiles>();
     }
 
     /// <summary>

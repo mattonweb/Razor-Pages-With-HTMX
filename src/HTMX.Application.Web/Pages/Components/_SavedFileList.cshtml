@@ -1,0 +1,94 @@
+@model HTMX.Application.Web.Pages.Components.ConfirmationPageModel
+@*
+    The files, in their card. Each row's Delete is a link to the file's confirmation page, which asks the dialog's
+    question as a page, and which any browser can follow, with script or without it. The template beside the link
+    holds the button that opens the file's dialog with commandfor, which only a browser with invoker commands can use;
+    the application's script puts it in the link's place in such a browser, as the page loads and after each swap. The
+    link and the button look alike and share an id, so the swap moves nothing on the screen.
+
+    Each dialog's form posts to Delete with HTMX, and the answer replaces this card, which closes the dialog; the
+    keyboard goes to the Delete of the row now in the deleted row's place. The dialogs come after the table, so that
+    the row's autofocus comes before each dialog's Cancel, which says autofocus too. Put them all back keeps its id.
+*@
+@{
+    string? putBack = Url.Page("./ConfirmationPage", "PutBack");
+}
+<section class="card" id="saved-files" aria-labelledby="saved-files-heading">
+    <header class="card-header">
+        <h2 id="saved-files-heading" tabindex="-1" autofocus="@Model.ListHeadingFocused">Files</h2>
+    </header>
+    @if (Model.Files.Length == 0)
+    {
+        <div class="card-body"><p>No files are left. Put them all back to try again.</p></div>
+    }
+    else
+    {
+        <div class="grid-wrap">
+            <table class="grid">
+                <caption class="visually-hidden">Files, each with Delete</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">File</th>
+                        <th scope="col"><span class="visually-hidden">Delete</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (SavedFile file in Model.Files)
+                    {
+                        long number = file.Number;
+                        bool focused = Model.FocusedFile == number;
+                        string? confirm = Url.Page("./ConfirmDelete", new { file = number });
+                        <tr id="file-@number">
+                            <td class="title">@file.Name</td>
+                            <td class="actions">
+                                <a class="btn danger" id="delete-@number" href="@confirm" data-dialog-link
+                                   autofocus="@focused">
+                                    Delete<span class="visually-hidden"> @file.Name</span>
+                                </a>
+                                <template>
+                                    <button class="btn danger" id="delete-@number" type="button"
+                                            commandfor="delete-file-@number" command="show-modal">
+                                        Delete<span class="visually-hidden"> @file.Name</span>
+                                    </button>
+                                </template>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @foreach (SavedFile file in Model.Files)
+        {
+            long number = file.Number;
+            string dialog = $"delete-file-{number}";
+            string? delete = Url.Page("./ConfirmationPage", "Delete", new { file = number });
+            <dialog class="dialog sm" id="@dialog" aria-labelledby="@dialog-title" aria-describedby="@dialog-text">
+                <form method="post" action="@delete" asp-antiforgery="true"
+                      hx-post="@delete" hx-target="#saved-files" hx-swap="outerHTML"
+                      hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
+                    <header class="dialog-header"><h2 id="@dialog-title">Delete @file.Name for good?</h2></header>
+                    <div class="dialog-body confirm">
+                        <span class="dialog-icon">
+                            <svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg>
+                        </span>
+                        <div class="message" id="@dialog-text">
+                            <p>This removes @file.Name for good. It cannot be undone.</p>
+                        </div>
+                    </div>
+                    <footer class="dialog-footer">
+                        <button class="btn" type="button" commandfor="@dialog" command="close" autofocus>Cancel</button>
+                        <button class="btn danger" type="submit">Delete permanently</button>
+                    </footer>
+                </form>
+            </dialog>
+        }
+    }
+    <div class="form-actions">
+        <div class="end">
+            <form method="post" action="@putBack" asp-antiforgery="true"
+                  hx-post="@putBack" hx-target="#saved-files" hx-swap="outerHTML">
+                <button class="btn" type="submit" id="put-back">Put them all back</button>
+            </form>
+        </div>
+    </div>
+</section>
