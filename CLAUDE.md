@@ -2,6 +2,11 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-15 (attended session with Matt): `brand-htmlx-pages` holds no stylesheet now.** It specifies the brand
+  for any web application, whatever its styling: the tokens, the icon sprite, and each component's parts,
+  measurements, states and accessibility, with reference images in light and dark. Its stylesheets, specimen pages
+  and status table are gone; the application's own stylesheets in `wwwroot/css` build the components. Older entries
+  that say to read its status table, or that the application copies its CSS, predate this.
 - **2026-11-13 (attended session with Matt): browser tests exist, in `HTMX.Test.Integration`.** They drive the
   installed Microsoft Edge with Playwright, against the application on Kestrel, and carry `[TestCategory("Browser")]`
   and `[DoNotParallelize]`. The stack and the layout say so. Microsoft.Playwright 1.64.1 came from the local NuGet
@@ -99,8 +104,8 @@ src/
 `.claude/skills/` holds 5 Windows junctions, never copies, each gitignored. They point into the public
 [Signalbox](https://github.com/mattonweb/Signalbox) repository, cloned at `C:\Source\Signalbox`; its `REPO-SETUP.md`
 explains the mechanism. It also holds two real folders, tracked in this repository: `brand-htmlx-pages`, because the
-brand belongs to this application and to no other, and `code-htmx-pages`, because its patterns are proven by
-building this application.
+brand was drawn for this application, though written so that any web application can adopt it, and
+`code-htmx-pages`, because its patterns are proven by building this application.
 
 | Skill | Home | What it governs |
 |---|---|---|
@@ -109,7 +114,7 @@ building this application.
 | `code-csharp-mstest` | Signalbox | How tests are written: naming, assertion patterns, structure |
 | `dotnet-solution-architecture` | Signalbox | Which projects exist and what each may reference: `{{solution}}.{{kind}}.{{name}}` naming, the four project kinds, the dependency rules, and the public surface of a class library. Read it before creating a project or adding a project reference |
 | `devops-git-conventions` | Signalbox | The commit-message form you draft for Matt. Its branch, pull-request and tag sections do not apply here; this repository has no branches and no pipeline |
-| `brand-htmlx-pages` | this repository | The HTMLX Pages brand: tokens, CSS, icons and the markup of every UI component, with specimen pages. A draft; its status table says which groups are settled |
+| `brand-htmlx-pages` | this repository | The HTMLX Pages brand: tokens, the icon sprite, and a specification of every UI component (its parts, measurements, states and accessibility) with reference images in light and dark. It holds no stylesheet and names no class; `wwwroot/css` builds the components. Read it before building or styling any UI. A draft |
 | `code-htmx-pages` | this repository | How Razor Pages and HTMX 4 work together: the HTMX 4 changes that break HTMX 2 habits, loading HTMX, a handler that returns a partial or the whole page by `HX-Request-Type`, history, testing, and the patterns still open. Read it before writing any `hx-` attribute or a handler that answers HTMX. A draft |
 
 ⛔ **Matt owns every skill. Never edit a file inside one of the five junctions**, however wrong it looks; report the
