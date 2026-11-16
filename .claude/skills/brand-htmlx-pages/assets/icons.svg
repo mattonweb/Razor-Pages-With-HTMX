@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg">
   <!--
-    HTMLX Pages icon sprite. Drawn for this repository on a 24px grid as plain strokes; the .icon class
-    supplies stroke color, width and caps. Use: <svg class="icon" aria-hidden="true"><use href="/icons.svg#search"></use></svg>
+    HTMLX Pages icon sprite. Drawn for the brand on a 24px grid as plain strokes. The symbols set no stroke of their
+    own: the page draws each icon with no fill and a 1.75 stroke in the text color, with round caps and joins.
+    Use: <svg aria-hidden="true"><use href="/icons.svg#search"></use></svg>
     The logo is the one symbol with its own colors.
   -->
   <symbol id="logo" viewBox="0 0 24 24">

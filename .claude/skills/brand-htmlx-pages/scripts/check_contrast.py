@@ -1,6 +1,6 @@
 """Check the HTMLX Pages color tokens for WCAG contrast, in light and dark mode.
 
-Reads ../assets/css/tokens.css (or the path given as the first argument), resolves each light-dark() token,
+Reads ../assets/tokens.css (or the path given as the first argument), resolves each light-dark() token,
 and checks every text and control pair the brand uses: 4.5:1 for text, 3:1 for icons and form-control borders.
 Exits 1 if any pair falls short.
 
@@ -10,7 +10,7 @@ import pathlib
 import re
 import sys
 
-DEFAULT_TOKENS = pathlib.Path(__file__).resolve().parent.parent / "assets" / "css" / "tokens.css"
+DEFAULT_TOKENS = pathlib.Path(__file__).resolve().parent.parent / "assets" / "tokens.css"
 
 # (foreground token, background token, minimum ratio)
 PAIRS = [
