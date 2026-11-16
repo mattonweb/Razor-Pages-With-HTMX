@@ -264,8 +264,9 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   bar shows part of it gone, the Load on scroll list growing as its last row comes into view, up to a hundred, and
   the Confirmation page's Delete asking in its dialog with invoker commands, and on its own page without them or with
   script off.
-- **Look:** the HTMLX Pages brand. Its stylesheets and icon sprite were copied from
-  `.claude/skills/brand-htmlx-pages/assets/` into `wwwroot`, and the pages use its components' markup. The home page's
+- **Look:** the HTMLX Pages brand, `.claude/skills/brand-htmlx-pages`. Its tokens and icon sprite were copied from the
+  skill's `assets/` into `wwwroot`, and the stylesheets beside them in `wwwroot/css` build its components to the
+  skill's specs. The home page's
   robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from
   [FreeSVG](https://freesvg.org/artificial-intelligence-technology-concept), CC0 (public domain), with the blue square
   behind it removed.
