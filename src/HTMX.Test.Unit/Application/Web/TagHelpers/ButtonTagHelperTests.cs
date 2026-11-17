@@ -63,6 +63,30 @@ public sealed class ButtonTagHelperTests
     }
 
     /// <summary>
+    /// Unit test to verify that the icon look for an inverse surface, such as a toast, is square and takes that
+    /// surface's text color rather than the icon color.
+    /// </summary>
+    [TestMethod]
+    public void Process_IconInverseLook_IsSquareInTheInverseText()
+    {
+        // Arrange (Given)
+        TagHelperOutput output = CreateOutput();
+
+        // Act (When)
+        Process("icon-inverse", output);
+        string[] classes = ClassesOf(output);
+        bool square = classes.Contains("w-control");
+        bool inverse = classes.Contains("text-on-inverse");
+        bool icon = classes.Contains("text-icon");
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (true, true, false),
+            (square, inverse, icon),
+            "An icon button on an inverse surface should be square, in the surface's text color.");
+    }
+
+    /// <summary>
     /// Unit test to verify that a look the tag helper does not know is refused rather than drawn as some other look.
     /// </summary>
     [TestMethod]
