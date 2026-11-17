@@ -18,7 +18,24 @@ dotnet run --project src/HTMX.Application.Web --launch-profile http
 ```
 
 Then open <http://localhost:5049>. The tests run with `dotnet test "src/HTMX Pages Solution.slnx"`. The browser tests
-need Microsoft Edge installed; on a machine without it, leave them out with `--filter "TestCategory!=Browser"`.
+need Microsoft Edge installed; on a machine without it, leave them out with `--filter "TestCategory!=Browser"`. The
+first build on a machine downloads the Tailwind CSS CLI that compiles the stylesheet, so it needs a connection once;
+see Versions and choices.
+
+While changing the pages, run `dotnet watch` and Tailwind's own watcher side by side. A class added to a page then
+reaches the stylesheet as the file is saved, and `dotnet watch` applies both changes and reloads the browser:
+
+```bash
+dotnet watch --project src/HTMX.Application.Web run --launch-profile http
+```
+
+```bash
+cd src/HTMX.Application.Web && ../../artifacts/tailwindcss/4.3.5/tailwindcss-windows-x64.exe --input Styles/app.css --output wwwroot/css/app.css --watch
+```
+
+On Linux or macOS the CLI's file is named for the system instead, such as `tailwindcss-macos-arm64`. The watcher adds
+classes but never takes one away; the build's own compile, after the next change to a page or a stylesheet, leaves
+out any class no page uses.
 
 ## Pages
 
@@ -264,12 +281,24 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   bar shows part of it gone, the Load on scroll list growing as its last row comes into view, up to a hundred, and
   the Confirmation page's Delete asking in its dialog with invoker commands, and on its own page without them or with
   script off.
-- **Look:** the HTMLX Pages brand, `.claude/skills/brand-htmlx-pages`. Its tokens and icon sprite were copied from the
-  skill's `assets/` into `wwwroot`, and the stylesheets beside them in `wwwroot/css` build its components to the
-  skill's specs. The home page's
-  robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from
+- **Look:** the HTMLX Pages brand, `.claude/skills/brand-htmlx-pages`. Its icon sprite was copied from the skill's
+  `assets/` into `wwwroot`, and its tokens into `Styles/`, beside the stylesheets in `Styles/legacy/` that build its
+  components to the skill's specs. The views move from those stylesheets to Tailwind CSS's utilities one area at a
+  time. The home page's robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from
   [FreeSVG](https://freesvg.org/artificial-intelligence-technology-concept), CC0 (public domain), with the blue square
   behind it removed.
+- **Tailwind CSS 4.3.5**, pinned, run as its standalone CLI, so nothing here runs on Node. Before each build the web
+  project compiles `Styles/app.css`, with the class names it finds in the pages and tag helpers, into
+  `wwwroot/css/app.css`, which git ignores: readable in Debug, minified in Release, and served fingerprinted like any
+  other file. It compiles again only when a stylesheet, a page or a tag helper has changed. The first build on a
+  machine downloads the CLI for its operating system from the
+  [v4.3.5 release](https://github.com/tailwindlabs/tailwindcss/releases/tag/v4.3.5) into `artifacts/tailwindcss/`,
+  which git ignores, and checks it against the SHA-256 the release publishes in `sha256sums.txt`, copied into the
+  project file for each system; the Windows x64 file is 111,161,344 bytes, with SHA-256
+  `2803583268c53f4713e89943e211081fddb186c0a4a7d07b5c342c6ae853ec95`. Windows on Arm runs that x64 build. Cascade
+  layers keep the old stylesheets and the utilities apart, in this order: Tailwind's theme; the base, which is
+  Tailwind's reset and the brand's tokens; the legacy stylesheets; components, which stays empty, since the views use
+  utilities and a partial view for markup that repeats; and the utilities, which win.
 - **HTMX 4.0.1**, pinned: `wwwroot/js/htmx.min.js`, downloaded from <https://unpkg.com/htmx.org@4.0.1/dist/htmx.min.js>.
   Its SHA-256 is `a0abb04f2f45a1f89d1d4844023245537e5e6014c87b144553e0607b4cc32130`, the integrity unpkg publishes for
   that file, so the copy here is the one released; `Get-FileHash` checks it again. Every page still works without
