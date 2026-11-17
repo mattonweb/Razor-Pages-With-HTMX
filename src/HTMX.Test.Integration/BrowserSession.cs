@@ -55,6 +55,14 @@ internal sealed class BrowserSession : IAsyncDisposable
     }
 
     /// <summary>
+    /// Gets the page's toast, by the data-toast attribute the application's script finds it by too, rather than by the
+    /// classes that style it, which change. Its Dismiss button is no way to find it: without script the button is not
+    /// shown, since nothing would make it work. Its text is the toast's: the message, and Undo when the toast offers
+    /// one. A test that waits for it waits until a toast arrives.
+    /// </summary>
+    public ILocator Toast => this.Page.Locator("[data-toast]");
+
+    /// <summary>
     /// Opens Edge on the application, running as much script as the test asks for.
     /// </summary>
     /// <param name="application">The application's address, from

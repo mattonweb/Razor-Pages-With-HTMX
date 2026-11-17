@@ -106,7 +106,7 @@ public sealed class StockTableTests : IDisposable
             IPage page = edge.Page;
             await page.GotoAsync(Address).ConfigureAwait(false);
             ILocator field = page.Locator("#on-hand-10003");
-            ILocator toast = page.Locator(".toast .message");
+            ILocator toast = edge.Toast;
 
             // Act (When)
             await field.FillAsync("15").ConfigureAwait(false);

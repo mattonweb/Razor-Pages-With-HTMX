@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using HTMX.Application.Web.Pages.Components;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,12 @@ public sealed class ConfirmationPageTests : IDisposable
     // own scripts, and takes away the property the application's script looks for.
     private const string WithoutInvokerCommands = "delete HTMLButtonElement.prototype.commandForElement;";
 
+    // The Sample contract's dialog, by its id, whatever classes style it.
+    private static readonly Regex ContractDialog = new Regex(
+        "<dialog\\b[^>]*\\bid=\"delete-file-10002\"",
+        RegexOptions.CultureInvariant,
+        TimeSpan.FromSeconds(1));
+
     // The application, started on the first request with a database of its own and stopped when the test ends.
     private readonly ApplicationFactory _application = new ApplicationFactory();
 
@@ -66,10 +73,7 @@ public sealed class ConfirmationPageTests : IDisposable
             "commandfor=\"delete-file-10002\" command=\"show-modal\"",
             page.Body,
             "A template should hold the button that opens the file's dialog.");
-        Assert.Contains(
-            "<dialog class=\"dialog sm\" id=\"delete-file-10002\"",
-            page.Body,
-            "The page should hold the file's dialog.");
+        Assert.IsTrue(ContractDialog.IsMatch(page.Body), "The page should hold the file's dialog.");
     }
 
     /// <summary>
@@ -159,8 +163,8 @@ public sealed class ConfirmationPageTests : IDisposable
             await dialog.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Delete permanently" })
                 .ClickAsync()
                 .ConfigureAwait(false);
-            await page.Locator(".toast .message").WaitForAsync().ConfigureAwait(false);
-            string? said = await page.Locator(".toast .message").TextContentAsync().ConfigureAwait(false);
+            await edge.Toast.WaitForAsync().ConfigureAwait(false);
+            string? said = await edge.Toast.TextContentAsync().ConfigureAwait(false);
             string focused = await page.EvaluateAsync<string>("() => document.activeElement.id").ConfigureAwait(false);
 
             // Assert (Then)
@@ -207,7 +211,7 @@ public sealed class ConfirmationPageTests : IDisposable
                 .ClickAsync()
                 .ConfigureAwait(false);
             await page.WaitForURLAsync("**" + Address).ConfigureAwait(false);
-            string? said = await page.Locator(".toast .message").TextContentAsync().ConfigureAwait(false);
+            string? said = await edge.Toast.TextContentAsync().ConfigureAwait(false);
             int rows = await page.Locator("#file-10002").CountAsync().ConfigureAwait(false);
 
             // Assert (Then)

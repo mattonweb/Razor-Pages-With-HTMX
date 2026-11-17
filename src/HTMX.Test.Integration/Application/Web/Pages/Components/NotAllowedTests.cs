@@ -131,7 +131,7 @@ public sealed class NotAllowedTests : IDisposable
         {
             IPage page = edge.Page;
             await page.GotoAsync(Address).ConfigureAwait(false);
-            ILocator toast = page.Locator(".toast .message");
+            ILocator toast = edge.Toast;
             Publishers publishers = this._application.Services.GetRequiredService<Publishers>();
 
             // Act (When)

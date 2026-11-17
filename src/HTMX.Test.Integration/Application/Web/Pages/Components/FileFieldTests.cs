@@ -132,7 +132,7 @@ public sealed class FileFieldTests : IDisposable
             await page.Locator("#Input_Title").FillAsync("Slow logo").ConfigureAwait(false);
             await page.Locator("#Input_File").SetInputFilesAsync(LargePng()).ConfigureAwait(false);
             await page.EvaluateAsync(RecordProgress).ConfigureAwait(false);
-            ILocator toast = page.Locator(".toast .message");
+            ILocator toast = edge.Toast;
 
             // Act (When)
             await page.Locator("#file-form button[type=submit]").ClickAsync().ConfigureAwait(false);
