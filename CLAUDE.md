@@ -2,6 +2,11 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-16 (attended session with Matt): the stylesheet compiles with Tailwind CSS.** The web project compiles
+  `Styles/app.css` into `wwwroot/css/app.css`, which is built, ignored by git and never edited. The stylesheets that
+  were in `wwwroot/css` are in `Styles/legacy/`, in a cascade layer of their own, and the views move to Tailwind's
+  utilities one area at a time; the data grid's class is `data-grid`, since `grid` is a utility. Matt chose pure
+  Tailwind: no component classes, and markup that repeats becomes a partial view. The stack and the layout say so.
 - **2026-11-15 (attended session with Matt): `brand-htmlx-pages` holds no stylesheet now.** It specifies the brand
   for any web application, whatever its styling: the tokens, the icon sprite, and each component's parts,
   measurements, states and accessibility, with reference images in light and dark. Its stylesheets, specimen pages
@@ -79,6 +84,9 @@ decline it and say why.
 - HTMX for the interactive CRUDL work: partial page updates from page handlers that return partial views, with the
   page still working as plain Razor Pages when HTMX is absent (progressive enhancement). Pin HTMX to one exact
   version and record it in `README.md`.
+- Styling: Tailwind CSS, run as its standalone CLI, so the repository has no Node and no `package.json`. The version
+  and each system's SHA-256 are pinned in the web project file, and `README.md` records them. Utilities only, with
+  no `@apply` and no component classes; markup that repeats becomes a partial view.
 - Persistence is whatever the presentation needs and nothing more. Chosen 2026-11-07: Entity Framework Core over an
   in-memory SQLite database, created when the application starts and seeded from code; see `README.md`.
 - Tests: MSTest. Unit tests are written as the `code-csharp-mstest` skill describes. That skill does not cover
@@ -92,12 +100,14 @@ src/
   HTMX Pages Solution.slnx          the one solution file
   Directory.Build.props             house build settings for every project (code-csharp-standards, section 1)
   HTMX.Adapter.Customers/           the in-memory customer database, its entities and their data access
-  HTMX.Application.Web/             the Razor Pages application
+  HTMX.Application.Web/             the Razor Pages application; its stylesheets are in Styles/
   HTMX.Test.Integration/            the integration tests: the whole application, in memory or, for a browser test,
                                     on Kestrel, driven in Edge
   HTMX.Test.Unit/                   the unit tests
   .editorconfig                     house copy, see below
 ```
+
+`artifacts/` at the root, which git ignores, holds what the build downloads: the Tailwind CSS CLI.
 
 ## Skills: owned by Matt
 
@@ -114,7 +124,7 @@ brand was drawn for this application, though written so that any web application
 | `code-csharp-mstest` | Signalbox | How tests are written: naming, assertion patterns, structure |
 | `dotnet-solution-architecture` | Signalbox | Which projects exist and what each may reference: `{{solution}}.{{kind}}.{{name}}` naming, the four project kinds, the dependency rules, and the public surface of a class library. Read it before creating a project or adding a project reference |
 | `devops-git-conventions` | Signalbox | The commit-message form you draft for Matt. Its branch, pull-request and tag sections do not apply here; this repository has no branches and no pipeline |
-| `brand-htmlx-pages` | this repository | The HTMLX Pages brand: tokens, the icon sprite, and a specification of every UI component (its parts, measurements, states and accessibility) with reference images in light and dark. It holds no stylesheet and names no class; `wwwroot/css` builds the components. Read it before building or styling any UI. A draft |
+| `brand-htmlx-pages` | this repository | The HTMLX Pages brand: tokens, the icon sprite, and a specification of every UI component (its parts, measurements, states and accessibility) with reference images in light and dark. It holds no stylesheet and names no class; the web project's `Styles/` builds the components. Read it before building or styling any UI. A draft |
 | `code-htmx-pages` | this repository | How Razor Pages and HTMX 4 work together: the HTMX 4 changes that break HTMX 2 habits, loading HTMX, a handler that returns a partial or the whole page by `HX-Request-Type`, history, testing, and the patterns still open. Read it before writing any `hx-` attribute or a handler that answers HTMX. A draft |
 
 ⛔ **Matt owns every skill. Never edit a file inside one of the five junctions**, however wrong it looks; report the
