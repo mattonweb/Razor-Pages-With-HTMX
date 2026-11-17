@@ -1,67 +1,19 @@
 /*
-  HTMLX Pages: element defaults, icons and buttons.
+  HTMLX Pages: icons, buttons and three helpers. The element defaults that were here are in ../base.css, in the base
+  layer, and the skip link is drawn in the layout with utilities.
 
   Naming: one lowercase block name per component (.btn, .chip, .data-grid), a plain word for each variant
   scoped to the block (.btn.primary), and ARIA attributes for state (aria-current, aria-sort,
   aria-busy, disabled). HTMX adds .htmx-request to an element while its request is in flight.
 */
 
-*, *::before, *::after { box-sizing: border-box; }
-
-html { -webkit-text-size-adjust: 100%; }
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  font-size: var(--text-md);
-  line-height: var(--leading);
-}
-
-h1, h2, h3, h4 { margin: 0; font-weight: var(--weight-strong); line-height: 1.25; }
-h1 { font-size: var(--text-2xl); }
-h2 { font-size: var(--text-xl); }
-h3 { font-size: var(--text-lg); }
-h4 { font-size: var(--text-md); }
-p  { margin: 0; }
-
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-
-code, kbd, .mono { font-family: var(--font-mono); font-size: 0.93em; }
-
-:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-sm); }
-
-/* Form controls: every text-like input, select and textarea looks the same with no class at all, so the
-   output of the tag helpers (<input asp-for>, <select asp-for>, <textarea asp-for>) needs nothing added. */
-input:not([type="checkbox"], [type="radio"], [type="hidden"]), select, textarea {
-  height: var(--control-height); padding: 0 var(--space-3);
-  border: 1px solid var(--border-input); border-radius: var(--radius-sm);
-  background: var(--surface); color: var(--text); font: inherit;
-}
-select { padding: 0 var(--space-2); }
-textarea { height: auto; min-height: 96px; padding: var(--space-2) var(--space-3); resize: vertical; }
-:is(input, select, textarea):focus-visible { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-::placeholder { color: var(--text-muted); }
-:is(input, select, textarea):disabled {
-  background: var(--neutral-subtle); border-color: var(--neutral-line); color: var(--text-disabled); cursor: not-allowed;
-}
-:is(input, textarea)[readonly] { background: var(--bg); }
-input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; margin: 0; accent-color: var(--accent-fill); }
-
 .muted { color: var(--text-muted); }
+.mono { font-family: var(--font-mono); font-size: 0.93em; }
 
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
-
-.skip-link {
-  position: absolute; left: var(--space-2); top: -100px; z-index: 100;
-  padding: var(--space-2) var(--space-3); background: var(--surface); border-radius: var(--radius-sm);
-}
-.skip-link:focus { top: var(--space-2); }
 
 /* Icons: <svg class="icon" aria-hidden="true"><use href="/icons.svg#name"></use></svg>.
    Line icons on a 24px grid that take the text color. */
@@ -115,17 +67,9 @@ input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; margin:
 
 .btn-group { display: inline-flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
 
-/* Without script. A control that only script makes work says so with data-action, or data-select-all on a grid's
-   select-all box, and leaves the page when the browser runs no script, so that nothing on it does nothing when
-   pressed. A form that HTMX applies as you go keeps its own Apply button for that case (inputs.css, navigation.css). */
-@media (scripting: none) {
-  [data-action], [data-select-all] { display: none; }
-}
-
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Reduced motion: transitions stop; busy indicators slow down rather than vanish, so the state stays visible. */
+/* Reduced motion: the busy spinner slows down rather than vanishing, so the state stays visible. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition-duration: 0.01ms !important; }
   .btn.htmx-request::after, .btn[aria-busy="true"]::after { animation-duration: 2s; }
 }

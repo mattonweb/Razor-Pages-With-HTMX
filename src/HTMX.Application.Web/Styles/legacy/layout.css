@@ -1,58 +1,13 @@
 /*
   HTMLX Pages: layout. The frame of every page and the surfaces content sits on.
-    .app           the application shell: header, side nav and main, as a grid
-    .avatar        the signed-in user's initials, in the header
     .page-header   breadcrumbs, the title row and the page's actions; .title holds a title and its status chip
     .card          a surface; .card-header and .card-body inside, .cards for a column of them
     .hero          the opening of a landing page, in a card: an illustration beside a heading, text and actions
     .toolbar       the row at the top of a card that holds a filter box and a segmented control
     .tabs          links to the sections of one page
 
-  <div class="app">                 data-nav="rail" collapses the side nav to icons; data-nav="full" keeps
-    <header class="app-header">     it open on narrow screens. With no data-nav the nav is full from
-    <nav class="app-nav">           900px and a rail below that.
-    <main class="app-main" id="main">
+  The application shell, its header, side nav, avatar and main, is drawn in the layout with utilities.
 */
-
-.app {
-  --nav: var(--nav-width);
-  display: grid;
-  grid-template-columns: var(--nav) minmax(0, 1fr);
-  grid-template-rows: var(--header-height) 1fr;
-  grid-template-areas: "header header" "nav main";
-  min-height: 100vh;
-}
-.app[data-nav="rail"] { --nav: var(--nav-rail-width); }
-@media (max-width: 899px) { .app:not([data-nav="full"]) { --nav: var(--nav-rail-width); } }
-
-/* Header */
-.app-header {
-  grid-area: header; position: sticky; top: 0; z-index: 10;
-  display: flex; align-items: center; gap: var(--space-2);
-  padding: 0 var(--space-2);
-  background: var(--surface); border-bottom: 1px solid var(--border);
-}
-.app-header .end { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); }
-
-.brand {
-  display: inline-flex; align-items: center; gap: var(--space-2);
-  color: var(--text); font-size: var(--text-lg); font-weight: var(--weight-strong);
-}
-.brand:hover { text-decoration: none; }
-.brand-mark { width: 28px; height: 28px; flex: none; }
-
-/* Avatar: the signed-in user's initials, at the right of the header. The only avatar in the application.
-   <span class="avatar" role="img" aria-label="Signed in as Demo User">DU</span> */
-.avatar {
-  display: inline-grid; place-items: center; flex: none;
-  width: 32px; height: 32px; border-radius: var(--radius-full);
-  background: var(--brand-subtle); color: var(--brand-text);
-  font-size: var(--text-xs); font-weight: var(--weight-strong); text-transform: uppercase;
-}
-
-/* Main content */
-.app-main { grid-area: main; padding: var(--space-6) var(--space-8) var(--space-8); }
-@media (max-width: 899px) { .app-main { padding: var(--space-4); } }
 
 /* Page header: breadcrumbs, then the title row with the page's actions on the right. */
 .page-header { display: grid; gap: var(--space-2); margin-bottom: var(--space-6); }

@@ -30,45 +30,60 @@
     Without HTMX every link and form works as it always did.
 *@
 <body hx-boost:inherited="true">
-    <a class="skip-link" href="#main">Skip to content</a>
-    <div class="app" id="app-shell">
-        <header class="app-header">
-            <button class="btn ghost icon-only" type="button" data-action="toggle-nav" aria-label="Main menu" aria-controls="app-nav">
-                <svg class="icon" aria-hidden="true"><use href="/icons.svg#menu"></use></svg>
+    @* The skip link waits above the window until the keyboard reaches it. *@
+    <a class="absolute -top-[100px] left-2 z-100 rounded-sm bg-surface px-3 py-2 focus:top-2" href="#main">Skip to content</a>
+
+    @*
+        The application shell: the header across the top, the side nav, and the page's main content beside it. The nav
+        is full from 900px and an icon rail below that; the menu button switches it, and the application's script
+        records the choice in data-nav, which the rail: variant reads. --nav holds the nav's width for the grid.
+    *@
+    <div id="app-shell" class="grid min-h-screen grid-cols-[var(--nav)_minmax(0,1fr)] grid-rows-[var(--header-height)_1fr] [--nav:var(--nav-width)] rail:[--nav:var(--nav-rail-width)]">
+        <header class="sticky top-0 z-10 col-span-2 flex items-center gap-2 border-b border-line bg-surface px-2">
+            <button button="icon" type="button" data-action="toggle-nav" aria-label="Main menu" aria-controls="app-nav">
+                <icon name="menu" />
             </button>
-            <a class="brand" asp-page="/Index">
-                <svg class="brand-mark" aria-hidden="true"><use href="/icons.svg#logo"></use></svg>
+            <a class="inline-flex items-center gap-2 text-lg font-strong text-fg hover:no-underline" asp-page="/Index">
+                <svg class="size-7 flex-none" aria-hidden="true"><use href="/icons.svg#logo"></use></svg>
                 HTMLX Pages
             </a>
-            <div class="end">
-                <span class="avatar" role="img" aria-label="Signed in as Demo User">DU</span>
+            <div class="ml-auto flex items-center gap-2">
+                <span class="inline-grid size-8 flex-none place-items-center rounded-full bg-brand-subtle text-xs font-strong uppercase text-brand-text" role="img" aria-label="Signed in as Demo User">DU</span>
             </div>
         </header>
 
-        @* Each page names its section in ViewData, and the section's link is marked as the current page. The foot of
-           the nav holds the one link that leaves the application, to its source on GitHub, which opens a new tab. *@
-        <nav class="app-nav" id="app-nav" aria-label="Main">
-            <a asp-page="/Organizations/Index" title="Organizations"
+        @*
+            Each page names its section in ViewData, and the section's link is marked as the current page. The foot of
+            the nav holds the one link that leaves the application, to its source on GitHub, which opens a new tab. The
+            four links look alike, so their classes are written once, here. In the rail a link's label leaves the screen
+            but stays for a screen reader, and its title gives a tooltip.
+        *@
+        @{
+            string navLink = "group flex h-10 items-center gap-3 whitespace-nowrap px-[14px] text-fg hover:bg-surface-hover hover:no-underline aria-[current=page]:bg-accent-subtle aria-[current=page]:font-strong aria-[current=page]:text-accent aria-[current=page]:shadow-[inset_3px_0_0_var(--accent)]";
+            string navIcon = "text-icon group-aria-[current=page]:text-accent";
+        }
+        <nav id="app-nav" class="sticky top-header flex h-[calc(100vh-var(--header-height))] flex-col gap-0.5 overflow-x-hidden overflow-y-auto border-r border-line bg-surface py-2" aria-label="Main">
+            <a class="@navLink" asp-page="/Organizations/Index" title="Organizations"
                aria-current="@(ViewData["Section"] as string == "Organizations" ? "page" : null)">
-                <svg class="icon" aria-hidden="true"><use href="/icons.svg#building"></use></svg><span>Organizations</span>
+                <icon name="building" class="@navIcon" /><span class="rail:sr-only">Organizations</span>
             </a>
-            <a asp-page="/Users/Index" title="Users"
+            <a class="@navLink" asp-page="/Users/Index" title="Users"
                aria-current="@(ViewData["Section"] as string == "Users" ? "page" : null)">
-                <svg class="icon" aria-hidden="true"><use href="/icons.svg#users"></use></svg><span>Users</span>
+                <icon name="users" class="@navIcon" /><span class="rail:sr-only">Users</span>
             </a>
-            <a asp-page="/Components/Index" title="Components"
+            <a class="@navLink" asp-page="/Components/Index" title="Components"
                aria-current="@(ViewData["Section"] as string == "Components" ? "page" : null)">
-                <svg class="icon" aria-hidden="true"><use href="/icons.svg#palette"></use></svg><span>Components</span>
+                <icon name="palette" class="@navIcon" /><span class="rail:sr-only">Components</span>
             </a>
-            <div class="end">
-                <a href="https://github.com/mattonweb/Razor-Pages-With-HTMX" target="_blank" rel="noopener"
+            <div class="mt-auto flex flex-col gap-0.5 border-t border-line pt-2">
+                <a class="@navLink" href="https://github.com/mattonweb/Razor-Pages-With-HTMX" target="_blank" rel="noopener"
                    title="GitHub (opens in a new tab)">
-                    <svg class="icon" aria-hidden="true"><use href="/icons.svg#external"></use></svg><span>GitHub</span><span class="visually-hidden"> (opens in a new tab)</span>
+                    <icon name="external" class="@navIcon" /><span class="rail:sr-only">GitHub</span><span class="sr-only"> (opens in a new tab)</span>
                 </a>
             </div>
         </nav>
 
-        <main class="app-main" id="main">
+        <main id="main" class="px-8 pt-6 pb-8 max-md:p-4">
             @RenderBody()
         </main>
     </div>
@@ -78,7 +93,7 @@
         after an action HTMX sent, the response replaces what it holds. Being a live region from the start, it has
         screen readers announce each toast as it arrives.
     *@
-    <div class="toasts" id="toasts" role="status" aria-live="polite">@await RenderSectionAsync("Toasts", required: false)</div>
+    <div id="toasts" class="pointer-events-none fixed bottom-6 left-1/2 z-50 grid w-max max-w-[calc(100vw-2*var(--space-4))] -translate-x-1/2 justify-items-center gap-2" role="status" aria-live="polite">@await RenderSectionAsync("Toasts", required: false)</div>
 
     @*
         What the application's script puts in the toast region when a request HTMX sent fails, in place of swapping

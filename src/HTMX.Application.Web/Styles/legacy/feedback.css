@@ -4,7 +4,7 @@
     .busy-bar      a thin progress line while a request is in flight
     .bulk-bar      the bar that appears when rows are selected, with what can be done to them
     .alert         a banner on the page about a state that lasts
-    .toasts        the region, once per layout, that toasts appear in; .toast is one message, often with Undo
+    .toast         one message in the layout's toast region, often with Undo
     .dialog-icon   the toned icon that leads a confirm dialog's message
   An action that can be undone runs at once and says so in a toast with Undo. Only an action that cannot be
   undone asks first, in a confirm dialog.
@@ -80,15 +80,9 @@
 .alert.warning { --tone: var(--warning); --tone-subtle: var(--warning-subtle); --tone-line: var(--warning-line); }
 .alert.danger  { --tone: var(--danger);  --tone-subtle: var(--danger-subtle);  --tone-line: var(--danger-line); }
 
-/* Toasts: <div class="toasts" role="status" aria-live="polite"> sits once in the layout, empty; the server adds
+/* Toasts: the region they appear in sits once in the layout, empty, drawn there with utilities; the server adds
    a .toast to it after an action. A toast leaves by itself after 8 seconds, paused while the pointer or the
    keyboard is on it, and its Undo stays a real button that posts the undo. */
-.toasts {
-  position: fixed; left: 50%; bottom: var(--space-6); z-index: 50; translate: -50% 0;
-  display: grid; justify-items: center; gap: var(--space-2);
-  width: max-content; max-width: calc(100vw - 2 * var(--space-4));
-  pointer-events: none;
-}
 .toast {
   display: flex; align-items: center; gap: var(--space-3);
   min-height: 44px; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);

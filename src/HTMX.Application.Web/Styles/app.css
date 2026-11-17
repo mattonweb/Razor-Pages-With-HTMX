@@ -5,16 +5,19 @@
 
   Cascade layers set which rules win, whatever their specificity: a later layer wins over an earlier one.
     theme       Tailwind's theme variables.
-    base        Tailwind's reset (preflight), then the brand's tokens, copied unchanged from the brand skill.
+    base        Tailwind's reset (preflight), the brand's tokens, copied unchanged from the brand skill, and the
+                brand's element defaults (base.css).
     legacy      The stylesheets the views were first built with. A view moves to Tailwind's utilities one area at
                 a time, and this layer goes once no view uses its classes.
-    components  Empty: the views use utilities alone, and markup that repeats becomes a partial view.
+    components  Empty: the views use utilities alone. A button or an icon is drawn by a tag helper (TagHelpers/),
+                which writes its utilities in one place, and other markup that repeats becomes a partial view.
     utilities   The utilities the views use, which Tailwind generates from the class names it finds in them.
 */
 @layer theme, base, legacy, components, utilities;
 
 @import "tailwindcss" source(none);
 @import "./tokens.css" layer(base);
+@import "./base.css" layer(base);
 @import "./legacy/base.css" layer(legacy);
 @import "./legacy/layout.css" layer(legacy);
 @import "./legacy/navigation.css" layer(legacy);
@@ -26,11 +29,127 @@
 @source "../Pages";
 @source "../TagHelpers";
 
-/* Two of the browser's defaults that Tailwind's reset takes away and the brand keeps: a modal dialog sits in the
-   middle of the window, and a file field keeps the browser's own button until the brand draws one. */
-@layer base {
-  dialog { margin: auto; }
-  ::file-selector-button { all: revert; }
+/*
+  The theme: the brand's tokens, under the names Tailwind's utilities use, and nothing else. Each namespace is
+  emptied first, so the only colors, sizes and fonts there are the brand's: there is no bg-red-500 to reach for.
+
+  inline makes each utility read the brand's own variable, as in .bg-accent { background-color: var(--accent) },
+  so tokens.css stays the one place a value is written, and light and dark need no dark: variant, since each
+  token is already light-dark(). reference keeps Tailwind from writing these names as variables of its own: several
+  are the brand's names already, such as --text-sm and --radius-sm, and would point at themselves.
+
+  A few colors take a shorter name, so that a utility does not say its kind twice: --text is fg (text-fg, not
+  text-text), --bg is page, and --border is line. The window's breakpoint and the card's width have to be written
+  out, since a media or container query cannot read a variable.
+*/
+@theme inline reference {
+  --color-*: initial;
+  --color-brand: var(--brand);
+  --color-brand-text: var(--brand-text);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-on-brand: var(--on-brand);
+  --color-accent: var(--accent);
+  --color-accent-fill: var(--accent-fill);
+  --color-accent-fill-hover: var(--accent-fill-hover);
+  --color-accent-fill-active: var(--accent-fill-active);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-on-accent: var(--on-accent);
+  --color-fg: var(--text);
+  --color-fg-muted: var(--text-muted);
+  --color-fg-disabled: var(--text-disabled);
+  --color-icon: var(--icon);
+  --color-page: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-line: var(--border);
+  --color-line-input: var(--border-input);
+  --color-inverse: var(--inverse);
+  --color-on-inverse: var(--on-inverse);
+  --color-accent-on-inverse: var(--accent-on-inverse);
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-line: var(--success-line);
+  --color-danger: var(--danger);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-danger-line: var(--danger-line);
+  --color-danger-fill: var(--danger-fill);
+  --color-danger-fill-hover: var(--danger-fill-hover);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-line: var(--warning-line);
+  --color-info: var(--info);
+  --color-info-subtle: var(--info-subtle);
+  --color-info-line: var(--info-line);
+  --color-neutral: var(--neutral);
+  --color-neutral-subtle: var(--neutral-subtle);
+  --color-neutral-line: var(--neutral-line);
+  --color-scrim: var(--scrim);
+
+  --font-*: initial;
+  --font-sans: var(--font);
+  --font-mono: var(--font-mono);
+
+  --text-*: initial;
+  --text-xs: var(--text-xs);
+  --text-sm: var(--text-sm);
+  --text-md: var(--text-md);
+  --text-lg: var(--text-lg);
+  --text-xl: var(--text-xl);
+  --text-2xl: var(--text-2xl);
+
+  --font-weight-*: initial;
+  --font-weight-regular: var(--weight-regular);
+  --font-weight-strong: var(--weight-strong);
+
+  --leading-*: initial;
+  --leading-body: var(--leading);
+
+  /* The brand's 4px grid: p-1 is --space-1, p-2 --space-2 and so on. The named sizes give h-control, top-header,
+     w-nav and the like. */
+  --spacing: var(--space-1);
+  --spacing-control: var(--control-height);
+  --spacing-row: var(--row-height);
+  --spacing-header: var(--header-height);
+  --spacing-nav: var(--nav-width);
+  --spacing-rail: var(--nav-rail-width);
+
+  --radius-*: initial;
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-full: var(--radius-full);
+
+  --shadow-*: initial;
+  --shadow-card: var(--shadow-card);
+  --shadow-popup: var(--shadow-popup);
+
+  --breakpoint-*: initial;
+  --breakpoint-md: 900px;
+
+  --container-*: initial;
+  --container-card: 560px;
+
+  --animate-*: initial;
+  --animate-spin: spin 0.7s linear infinite;
+  @keyframes spin { to { transform: rotate(360deg); } }
+}
+
+/*
+  Variants for the states HTMX and the application's script give a page, written once so that a view names the
+  state rather than the selector.
+    busy:   the element itself is waiting for an answer: HTMX marks the element that sent a request .htmx-request,
+            and aria-busy="true" shows the same state without HTMX.
+    rail:   the side nav is an icon rail: the menu button chose it, or the window is narrower than 900px and the
+            button did not choose the full nav. It applies to the shell that carries data-nav and everything in it.
+    htmx:   HTMX runs on the page: script is on, and the application's script did not find HTMX missing. A form that
+            HTMX sends as you go hides its Apply button with htmx:hidden.
+*/
+@custom-variant busy (&:is(.htmx-request, [aria-busy="true"]));
+@custom-variant rail {
+  &:where([data-nav="rail"], [data-nav="rail"] *) { @slot; }
+  @media (width < 900px) { &:where(:root:not(:has([data-nav="full"])) *) { @slot; } }
+}
+@custom-variant htmx {
+  @media (scripting: enabled) { &:where(:root:not([data-htmx="absent"]) *) { @slot; } }
 }
 
 /* The browser's own bullets and indent for a list with no class, which the legacy markup relied on. The selector
