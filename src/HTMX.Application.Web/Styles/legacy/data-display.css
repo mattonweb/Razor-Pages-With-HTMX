@@ -1,6 +1,6 @@
 /*
   HTMLX Pages: data display. Showing records and values.
-    .grid          a table of records: sort headers, a title cell, a selection column, archived rows
+    .data-grid     a table of records: sort headers, a title cell, a selection column, archived rows
     .chip          a status label
     .empty         what a list shows when it has nothing to show
     .fields        label-over-value pairs, in as many columns as the width allows
@@ -13,46 +13,46 @@
 
 /* Grid */
 .grid-wrap { overflow-x: auto; }
-.grid { width: 100%; border-collapse: collapse; }
-.grid th {
+.data-grid { width: 100%; border-collapse: collapse; }
+.data-grid th {
   height: 40px; padding: 0 var(--space-4);
   border-bottom: 1px solid var(--border);
   font-size: var(--text-sm); font-weight: var(--weight-strong); color: var(--text-muted);
   text-align: left; white-space: nowrap;
 }
-.grid td {
+.data-grid td {
   height: var(--row-height); padding: var(--space-2) var(--space-4);
   border-bottom: 1px solid var(--border); vertical-align: middle;
 }
-.grid tbody tr:last-child td { border-bottom: 0; }
-.grid tbody tr:hover { background: var(--surface-hover); }
-.grid tbody tr[aria-selected="true"] { background: var(--accent-subtle); }
+.data-grid tbody tr:last-child td { border-bottom: 0; }
+.data-grid tbody tr:hover { background: var(--surface-hover); }
+.data-grid tbody tr[aria-selected="true"] { background: var(--accent-subtle); }
 
 /* Selection column: a checkbox (bulk selection) or a radio (a picker) in the first cell. A row whose box is
    checked is highlighted; its label is the row's title, so a click on the name also selects it. */
-.grid .select { width: 1%; padding-right: 0; }
-.grid tbody tr:has(.select input:checked) { background: var(--accent-subtle); }
-.grid td.title label { display: block; font-weight: var(--weight-strong); cursor: pointer; }
-.grid .actions { width: 1%; padding-block: 0; text-align: right; white-space: nowrap; }
-.grid .num { text-align: right; font-variant-numeric: tabular-nums; }
+.data-grid .select { width: 1%; padding-right: 0; }
+.data-grid tbody tr:has(.select input:checked) { background: var(--accent-subtle); }
+.data-grid td.title label { display: block; font-weight: var(--weight-strong); cursor: pointer; }
+.data-grid .actions { width: 1%; padding-block: 0; text-align: right; white-space: nowrap; }
+.data-grid .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Sortable header: <th aria-sort="ascending"><a href="?sort=name&amp;dir=desc">Name <svg class="icon sm">…</svg></a></th>.
    The arrow shows on the sorted column, and on any header under the pointer or keyboard focus. */
-.grid th a { display: inline-flex; align-items: center; gap: var(--space-1); color: inherit; }
-.grid th a:hover { color: var(--text); text-decoration: none; }
-.grid th a .icon { opacity: 0; }
-.grid th a:hover .icon, .grid th a:focus-visible .icon,
-.grid th[aria-sort="ascending"] a .icon, .grid th[aria-sort="descending"] a .icon { opacity: 1; }
-.grid th[aria-sort="ascending"], .grid th[aria-sort="descending"] { color: var(--text); }
+.data-grid th a { display: inline-flex; align-items: center; gap: var(--space-1); color: inherit; }
+.data-grid th a:hover { color: var(--text); text-decoration: none; }
+.data-grid th a .icon { opacity: 0; }
+.data-grid th a:hover .icon, .data-grid th a:focus-visible .icon,
+.data-grid th[aria-sort="ascending"] a .icon, .data-grid th[aria-sort="descending"] a .icon { opacity: 1; }
+.data-grid th[aria-sort="ascending"], .data-grid th[aria-sort="descending"] { color: var(--text); }
 
 /* An archived row in the All view: muted text, the chip says why. */
-.grid tr.archived td:not(.actions) { color: var(--text-muted); }
-.grid tr.archived td.title a { color: var(--text-muted); }
+.data-grid tr.archived td:not(.actions) { color: var(--text-muted); }
+.data-grid tr.archived td.title a { color: var(--text-muted); }
 
 /* Title cell: the first column. A link to the record, then a muted second line.
    <td class="title"><a href="…">Pat Example</a><span class="sub">pat@example.com</span></td> */
-.grid td.title a { display: block; font-weight: var(--weight-strong); }
-.grid td.title .sub { display: block; font-size: var(--text-sm); color: var(--text-muted); }
+.data-grid td.title a { display: block; font-weight: var(--weight-strong); }
+.data-grid td.title .sub { display: block; font-size: var(--text-sm); color: var(--text-muted); }
 
 /* Chip: a status label with a dot. Tones: success, danger, warning, info, brand; neutral is the default. */
 .chip {

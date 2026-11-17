@@ -1,7 +1,7 @@
 /*
   HTMLX Pages: element defaults, icons and buttons.
 
-  Naming: one lowercase block name per component (.btn, .chip, .grid), a plain word for each variant
+  Naming: one lowercase block name per component (.btn, .chip, .data-grid), a plain word for each variant
   scoped to the block (.btn.primary), and ARIA attributes for state (aria-current, aria-sort,
   aria-busy, disabled). HTMX adds .htmx-request to an element while its request is in flight.
 */

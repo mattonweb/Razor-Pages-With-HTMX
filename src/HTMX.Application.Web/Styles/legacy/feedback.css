@@ -40,7 +40,7 @@
   background: var(--accent); animation: busy-slide 1.1s ease-in-out infinite;
 }
 .htmx-request .busy-bar, .htmx-request.busy-bar, [aria-busy="true"] .busy-bar { visibility: visible; }
-.htmx-request .grid tbody, [aria-busy="true"] .grid tbody { opacity: .5; transition: opacity .2s; }
+.htmx-request .data-grid tbody, [aria-busy="true"] .data-grid tbody { opacity: .5; transition: opacity .2s; }
 @keyframes busy-slide { from { translate: -100% 0; } to { translate: 340% 0; } }
 @media (prefers-reduced-motion: reduce) { .busy-bar::before { animation-duration: 3s; } }
 
@@ -51,7 +51,7 @@
 /* The counter starts on .grid-wrap, not the card: the card is a size container, and a container's own
    counter-reset does not reach its contents. The bar, a later sibling of .grid-wrap, still reads it. */
 .card:has(.bulk-bar) .grid-wrap { counter-reset: selected; }
-.grid tbody tr:has(.select input:checked) { counter-increment: selected; }   /* counted on the row: a checkbox itself does not count */
+.data-grid tbody tr:has(.select input:checked) { counter-increment: selected; }   /* counted on the row: a checkbox itself does not count */
 .bulk-bar {
   position: sticky; bottom: var(--space-4); z-index: 5;
   display: none; align-items: center; gap: var(--space-2); flex-wrap: wrap;
@@ -60,7 +60,7 @@
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
   box-shadow: var(--shadow-popup);
 }
-.card:has(.grid tbody .select input:checked) .bulk-bar { display: flex; }
+.card:has(.data-grid tbody .select input:checked) .bulk-bar { display: flex; }
 .bulk-bar .count { font-weight: var(--weight-strong); }
 .bulk-bar .count::before { content: counter(selected); font-variant-numeric: tabular-nums; }
 

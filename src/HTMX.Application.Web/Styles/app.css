@@ -1,0 +1,40 @@
+/*
+  The application's one stylesheet, as Tailwind CSS reads it. The Tailwind CSS standalone CLI, pinned in the
+  project file, compiles it into wwwroot/css/app.css before each build, unminified in Debug and minified in Release;
+  nothing here runs on Node.
+
+  Cascade layers set which rules win, whatever their specificity: a later layer wins over an earlier one.
+    theme       Tailwind's theme variables.
+    base        Tailwind's reset (preflight), then the brand's tokens, copied unchanged from the brand skill.
+    legacy      The stylesheets the views were first built with. A view moves to Tailwind's utilities one area at
+                a time, and this layer goes once no view uses its classes.
+    components  Empty: the views use utilities alone, and markup that repeats becomes a partial view.
+    utilities   The utilities the views use, which Tailwind generates from the class names it finds in them.
+*/
+@layer theme, base, legacy, components, utilities;
+
+@import "tailwindcss" source(none);
+@import "./tokens.css" layer(base);
+@import "./legacy/base.css" layer(legacy);
+@import "./legacy/layout.css" layer(legacy);
+@import "./legacy/navigation.css" layer(legacy);
+@import "./legacy/data-display.css" layer(legacy);
+@import "./legacy/inputs.css" layer(legacy);
+@import "./legacy/feedback.css" layer(legacy);
+
+/* source(none) above stops Tailwind scanning the whole project, bin and obj included; it reads only these. */
+@source "../Pages";
+@source "../TagHelpers";
+
+/* Two of the browser's defaults that Tailwind's reset takes away and the brand keeps: a modal dialog sits in the
+   middle of the window, and a file field keeps the browser's own button until the brand draws one. */
+@layer base {
+  dialog { margin: auto; }
+  ::file-selector-button { all: revert; }
+}
+
+/* The browser's own bullets and indent for a list with no class, which the legacy markup relied on. The selector
+   weighs nothing, so any rule of the legacy stylesheets wins over it. It goes with the legacy layer. */
+@layer legacy {
+  :where(ul, ol):where(:not([class])) { margin: revert; padding: revert; list-style: revert; }
+}

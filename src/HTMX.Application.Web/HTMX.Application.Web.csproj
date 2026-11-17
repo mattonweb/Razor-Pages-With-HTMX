@@ -6,4 +6,90 @@
     <ProjectReference Include="..\HTMX.Adapter.Customers\HTMX.Adapter.Customers.csproj" />
   </ItemGroup>
 
+  <!--
+    Tailwind CSS compiles Styles/app.css into wwwroot/css/app.css before each build. It runs as Tailwind's standalone
+    CLI, one executable per operating system, so the build needs no Node. The first build on a machine downloads the
+    pinned version from Tailwind's GitHub release into artifacts/ at the repository's root, which git ignores, and
+    checks it against the SHA-256 the release publishes in its sha256sums.txt, copied here, before it runs.
+  -->
+  <PropertyGroup>
+    <TailwindVersion>4.3.5</TailwindVersion>
+    <TailwindRelease>https://github.com/tailwindlabs/tailwindcss/releases/download/v$(TailwindVersion)</TailwindRelease>
+    <ArtifactsRoot>$([MSBuild]::NormalizeDirectory($(MSBuildProjectDirectory), ..\..\artifacts))</ArtifactsRoot>
+    <TailwindDirectory>$(ArtifactsRoot)tailwindcss\$(TailwindVersion)\</TailwindDirectory>
+    <TailwindArchitecture>$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)</TailwindArchitecture>
+    <TailwindInput>Styles\app.css</TailwindInput>
+    <TailwindOutput>wwwroot\css\app.css</TailwindOutput>
+    <!-- Readable in a browser's developer tools while debugging; as small as it can be in a release. -->
+    <TailwindMinify Condition="'$(Configuration)' == 'Release'">--minify</TailwindMinify>
+    <TailwindSettings>$(BaseIntermediateOutputPath)tailwind.settings</TailwindSettings>
+  </PropertyGroup>
+
+  <!-- Version 4.3.5 has no build for Windows on Arm, where the x64 build runs under emulation, and Linux here means
+       glibc: Alpine and other musl systems need the release's -musl build instead. -->
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <TailwindAsset>tailwindcss-windows-x64.exe</TailwindAsset>
+    <TailwindSha256>2803583268c53f4713e89943e211081fddb186c0a4a7d07b5c342c6ae853ec95</TailwindSha256>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$(TailwindArchitecture)' == 'X64'">
+    <TailwindAsset>tailwindcss-linux-x64</TailwindAsset>
+    <TailwindSha256>e47695cee3f0d90623a91f3939b08bdee610eb5ad99340adff9d4145b284d6cc</TailwindSha256>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$(TailwindArchitecture)' == 'Arm64'">
+    <TailwindAsset>tailwindcss-linux-arm64</TailwindAsset>
+    <TailwindSha256>ffcd0d21dbd7c605dc12743ff0c0b47debc963c86b399674084c1c8f2c96ecad</TailwindSha256>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$(TailwindArchitecture)' == 'X64'">
+    <TailwindAsset>tailwindcss-macos-x64</TailwindAsset>
+    <TailwindSha256>a63702686a3ed048b3135d84a73be49ea9d47f880c9b20e54b3ef60934ad8cdf</TailwindSha256>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$(TailwindArchitecture)' == 'Arm64'">
+    <TailwindAsset>tailwindcss-macos-arm64</TailwindAsset>
+    <TailwindSha256>f3f4f5d1727e2b693b8f1c9a1492b5dd87008c86ea286bee1589cb458e6235fc</TailwindSha256>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TailwindCli>$(TailwindDirectory)$(TailwindAsset)</TailwindCli>
+  </PropertyGroup>
+
+  <!-- Everything the compiled stylesheet depends on: the stylesheets, and the files Styles/app.css says to scan for
+       class names. -->
+  <ItemGroup>
+    <TailwindSource Include="Styles\**\*.css;Pages\**\*.cshtml;TagHelpers\**\*.cs" />
+  </ItemGroup>
+
+  <!-- Downloads into a folder of its own and checks the file before moving it into place, so that a download that
+       fails or does not match never becomes the CLI the build runs. -->
+  <Target Name="DownloadTailwindCli" Condition="!Exists('$(TailwindCli)')">
+    <Error Condition="'$(TailwindAsset)' == ''"
+           Text="Tailwind CSS $(TailwindVersion) has no standalone CLI for this operating system and architecture." />
+    <RemoveDir Directories="$(TailwindDirectory)download" />
+    <DownloadFile SourceUrl="$(TailwindRelease)/$(TailwindAsset)" DestinationFolder="$(TailwindDirectory)download"
+                  Retries="2" />
+    <VerifyFileHash File="$(TailwindDirectory)download\$(TailwindAsset)" Hash="$(TailwindSha256)" Algorithm="SHA256" />
+    <Exec Condition="!$([MSBuild]::IsOSPlatform('Windows'))"
+          Command="chmod +x &quot;$(TailwindDirectory)download/$(TailwindAsset)&quot;" />
+    <Move SourceFiles="$(TailwindDirectory)download\$(TailwindAsset)" DestinationFiles="$(TailwindCli)" />
+    <RemoveDir Directories="$(TailwindDirectory)download" />
+  </Target>
+
+  <!-- Records the version and the options the stylesheet was compiled with, rewriting the file only when they change,
+       so that moving between Debug and Release compiles it again. -->
+  <Target Name="RecordTailwindSettings">
+    <WriteLinesToFile File="$(TailwindSettings)" Lines="$(TailwindVersion) $(TailwindMinify)" Overwrite="true"
+                      WriteOnlyWhenDifferent="true" />
+  </Target>
+
+  <!-- Compiles only when a source, the version or the options have changed since the last compile. The output is
+       added as content here as well, because on a fresh clone it did not exist when the project was read, and it is
+       served, fingerprinted, like any other file in wwwroot. -->
+  <Target Name="CompileTailwindCss" BeforeTargets="BeforeBuild"
+          DependsOnTargets="DownloadTailwindCli;RecordTailwindSettings"
+          Inputs="@(TailwindSource);$(TailwindSettings)" Outputs="$(TailwindOutput)">
+    <Exec Command="&quot;$(TailwindCli)&quot; --input $(TailwindInput) --output $(TailwindOutput) $(TailwindMinify)" />
+    <ItemGroup>
+      <Content Remove="$(TailwindOutput)" />
+      <Content Include="$(TailwindOutput)" />
+    </ItemGroup>
+  </Target>
+
 </Project>
