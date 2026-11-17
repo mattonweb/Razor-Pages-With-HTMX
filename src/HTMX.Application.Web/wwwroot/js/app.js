@@ -13,7 +13,7 @@
   }
 
   const toggleSelector = "[data-action='toggle-nav']";
-  const navIsFull = () => document.querySelector(".app-nav").offsetWidth > 100;
+  const navIsFull = () => document.getElementById("app-nav").offsetWidth > 100;
   const describeButton = () =>
     document.querySelector(toggleSelector)?.setAttribute("aria-expanded", String(navIsFull()));
 
@@ -24,19 +24,21 @@
     }
 
     const isRail = !navIsFull();
-    document.querySelector(".app").dataset.nav = isRail ? "full" : "rail";
+    document.getElementById("app-shell").dataset.nav = isRail ? "full" : "rail";
     button.setAttribute("aria-expanded", String(isRail));
   });
   document.addEventListener("DOMContentLoaded", describeButton);
   document.addEventListener("htmx:after:swap", describeButton);
 
-  // The brand's CSS fades a toast out after 8 seconds, and pauses while the pointer or the keyboard is on it; once it
-  // has faded, or Dismiss is pressed, the toast is removed, so that nothing invisible stays in the page.
+  // The stylesheet fades a toast out after 8 seconds, and pauses while the pointer or the keyboard is on it; once it
+  // has faded, or Dismiss is pressed, the toast is removed, so that nothing invisible stays in the page. A toast is
+  // marked data-toast, and it has faded when an animation of its own ends with it hidden, so neither the classes that
+  // style it nor the name of that animation matter here.
   document.addEventListener("click", (event) => {
-    event.target.closest("[data-action='dismiss-toast']")?.closest(".toast")?.remove();
+    event.target.closest("[data-action='dismiss-toast']")?.closest("[data-toast]")?.remove();
   });
   document.addEventListener("animationend", (event) => {
-    if (event.animationName === "toast-out") {
+    if (event.target.matches("[data-toast]") && getComputedStyle(event.target).visibility === "hidden") {
       event.target.remove();
     }
   });
