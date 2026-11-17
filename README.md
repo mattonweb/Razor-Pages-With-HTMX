@@ -284,9 +284,13 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   what they check by role, text, id or a `data-` attribute, never by a class, so restyling a page cannot break one;
   the application's script finds what it works on the same way.
 - **Look:** the HTMLX Pages brand, `.claude/skills/brand-htmlx-pages`. Its icon sprite was copied from the skill's
-  `assets/` into `wwwroot`, and its tokens into `Styles/`, beside the stylesheets in `Styles/legacy/` that build its
-  components to the skill's specs. The views move from those stylesheets to Tailwind CSS's utilities one area at a
-  time. The home page's robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from
+  `assets/` into `wwwroot`, and its tokens into `Styles/tokens.css`. Tailwind's theme in `Styles/app.css` is those
+  tokens and nothing else, so `bg-accent` is the brand's accent and there is no `bg-red-500`, and each utility reads
+  the token itself, which is already right in light and dark. `Styles/base.css` holds the brand's element defaults. A
+  button and an icon are drawn by tag helpers, which keep their utilities in one place:
+  `<a asp-page="./Edit" button="primary">` and `<icon name="edit" />`. The layout's shell is written in utilities; the
+  other views move from the stylesheets in `Styles/legacy/` one area at a time. The home page's robot,
+  `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from
   [FreeSVG](https://freesvg.org/artificial-intelligence-technology-concept), CC0 (public domain), with the blue square
   behind it removed.
 - **Tailwind CSS 4.3.5**, pinned, run as its standalone CLI, so nothing here runs on Node. Before each build the web
