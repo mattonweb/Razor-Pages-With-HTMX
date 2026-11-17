@@ -7,8 +7,8 @@
     .related       a link to another record, led by its type's icon
     .panel         a side panel that shows one record's fields over the page
     .version       a version badge
-    .timeline      a list of versions, newest first, each a <details> that opens on its changes
-    .diff          a table of changed values, before and after
+
+  The timeline and the diff are drawn in their partial views, _Timeline and _Diff, with utilities.
 */
 
 /* Grid */
@@ -40,9 +40,9 @@
    The arrow shows on the sorted column, and on any header under the pointer or keyboard focus. */
 .data-grid th a { display: inline-flex; align-items: center; gap: var(--space-1); color: inherit; }
 .data-grid th a:hover { color: var(--text); text-decoration: none; }
-.data-grid th a .icon { opacity: 0; }
-.data-grid th a:hover .icon, .data-grid th a:focus-visible .icon,
-.data-grid th[aria-sort="ascending"] a .icon, .data-grid th[aria-sort="descending"] a .icon { opacity: 1; }
+.data-grid th a svg { opacity: 0; }
+.data-grid th a:hover svg, .data-grid th a:focus-visible svg,
+.data-grid th[aria-sort="ascending"] a svg, .data-grid th[aria-sort="descending"] a svg { opacity: 1; }
 .data-grid th[aria-sort="ascending"], .data-grid th[aria-sort="descending"] { color: var(--text); }
 
 /* An archived row in the All view: muted text, the chip says why. */
@@ -131,47 +131,3 @@
 }
 .version.current { background: var(--brand); color: var(--on-brand); }
 
-/* Timeline: a line down the left with a dot per version; the current version's dot is the brand color. */
-.timeline { margin: 0; padding: 0; list-style: none; }
-.timeline > li { position: relative; padding-left: var(--space-8); }
-.timeline > li::before {
-  content: ""; position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: var(--border);
-}
-.timeline > li:first-child::before { top: 20px; }
-.timeline > li:last-child::before { bottom: auto; height: 20px; }
-.timeline > li::after {
-  content: ""; position: absolute; left: 5px; top: 14px; width: 14px; height: 14px; border-radius: 50%;
-  background: var(--surface); border: 2px solid var(--border-input);
-}
-.timeline > li.current::after { background: var(--brand); border-color: var(--brand); }
-
-.timeline summary {
-  display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2) var(--space-3);
-  padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm);
-  list-style: none; cursor: pointer;
-}
-.timeline summary::-webkit-details-marker { display: none; }
-.timeline summary:hover { background: var(--surface-hover); }
-.timeline summary .chevron { color: var(--icon); transition: rotate .15s; }
-.timeline details[open] > summary .chevron { rotate: 90deg; }
-.timeline summary .when { margin-left: auto; font-size: var(--text-sm); color: var(--text-muted); }
-.timeline .entry-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-3) var(--space-5); }
-.timeline .entry-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-
-/* Diff: Field, Before, After. Only the fields that changed; a missing value reads "Not set". The column headers
-   carry the meaning, so the colors only reinforce it. */
-.diff { width: 100%; min-width: 440px; border-collapse: collapse; table-layout: fixed; font-size: var(--text-sm); }   /* narrower than that, .diff-wrap scrolls sideways, as a grid does */
-.diff thead th:first-child { width: 120px; }   /* Field is fixed; Before and After share the rest equally */
-.diff th, .diff td {
-  padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border);
-  text-align: left; vertical-align: top; overflow-wrap: anywhere;
-}
-.diff thead th { font-weight: var(--weight-strong); color: var(--text-muted); }
-.diff tbody th { font-weight: var(--weight-strong); }
-.diff tbody tr:last-child > * { border-bottom: 0; }
-.diff del {
-  background: var(--danger-subtle); color: var(--text);
-  text-decoration: line-through; text-decoration-color: var(--danger);
-}
-.diff ins { background: var(--success-subtle); color: var(--text); text-decoration: none; }
-.diff-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }

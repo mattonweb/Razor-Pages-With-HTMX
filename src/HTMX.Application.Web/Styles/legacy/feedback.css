@@ -4,7 +4,6 @@
     .busy-bar      a thin progress line while a request is in flight
     .bulk-bar      the bar that appears when rows are selected, with what can be done to them
     .alert         a banner on the page about a state that lasts
-    .toast         one message in the layout's toast region, often with Undo
     .dialog-icon   the toned icon that leads a confirm dialog's message
   An action that can be undone runs at once and says so in a toast with Undo. Only an action that cannot be
   undone asks first, in a confirm dialog.
@@ -80,24 +79,6 @@
 .alert.warning { --tone: var(--warning); --tone-subtle: var(--warning-subtle); --tone-line: var(--warning-line); }
 .alert.danger  { --tone: var(--danger);  --tone-subtle: var(--danger-subtle);  --tone-line: var(--danger-line); }
 
-/* Toasts: the region they appear in sits once in the layout, empty, drawn there with utilities; the server adds
-   a .toast to it after an action. A toast leaves by itself after 8 seconds, paused while the pointer or the
-   keyboard is on it, and its Undo stays a real button that posts the undo. */
-.toast {
-  display: flex; align-items: center; gap: var(--space-3);
-  min-height: 44px; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
-  background: var(--inverse); color: var(--on-inverse);
-  border-radius: var(--radius-md); box-shadow: var(--shadow-popup);
-  pointer-events: auto;
-  animation: toast-in .2s ease-out, toast-out .3s ease-in 8s forwards;
-}
-.toast:hover, .toast:focus-within { animation-play-state: running, paused; }
-.toast .message { flex: 1; }
-.toast .btn.ghost { color: var(--accent-on-inverse); }
-.toast .btn.ghost:hover { background: color-mix(in srgb, var(--on-inverse) 12%, transparent); }
-.toast .btn.ghost.icon-only { color: var(--on-inverse); }
-@keyframes toast-in  { from { opacity: 0; translate: 0 8px; } }
-@keyframes toast-out { to { opacity: 0; visibility: hidden; } }
 
 /* Confirm dialog: a .dialog.sm whose body leads with a .dialog-icon in the dialog's tone, then the message.
    The safe choice comes first in the footer and has focus; the destructive one is .btn.danger, last. */
@@ -114,7 +95,7 @@
 .dialog-icon.info    { --tone: var(--info);    --tone-subtle: var(--info-subtle); }
 
 /* Roll-back preview: a .dialog whose body says what will happen, warns in an .alert about anything that cannot
-   be carried out, and shows the .diff from now to the result. What it previews can be undone, so its button is
+   be carried out, and shows the diff from now to the result. What it previews can be undone, so its button is
    primary, not danger. */
 .rollback { display: grid; gap: var(--space-3); }
 .rollback .alert { margin: 0; }

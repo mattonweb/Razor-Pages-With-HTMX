@@ -8,7 +8,8 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 /// <summary>
 /// Draws a button as the brand gives it, from the look its <c>button</c> attribute names: <c>secondary</c>, the
 /// default; <c>primary</c>; <c>danger</c>; <c>ghost</c>; or <c>icon</c>, a square ghost button that holds an icon alone
-/// and carries an <c>aria-label</c>. It draws a <c>&lt;button&gt;</c>, a link that looks like a button, or a
+/// and carries an <c>aria-label</c>. On an inverse surface, such as a toast, <c>ghost-inverse</c> and
+/// <c>icon-inverse</c> are the ghost and icon looks in its colors. It draws a <c>&lt;button&gt;</c>, a link that looks like a button, or a
 /// <c>&lt;span&gt;</c> that stands in for a link with nowhere to go. The look's Tailwind utilities are written here
 /// once rather than on every button, and any class the view gives the element is kept beside them.
 /// </summary>
@@ -65,8 +66,18 @@ public sealed class ButtonTagHelper : TagHelper
     private const string Icon =
         "w-control px-0 border-transparent bg-transparent text-icon hover:bg-surface-hover " + LightSpinner;
 
+    // On an inverse surface: the accent or the surface's own text, washed with that text under the pointer.
+    private const string GhostInverse =
+        "px-3 border-transparent bg-transparent text-accent-on-inverse "
+        + "hover:bg-[color-mix(in_srgb,var(--on-inverse)_12%,transparent)] " + LightSpinner;
+
+    private const string IconInverse =
+        "w-control px-0 border-transparent bg-transparent text-on-inverse "
+        + "hover:bg-[color-mix(in_srgb,var(--on-inverse)_12%,transparent)] " + LightSpinner;
+
     /// <summary>
-    /// Gets or sets the button's look: <c>secondary</c>, <c>primary</c>, <c>danger</c>, <c>ghost</c> or <c>icon</c>.
+    /// Gets or sets the button's look: <c>secondary</c>, <c>primary</c>, <c>danger</c>, <c>ghost</c> or <c>icon</c>,
+    /// or on an inverse surface <c>ghost-inverse</c> or <c>icon-inverse</c>.
     /// </summary>
     [HtmlAttributeName(LookAttributeName)]
     public string? Look { get; set; }
@@ -76,7 +87,7 @@ public sealed class ButtonTagHelper : TagHelper
     /// </summary>
     /// <param name="context">The element as Razor read it.</param>
     /// <param name="output">The element as it will be written.</param>
-    /// <exception cref="InvalidOperationException">The look is not one of the five.</exception>
+    /// <exception cref="InvalidOperationException">The look is not one of the seven.</exception>
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         ArgumentNullException.ThrowIfNull(output);
@@ -92,7 +103,7 @@ public sealed class ButtonTagHelper : TagHelper
     /// </summary>
     /// <param name="look">The look, as the view names it.</param>
     /// <returns>The look's utilities.</returns>
-    /// <exception cref="InvalidOperationException">The look is not one of the five.</exception>
+    /// <exception cref="InvalidOperationException">The look is not one of the seven.</exception>
     private static string ClassesFor(string? look)
     {
         return look switch
@@ -107,9 +118,14 @@ public sealed class ButtonTagHelper : TagHelper
                 Ghost,
             "icon" =>
                 Icon,
+            "ghost-inverse" =>
+                GhostInverse,
+            "icon-inverse" =>
+                IconInverse,
             _ =>
                 throw new InvalidOperationException(
-                    $"A button's look is secondary, primary, danger, ghost or icon, not \"{look}\"."),
+                    "A button's look is secondary, primary, danger, ghost, icon, ghost-inverse or icon-inverse, "
+                    + $"not \"{look}\"."),
         };
     }
 }

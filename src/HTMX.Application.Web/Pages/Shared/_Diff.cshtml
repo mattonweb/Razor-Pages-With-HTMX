@@ -3,30 +3,34 @@
     The brand's diff: Field, then the value before and after, as <del> and <ins>, for only the fields that changed. A
     missing value reads "Not set". The column headings carry the meaning; the colors only reinforce it.
 *@
-<div class="diff-wrap">
-    <table class="diff">
-        <caption class="visually-hidden">@Model.Caption</caption>
-        <thead><tr><th scope="col">Field</th><th scope="col">@Model.BeforeHeading</th><th scope="col">@Model.AfterHeading</th></tr></thead>
-        <tbody>
+@{
+    // Every cell, a heading or a value: 8px by 12px of padding, a line below, aligned top, breaking anywhere.
+    string cell = "border-b border-line px-3 py-2 text-left align-top wrap-anywhere";
+}
+<div class="overflow-x-auto rounded-md border border-line">
+    <table class="w-full min-w-[440px] table-fixed border-collapse text-sm">
+        <caption class="sr-only">@Model.Caption</caption>
+        <thead class="text-fg-muted"><tr><th scope="col" class="@cell w-[120px] font-strong">Field</th><th scope="col" class="@cell font-strong">@Model.BeforeHeading</th><th scope="col" class="@cell font-strong">@Model.AfterHeading</th></tr></thead>
+        <tbody class="[&>tr:last-child>*]:border-b-0">
             @foreach (FieldChange change in Model.Changes)
             {
                 <tr>
-                    <th scope="row">@change.Field</th>
+                    <th scope="row" class="@cell font-strong">@change.Field</th>
                     @if (change.Before is string before)
                     {
-                        <td><del>@before</del></td>
+                        <td class="@cell"><del class="bg-danger-subtle text-fg line-through decoration-danger">@before</del></td>
                     }
                     else
                     {
-                        <td><span class="unset">Not set</span></td>
+                        <td class="@cell">Not set</td>
                     }
                     @if (change.After is string after)
                     {
-                        <td><ins>@after</ins></td>
+                        <td class="@cell"><ins class="bg-success-subtle text-fg no-underline">@after</ins></td>
                     }
                     else
                     {
-                        <td><span class="unset">Not set</span></td>
+                        <td class="@cell">Not set</td>
                     }
                 </tr>
             }
