@@ -287,8 +287,9 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   `assets/` into `wwwroot`, and its tokens into `Styles/tokens.css`. Tailwind's theme in `Styles/app.css` is those
   tokens and nothing else, so `bg-accent` is the brand's accent and there is no `bg-red-500`, and each utility reads
   the token itself, which is already right in light and dark. `Styles/base.css` holds the brand's element defaults. A
-  button and an icon are drawn by tag helpers, which keep their utilities in one place:
-  `<a asp-page="./Edit" button="primary">` and `<icon name="edit" />`. The layout's shell is written in utilities; the
+  button, an icon and a chip are drawn by tag helpers, which keep their utilities in one place:
+  `<a asp-page="./Edit" button="primary">`, `<icon name="edit" />` and `<span chip="success">Active</span>`. The
+  layout's shell and the shared partials, such as the toast, the timeline and the diff, are written in utilities; the
   other views move from the stylesheets in `Styles/legacy/` one area at a time. The home page's robot,
   `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from
   [FreeSVG](https://freesvg.org/artificial-intelligence-technology-concept), CC0 (public domain), with the blue square
