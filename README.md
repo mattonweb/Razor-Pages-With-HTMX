@@ -280,7 +280,9 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   answer that holds a script, swapped in without running it, a file sent over a slowed connection, whose progress
   bar shows part of it gone, the Load on scroll list growing as its last row comes into view, up to a hundred, and
   the Confirmation page's Delete asking in its dialog with invoker commands, and on its own page without them or with
-  script off.
+  script off, the menu button switching the side nav, and a toast leaving on Dismiss and once it has faded. They find
+  what they check by role, text, id or a `data-` attribute, never by a class, so restyling a page cannot break one;
+  the application's script finds what it works on the same way.
 - **Look:** the HTMLX Pages brand, `.claude/skills/brand-htmlx-pages`. Its icon sprite was copied from the skill's
   `assets/` into `wwwroot`, and its tokens into `Styles/`, beside the stylesheets in `Styles/legacy/` that build its
   components to the skill's specs. The views move from those stylesheets to Tailwind CSS's utilities one area at a
