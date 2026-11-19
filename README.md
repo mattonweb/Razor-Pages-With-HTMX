@@ -286,11 +286,13 @@ The seed is written without logging its SQL, so the console shows only the SQL e
 - **Look:** the HTMLX Pages brand, `.claude/skills/brand-htmlx-pages`. Its icon sprite was copied from the skill's
   `assets/` into `wwwroot`, and its tokens into `Styles/tokens.css`. Tailwind's theme in `Styles/app.css` is those
   tokens and nothing else, so `bg-accent` is the brand's accent and there is no `bg-red-500`, and each utility reads
-  the token itself, which is already right in light and dark. `Styles/base.css` holds the brand's element defaults. A
-  button, an icon and a chip are drawn by tag helpers, which keep their utilities in one place:
-  `<a asp-page="./Edit" button="primary">`, `<icon name="edit" />` and `<span chip="success">Active</span>`. The
-  layout's shell and the shared partials, such as the toast, the timeline and the diff, are written in utilities; the
-  other views move from the stylesheets in `Styles/legacy/` one area at a time. The home page's robot,
+  the token itself, which is already right in light and dark. `Styles/base.css` holds the brand's element defaults.
+  Each of the brand's components is drawn by a tag helper in `TagHelpers/`, which keeps its utilities in one place.
+  An attribute names the component, or one of its parts, on the element the view writes, so the view keeps its own
+  markup, ARIA and `hx-` attributes: `<a asp-page="./Edit" button="primary">`, `<icon name="edit" />`,
+  `<span chip="success">Active</span>`, and `<section card>` with `<header card="header">` and
+  `<div card="body">` inside. The layout's shell, the shared partials and the organizations' pages are written this
+  way; the other views move from the stylesheets in `Styles/legacy/` one area at a time. The home page's robot,
   `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from
   [FreeSVG](https://freesvg.org/artificial-intelligence-technology-concept), CC0 (public domain), with the blue square
   behind it removed.
@@ -305,7 +307,7 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   `2803583268c53f4713e89943e211081fddb186c0a4a7d07b5c342c6ae853ec95`. Windows on Arm runs that x64 build. Cascade
   layers keep the old stylesheets and the utilities apart, in this order: Tailwind's theme; the base, which is
   Tailwind's reset and the brand's tokens; the legacy stylesheets; components, which stays empty, since the views use
-  utilities and a partial view for markup that repeats; and the utilities, which win.
+  utilities and the tag helpers write them; and the utilities, which win.
 - **HTMX 4.0.1**, pinned: `wwwroot/js/htmx.min.js`, downloaded from <https://unpkg.com/htmx.org@4.0.1/dist/htmx.min.js>.
   Its SHA-256 is `a0abb04f2f45a1f89d1d4844023245537e5e6014c87b144553e0607b4cc32130`, the integrity unpkg publishes for
   that file, so the copy here is the one released; `Get-FileHash` checks it again. Every page still works without
