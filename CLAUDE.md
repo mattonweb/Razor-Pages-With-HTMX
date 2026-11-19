@@ -2,6 +2,10 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-18 (attended session with Matt): every component is a tag helper, part by part.** The atoms' pattern
+  now covers the composite components too (`card`, `dialog="confirm"`, `grid="title"` and so on, on a shared
+  `ComponentTagHelper`), breadcrumbs and tabs included, rather than partial views. The organizations' pages are
+  drawn this way. The stack says so.
 - **2026-11-16, later (attended session with Matt): the theme, the base layer and the shell are Tailwind's.**
   `Styles/app.css` maps the brand's tokens into Tailwind's theme, with the `busy:`, `rail:` and `htmx:` variants;
   `Styles/base.css` holds the element defaults; the layout's shell is utilities. Buttons and icons are tag helpers
@@ -90,9 +94,11 @@ decline it and say why.
   version and record it in `README.md`.
 - Styling: Tailwind CSS, run as its standalone CLI, so the repository has no Node and no `package.json`. The version
   and each system's SHA-256 are pinned in the web project file, and `README.md` records them. Utilities only, with
-  no `@apply` and no component classes. A button, an icon and a chip are drawn by tag helpers that hold their
-  utilities (`button="primary"`, `<icon name="edit" />`, Matt's choice); other markup that repeats becomes a partial
-  view. The theme in `Styles/app.css` maps the brand's tokens and empties Tailwind's own palette and scales.
+  no `@apply` and no component classes. Each of the brand's components is drawn by a tag helper that holds its
+  utilities, named by an attribute on the element that is the component or one of its parts (`button="primary"`,
+  `<icon name="edit" />`, `<section card>`, `<header card="header">`; Matt's choice), so a view keeps its own
+  markup, ARIA and `hx-` attributes. A hook for HTMX, the script or a test is an id or a `data-` attribute, never
+  a class. The theme in `Styles/app.css` maps the brand's tokens and empties Tailwind's own palette and scales.
 - Persistence is whatever the presentation needs and nothing more. Chosen 2026-11-07: Entity Framework Core over an
   in-memory SQLite database, created when the application starts and seeded from code; see `README.md`.
 - Tests: MSTest. Unit tests are written as the `code-csharp-mstest` skill describes. That skill does not cover
