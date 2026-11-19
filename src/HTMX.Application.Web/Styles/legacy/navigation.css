@@ -1,10 +1,10 @@
 /*
   HTMLX Pages: navigation. Moving between pages and between parts of a page.
     .breadcrumbs   where this page sits
-    .menu          a popover menu of actions, opened by a button
     .segmented     a few mutually exclusive views of the same content, as links
     .pager         the range shown, Previous and Next, and the rows per page
-  Every one of them is made of real links (or a GET form), so it works before HTMX is added.
+  Every one of them is made of real links (or a GET form), so it works before HTMX is added. The menu is drawn by
+  its tag helper, MenuTagHelper, with utilities.
 */
 
 .breadcrumbs ol {
@@ -14,27 +14,6 @@
 }
 .breadcrumbs li + li::before { content: "/"; margin-right: var(--space-2); color: var(--text-disabled); }
 .breadcrumbs [aria-current="page"] { color: var(--text); }
-
-/* Menu: a native popover. <button popovertarget="row-7-menu"> opens <div class="menu" id="row-7-menu" popover>.
-   Anchor positioning places it under its button; browsers without it show the menu centered. */
-.menu {
-  inset: auto; margin: var(--space-1) 0 0;
-  position-area: bottom span-left; position-try-fallbacks: flip-block;
-  min-width: 180px; padding: var(--space-1);
-  background: var(--surface); color: var(--text);
-  border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-popup);
-}
-@supports not (position-area: bottom) { .menu { margin: auto; inset: 0; height: fit-content; } }
-.menu a, .menu button {
-  display: flex; align-items: center; gap: var(--space-2); width: 100%;
-  height: var(--control-height); padding: 0 var(--space-2);
-  border: 0; border-radius: var(--radius-sm); background: none;
-  color: var(--text); font: inherit; text-align: left; cursor: pointer;
-}
-.menu a:hover, .menu button:hover { background: var(--surface-hover); text-decoration: none; }
-.menu .icon { width: 18px; height: 18px; color: var(--icon); }
-.menu .danger, .menu .danger .icon { color: var(--danger); }
-.menu hr { margin: var(--space-1) 0; border: 0; border-top: 1px solid var(--border); }
 
 /* Segmented filter: a <nav> of links; the current one carries aria-current="page". */
 .segmented {

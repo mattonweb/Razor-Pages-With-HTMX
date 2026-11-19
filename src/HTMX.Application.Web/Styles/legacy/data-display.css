@@ -49,10 +49,8 @@
 .data-grid tr.archived td:not(.actions) { color: var(--text-muted); }
 .data-grid tr.archived td.title a { color: var(--text-muted); }
 
-/* Title cell: the first column. A link to the record, then a muted second line.
-   <td class="title"><a href="…">Pat Example</a><span class="sub">pat@example.com</span></td> */
+/* Title cell: the first column. A link to the record, on its own line. */
 .data-grid td.title a { display: block; font-weight: var(--weight-strong); }
-.data-grid td.title .sub { display: block; font-size: var(--text-sm); color: var(--text-muted); }
 
 /* Chip: a status label with a dot. Tones: success, danger, warning, info, brand; neutral is the default. */
 .chip {

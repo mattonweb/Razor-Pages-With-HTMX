@@ -42,6 +42,14 @@ textarea { height: auto; min-height: 96px; padding: var(--space-2) var(--space-3
   background: var(--neutral-subtle); border-color: var(--neutral-line); color: var(--text-disabled); cursor: not-allowed;
 }
 :is(input, textarea)[readonly] { background: var(--bg); }
+
+/* Invalid: a control whose value failed validation, which says aria-invalid="true", or which the framework's tag
+   helpers mark .input-validation-error, has a danger border, and a danger ring with the keyboard on it. It comes
+   after the focus rule above, which it replaces. */
+:is(input, select, textarea):is(.input-validation-error, [aria-invalid="true"]) { border-color: var(--danger); }
+:is(input, select, textarea):is(.input-validation-error, [aria-invalid="true"]):focus-visible {
+  box-shadow: 0 0 0 1px var(--danger);
+}
 input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; margin: 0; accent-color: var(--accent-fill); }
 
 /* Two of the browser's defaults that Tailwind's reset takes away and the brand keeps: a modal dialog sits in the

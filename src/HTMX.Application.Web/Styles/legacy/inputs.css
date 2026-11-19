@@ -45,11 +45,7 @@ fieldset.field { margin: 0; padding: 0; border: 0; }
   content: " *"; color: var(--danger);
 }
 
-/* Validation: the control's border and its message turn danger. */
-:is(input, select, textarea):is(.input-validation-error, [aria-invalid="true"]) { border-color: var(--danger); }
-:is(input, select, textarea):is(.input-validation-error, [aria-invalid="true"]):focus-visible {
-  box-shadow: 0 0 0 1px var(--danger);
-}
+/* Validation: the message turns danger. The invalid control's own look is in ../base.css. */
 .field-validation-error { font-size: var(--text-sm); color: var(--danger); }
 .field-validation-valid { display: none; }
 .validation-summary-errors {

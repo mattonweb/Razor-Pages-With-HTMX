@@ -32,31 +32,31 @@
     // actions.
     bool changeable = organization.Archived is null;
 }
-<section class="card" id="contact-list" aria-labelledby="contacts-heading"
+<section card id="contact-list" aria-labelledby="contacts-heading"
          hx-boost:inherited="true" hx-target:inherited="#organization" hx-swap:inherited="outerHTML"
          hx-indicator:inherited="#contact-list" hx-sync:inherited="this:replace">
-    <header class="card-header">
+    <header card="header">
         <h2 id="contacts-heading" tabindex="-1" autofocus="@Model.ListHeadingFocused">Contacts</h2>
         @if (changeable)
         {
-            <a class="btn ghost" asp-page="/Contacts/Create" asp-route-organization="@organization.Id.Value" hx-target="body" hx-swap="innerHTML"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>New contact</a>
+            <a button="ghost" asp-page="/Contacts/Create" asp-route-organization="@organization.Id.Value" hx-target="body" hx-swap="innerHTML"><icon name="plus" />New contact</a>
         }
     </header>
-    <div class="busy-bar"></div>
+    <div busy-bar></div>
 
     @if (list.Total.Value == 0)
     {
-        <div class="empty">
-            <svg class="icon" aria-hidden="true"><use href="/icons.svg#users"></use></svg>
+        <div empty-state>
+            <icon name="users" />
             <h3>No contacts yet</h3>
             <p>Nobody at @organization.Name.Value is on record.</p>
         </div>
     }
     else
     {
-        <div class="grid-wrap">
-            <table class="data-grid">
-                <caption class="visually-hidden">Contacts at @organization.Name.Value, sorted by name</caption>
+        <div grid="scroll">
+            <table grid>
+                <caption class="sr-only">Contacts at @organization.Name.Value, sorted by name</caption>
                 <thead>
                     <tr>
                         <th scope="col">Name</th>
@@ -65,7 +65,7 @@
                         <th scope="col">Status</th>
                         @if (changeable)
                         {
-                            <th scope="col"><span class="visually-hidden">Actions</span></th>
+                            <th scope="col"><span class="sr-only">Actions</span></th>
                         }
                     </tr>
                 </thead>
@@ -74,14 +74,14 @@
                     {
                         bool archived = contact.ArchivedOn is not null;
                         string menu = $"contact-{contact.Id.Value}-menu";
-                        <tr class="@(archived ? "archived" : null)">
+                        <tr grid="@(archived ? "archived" : null)">
                             @* A link to the contact leaves the list, so it loads the whole page, as New contact
                                does. *@
-                            <td class="title">
+                            <td grid="title">
                                 <a asp-page="/Contacts/Details" asp-route-id="@contact.Id.Value" hx-target="body" hx-swap="innerHTML">@contact.Name.Value</a>
                                 @if (contact.JobTitle is JobTitle jobTitle)
                                 {
-                                    <span class="sub">@jobTitle.Value</span>
+                                    <span>@jobTitle.Value</span>
                                 }
                             </td>
                             <td>
@@ -95,11 +95,11 @@
                             <td>
                                 @if (archived)
                                 {
-                                    <span class="chip">Archived</span>
+                                    <span chip="neutral">Archived</span>
                                 }
                                 else
                                 {
-                                    <span class="chip success">Active</span>
+                                    <span chip="success">Active</span>
                                 }
                             </td>
                             @if (changeable)
@@ -108,28 +108,28 @@
                                 @* The row's menu, a popover with an id built from the contact's. Once the answer
                                    has drawn the list again, HTMX focuses the element that says autofocus: this row's
                                    menu button. *@
-                                <td class="actions">
-                                    <button class="btn ghost icon-only" type="button" popovertarget="@menu"
+                                <td grid="actions">
+                                    <button button="icon" type="button" popovertarget="@menu"
                                             aria-label="Actions for @contact.Name.Value"
                                             autofocus="@(Model.Focused == contact.Id)">
-                                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#more"></use></svg>
+                                        <icon name="more" />
                                     </button>
-                                    <div class="menu" id="@menu" popover>
+                                    <div menu id="@menu" popover>
                                         <form method="post" action="@action" asp-antiforgery="true"
                                               hx-post="@action" hx-target="#organization">
                                             @if (archived)
                                             {
-                                                <button type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Restore</button>
+                                                <button menu="item" type="submit"><icon name="restore" />Restore</button>
                                             }
                                             else
                                             {
-                                                <button type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>Archive</button>
+                                                <button menu="item" type="submit"><icon name="archive" />Archive</button>
                                             }
                                         </form>
                                         @if (archived)
                                         {
                                             <hr>
-                                            <button class="danger" type="button" commandfor="contact-@(contact.Id.Value)-delete" command="show-modal"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg>Delete permanently</button>
+                                            <button menu="danger" type="button" commandfor="contact-@(contact.Id.Value)-delete" command="show-modal"><icon name="trash" />Delete permanently</button>
                                         }
                                     </div>
                                 </td>
@@ -146,19 +146,19 @@
             {
                 string dialog = $"contact-{contact.Id.Value}-delete";
                 string deleteAction = Model.DeleteAction(contact);
-                <dialog class="dialog sm" id="@dialog" aria-labelledby="@(dialog)-title" aria-describedby="@(dialog)-text">
+                <dialog dialog="confirm" id="@dialog" aria-labelledby="@(dialog)-title" aria-describedby="@(dialog)-text">
                     <form method="post" action="@deleteAction" asp-antiforgery="true"
                           hx-post="@deleteAction" hx-target="#organization"
                           hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
                         <input type="hidden" name="version" value="@contact.Version.Value" />
-                        <header class="dialog-header"><h2 id="@(dialog)-title">Delete @contact.Name.Value permanently?</h2></header>
-                        <div class="dialog-body confirm">
-                            <span class="dialog-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg></span>
-                            <div class="message" id="@(dialog)-text"><p>This removes @contact.Name.Value and their history, and takes them off this list. It cannot be undone.</p></div>
+                        <header dialog="header"><h2 id="@(dialog)-title">Delete @contact.Name.Value permanently?</h2></header>
+                        <div dialog="confirm-body">
+                            <span dialog="icon"><icon name="trash" /></span>
+                            <div dialog="message" id="@(dialog)-text"><p>This removes @contact.Name.Value and their history, and takes them off this list. It cannot be undone.</p></div>
                         </div>
-                        <footer class="dialog-footer">
-                            <button class="btn" type="button" commandfor="@dialog" command="close" autofocus>Cancel</button>
-                            <button class="btn danger" type="submit">Delete permanently</button>
+                        <footer dialog="footer">
+                            <button button="secondary" type="button" commandfor="@dialog" command="close" autofocus>Cancel</button>
+                            <button button="danger" type="submit">Delete permanently</button>
                         </footer>
                     </form>
                 </dialog>
@@ -169,24 +169,24 @@
            side, not where in the list this page starts, so the summary gives the count shown and the total. *@
         @if (list.Previous is not null || list.Next is not null)
         {
-            <footer class="pager">
-                <p class="summary">Showing <strong>@list.Items.Length.ToString("N0", CultureInfo.CurrentCulture)</strong> of <strong>@list.Total.Value.ToString("N0", CultureInfo.CurrentCulture)</strong></p>
-                <nav class="pages" aria-label="Pages">
+            <footer pager>
+                <p pager="summary">Showing <strong>@list.Items.Length.ToString("N0", CultureInfo.CurrentCulture)</strong> of <strong>@list.Total.Value.ToString("N0", CultureInfo.CurrentCulture)</strong></p>
+                <nav pager="pages" aria-label="Pages">
                     @if (list.Previous is ContactCursor previous)
                     {
-                        <a class="btn" rel="prev" asp-page="./Contacts" asp-all-route-data="Model.PageValues(previous)"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-left"></use></svg>Previous</a>
+                        <a button="secondary" rel="prev" asp-page="./Contacts" asp-all-route-data="Model.PageValues(previous)"><icon name="chevron-left" />Previous</a>
                     }
                     else
                     {
-                        <span class="btn" aria-disabled="true"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-left"></use></svg>Previous</span>
+                        <span button="secondary" aria-disabled="true"><icon name="chevron-left" />Previous</span>
                     }
                     @if (list.Next is ContactCursor next)
                     {
-                        <a class="btn" rel="next" asp-page="./Contacts" asp-all-route-data="Model.PageValues(next)">Next<svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-right"></use></svg></a>
+                        <a button="secondary" rel="next" asp-page="./Contacts" asp-all-route-data="Model.PageValues(next)">Next<icon name="chevron-right" /></a>
                     }
                     else
                     {
-                        <span class="btn" aria-disabled="true">Next<svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-right"></use></svg></span>
+                        <span button="secondary" aria-disabled="true">Next<icon name="chevron-right" /></span>
                     }
                 </nav>
             </footer>

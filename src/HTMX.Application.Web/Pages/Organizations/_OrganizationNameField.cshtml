@@ -26,7 +26,7 @@
     string? describedBy = savedName is null ? null : "name-saved";
     string? check = Model.CheckNameAddress;
 }
-<div class="field">
+<div field data-field>
     <label asp-for="Input.Name"></label>
     @if (check is null)
     {
@@ -36,11 +36,11 @@
     {
         <input asp-for="Input.Name" aria-describedby="@describedBy"
                hx-post="@check" hx-trigger="input changed delay:500ms, change"
-               hx-target="closest .field" hx-swap="outerMorph" hx-sync="this:replace" />
+               hx-target="closest [data-field]" hx-swap="outerMorph" hx-sync="this:replace" />
     }
     @if (savedName is not null)
     {
-        <p class="hint" id="name-saved">Saved as @savedName</p>
+        <p field="hint" id="name-saved">Saved as @savedName</p>
     }
-    <span asp-validation-for="Input.Name" aria-live="@(check is null ? null : "polite")"></span>
+    <span asp-validation-for="Input.Name" field="message" aria-live="@(check is null ? null : "polite")"></span>
 </div>

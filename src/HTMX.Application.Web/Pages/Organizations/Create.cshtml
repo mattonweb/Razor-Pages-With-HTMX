@@ -5,11 +5,11 @@
     ViewData["Section"] = "Organizations";
 }
 
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Organizations</a></li><li><span aria-current="page">New</span></li></ol>
     </nav>
-    <div class="title-row"><h1 tabindex="-1" autofocus="@Model.HeadingFocused">New organization</h1></div>
+    <div page-header="title-row"><h1 tabindex="-1" autofocus="@Model.HeadingFocused">New organization</h1></div>
 </header>
 
 @* The form is a partial: the page renders it here, and a refused save that HTMX sent gets it alone. *@

@@ -93,9 +93,3 @@
 }
 .dialog-icon.warning { --tone: var(--warning); --tone-subtle: var(--warning-subtle); }
 .dialog-icon.info    { --tone: var(--info);    --tone-subtle: var(--info-subtle); }
-
-/* Roll-back preview: a .dialog whose body says what will happen, warns in an .alert about anything that cannot
-   be carried out, and shows the diff from now to the result. What it previews can be undone, so its button is
-   primary, not danger. */
-.rollback { display: grid; gap: var(--space-3); }
-.rollback .alert { margin: 0; }

@@ -13,10 +13,10 @@
 <div id="organization">
     <partial name="_OrganizationHeader" model="Model" />
 
-    <section class="card" aria-labelledby="details-heading">
-        <header class="card-header"><h2 id="details-heading">Details</h2></header>
-        <div class="card-body">
-            <dl class="fields">
+    <section card aria-labelledby="details-heading">
+        <header card="header"><h2 id="details-heading">Details</h2></header>
+        <div card="body">
+            <dl fields>
                 <div><dt>Industry</dt><dd>@IndustryNames.Of(organization.Industry)</dd></div>
                 <div>
                     <dt>Website</dt>
@@ -26,11 +26,11 @@
                     }
                     else
                     {
-                        <dd><span class="unset">Not set</span></dd>
+                        <dd><span class="text-fg-muted">Not set</span></dd>
                     }
                 </div>
-                <div><dt>Contacts</dt><dd class="mono">@organization.Contacts.Value.ToString("N0", CultureInfo.CurrentCulture)</dd></div>
-                <div><dt>Identifier</dt><dd class="mono">@organization.Id.Value</dd></div>
+                <div><dt>Contacts</dt><dd class="font-mono text-[0.93em]">@organization.Contacts.Value.ToString("N0", CultureInfo.CurrentCulture)</dd></div>
+                <div><dt>Identifier</dt><dd class="font-mono text-[0.93em]">@organization.Id.Value</dd></div>
                 <div><dt>Created</dt><dd><partial name="_Moment" model="created.On" /> by <partial name="_UserLink" model="created.By" /></dd></div>
                 @if (organization.Archived is RecordChange archived)
                 {

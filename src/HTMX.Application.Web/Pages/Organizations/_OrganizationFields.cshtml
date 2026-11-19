@@ -19,11 +19,11 @@
         ? websiteShown
         : null;
 }
-<section class="card" aria-labelledby="details-heading">
-    <header class="card-header"><h2 id="details-heading">Details</h2></header>
-    <div class="card-body fields">
+<section card aria-labelledby="details-heading">
+    <header card="header"><h2 id="details-heading">Details</h2></header>
+    <div card="body" fields>
         <partial name="_OrganizationNameField" model="Model" />
-        <div class="field">
+        <div field>
             <label asp-for="Input.Industry"></label>
             <select asp-for="Input.Industry" asp-items="Html.GetEnumSelectList<Industry>()"
                     aria-describedby="@(savedIndustry is null ? null : "industry-saved")">
@@ -31,20 +31,20 @@
             </select>
             @if (savedIndustry is not null)
             {
-                <p class="hint" id="industry-saved">Saved as @savedIndustry</p>
+                <p field="hint" id="industry-saved">Saved as @savedIndustry</p>
             }
-            <span asp-validation-for="Input.Industry"></span>
+            <span asp-validation-for="Input.Industry" field="message"></span>
         </div>
-        <div class="field">
+        <div field>
             <label asp-for="Input.Website"></label>
             <input asp-for="Input.Website" type="url" placeholder="https://"
                    aria-describedby="@(savedWebsite is null ? "website-hint" : "website-hint website-saved")" />
-            <p class="hint" id="website-hint">Leave it empty when the organization has no website.</p>
+            <p field="hint" id="website-hint">Leave it empty when the organization has no website.</p>
             @if (savedWebsite is not null)
             {
-                <p class="hint" id="website-saved">Saved as @savedWebsite</p>
+                <p field="hint" id="website-saved">Saved as @savedWebsite</p>
             }
-            <span asp-validation-for="Input.Website"></span>
+            <span asp-validation-for="Input.Website" field="message"></span>
         </div>
     </div>
 </section>

@@ -10,13 +10,11 @@
     closes with it. What an entry can offer, and what it says instead, its page model has worked out.
 
     Each entry draws its part of the line down the left in its ::before, from the first dot to the last, so an entry
-    alone has none, and its dot in its ::after, filled with the brand for the current version. The dialog keeps the
-    legacy dialog classes until the dialogs move together.
+    alone has none, and its dot in its ::after, filled with the brand for the current version.
 *@
 @{
     int current = Model.Current.Value;
     string entryClasses = "relative pl-8 before:absolute before:top-0 before:bottom-0 before:left-[11px] before:w-0.5 before:bg-line first:before:top-5 last:before:bottom-auto last:before:h-5 only:before:hidden after:absolute after:top-3.5 after:left-[5px] after:size-3.5 after:rounded-[50%] after:border-2";
-    string badge = "inline-grid h-[22px] min-w-8 place-items-center rounded-sm px-1.5 font-mono text-xs font-strong";
 }
 <ol class="list-none" reversed>
     @foreach (TimelineEntry entry in Model.Entries)
@@ -43,7 +41,7 @@
             <details class="group" open="@isCurrent">
                 <summary class="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-2 rounded-sm px-3 py-2 hover:bg-surface-hover [&::-webkit-details-marker]:hidden">
                     <icon name="chevron-right" size="sm" class="text-icon transition-[rotate] duration-150 ease-[ease] group-open:rotate-90" />
-                    <span class="@badge @(isCurrent ? "bg-brand text-on-brand" : "bg-brand-subtle text-brand-text")">v@(number)</span>
+                    <span version="@(isCurrent ? "current" : string.Empty)">v@(number)</span>
                     <span><strong>@TimelineText.Title(entry.Change)</strong> @TimelineText.Summary(entry)</span>
                     <span class="ml-auto text-sm text-fg-muted"><partial name="_Moment" model="entry.Changed.On" /> by @entry.Changed.By.Name.Value</span>
                 </summary>
@@ -76,21 +74,21 @@
 
             @if (!isCurrent && entry.RollBack.Length > 0)
             {
-                <dialog class="dialog" id="@dialogId" aria-labelledby="@(dialogId)-title">
+                <dialog dialog id="@dialogId" aria-labelledby="@(dialogId)-title">
                     <form method="post" action="@Model.RollBackAction" asp-antiforgery="true"
                           hx-post="@Model.RollBackAction" hx-target="@Model.Target" hx-swap="outerHTML"
                           hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
                         <input type="hidden" name="to" value="@number" />
                         <input type="hidden" name="version" value="@current" />
-                        <header class="dialog-header">
+                        <header dialog="header">
                             <h2 id="@(dialogId)-title">Roll back to version @number?</h2>
                             <button button="icon" type="button" commandfor="@dialogId" command="close" aria-label="Close"><icon name="x" /></button>
                         </header>
-                        <div class="dialog-body rollback">
+                        <div dialog="preview-body">
                             <p>@Model.RecordName goes back to the values of version @number, as a new version, v@(current + 1). Every version stays in the history, so this can be undone.</p>
                             <partial name="_Diff" model="rollBackDiff" />
                         </div>
-                        <footer class="dialog-footer">
+                        <footer dialog="footer">
                             <button button="secondary" type="button" commandfor="@dialogId" command="close" autofocus>Cancel</button>
                             <button button="primary" type="submit"><icon name="restore" />Roll back to version @number</button>
                         </footer>

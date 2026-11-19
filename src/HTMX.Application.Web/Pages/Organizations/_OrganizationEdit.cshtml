@@ -30,28 +30,28 @@
     };
 }
 <div id="organization-edit">
-    <header class="page-header">
-        <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <header page-header>
+        <nav breadcrumbs aria-label="Breadcrumb">
             <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Organizations</a></li><li><a asp-page="./Details" asp-route-id="@organization.Id.Value">@organization.Name.Value</a></li><li><span aria-current="page">Edit</span></li></ol>
         </nav>
-        <div class="title-row">
-            <div class="title">
+        <div page-header="title-row">
+            <div page-header="title">
                 <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Edit @organization.Name.Value</h1>
-                <span class="version current">v@(organization.Version.Value)</span>
+                <span version="current">v@(organization.Version.Value)</span>
             </div>
         </div>
-        <p class="muted">Updated <partial name="_Moment" model="lastChange.On" /> by <partial name="_UserLink" model="lastChange.By" /></p>
+        <p class="text-fg-muted">Updated <partial name="_Moment" model="lastChange.On" /> by <partial name="_UserLink" model="lastChange.By" /></p>
     </header>
 
     @if (organization.Archived is not null)
     {
-        <div class="alert warning" role="status" tabindex="-1" autofocus="@Model.ArchivedMeanwhile">
-            <svg class="icon" aria-hidden="true"><use href="/icons.svg#alert"></use></svg>
-            <div class="content">
+        <div alert="warning" role="status" tabindex="-1" autofocus="@Model.ArchivedMeanwhile">
+            <icon name="alert" />
+            <div alert="content">
                 <strong>@organization.Name.Value is archived</strong>
                 <span>An archived organization can't be edited until it is restored.</span>
             </div>
-            <div class="actions"><a class="btn" asp-page="./Details" asp-route-id="@organization.Id.Value">Back to the organization</a></div>
+            <div alert="actions"><a button="secondary" asp-page="./Details" asp-route-id="@organization.Id.Value">Back to the organization</a></div>
         </div>
     }
     else
@@ -59,15 +59,15 @@
         <form method="post" action="@action" asp-antiforgery="true" novalidate
               hx-post="@action" hx-target="#organization-edit" hx-swap="outerHTML"
               hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
-            <div asp-validation-summary="ModelOnly" role="alert" tabindex="-1" autofocus="@Model.Overtaken"></div>
+            <div asp-validation-summary="ModelOnly" field="summary" role="alert" tabindex="-1" autofocus="@Model.Overtaken"></div>
             <input type="hidden" asp-for="Input.Version" />
 
             <partial name="_OrganizationFields" model="fields" />
 
-            <div class="form-actions">
-                <div class="end">
-                    <a class="btn" asp-page="./Details" asp-route-id="@organization.Id.Value">Cancel</a>
-                    <button class="btn primary" type="submit">Save changes</button>
+            <div form-actions>
+                <div form-actions="end">
+                    <a button="secondary" asp-page="./Details" asp-route-id="@organization.Id.Value">Cancel</a>
+                    <button button="primary" type="submit">Save changes</button>
                 </div>
             </div>
         </form>
