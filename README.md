@@ -291,8 +291,7 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   An attribute names the component, or one of its parts, on the element the view writes, so the view keeps its own
   markup, ARIA and `hx-` attributes: `<a asp-page="./Edit" button="primary">`, `<icon name="edit" />`,
   `<span chip="success">Active</span>`, and `<section card>` with `<header card="header">` and
-  `<div card="body">` inside. Every view but the home page is written this way; the home page still uses the last
-  two stylesheets in `Styles/legacy/`, which go when it moves. The home page's robot, `wwwroot/images/robot.svg`, is
+  `<div card="body">` inside. Every view is written this way. The home page's robot, `wwwroot/images/robot.svg`, is
   "Artificial intelligence technology concept" from
   [FreeSVG](https://freesvg.org/artificial-intelligence-technology-concept), CC0 (public domain), with the blue square
   behind it removed.
@@ -305,9 +304,9 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   which git ignores, and checks it against the SHA-256 the release publishes in `sha256sums.txt`, copied into the
   project file for each system; the Windows x64 file is 111,161,344 bytes, with SHA-256
   `2803583268c53f4713e89943e211081fddb186c0a4a7d07b5c342c6ae853ec95`. Windows on Arm runs that x64 build. Cascade
-  layers keep the old stylesheets and the utilities apart, in this order: Tailwind's theme; the base, which is
-  Tailwind's reset and the brand's tokens; the legacy stylesheets; components, which stays empty, since the views use
-  utilities and the tag helpers write them; and the utilities, which win.
+  layers set which rules win, in this order: Tailwind's theme; the base, which is Tailwind's reset, the brand's
+  tokens and its element defaults; components, which stays empty, since the views use utilities and the tag helpers
+  write them; and the utilities, which win.
 - **HTMX 4.0.1**, pinned: `wwwroot/js/htmx.min.js`, downloaded from <https://unpkg.com/htmx.org@4.0.1/dist/htmx.min.js>.
   Its SHA-256 is `a0abb04f2f45a1f89d1d4844023245537e5e6014c87b144553e0607b4cc32130`, the integrity unpkg publishes for
   that file, so the copy here is the one released; `Get-FileHash` checks it again. Every page still works without
