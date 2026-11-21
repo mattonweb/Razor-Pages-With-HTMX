@@ -14,17 +14,17 @@
 <div id="contact">
     <partial name="_ContactHeader" model="Model" />
 
-    <section class="card" aria-labelledby="details-heading">
-        <header class="card-header"><h2 id="details-heading">Details</h2></header>
-        <div class="card-body">
-            <dl class="fields">
+    <section card aria-labelledby="details-heading">
+        <header card="header"><h2 id="details-heading">Details</h2></header>
+        <div card="body">
+            <dl fields>
                 <div>
                     <dt>Organization</dt>
                     <dd>
-                        <a class="related @(organization.ArchivedOn is null ? null : "archived")" asp-page="/Organizations/Details" asp-route-id="@organization.Id.Value"><svg class="icon" aria-hidden="true"><use href="/icons.svg#building"></use></svg>@organization.Name.Value</a>
+                        <a related="@(organization.ArchivedOn is null ? string.Empty : "archived")" asp-page="/Organizations/Details" asp-route-id="@organization.Id.Value"><icon name="building" size="sm" />@organization.Name.Value</a>
                         @if (organization.ArchivedOn is not null)
                         {
-                            <span class="chip">Archived</span>
+                            <span chip="neutral" class="ml-2">Archived</span>
                         }
                     </dd>
                 </div>
@@ -36,7 +36,7 @@
                     }
                     else
                     {
-                        <dd><span class="unset">Not set</span></dd>
+                        <dd><span class="text-fg-muted">Not set</span></dd>
                     }
                 </div>
                 <div>
@@ -47,7 +47,7 @@
                     }
                     else
                     {
-                        <dd><span class="unset">Not set</span></dd>
+                        <dd><span class="text-fg-muted">Not set</span></dd>
                     }
                 </div>
                 <div>
@@ -59,16 +59,16 @@
                     }
                     @if (contact.PhoneNumbers.Values.Length == 0)
                     {
-                        <dd><span class="unset">Not set</span></dd>
+                        <dd><span class="text-fg-muted">Not set</span></dd>
                     }
                 </div>
-                <div><dt>Identifier</dt><dd class="mono">@contact.Id.Value</dd></div>
+                <div><dt>Identifier</dt><dd class="font-mono text-[0.93em]">@contact.Id.Value</dd></div>
                 <div><dt>Created</dt><dd><partial name="_Moment" model="created.On" /> by <partial name="_UserLink" model="created.By" /></dd></div>
                 @if (contact.Archived is RecordChange archived)
                 {
                     <div><dt>Archived</dt><dd><partial name="_Moment" model="archived.On" /> by <partial name="_UserLink" model="archived.By" /></dd></div>
                 }
-                <div class="wide">
+                <div class="col-span-full">
                     <dt>Notes</dt>
                     @if (contact.Notes is Notes notes)
                     {
@@ -76,7 +76,7 @@
                     }
                     else
                     {
-                        <dd><span class="unset">Not set</span></dd>
+                        <dd><span class="text-fg-muted">Not set</span></dd>
                     }
                 </div>
             </dl>

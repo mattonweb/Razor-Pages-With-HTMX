@@ -21,17 +21,17 @@
           hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
         <partial name="_ContactFields" model="fields" />
 
-        <div class="form-actions">
-            <div class="end">
+        <div form-actions>
+            <div form-actions="end">
                 @if (from is not null)
                 {
-                    <a class="btn" asp-page="/Organizations/Contacts" asp-route-id="@from.Id.Value">Cancel</a>
+                    <a button="secondary" asp-page="/Organizations/Contacts" asp-route-id="@from.Id.Value">Cancel</a>
                 }
                 else
                 {
-                    <a class="btn" asp-page="/Organizations/Index">Cancel</a>
+                    <a button="secondary" asp-page="/Organizations/Index">Cancel</a>
                 }
-                <button class="btn primary" type="submit">Create contact</button>
+                <button button="primary" type="submit">Create contact</button>
             </div>
         </div>
     </form>

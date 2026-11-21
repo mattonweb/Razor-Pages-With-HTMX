@@ -7,8 +7,8 @@
 }
 @* The breadcrumbs lead back through the organization the form was opened from, when there is one. *@
 
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol>
             <li><a asp-page="/Index">Home</a></li>
             <li><a asp-page="/Organizations/Index">Organizations</a></li>
@@ -20,7 +20,7 @@
             <li><span aria-current="page">New contact</span></li>
         </ol>
     </nav>
-    <div class="title-row"><h1 tabindex="-1" autofocus="@Model.HeadingFocused">New contact</h1></div>
+    <div page-header="title-row"><h1 tabindex="-1" autofocus="@Model.HeadingFocused">New contact</h1></div>
 </header>
 
 @* The form is a partial: the page renders it here, and a refused save that HTMX sent gets it alone. *@

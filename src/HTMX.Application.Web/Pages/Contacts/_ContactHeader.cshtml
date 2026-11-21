@@ -28,8 +28,8 @@
     string? restoreAction = Url.Page(Model.PageName, "Restore", Model.TabValues());
     string? deleteAction = Url.Page(Model.PageName, "Delete", Model.TabValues());
 }
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol>
             <li><a asp-page="/Index">Home</a></li>
             <li><a asp-page="/Organizations/Index">Organizations</a></li>
@@ -38,79 +38,79 @@
             <li><span aria-current="page">@contact.Name.Value</span></li>
         </ol>
     </nav>
-    <div class="title-row">
-        <div class="title">
+    <div page-header="title-row">
+        <div page-header="title">
             <h1 tabindex="-1" autofocus="@Model.HeadingFocused">@contact.Name.Value</h1>
             @if (contact.Archived is null)
             {
-                <span class="chip success">Active</span>
+                <span chip="success">Active</span>
             }
             else
             {
-                <span class="chip">Archived</span>
+                <span chip="neutral">Archived</span>
             }
-            <span class="version current">v@(contact.Version.Value)</span>
+            <span version="current">v@(contact.Version.Value)</span>
         </div>
         @if (organizationActive && contact.Archived is null)
         {
-            <div class="btn-group">
+            <div page-header="actions">
                 <form method="post" action="@archiveAction" asp-antiforgery="true"
                       hx-post="@archiveAction" hx-target="#contact" hx-swap="outerHTML"
                       hx-indicator="find button">
-                    <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>Archive</button>
+                    <button button="secondary" id="status-action" type="submit"><icon name="archive" />Archive</button>
                 </form>
-                <a class="btn primary" asp-page="./Edit" asp-route-id="@id"><svg class="icon" aria-hidden="true"><use href="/icons.svg#edit"></use></svg>Edit</a>
+                <a button="primary" asp-page="./Edit" asp-route-id="@id"><icon name="edit" />Edit</a>
             </div>
         }
     </div>
-    <p class="muted">Updated <partial name="_Moment" model="lastChange.On" /> by <partial name="_UserLink" model="lastChange.By" /></p>
+    <p class="text-fg-muted">Updated <partial name="_Moment" model="lastChange.On" /> by <partial name="_UserLink" model="lastChange.By" /></p>
 </header>
 
 @if (!organizationActive)
 {
-    <div class="alert" role="status">
-        <svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>
-        <div class="content"><p><strong>@organization.Name.Value is archived.</strong> Its contacts can't be changed until it is restored.</p></div>
-        <div class="actions">
-            <a class="btn" asp-page="/Organizations/Details" asp-route-id="@organizationId"><svg class="icon" aria-hidden="true"><use href="/icons.svg#building"></use></svg>Go to @organization.Name.Value</a>
+    <div alert role="status">
+        <icon name="archive" />
+        <div alert="content"><p><strong>@organization.Name.Value is archived.</strong> Its contacts can't be changed until it is restored.</p></div>
+        <div alert="actions">
+            <a button="secondary" asp-page="/Organizations/Details" asp-route-id="@organizationId"><icon name="building" />Go to @organization.Name.Value</a>
         </div>
     </div>
 }
 else if (contact.Archived is not null)
 {
-    <div class="alert" role="status">
-        <svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>
-        <div class="content"><p><strong>This contact is archived.</strong> They stay on the Contacts tab of @organization.Name.Value, muted, and can't be edited or rolled back until they are restored.</p></div>
-        <div class="actions">
+    <div alert role="status">
+        <icon name="archive" />
+        <div alert="content"><p><strong>This contact is archived.</strong> They stay on the Contacts tab of @organization.Name.Value, muted, and can't be edited or rolled back until they are restored.</p></div>
+        <div alert="actions">
             <form method="post" action="@restoreAction" asp-antiforgery="true"
                   hx-post="@restoreAction" hx-target="#contact" hx-swap="outerHTML"
                   hx-indicator="find button">
-                <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Restore</button>
+                <button button="secondary" id="status-action" type="submit"><icon name="restore" />Restore</button>
             </form>
-            <button class="btn danger" type="button" commandfor="delete-contact" command="show-modal"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg>Delete permanently</button>
+            <button button="danger" type="button" commandfor="delete-contact" command="show-modal"><icon name="trash" />Delete permanently</button>
         </div>
     </div>
 
-    <dialog class="dialog sm" id="delete-contact" aria-labelledby="delete-contact-title" aria-describedby="delete-contact-text">
+    <dialog dialog="confirm" id="delete-contact" aria-labelledby="delete-contact-title" aria-describedby="delete-contact-text">
         <form method="post" action="@deleteAction" asp-antiforgery="true"
               hx-post="@deleteAction" hx-target="#contact" hx-swap="outerHTML"
               hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
             <input type="hidden" name="version" value="@contact.Version.Value" />
-            <header class="dialog-header"><h2 id="delete-contact-title">Delete @name permanently?</h2></header>
-            <div class="dialog-body confirm">
-                <span class="dialog-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg></span>
-                <div class="message" id="delete-contact-text"><p>This removes @name and their history, and takes them off the Contacts tab of @organization.Name.Value. It cannot be undone.</p></div>
+            <header dialog="header"><h2 id="delete-contact-title">Delete @name permanently?</h2></header>
+            <div dialog="confirm-body">
+                <span dialog="icon"><icon name="trash" /></span>
+                <div dialog="message" id="delete-contact-text"><p>This removes @name and their history, and takes them off the Contacts tab of @organization.Name.Value. It cannot be undone.</p></div>
             </div>
-            <footer class="dialog-footer">
-                <button class="btn" type="button" commandfor="delete-contact" command="close" autofocus>Cancel</button>
-                <button class="btn danger" type="submit">Delete permanently</button>
+            <footer dialog="footer">
+                <button button="secondary" type="button" commandfor="delete-contact" command="close" autofocus>Cancel</button>
+                <button button="danger" type="submit">Delete permanently</button>
             </footer>
         </form>
     </dialog>
 }
 
 @* Each tab is a page with its own URL; the count after History is how many versions the contact has. *@
-<nav class="tabs" aria-label="Contact">
-    <a asp-page="./Details" asp-route-id="@id" aria-current="@(Model.PageName == "./Details" ? "page" : null)">Details</a>
-    <a asp-page="./History" asp-route-id="@id" aria-current="@(Model.PageName == "./History" ? "page" : null)">History <span class="count">@contact.Version.Value</span></a>
+<nav tabs aria-label="Contact">
+    <a tabs="tab" asp-page="./Details" asp-route-id="@id" aria-current="@(Model.PageName == "./Details" ? "page" : null)">Details</a>
+    <a tabs="tab" asp-page="./History" asp-route-id="@id" aria-current="@(Model.PageName == "./History" ? "page" : null)">History <span tabs="count">@contact.Version.Value</span></a>
 </nav>

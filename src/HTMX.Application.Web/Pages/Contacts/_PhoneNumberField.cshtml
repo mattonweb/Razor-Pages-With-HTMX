@@ -21,9 +21,9 @@
     const string SavedId = "phone-numbers-saved";
     bool several = Model.Rows.Length > 1;
 }
-<fieldset class="field" id="phone-numbers" aria-describedby="@(Model.Error is null ? null : errorId)">
+<fieldset field id="phone-numbers" aria-describedby="@(Model.Error is null ? null : errorId)">
     <legend>Phone numbers</legend>
-    <ul class="field-rows">
+    <ul field-rows>
         @foreach (PhoneNumberRow row in Model.Rows)
         {
             int number = row.Position + 1;
@@ -47,27 +47,27 @@
                        aria-describedby="@(describedBy.Count == 0 ? null : string.Join(' ', describedBy))" />
                 @if (several)
                 {
-                    <button class="btn ghost icon-only" type="submit" name="removePhoneNumber" value="@row.Position"
+                    <button button="icon" type="submit" name="removePhoneNumber" value="@row.Position"
                             formaction="@Model.RemoveAction" formnovalidate
                             hx-post="@Model.RemoveAction" hx-target="#phone-numbers" hx-swap="outerHTML"
-                            aria-label="Remove phone number @number"><svg class="icon" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button>
+                            aria-label="Remove phone number @number"><icon name="x" /></button>
                 }
             </li>
         }
     </ul>
     @if (Model.Saved is not null)
     {
-        <p class="hint" id="@SavedId">Saved as @Model.Saved</p>
+        <p field="hint" id="@SavedId">Saved as @Model.Saved</p>
     }
     @if (Model.Error is not null)
     {
-        <span class="field-validation-error" id="@errorId">@Model.Error</span>
+        <span field="message" id="@errorId">@Model.Error</span>
     }
     @if (Model.CanAdd)
     {
         <div>
-            <button class="btn ghost" type="submit" formaction="@Model.AddAction" formnovalidate
-                    hx-post="@Model.AddAction" hx-target="#phone-numbers" hx-swap="outerHTML"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>Add a phone number</button>
+            <button button="ghost" type="submit" formaction="@Model.AddAction" formnovalidate
+                    hx-post="@Model.AddAction" hx-target="#phone-numbers" hx-swap="outerHTML"><icon name="plus" />Add a phone number</button>
         </div>
     }
 </fieldset>

@@ -12,17 +12,17 @@
     relation field, and this dialog with a new one, which closes the open one. Enter in the filter chooses too, as in
     the brand's picker: the list has kept up with the typing.
 *@
-<dialog class="dialog" id="organization-picker" aria-labelledby="organization-picker-title">
+<dialog dialog id="organization-picker" aria-labelledby="organization-picker-title">
     <form hx-get="@Model.FieldAction" hx-target="#organization-field" hx-swap="outerHTML">
-        <header class="dialog-header">
+        <header dialog="header">
             <h2 id="organization-picker-title">Choose an organization</h2>
-            <button class="btn ghost icon-only" type="button" commandfor="organization-picker" command="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button>
+            <button button="icon" type="button" commandfor="organization-picker" command="close" aria-label="Close"><icon name="x" /></button>
         </header>
-        <div class="dialog-body">
-            <div class="card">
-                <div class="toolbar">
-                    <div class="filter-box" role="search">
-                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#filter"></use></svg>
+        <div dialog="body">
+            <div card>
+                <div toolbar>
+                    <div filter-box role="search">
+                        <icon name="filter" />
                         <input type="search" id="organization-filter" name="filter" autofocus
                                placeholder="Filter organizations" aria-label="Filter organizations"
                                hx-get="@Model.ChoicesAction" hx-trigger="input changed delay:300ms"
@@ -33,9 +33,9 @@
                 <partial name="_OrganizationChoices" model="Model" />
             </div>
         </div>
-        <footer class="dialog-footer">
-            <button class="btn" type="button" commandfor="organization-picker" command="close">Cancel</button>
-            <button class="btn primary" type="submit" name="choose" value="true">Choose organization</button>
+        <footer dialog="footer">
+            <button button="secondary" type="button" commandfor="organization-picker" command="close">Cancel</button>
+            <button button="primary" type="submit" name="choose" value="true">Choose organization</button>
         </footer>
     </form>
 </dialog>

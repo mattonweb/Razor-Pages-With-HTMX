@@ -8,9 +8,13 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 /// <list type="bullet">
 /// <item><description><c>scroll</c>, the element around the table, which scrolls sideways when the card is too
 /// narrow;</description></item>
+/// <item><description><c>select</c>, a header or cell of the selection column, first in each row, which holds a
+/// checkbox, or a radio in a picker; a row whose box is checked is filled with the accent's subtle
+/// color;</description></item>
 /// <item><description><c>sort</c>, a sortable column's header link, whose arrow shows on the sorted column, the one
 /// whose header says <c>aria-sort</c>, and under the pointer or the keyboard;</description></item>
-/// <item><description><c>title</c>, the title cell: a link to the record and an optional second line;</description></item>
+/// <item><description><c>title</c>, the title cell: a link to the record and an optional second line, or, beside a
+/// selection column, the label of its box;</description></item>
 /// <item><description><c>number</c>, a header or cell in a column of numbers;</description></item>
 /// <item><description><c>actions</c>, the last cell, which holds the row's menu button;</description></item>
 /// <item><description><c>archived</c>, a row whose record is archived, among rows that are not.</description></item>
@@ -46,10 +50,13 @@ public sealed class GridTagHelper : ComponentTagHelper
         + "[:where(&_td)]:h-row [:where(&_td)]:border-b [:where(&_td)]:border-line [:where(&_td)]:px-4 "
         + "[:where(&_td)]:py-2 [:where(&_td)]:align-middle "
         + "[&_tbody_tr:last-child_td]:border-b-0 [&_tbody_tr:hover]:bg-surface-hover "
+        + "[&_tbody_tr:has(input:checked)]:bg-accent-subtle "
         + "in-busy:[&>tbody]:opacity-50 in-busy:[&>tbody]:transition-opacity in-busy:[&>tbody]:duration-200 "
         + "in-busy:[&>tbody]:ease-[ease]";
 
     private const string Scroll = "overflow-x-auto";
+
+    private const string Select = "w-[1%] pr-0";
 
     private const string Sort =
         "inline-flex items-center gap-1 text-inherit hover:text-fg hover:no-underline [&>svg]:opacity-0 "
@@ -78,6 +85,8 @@ public sealed class GridTagHelper : ComponentTagHelper
                 Grid,
             "scroll" =>
                 Scroll,
+            "select" =>
+                Select,
             "sort" =>
                 Sort,
             "title" =>
@@ -90,8 +99,8 @@ public sealed class GridTagHelper : ComponentTagHelper
                 Archived,
             _ =>
                 throw new InvalidOperationException(
-                    "A grid's parts are scroll, sort, title, number, actions and archived, or none for the table "
-                    + $"itself, not \"{part}\"."),
+                    "A grid's parts are scroll, select, sort, title, number, actions and archived, or none for "
+                    + $"the table itself, not \"{part}\"."),
         };
     }
 }

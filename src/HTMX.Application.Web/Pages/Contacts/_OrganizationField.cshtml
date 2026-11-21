@@ -11,30 +11,30 @@
 @{
     string? describedBy = Model.Saved is null ? null : "organization-saved";
 }
-<fieldset class="field" id="organization-field">
+<fieldset field id="organization-field">
     <legend>Organization</legend>
-    <div class="relation">
+    <div relation>
         <input type="hidden" asp-for="Input.OrganizationId" />
         @if (Model.Chosen is OrganizationReference chosen)
         {
-            <a class="related @(chosen.ArchivedOn is null ? null : "archived")" asp-page="/Organizations/Details" asp-route-id="@chosen.Id.Value"><svg class="icon" aria-hidden="true"><use href="/icons.svg#building"></use></svg>@chosen.Name.Value</a>
+            <a related="@(chosen.ArchivedOn is null ? string.Empty : "archived")" asp-page="/Organizations/Details" asp-route-id="@chosen.Id.Value"><icon name="building" size="sm" />@chosen.Name.Value</a>
             @if (chosen.ArchivedOn is not null)
             {
-                <span class="chip">Archived</span>
+                <span chip="neutral" class="ml-2">Archived</span>
             }
-            <button class="btn" type="button" commandfor="organization-picker" command="show-modal"
+            <button button="secondary" type="button" commandfor="organization-picker" command="show-modal"
                     aria-label="Change organization" aria-describedby="@describedBy" autofocus="@Model.Focus">Change</button>
         }
         else
         {
-            <span class="unset">No organization</span>
-            <button class="btn" type="button" commandfor="organization-picker" command="show-modal"
+            <span class="text-fg-muted">No organization</span>
+            <button button="secondary" type="button" commandfor="organization-picker" command="show-modal"
                     aria-label="Choose an organization" aria-describedby="@describedBy" autofocus="@Model.Focus">Choose</button>
         }
     </div>
     @if (Model.Saved is string saved)
     {
-        <p class="hint" id="organization-saved">Saved as @saved</p>
+        <p field="hint" id="organization-saved">Saved as @saved</p>
     }
-    <span asp-validation-for="Input.OrganizationId"></span>
+    <span asp-validation-for="Input.OrganizationId" field="message"></span>
 </fieldset>

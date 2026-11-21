@@ -1,14 +1,14 @@
 /*
   HTMLX Pages: data display. Showing records and values.
-    .data-grid     a table of records: sort headers, a title cell, a selection column, archived rows
+    .data-grid     a table of records: sort headers, a title cell, archived rows
     .chip          a status label
     .empty         what a list shows when it has nothing to show
     .fields        label-over-value pairs, in as many columns as the width allows
-    .related       a link to another record, led by its type's icon
     .panel         a side panel that shows one record's fields over the page
     .version       a version badge
 
-  The timeline and the diff are drawn in their partial views, _Timeline and _Diff, with utilities.
+  The timeline and the diff are drawn in their partial views, _Timeline and _Diff, with utilities; a related-record
+  link, a grid's selection column and its number columns by their tag helpers, RelatedTagHelper and GridTagHelper.
 */
 
 /* Grid */
@@ -28,13 +28,7 @@
 .data-grid tbody tr:hover { background: var(--surface-hover); }
 .data-grid tbody tr[aria-selected="true"] { background: var(--accent-subtle); }
 
-/* Selection column: a checkbox (bulk selection) or a radio (a picker) in the first cell. A row whose box is
-   checked is highlighted; its label is the row's title, so a click on the name also selects it. */
-.data-grid .select { width: 1%; padding-right: 0; }
-.data-grid tbody tr:has(.select input:checked) { background: var(--accent-subtle); }
-.data-grid td.title label { display: block; font-weight: var(--weight-strong); cursor: pointer; }
 .data-grid .actions { width: 1%; padding-block: 0; text-align: right; white-space: nowrap; }
-.data-grid .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Sortable header: <th aria-sort="ascending"><a href="?sort=name&amp;dir=desc">Name <svg class="icon sm">…</svg></a></th>.
    The arrow shows on the sorted column, and on any header under the pointer or keyboard focus. */
@@ -79,7 +73,7 @@
 
 /* Fields: <dl class="fields"><div><dt>Email</dt><dd>…</dd></div>…</dl>. Each label sits over its value, and the
    list fills as many 260px columns as fit: two or three in a card, one in the side panel. .wide spans the row.
-   A value that was never set reads "Not set" in .unset, never a blank or a dash. */
+   A value that was never set reads "Not set", muted, never a blank or a dash. */
 .fields {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
   gap: var(--space-4) var(--space-6); margin: 0;
@@ -87,14 +81,6 @@
 .fields .wide { grid-column: 1 / -1; }
 .fields dt { font-size: var(--text-sm); color: var(--text-muted); }
 .fields dd { margin: 2px 0 0; overflow-wrap: anywhere; }
-.fields .unset { color: var(--text-muted); }
-
-/* Related-record link: the record type's icon, then the record's name. A link to an archived record stays a
-   link, muted, followed by an Archived chip. */
-.related { display: inline-flex; align-items: center; gap: var(--space-1); }
-.related .icon { width: 16px; height: 16px; }
-.related.archived { color: var(--text-muted); }
-.related + .chip { margin-left: var(--space-2); }
 
 /* Side panel: <aside class="panel" id="record-panel" popover>. It covers the right edge of the page and closes
    on Escape, on its close button, or on a click outside it. It is not modal: the list beside it stays usable,

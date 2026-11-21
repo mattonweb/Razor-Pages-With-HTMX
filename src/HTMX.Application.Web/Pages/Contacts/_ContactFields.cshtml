@@ -24,17 +24,17 @@
         ? saved.Organization.Name.Value
         : null;
 }
-<section class="card" aria-labelledby="details-heading">
-    <header class="card-header"><h2 id="details-heading">Details</h2></header>
-    <div class="card-body fields">
-        <div class="field">
+<section card aria-labelledby="details-heading">
+    <header card="header"><h2 id="details-heading">Details</h2></header>
+    <div card="body" fields>
+        <div field>
             <label asp-for="Input.Name"></label>
             <input asp-for="Input.Name" aria-describedby="@(savedName is null ? null : "name-saved")" />
             @if (savedName is not null)
             {
-                <p class="hint" id="name-saved">Saved as @savedName</p>
+                <p field="hint" id="name-saved">Saved as @savedName</p>
             }
-            <span asp-validation-for="Input.Name"></span>
+            <span asp-validation-for="Input.Name" field="message"></span>
         </div>
 
         @if (Model.Relation is OrganizationField relation)
@@ -43,7 +43,7 @@
         }
         else
         {
-            <div class="field" id="organization-field" hx-get="@Model.EnhanceAction" hx-trigger="load" hx-swap="outerHTML">
+            <div field id="organization-field" hx-get="@Model.EnhanceAction" hx-trigger="load" hx-swap="outerHTML">
                 <label asp-for="Input.OrganizationId"></label>
                 <select asp-for="Input.OrganizationId" asp-items="Model.OrganizationOptions"
                         aria-describedby="@(savedOrganization is null ? null : "organization-saved")">
@@ -51,39 +51,39 @@
                 </select>
                 @if (savedOrganization is not null)
                 {
-                    <p class="hint" id="organization-saved">Saved as @savedOrganization</p>
+                    <p field="hint" id="organization-saved">Saved as @savedOrganization</p>
                 }
-                <span asp-validation-for="Input.OrganizationId"></span>
+                <span asp-validation-for="Input.OrganizationId" field="message"></span>
             </div>
         }
 
-        <div class="field">
+        <div field>
             <label asp-for="Input.JobTitle"></label>
             <input asp-for="Input.JobTitle" aria-describedby="@(savedJobTitle is null ? null : "job-title-saved")" />
             @if (savedJobTitle is not null)
             {
-                <p class="hint" id="job-title-saved">Saved as @savedJobTitle</p>
+                <p field="hint" id="job-title-saved">Saved as @savedJobTitle</p>
             }
-            <span asp-validation-for="Input.JobTitle"></span>
+            <span asp-validation-for="Input.JobTitle" field="message"></span>
         </div>
-        <div class="field">
+        <div field>
             <label asp-for="Input.Email"></label>
             <input asp-for="Input.Email" aria-describedby="@(savedEmail is null ? null : "email-saved")" />
             @if (savedEmail is not null)
             {
-                <p class="hint" id="email-saved">Saved as @savedEmail</p>
+                <p field="hint" id="email-saved">Saved as @savedEmail</p>
             }
-            <span asp-validation-for="Input.Email"></span>
+            <span asp-validation-for="Input.Email" field="message"></span>
         </div>
         <partial name="_PhoneNumberField" model="Model.PhoneNumbers" />
-        <div class="field wide">
+        <div field class="col-span-full">
             <label asp-for="Input.Notes"></label>
             <textarea asp-for="Input.Notes" rows="4" aria-describedby="@(savedNotes is null ? null : "notes-saved")"></textarea>
             @if (savedNotes is not null)
             {
-                <p class="hint" id="notes-saved">Saved as @savedNotes</p>
+                <p field="hint" id="notes-saved">Saved as @savedNotes</p>
             }
-            <span asp-validation-for="Input.Notes"></span>
+            <span asp-validation-for="Input.Notes" field="message"></span>
         </div>
     </div>
 </section>

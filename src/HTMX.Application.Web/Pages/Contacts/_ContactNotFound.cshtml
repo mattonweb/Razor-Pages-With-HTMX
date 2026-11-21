@@ -4,18 +4,18 @@
     renders it also sets the status 404 Not Found. Its model is the identifier from the route, and whether the heading
     takes the focus, as when a link HTMX loads leads here.
 *@
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="/Organizations/Index">Organizations</a></li><li><span aria-current="page">Not found</span></li></ol>
     </nav>
-    <div class="title-row"><h1 tabindex="-1" autofocus="@Model.HeadingFocused">Contact not found</h1></div>
+    <div page-header="title-row"><h1 tabindex="-1" autofocus="@Model.HeadingFocused">Contact not found</h1></div>
 </header>
 
-<div class="card">
-    <div class="empty">
-        <svg class="icon" aria-hidden="true"><use href="/icons.svg#user"></use></svg>
+<div card>
+    <div empty-state>
+        <icon name="user" />
         <h3>No contact has the identifier @Model.Id</h3>
         <p>They may have been deleted, or the link may be mistyped.</p>
-        <a class="btn" asp-page="/Organizations/Index">Back to organizations</a>
+        <a button="secondary" asp-page="/Organizations/Index">Back to organizations</a>
     </div>
 </div>
