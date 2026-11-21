@@ -96,8 +96,8 @@ decline it and say why.
   page still working as plain Razor Pages when HTMX is absent (progressive enhancement). Pin HTMX to one exact
   version and record it in `README.md`.
 - Styling: Tailwind CSS, run as its standalone CLI, so the repository has no Node and no `package.json`. The version
-  and each system's SHA-256 are pinned in the web project file, and `README.md` records them. Utilities only, with
-  no `@apply` and no component classes. Each of the brand's components is drawn by a tag helper that holds its
+  and each system's SHA-256 are pinned in the web project file, and `README.md` records the version. Utilities only,
+  with no `@apply` and no component classes. Each of the brand's components is drawn by a tag helper that holds its
   utilities, named by an attribute on the element that is the component or one of its parts (`button="primary"`,
   `<icon name="edit" />`, `<section card>`, `<header card="header">`; Matt's choice), so a view keeps its own
   markup, ARIA and `hx-` attributes. A hook for HTMX, the script or a test is an id or a `data-` attribute, never
