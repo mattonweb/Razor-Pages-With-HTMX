@@ -291,9 +291,9 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   An attribute names the component, or one of its parts, on the element the view writes, so the view keeps its own
   markup, ARIA and `hx-` attributes: `<a asp-page="./Edit" button="primary">`, `<icon name="edit" />`,
   `<span chip="success">Active</span>`, and `<section card>` with `<header card="header">` and
-  `<div card="body">` inside. The layout's shell, the shared partials, and the organizations' and contacts' pages
-  are written this way; the other views move from the stylesheets in `Styles/legacy/` one area at a time. The home
-  page's robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from
+  `<div card="body">` inside. The layout's shell, the shared partials, and the organizations', contacts' and users'
+  pages are written this way; the other views move from the stylesheets in `Styles/legacy/` one area at a time. The
+  home page's robot, `wwwroot/images/robot.svg`, is "Artificial intelligence technology concept" from
   [FreeSVG](https://freesvg.org/artificial-intelligence-technology-concept), CC0 (public domain), with the blue square
   behind it removed.
 - **Tailwind CSS 4.3.5**, pinned, run as its standalone CLI, so nothing here runs on Node. Before each build the web
