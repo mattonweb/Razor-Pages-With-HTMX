@@ -2,6 +2,9 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-20 (attended session with Matt): every view is drawn with Tailwind.** The organizations', contacts',
+  users' and components' pages, and the home page, use the component tag helpers, so `Styles/legacy/` and its
+  cascade layer are gone. Entries below that name them predate this.
 - **2026-11-18 (attended session with Matt): every component is a tag helper, part by part.** The atoms' pattern
   now covers the composite components too (`card`, `dialog="confirm"`, `grid="title"` and so on, on a shared
   `ComponentTagHelper`), breadcrumbs and tabs included, rather than partial views. The organizations' pages are
