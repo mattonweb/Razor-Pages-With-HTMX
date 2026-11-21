@@ -26,7 +26,9 @@ public sealed class ComponentTagHelperTests
     /// the component itself its utilities when the attribute has no value.
     /// </summary>
     /// <param name="name">The component's attribute.</param>
-    /// <param name="part">The part the attribute names, or <see langword="null"/> for an attribute with no value.</param>
+    /// <param name="part">
+    /// The part the attribute names, or <see langword="null"/> for an attribute with no value.
+    /// </param>
     /// <param name="utility">A utility that belongs to that part alone.</param>
     [TestMethod]
     [DataRow("alert", "warning", "bg-warning-subtle", DisplayName = "Alert, warning tone")]
@@ -37,16 +39,21 @@ public sealed class ComponentTagHelperTests
     [DataRow("dialog", "confirm", "w-[min(420px,calc(100vw_-_2_*_var(--space-4)))]", DisplayName = "Dialog, confirm")]
     [DataRow("dialog", "icon-warning", "bg-warning-subtle", DisplayName = "Dialog, warning icon")]
     [DataRow("empty-state", null, "[&>svg]:size-10", DisplayName = "Empty state")]
+    [DataRow("field", null, "[&>legend]:mb-1", DisplayName = "Field, its legend")]
     [DataRow("field", "message", "empty:hidden", DisplayName = "Field, message")]
+    [DataRow("field-rows", null, "[&>li]:flex", DisplayName = "Rows")]
     [DataRow("field", "summary", "[&.validation-summary-valid]:hidden", DisplayName = "Field, summary")]
     [DataRow("fields", null, "gap-x-6", DisplayName = "Fields")]
     [DataRow("filter-box", null, "[&>input]:pl-9", DisplayName = "Filter box")]
     [DataRow("form-actions", "end", "ml-auto", DisplayName = "Form action bar, end")]
     [DataRow("grid", "number", "tabular-nums", DisplayName = "Grid, number")]
     [DataRow("grid", "archived", "[--grid-title:var(--text-muted)]", DisplayName = "Grid, archived row")]
+    [DataRow("grid", "select", "pr-0", DisplayName = "Grid, selection column")]
     [DataRow("menu", "danger", "text-danger", DisplayName = "Menu, danger item")]
     [DataRow("page-header", "title-row", "justify-between", DisplayName = "Page header, title row")]
     [DataRow("pager", "size", "justify-self-end", DisplayName = "Pager, size")]
+    [DataRow("related", "archived", "text-fg-muted", DisplayName = "Related-record link, archived")]
+    [DataRow("relation", null, "[&>button]:[border-width:0_0_0_1px]", DisplayName = "Relation field's box")]
     [DataRow("segmented", "segment", "aria-[current=page]:bg-surface", DisplayName = "Segmented control, segment")]
     [DataRow("tabs", "tab", "aria-[current=page]:text-accent", DisplayName = "Tabs, tab")]
     [DataRow("toolbar", null, "[&>nav]:ml-auto", DisplayName = "Toolbar")]
@@ -81,12 +88,15 @@ public sealed class ComponentTagHelperTests
     [DataRow("empty-state", DisplayName = "Empty state")]
     [DataRow("field", DisplayName = "Field")]
     [DataRow("fields", DisplayName = "Fields")]
+    [DataRow("field-rows", DisplayName = "Rows")]
     [DataRow("filter-box", DisplayName = "Filter box")]
     [DataRow("form-actions", DisplayName = "Form action bar")]
     [DataRow("grid", DisplayName = "Grid")]
     [DataRow("menu", DisplayName = "Menu")]
     [DataRow("page-header", DisplayName = "Page header")]
     [DataRow("pager", DisplayName = "Pager")]
+    [DataRow("related", DisplayName = "Related-record link")]
+    [DataRow("relation", DisplayName = "Relation field's box")]
     [DataRow("segmented", DisplayName = "Segmented control")]
     [DataRow("tabs", DisplayName = "Tabs")]
     [DataRow("toolbar", DisplayName = "Toolbar")]
@@ -141,8 +151,8 @@ public sealed class ComponentTagHelperTests
     }
 
     /// <summary>
-    /// Unit test to verify that an attribute with an empty value, as a view writes for a version that is not the current
-    /// one, draws the component itself.
+    /// Unit test to verify that an attribute with an empty value, as a view writes for a version that is not the
+    /// current one, draws the component itself.
     /// </summary>
     [TestMethod]
     public void Process_EmptyValue_DrawsTheComponent()
@@ -217,6 +227,8 @@ public sealed class ComponentTagHelperTests
                 new FieldTagHelper(),
             "fields" =>
                 new FieldsTagHelper(),
+            "field-rows" =>
+                new FieldRowsTagHelper(),
             "filter-box" =>
                 new FilterBoxTagHelper(),
             "form-actions" =>
@@ -229,6 +241,10 @@ public sealed class ComponentTagHelperTests
                 new PageHeaderTagHelper(),
             "pager" =>
                 new PagerTagHelper(),
+            "related" =>
+                new RelatedTagHelper(),
+            "relation" =>
+                new RelationTagHelper(),
             "segmented" =>
                 new SegmentedTagHelper(),
             "tabs" =>
