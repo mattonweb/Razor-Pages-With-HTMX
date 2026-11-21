@@ -4,8 +4,8 @@
     ViewData["Title"] = "Sign in as a visitor";
     ViewData["Section"] = "Components";
 }
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol>
             <li><a asp-page="/Index">Home</a></li>
             <li><a asp-page="./Index">Components</a></li>
@@ -13,10 +13,10 @@
             <li><span aria-current="page">Sign in</span></li>
         </ol>
     </nav>
-    <div class="title-row">
+    <div page-header="title-row">
         <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Sign in as a visitor</h1>
     </div>
-    <p class="muted">
+    <p class="text-fg-muted">
         The Sign-in expiry page and the Visitors' room need a visitor. A visitor's sign-in asks for nothing, and lasts
         thirty seconds; only a visitor with a pass may enter the Visitors' room.
     </p>
@@ -28,17 +28,17 @@
     it, a redirect there. Its two buttons post the same form, and the one pressed sends its own name and value as
     well: Pass=true for a sign-in with a pass. The browser does so, and HTMX too (4.0.1 source, #collectFormData).
 *@
-<section class="card" aria-labelledby="visitor-heading">
-    <header class="card-header"><h2 id="visitor-heading">Sign in</h2></header>
+<section card aria-labelledby="visitor-heading">
+    <header card="header"><h2 id="visitor-heading">Sign in</h2></header>
     <form method="post" asp-page="./VisitorSignIn">
         <input type="hidden" asp-for="ReturnUrl" />
-        <div class="card-body">
+        <div card="body">
             <p>Sign in as a visitor for thirty seconds, with a pass or without one.</p>
         </div>
-        <div class="form-actions">
-            <div class="end">
-                <button class="btn" type="submit" name="Pass" value="true">Sign in with a pass</button>
-                <button class="btn primary" type="submit">Sign in</button>
+        <div form-actions>
+            <div form-actions="end">
+                <button button="secondary" type="submit" name="Pass" value="true">Sign in with a pass</button>
+                <button button="primary" type="submit">Sign in</button>
             </div>
         </div>
     </form>

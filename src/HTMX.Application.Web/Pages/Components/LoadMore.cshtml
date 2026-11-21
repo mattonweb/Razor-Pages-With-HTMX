@@ -4,14 +4,14 @@
     ViewData["Title"] = "Load more";
     ViewData["Section"] = "Components";
 }
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Load more</span></li></ol>
     </nav>
-    <div class="title-row">
+    <div page-header="title-row">
         <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Load more</h1>
     </div>
-    <p class="muted">
+    <p class="text-fg-muted">
         The active organizations by name, ten at a time, each Load more adding the next ten under the rest.
     </p>
 </header>
@@ -21,11 +21,11 @@
     and the link, is drawn again by the same answer, through an hx-partial (_LoadMoreAnswer). Both are partials, so the
     page and the answer draw them alike.
 *@
-<section class="card" aria-labelledby="more-heading">
-    <header class="card-header"><h2 id="more-heading">Organizations</h2></header>
-    <div class="grid-wrap">
-        <table class="data-grid">
-            <caption class="visually-hidden">Active organizations, by name</caption>
+<section card aria-labelledby="more-heading">
+    <header card="header"><h2 id="more-heading">Organizations</h2></header>
+    <div grid="scroll">
+        <table grid>
+            <caption class="sr-only">Active organizations, by name</caption>
             <thead>
                 <tr>
                     <th scope="col">Name</th>

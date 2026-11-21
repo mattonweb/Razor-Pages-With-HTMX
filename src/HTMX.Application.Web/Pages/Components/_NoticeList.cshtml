@@ -24,10 +24,11 @@
     string? allSeen = Url.Page("./SeenNotices", "AllSeen");
     string? allNew = Url.Page("./SeenNotices", "AllNew");
 }
-<section class="card" id="notice-list" aria-labelledby="notice-list-heading">
-    <header class="card-header"><h2 id="notice-list-heading">Notices, @count new</h2></header>
-    <div class="card-body">
-        <ul hx-headers:inherited="@headers">
+<section card id="notice-list" aria-labelledby="notice-list-heading">
+    <header card="header"><h2 id="notice-list-heading">Notices, @count new</h2></header>
+    <div card="body">
+        @* A plain list, drawn as the browser draws one: Tailwind's reset takes away its bullets and indent. *@
+        <ul class="my-[1em] list-disc ps-10" hx-headers:inherited="@headers">
             @foreach (Notice notice in Model.Notices)
             {
                 if (notice.Seen)
@@ -38,21 +39,21 @@
                 {
                     string? seen = Url.Page("./SeenNotices", "Seen", new { notice = notice.Number });
                     <li id="notice-@notice.Number" hx-post="@seen" hx-trigger="revealed" hx-swap="none">
-                        <span class="chip info">New</span> @notice.Text
+                        <span chip="info">New</span> @notice.Text
                     </li>
                 }
             }
         </ul>
     </div>
-    <div class="form-actions">
-        <div class="end">
+    <div form-actions>
+        <div form-actions="end">
             <form method="post" action="@allNew" asp-antiforgery="true"
                   hx-post="@allNew" hx-target="#notice-list" hx-swap="outerHTML">
-                <button class="btn ghost" type="submit" id="notices-all-new">Mark all as new</button>
+                <button button="ghost" type="submit" id="notices-all-new">Mark all as new</button>
             </form>
             <form method="post" action="@allSeen" asp-antiforgery="true"
                   hx-post="@allSeen" hx-target="#notice-list" hx-swap="outerHTML">
-                <button class="btn" type="submit" id="notices-all-seen">Mark all as seen</button>
+                <button button="secondary" type="submit" id="notices-all-seen">Mark all as seen</button>
             </form>
         </div>
     </div>

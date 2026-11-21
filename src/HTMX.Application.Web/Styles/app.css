@@ -21,10 +21,6 @@
 @import "./base.css" layer(base);
 @import "./legacy/base.css" layer(legacy);
 @import "./legacy/layout.css" layer(legacy);
-@import "./legacy/navigation.css" layer(legacy);
-@import "./legacy/data-display.css" layer(legacy);
-@import "./legacy/inputs.css" layer(legacy);
-@import "./legacy/feedback.css" layer(legacy);
 
 /* source(none) above stops Tailwind scanning the whole project, bin and obj included; it reads only these. */
 @source "../Pages";

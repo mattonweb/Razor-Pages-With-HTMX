@@ -1,11 +1,11 @@
 /*
-  HTMLX Pages: layout. The frame of every page and the surfaces content sits on.
-    .page-header   breadcrumbs, the title row and the page's actions; .title holds a title and its status chip
-    .card          a surface; .card-header and .card-body inside, .cards for a column of them
+  HTMLX Pages: layout, as the home page still draws it.
+    .page-header   breadcrumbs, then the title row
+    .card          a surface
     .hero          the opening of a landing page, in a card: an illustration beside a heading, text and actions
 
-  The application shell, its header, side nav, avatar and main, is drawn in the layout with utilities; the
-  toolbar and tabs by their tag helpers.
+  Every other view draws these with the tag helpers in TagHelpers/, and this stylesheet goes once the home page does
+  too.
 */
 
 /* Page header: breadcrumbs, then the title row with the page's actions on the right. */
@@ -13,25 +13,14 @@
 .page-header .title-row {
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap;
 }
-/* On a record's page the title is the record's name with its status chip beside it: <div class="title">. */
-.page-header .title { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 
-/* Card: the surface every list, form and panel sits on. It is a size container, so a component inside it
-   (the pager, for one) can rearrange itself for the card's width with @container rather than the window's. */
+/* Card: the surface every list, form and panel sits on. It is a size container, so a component inside it can
+   rearrange itself for the card's width with @container rather than the window's. */
 .card {
   position: relative; container-type: inline-size;
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius-md); box-shadow: var(--shadow-card);
 }
-.card-body { padding: var(--space-4); }
-.card-header {
-  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
-  padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border);
-}
-.card-header h2 { font-size: var(--text-lg); }
-
-/* Cards: a column of cards with the standard gap between them. */
-.cards { display: grid; gap: var(--space-4); }
 
 /* Hero: the opening of a landing page. It sits in a card, as the empty state does, so on a card narrower than 560px
    the illustration moves above the text. The illustration is an image with colors of its own, so it must read on

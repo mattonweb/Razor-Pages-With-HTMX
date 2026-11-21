@@ -14,9 +14,9 @@
     string now = Model.Now.ToString("T", CultureInfo.CurrentCulture);
     string? ends = Model.Ends?.ToString("T", CultureInfo.CurrentCulture);
 }
-<section class="card" id="sign-in-clock" aria-labelledby="sign-in-clock-heading">
-    <header class="card-header"><h2 id="sign-in-clock-heading">Signed in as a visitor</h2></header>
-    <div class="card-body">
+<section card id="sign-in-clock" aria-labelledby="sign-in-clock-heading">
+    <header card="header"><h2 id="sign-in-clock-heading">Signed in as a visitor</h2></header>
+    <div card="body">
         <p>The server's time is <strong>@now</strong>.</p>
         @if (ends is not null)
         {

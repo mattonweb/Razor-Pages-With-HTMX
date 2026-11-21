@@ -19,12 +19,12 @@
     string heading = Model.Job is long number ? $"Job {number}" : "No job yet";
     string start = Model.StepsDone is null ? "Start the job" : "Start another job";
 }
-<section class="card" id="job" aria-labelledby="job-heading" aria-busy="@(running ? "true" : null)"
+<section card id="job" aria-labelledby="job-heading" aria-busy="@(running ? "true" : null)"
          hx-get="@(running ? self : null)" hx-trigger="@(running ? "every 1s" : null)"
          hx-swap="@(running ? "outerHTML" : null)">
-    <header class="card-header"><h2 id="job-heading">@heading</h2></header>
-    <div class="busy-bar"></div>
-    <div class="card-body">
+    <header card="header"><h2 id="job-heading">@heading</h2></header>
+    <div busy-bar></div>
+    <div card="body">
         @if (Model.Missing)
         {
             <p>No job has the number @Model.Job. It may be older than the jobs kept, or the link may be mistyped.</p>
@@ -44,7 +44,7 @@
         {
             <form method="post" action="@action" asp-antiforgery="true"
                   hx-post="@action" hx-target="#job" hx-swap="outerHTML">
-                <button class="btn primary" type="submit">@start</button>
+                <button button="primary" type="submit">@start</button>
             </form>
         }
     </div>

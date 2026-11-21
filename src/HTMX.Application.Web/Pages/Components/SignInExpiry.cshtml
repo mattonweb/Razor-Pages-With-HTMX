@@ -4,14 +4,14 @@
     ViewData["Title"] = "Sign-in expiry";
     ViewData["Section"] = "Components";
 }
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Sign-in expiry</span></li></ol>
     </nav>
-    <div class="title-row">
+    <div page-header="title-row">
         <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Sign-in expiry</h1>
     </div>
-    <p class="muted">
+    <p class="text-fg-muted">
         A page only a signed-in visitor may see. The sign-in lasts thirty seconds, and the card asks the server for the
         time until it has ended.
     </p>

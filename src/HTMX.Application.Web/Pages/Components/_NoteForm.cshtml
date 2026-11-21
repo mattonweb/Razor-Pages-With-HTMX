@@ -7,21 +7,21 @@
 @{
     string? action = Url.Page("./ReloadOnEvent");
 }
-<section class="card" id="note-form" aria-labelledby="note-form-heading">
-    <header class="card-header"><h2 id="note-form-heading">Write a note</h2></header>
+<section card id="note-form" aria-labelledby="note-form-heading">
+    <header card="header"><h2 id="note-form-heading">Write a note</h2></header>
     <form method="post" action="@action" asp-antiforgery="true" novalidate
           hx-post="@action" hx-target="#note-form" hx-swap="outerHTML"
           hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
-        <div class="card-body fields">
-            <div class="field wide">
+        <div card="body" fields>
+            <div field class="col-span-full">
                 <label asp-for="Input.Text"></label>
                 <input asp-for="Input.Text" autocomplete="off" autofocus="@Model.TextFocused" />
-                <span asp-validation-for="Input.Text"></span>
+                <span asp-validation-for="Input.Text" field="message"></span>
             </div>
         </div>
-        <div class="form-actions">
-            <div class="end">
-                <button class="btn primary" type="submit">Write the note</button>
+        <div form-actions>
+            <div form-actions="end">
+                <button button="primary" type="submit">Write the note</button>
             </div>
         </div>
     </form>

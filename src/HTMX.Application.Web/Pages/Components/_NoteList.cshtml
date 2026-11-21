@@ -16,21 +16,22 @@
     string trigger = $"{ReloadOnEventModel.NotesChanged} from:document";
     string count = Model.Notes.Length.ToString("N0", CultureInfo.CurrentCulture);
 }
-<section class="card" id="note-list" aria-labelledby="note-list-heading"
+<section card id="note-list" aria-labelledby="note-list-heading"
          hx-get="@self" hx-trigger="@trigger" hx-swap="outerHTML">
-    <header class="card-header"><h2 id="note-list-heading">Notes (@count)</h2></header>
+    <header card="header"><h2 id="note-list-heading">Notes (@count)</h2></header>
     @if (Model.Notes.Length == 0)
     {
-        <div class="empty">
-            <svg class="icon" aria-hidden="true"><use href="/icons.svg#inbox"></use></svg>
+        <div empty-state>
+            <icon name="inbox" />
             <h3>No notes yet</h3>
             <p>A note written in the form above shows here.</p>
         </div>
     }
     else
     {
-        <div class="card-body">
-            <ul>
+        <div card="body">
+            @* A plain list, drawn as the browser draws one: Tailwind's reset takes away its bullets and indent. *@
+            <ul class="my-[1em] list-disc ps-10">
                 @foreach (Note note in Model.Notes)
                 {
                     <li><strong>Note @note.Number</strong>: @note.Text</li>

@@ -13,23 +13,23 @@
 @{
     string? putBack = Url.Page("./ConfirmationPage", "PutBack");
 }
-<section class="card" id="saved-files" aria-labelledby="saved-files-heading">
-    <header class="card-header">
+<section card id="saved-files" aria-labelledby="saved-files-heading">
+    <header card="header">
         <h2 id="saved-files-heading" tabindex="-1" autofocus="@Model.ListHeadingFocused">Files</h2>
     </header>
     @if (Model.Files.Length == 0)
     {
-        <div class="card-body"><p>No files are left. Put them all back to try again.</p></div>
+        <div card="body"><p>No files are left. Put them all back to try again.</p></div>
     }
     else
     {
-        <div class="grid-wrap">
-            <table class="data-grid">
-                <caption class="visually-hidden">Files, each with Delete</caption>
+        <div grid="scroll">
+            <table grid>
+                <caption class="sr-only">Files, each with Delete</caption>
                 <thead>
                     <tr>
                         <th scope="col">File</th>
-                        <th scope="col"><span class="visually-hidden">Delete</span></th>
+                        <th scope="col"><span class="sr-only">Delete</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -39,16 +39,16 @@
                         bool focused = Model.FocusedFile == number;
                         string? confirm = Url.Page("./ConfirmDelete", new { file = number });
                         <tr id="file-@number">
-                            <td class="title">@file.Name</td>
-                            <td class="actions">
-                                <a class="btn danger" id="delete-@number" href="@confirm" data-dialog-link
+                            <td grid="title">@file.Name</td>
+                            <td grid="actions">
+                                <a button="danger" id="delete-@number" href="@confirm" data-dialog-link
                                    autofocus="@focused">
-                                    Delete<span class="visually-hidden"> @file.Name</span>
+                                    Delete<span class="sr-only"> @file.Name</span>
                                 </a>
                                 <template>
-                                    <button class="btn danger" id="delete-@number" type="button"
+                                    <button button="danger" id="delete-@number" type="button"
                                             commandfor="delete-file-@number" command="show-modal">
-                                        Delete<span class="visually-hidden"> @file.Name</span>
+                                        Delete<span class="sr-only"> @file.Name</span>
                                     </button>
                                 </template>
                             </td>
@@ -62,32 +62,32 @@
             long number = file.Number;
             string dialog = $"delete-file-{number}";
             string? delete = Url.Page("./ConfirmationPage", "Delete", new { file = number });
-            <dialog class="dialog sm" id="@dialog" aria-labelledby="@dialog-title" aria-describedby="@dialog-text">
+            <dialog dialog="confirm" id="@dialog" aria-labelledby="@dialog-title" aria-describedby="@dialog-text">
                 <form method="post" action="@delete" asp-antiforgery="true"
                       hx-post="@delete" hx-target="#saved-files" hx-swap="outerHTML"
                       hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
-                    <header class="dialog-header"><h2 id="@dialog-title">Delete @file.Name for good?</h2></header>
-                    <div class="dialog-body confirm">
-                        <span class="dialog-icon">
-                            <svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg>
+                    <header dialog="header"><h2 id="@dialog-title">Delete @file.Name for good?</h2></header>
+                    <div dialog="confirm-body">
+                        <span dialog="icon">
+                            <icon name="trash" />
                         </span>
-                        <div class="message" id="@dialog-text">
+                        <div dialog="message" id="@dialog-text">
                             <p>This removes @file.Name for good. It cannot be undone.</p>
                         </div>
                     </div>
-                    <footer class="dialog-footer">
-                        <button class="btn" type="button" commandfor="@dialog" command="close" autofocus>Cancel</button>
-                        <button class="btn danger" type="submit">Delete permanently</button>
+                    <footer dialog="footer">
+                        <button button="secondary" type="button" commandfor="@dialog" command="close" autofocus>Cancel</button>
+                        <button button="danger" type="submit">Delete permanently</button>
                     </footer>
                 </form>
             </dialog>
         }
     }
-    <div class="form-actions">
-        <div class="end">
+    <div form-actions>
+        <div form-actions="end">
             <form method="post" action="@putBack" asp-antiforgery="true"
                   hx-post="@putBack" hx-target="#saved-files" hx-swap="outerHTML">
-                <button class="btn" type="submit" id="put-back">Put them all back</button>
+                <button button="secondary" type="submit" id="put-back">Put them all back</button>
             </form>
         </div>
     </div>

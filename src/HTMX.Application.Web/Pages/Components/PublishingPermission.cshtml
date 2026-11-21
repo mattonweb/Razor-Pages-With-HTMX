@@ -4,8 +4,8 @@
     ViewData["Title"] = "Publishing permission";
     ViewData["Section"] = "Components";
 }
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol>
             <li><a asp-page="/Index">Home</a></li>
             <li><a asp-page="./Index">Components</a></li>
@@ -13,10 +13,10 @@
             <li><span aria-current="page">Publishing permission</span></li>
         </ol>
     </nav>
-    <div class="title-row">
+    <div page-header="title-row">
         <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Publishing permission</h1>
     </div>
-    <p class="muted">
+    <p class="text-fg-muted">
         Whether you may publish the Not allowed page's articles, as an administrator's page would say. Changing it here
         changes nothing on that page, if it is open in another tab, until that page is drawn again.
     </p>

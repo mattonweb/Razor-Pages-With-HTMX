@@ -8,9 +8,9 @@
     string handler = Model.MayPublish ? "Withdraw" : "Grant";
     string? action = Url.Page("./PublishingPermission", handler);
 }
-<section class="card" id="permission" aria-labelledby="permission-heading">
-    <header class="card-header"><h2 id="permission-heading">Publishing</h2></header>
-    <div class="card-body">
+<section card id="permission" aria-labelledby="permission-heading">
+    <header card="header"><h2 id="permission-heading">Publishing</h2></header>
+    <div card="body">
         @if (Model.MayPublish)
         {
             <p>You may publish articles.</p>
@@ -20,11 +20,11 @@
             <p>You may not publish articles.</p>
         }
     </div>
-    <div class="form-actions">
-        <div class="end">
+    <div form-actions>
+        <div form-actions="end">
             <form method="post" action="@action" asp-antiforgery="true"
                   hx-post="@action" hx-target="#permission" hx-swap="outerHTML">
-                <button class="btn" type="submit" id="permission-change">@handler the permission</button>
+                <button button="secondary" type="submit" id="permission-change">@handler the permission</button>
             </form>
         </div>
     </div>

@@ -8,21 +8,21 @@
     The Components section: one page for each pattern that needs a page of its own to show, apart from the records,
     with HTMX and without it. Each page names what it shows in the table, and its own comments say how.
 *@
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol><li><a asp-page="/Index">Home</a></li><li><span aria-current="page">Components</span></li></ol>
     </nav>
-    <div class="title-row">
+    <div page-header="title-row">
         <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Components</h1>
     </div>
-    <p class="muted">Pages that each show one pattern, working with HTMX and without it.</p>
+    <p class="text-fg-muted">Pages that each show one pattern, working with HTMX and without it.</p>
 </header>
 
-<section class="card" aria-labelledby="components-heading">
-    <header class="card-header"><h2 id="components-heading">Pages</h2></header>
-    <div class="grid-wrap">
-        <table class="data-grid">
-            <caption class="visually-hidden">The component pages, with what each shows</caption>
+<section card aria-labelledby="components-heading">
+    <header card="header"><h2 id="components-heading">Pages</h2></header>
+    <div grid="scroll">
+        <table grid>
+            <caption class="sr-only">The component pages, with what each shows</caption>
             <thead>
                 <tr>
                     <th scope="col">Component</th>
@@ -31,84 +31,84 @@
             </thead>
             <tbody>
                 <tr>
-                    <td class="title"><a asp-page="./FileField">File field</a></td>
+                    <td grid="title"><a asp-page="./FileField">File field</a></td>
                     <td>
                         A form that sends a file, shows how much of it has gone, and keeps the chosen file when a save
                         is refused for something else.
                     </td>
                 </tr>
                 <tr>
-                    <td class="title"><a asp-page="./LongJob">Long job</a></td>
+                    <td grid="title"><a asp-page="./LongJob">Long job</a></td>
                     <td>
                         A job that takes a while, whose card asks how far it has got every second until it has
                         finished.
                     </td>
                 </tr>
                 <tr>
-                    <td class="title"><a asp-page="./LoadMore">Load more</a></td>
+                    <td grid="title"><a asp-page="./LoadMore">Load more</a></td>
                     <td>
                         A list that grows ten rows at a time, with the address saying how many show and the keyboard
                         on the first new row.
                     </td>
                 </tr>
                 <tr>
-                    <td class="title"><a asp-page="./LoadOnScroll">Load on scroll</a></td>
+                    <td grid="title"><a asp-page="./LoadOnScroll">Load on scroll</a></td>
                     <td>
                         A list that grows as its last row comes into view, moving no keyboard and saying what came,
                         with nothing under it to fall out of reach.
                     </td>
                 </tr>
                 <tr>
-                    <td class="title"><a asp-page="./ReloadOnEvent">Reload on event</a></td>
+                    <td grid="title"><a asp-page="./ReloadOnEvent">Reload on event</a></td>
                     <td>
                         A list that loads itself again when an answer elsewhere on the page says it changed, through
                         HX-Trigger.
                     </td>
                 </tr>
                 <tr>
-                    <td class="title"><a asp-page="./OrderLines">Order lines</a></td>
+                    <td grid="title"><a asp-page="./OrderLines">Order lines</a></td>
                     <td>
                         Rows of two fields each, added and removed in a form, which bind by their positions and are
                         numbered afresh after every change.
                     </td>
                 </tr>
                 <tr>
-                    <td class="title"><a asp-page="./StockTable">Stock table</a></td>
+                    <td grid="title"><a asp-page="./StockTable">Stock table</a></td>
                     <td>
                         A table whose rows each save with a form of their own, in the row's last cell, which the row's
                         field names with the form attribute.
                     </td>
                 </tr>
                 <tr>
-                    <td class="title"><a asp-page="./SeenNotices">Seen notices</a></td>
+                    <td grid="title"><a asp-page="./SeenNotices">Seen notices</a></td>
                     <td>
                         Notices that mark themselves seen as they scroll into view, a request with no form around it,
                         which sends the antiforgery token in a header.
                     </td>
                 </tr>
                 <tr>
-                    <td class="title"><a asp-page="./SignInExpiry">Sign-in expiry</a></td>
+                    <td grid="title"><a asp-page="./SignInExpiry">Sign-in expiry</a></td>
                     <td>
                         A page behind a thirty-second sign-in, whose HTMX request goes to the sign-in page with a reload
                         once the sign-in has expired, and comes back.
                     </td>
                 </tr>
                 <tr>
-                    <td class="title"><a asp-page="./VisitorsRoom">Visitors' room</a></td>
+                    <td grid="title"><a asp-page="./VisitorsRoom">Visitors' room</a></td>
                     <td>
                         A page only a visitor with a pass may see, whose HTMX request goes to the access-denied page
                         with a reload once the visitor has signed in again without one.
                     </td>
                 </tr>
                 <tr>
-                    <td class="title"><a asp-page="./NotAllowed">Not allowed</a></td>
+                    <td grid="title"><a asp-page="./NotAllowed">Not allowed</a></td>
                     <td>
                         A list that offers Publish only to a user who may publish, and refuses one pressed after the
                         permission was withdrawn with the list as the user may now use it and a toast.
                     </td>
                 </tr>
                 <tr>
-                    <td class="title"><a asp-page="./ConfirmationPage">Confirmation page</a></td>
+                    <td grid="title"><a asp-page="./ConfirmationPage">Confirmation page</a></td>
                     <td>
                         A Delete that asks first in a dialog where the browser has invoker commands, and on a page of
                         its own in any other browser, or with script off.

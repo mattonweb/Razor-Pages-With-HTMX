@@ -4,14 +4,14 @@
     ViewData["Title"] = "Visitors' room";
     ViewData["Section"] = "Components";
 }
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Visitors' room</span></li></ol>
     </nav>
-    <div class="title-row">
+    <div page-header="title-row">
         <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Visitors' room</h1>
     </div>
-    <p class="muted">
+    <p class="text-fg-muted">
         A page only a visitor with a pass may see. Sign in again without a pass on the
         <a asp-page="./VisitorSignIn">visitor's sign-in</a> page in another tab, and this page's next request goes to
         the access-denied page.

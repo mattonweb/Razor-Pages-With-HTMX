@@ -20,7 +20,7 @@
     <tr id="more-@position" hx-get="@grows" hx-trigger="@(growing ? "revealed" : null)"
         hx-target="@(growing ? "#more-rows" : null)" hx-swap="@(growing ? "beforeend" : null)"
         hx-sync="@(growing ? "#more-rows:drop" : null)">
-        <td class="title">
+        <td grid="title">
             <a asp-page="/Organizations/Details" asp-route-id="@organization.Id.Value"
                autofocus="@(Model.FirstRowFocused && index == 0)">@organization.Name.Value</a>
         </td>

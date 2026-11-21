@@ -4,14 +4,14 @@
     ViewData["Title"] = "Order lines";
     ViewData["Section"] = "Components";
 }
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Order lines</span></li></ol>
     </nav>
-    <div class="title-row">
+    <div page-header="title-row">
         <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Order lines</h1>
     </div>
-    <p class="muted">
+    <p class="text-fg-muted">
         A form of lines, each a product and a quantity, which says what order it received. It keeps nothing.
     </p>
 </header>

@@ -4,14 +4,14 @@
     ViewData["Title"] = "Not allowed";
     ViewData["Section"] = "Components";
 }
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Components</a></li><li><span aria-current="page">Not allowed</span></li></ol>
     </nav>
-    <div class="title-row">
+    <div page-header="title-row">
         <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Not allowed</h1>
     </div>
-    <p class="muted">
+    <p class="text-fg-muted">
         Articles that only a user who may publish can publish. Withdraw that permission on the
         <a asp-page="./PublishingPermission">Publishing permission</a> page in another tab, as an administrator would,
         and this page still offers Publish until it is drawn again.

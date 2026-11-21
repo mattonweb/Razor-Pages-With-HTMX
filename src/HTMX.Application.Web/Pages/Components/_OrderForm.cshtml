@@ -7,17 +7,17 @@
 @{
     string? action = Url.Page("./OrderLines");
 }
-<section class="card" id="order-form" aria-labelledby="order-form-heading">
-    <header class="card-header"><h2 id="order-form-heading">An order</h2></header>
+<section card id="order-form" aria-labelledby="order-form-heading">
+    <header card="header"><h2 id="order-form-heading">An order</h2></header>
     <form method="post" action="@action" asp-antiforgery="true" novalidate
           hx-post="@action" hx-target="#order-form" hx-swap="outerHTML"
-          hx-indicator="find .form-actions button[type=submit]" hx-disable="find .form-actions button[type=submit]">
-        <div class="card-body fields">
+          hx-indicator="#order-send" hx-disable="#order-send">
+        <div card="body" fields>
             <partial name="_OrderLines" model="Model" />
         </div>
-        <div class="form-actions">
-            <div class="end">
-                <button class="btn primary" type="submit">Send the order</button>
+        <div form-actions>
+            <div form-actions="end">
+                <button button="primary" id="order-send" type="submit">Send the order</button>
             </div>
         </div>
     </form>

@@ -19,9 +19,9 @@
     bool several = lines.Length > 1;
     ModelStateDictionary state = ViewData.ModelState;
 }
-<fieldset class="field wide" id="order-lines">
+<fieldset field class="col-span-full" id="order-lines">
     <legend>Lines</legend>
-    <ul class="field-rows">
+    <ul field-rows>
         @for (int i = 0; i < lines.Length; i++)
         {
             int number = i + 1;
@@ -33,10 +33,10 @@
                 <input asp-for="Input.Lines[i].Quantity" min="1" max="99" aria-label="Quantity, line @number" />
                 @if (several)
                 {
-                    <button class="btn ghost icon-only" type="submit" name="removeLine" value="@i"
+                    <button button="icon" type="submit" name="removeLine" value="@i"
                             formaction="@remove" formnovalidate
                             hx-post="@remove" hx-target="#order-lines" hx-swap="outerHTML"
-                            aria-label="Remove line @number"><svg class="icon" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button>
+                            aria-label="Remove line @number"><icon name="x" /></button>
                 }
             </li>
         }
@@ -48,17 +48,17 @@
             || state.GetFieldValidationState($"Input.Lines[{i}].Quantity") == ModelValidationState.Invalid;
         if (wrong)
         {
-            <p class="field-validation-error">
-                Line @number: <span asp-validation-for="Input.Lines[i].Product"></span>
-                <span asp-validation-for="Input.Lines[i].Quantity"></span>
+            <p field="message">
+                Line @number: <span asp-validation-for="Input.Lines[i].Product" field="message"></span>
+                <span asp-validation-for="Input.Lines[i].Quantity" field="message"></span>
             </p>
         }
     }
     @if (lines.Length < OrderLinesModel.MostLines)
     {
         <div>
-            <button class="btn ghost" type="submit" formaction="@add" formnovalidate
-                    hx-post="@add" hx-target="#order-lines" hx-swap="outerHTML"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>Add a line</button>
+            <button button="ghost" type="submit" formaction="@add" formnovalidate
+                    hx-post="@add" hx-target="#order-lines" hx-swap="outerHTML"><icon name="plus" />Add a line</button>
         </div>
     }
 </fieldset>

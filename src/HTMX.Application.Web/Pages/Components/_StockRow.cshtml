@@ -23,7 +23,7 @@
     string? action = Url.Page("./StockTable", "Save", new { item = number });
 }
 <tr id="stock-@number">
-    <td class="title">@Model.Item.Name</td>
+    <td grid="title">@Model.Item.Name</td>
     <td>
         <input type="number" id="@fieldId" name="Input.OnHand" form="@formId" value="@Model.Value" min="0" max="999"
                aria-label="On hand, @Model.Item.Name" autofocus="@focused"
@@ -32,14 +32,14 @@
                aria-describedby="@(refused ? errorId : null)" />
         @if (refused)
         {
-            <span class="field-validation-error" id="@errorId">@Model.Message</span>
+            <span field="message" id="@errorId">@Model.Message</span>
         }
     </td>
-    <td class="actions">
+    <td grid="actions">
         <form id="@formId" method="post" action="@action" asp-antiforgery="true" novalidate
               hx-post="@action" hx-target="closest tr" hx-swap="outerHTML" hx-indicator="find button">
-            <button class="btn" type="submit" id="save-@number">
-                Save<span class="visually-hidden"> @Model.Item.Name</span>
+            <button button="secondary" type="submit" id="save-@number">
+                Save<span class="sr-only"> @Model.Item.Name</span>
             </button>
         </form>
     </td>

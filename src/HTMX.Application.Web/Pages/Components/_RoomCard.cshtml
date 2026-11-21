@@ -14,9 +14,9 @@
     string? self = Url.Page("./VisitorsRoom");
     string now = Model.Now.ToString("T", CultureInfo.CurrentCulture);
 }
-<section class="card" id="room-card" aria-labelledby="room-card-heading">
-    <header class="card-header"><h2 id="room-card-heading">In the room with a pass</h2></header>
-    <div class="card-body">
+<section card id="room-card" aria-labelledby="room-card-heading">
+    <header card="header"><h2 id="room-card-heading">In the room with a pass</h2></header>
+    <div card="body">
         <p>The server's time is <strong>@now</strong>.</p>
         <p>Without a pass, Check again goes to the access-denied page.</p>
         <p>
