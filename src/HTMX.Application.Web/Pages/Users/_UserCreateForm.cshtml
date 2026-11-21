@@ -13,10 +13,10 @@
       hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
     <partial name="_UserFields" model="fields" />
 
-    <div class="form-actions">
-        <div class="end">
-            <a class="btn" asp-page="./Index">Cancel</a>
-            <button class="btn primary" type="submit">Create user</button>
+    <div form-actions>
+        <div form-actions="end">
+            <a button="secondary" asp-page="./Index">Cancel</a>
+            <button button="primary" type="submit">Create user</button>
         </div>
     </div>
 </form>

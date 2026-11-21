@@ -5,7 +5,6 @@
     .empty         what a list shows when it has nothing to show
     .fields        label-over-value pairs, in as many columns as the width allows
     .panel         a side panel that shows one record's fields over the page
-    .version       a version badge
 
   The timeline and the diff are drawn in their partial views, _Timeline and _Diff, with utilities; a related-record
   link, a grid's selection column and its number columns by their tag helpers, RelatedTagHelper and GridTagHelper.
@@ -38,10 +37,6 @@
 .data-grid th a:hover svg, .data-grid th a:focus-visible svg,
 .data-grid th[aria-sort="ascending"] a svg, .data-grid th[aria-sort="descending"] a svg { opacity: 1; }
 .data-grid th[aria-sort="ascending"], .data-grid th[aria-sort="descending"] { color: var(--text); }
-
-/* An archived row in the All view: muted text, the chip says why. */
-.data-grid tr.archived td:not(.actions) { color: var(--text-muted); }
-.data-grid tr.archived td.title a { color: var(--text-muted); }
 
 /* Title cell: the first column. A link to the record, on its own line. */
 .data-grid td.title a { display: block; font-weight: var(--weight-strong); }
@@ -106,12 +101,3 @@
   display: flex; justify-content: flex-end; gap: var(--space-2);
   padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border);
 }
-
-/* Version badge */
-.version {
-  display: inline-grid; place-items: center; min-width: 32px; height: 22px; padding: 0 6px;
-  border-radius: var(--radius-sm); background: var(--brand-subtle); color: var(--brand-text);
-  font-family: var(--font-mono); font-size: var(--text-xs); font-weight: var(--weight-strong);
-}
-.version.current { background: var(--brand); color: var(--on-brand); }
-

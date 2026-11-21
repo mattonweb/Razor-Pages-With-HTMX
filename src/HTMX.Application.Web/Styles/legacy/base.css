@@ -1,5 +1,5 @@
 /*
-  HTMLX Pages: icons, buttons and three helpers. The element defaults that were here are in ../base.css, in the base
+  HTMLX Pages: icons, buttons and two helpers. The element defaults that were here are in ../base.css, in the base
   layer, and the skip link is drawn in the layout with utilities.
 
   Naming: one lowercase block name per component (.btn, .chip, .data-grid), a plain word for each variant
@@ -8,7 +8,6 @@
 */
 
 .muted { color: var(--text-muted); }
-.mono { font-family: var(--font-mono); font-size: 0.93em; }
 
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;

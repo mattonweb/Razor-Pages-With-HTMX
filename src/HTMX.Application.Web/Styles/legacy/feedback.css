@@ -3,7 +3,6 @@
     .dialog        a native modal dialog; .dialog.sm is a confirm dialog
     .busy-bar      a thin progress line while a request is in flight
     .bulk-bar      the bar that appears when rows are selected, with what can be done to them
-    .alert         a banner on the page about a state that lasts
     .dialog-icon   the toned icon that leads a confirm dialog's message
   An action that can be undone runs at once and says so in a toast with Undo. Only an action that cannot be
   undone asks first, in a confirm dialog.
@@ -62,23 +61,6 @@
 .card:has(.data-grid tbody .select input:checked) .bulk-bar { display: flex; }
 .bulk-bar .count { font-weight: var(--weight-strong); }
 .bulk-bar .count::before { content: counter(selected); font-variant-numeric: tabular-nums; }
-
-/* Alert: icon, message, then at most one or two actions. Tones as for chips: info, success, warning, danger;
-   neutral is the default. The text keeps the page's text color; the tone colors the icon, fill and line. */
-.alert {
-  --tone: var(--neutral); --tone-subtle: var(--neutral-subtle); --tone-line: var(--neutral-line);
-  display: flex; align-items: flex-start; gap: var(--space-3); flex-wrap: wrap;
-  margin-bottom: var(--space-4); padding: var(--space-3) var(--space-4);
-  background: var(--tone-subtle); border: 1px solid var(--tone-line); border-radius: var(--radius-md);
-}
-.alert > .icon { margin-top: 1px; color: var(--tone); }
-.alert .content { flex: 1 1 280px; display: grid; gap: 2px; }
-.alert .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.alert.info    { --tone: var(--info);    --tone-subtle: var(--info-subtle);    --tone-line: var(--info-line); }
-.alert.success { --tone: var(--success); --tone-subtle: var(--success-subtle); --tone-line: var(--success-line); }
-.alert.warning { --tone: var(--warning); --tone-subtle: var(--warning-subtle); --tone-line: var(--warning-line); }
-.alert.danger  { --tone: var(--danger);  --tone-subtle: var(--danger-subtle);  --tone-line: var(--danger-line); }
-
 
 /* Confirm dialog: a .dialog.sm whose body leads with a .dialog-icon in the dialog's tone, then the message.
    The safe choice comes first in the footer and has focus; the destructive one is .btn.danger, last. */

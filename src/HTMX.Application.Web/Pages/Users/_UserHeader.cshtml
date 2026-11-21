@@ -25,93 +25,93 @@
     string? restoreAction = Url.Page(Model.PageName, "Restore", Model.TabValues());
     string? deleteAction = Url.Page(Model.PageName, "Delete", Model.TabValues());
 }
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="./Index">Users</a></li><li><span aria-current="page">@account.DisplayName.Value</span></li></ol>
     </nav>
-    <div class="title-row">
-        <div class="title">
+    <div page-header="title-row">
+        <div page-header="title">
             <h1 tabindex="-1" autofocus="@Model.HeadingFocused">@account.DisplayName.Value</h1>
             @if (account.Archived is null)
             {
-                <span class="chip success">Active</span>
+                <span chip="success">Active</span>
             }
             else
             {
-                <span class="chip">Archived</span>
+                <span chip="neutral">Archived</span>
             }
-            <span class="version current">v@(account.Version.Value)</span>
+            <span version="current">v@(account.Version.Value)</span>
         </div>
         @if (account.Archived is null)
         {
-            <div class="btn-group">
+            <div page-header="actions">
                 @if (!Model.IsSignedInUser)
                 {
                     <form method="post" action="@archiveAction" asp-antiforgery="true"
                           hx-post="@archiveAction" hx-target="#user" hx-swap="outerHTML"
                           hx-indicator="find button">
-                        <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>Archive</button>
+                        <button button="secondary" id="status-action" type="submit"><icon name="archive" />Archive</button>
                     </form>
                 }
-                <a class="btn primary" asp-page="./Edit" asp-route-id="@id"><svg class="icon" aria-hidden="true"><use href="/icons.svg#edit"></use></svg>Edit</a>
+                <a button="primary" asp-page="./Edit" asp-route-id="@id"><icon name="edit" />Edit</a>
             </div>
         }
     </div>
-    <p class="muted">Updated <partial name="_Moment" model="lastChange.On" /> by <partial name="_UserLink" model="lastChange.By" /></p>
+    <p class="text-fg-muted">Updated <partial name="_Moment" model="lastChange.On" /> by <partial name="_UserLink" model="lastChange.By" /></p>
     @if (Model.IsSignedInUser)
     {
-        <p class="muted">You are signed in as @account.DisplayName.Value, so only another user can archive you.</p>
+        <p class="text-fg-muted">You are signed in as @account.DisplayName.Value, so only another user can archive you.</p>
     }
 </header>
 
 @if (account.Archived is not null)
 {
-    <div class="alert" role="status">
-        <svg class="icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg>
-        <div class="content"><p><strong>This user is archived.</strong> They are hidden from the active list and stay named on every record they changed, and they can't be edited or rolled back until they are restored.</p></div>
-        <div class="actions">
+    <div alert role="status">
+        <icon name="archive" />
+        <div alert="content"><p><strong>This user is archived.</strong> They are hidden from the active list and stay named on every record they changed, and they can't be edited or rolled back until they are restored.</p></div>
+        <div alert="actions">
             <form method="post" action="@restoreAction" asp-antiforgery="true"
                   hx-post="@restoreAction" hx-target="#user" hx-swap="outerHTML"
                   hx-indicator="find button">
-                <button class="btn" id="status-action" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#restore"></use></svg>Restore</button>
+                <button button="secondary" id="status-action" type="submit"><icon name="restore" />Restore</button>
             </form>
-            <button class="btn danger" type="button" commandfor="delete-user" command="show-modal"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg>Delete permanently</button>
+            <button button="danger" type="button" commandfor="delete-user" command="show-modal"><icon name="trash" />Delete permanently</button>
         </div>
     </div>
 
     @if (Model.InUse)
     {
-        <dialog class="dialog sm" id="delete-user" aria-labelledby="delete-user-title" aria-describedby="delete-user-text">
+        <dialog dialog="confirm" id="delete-user" aria-labelledby="delete-user-title" aria-describedby="delete-user-text">
             <form method="dialog">
-                <header class="dialog-header"><h2 id="delete-user-title">@name can't be deleted</h2></header>
-                <div class="dialog-body confirm">
-                    <span class="dialog-icon warning"><svg class="icon" aria-hidden="true"><use href="/icons.svg#alert"></use></svg></span>
-                    <div class="message" id="delete-user-text">
+                <header dialog="header"><h2 id="delete-user-title">@name can't be deleted</h2></header>
+                <div dialog="confirm-body">
+                    <span dialog="icon-warning"><icon name="alert" /></span>
+                    <div dialog="message" id="delete-user-text">
                         <p>Other records name @name as who created, changed or archived them, and their histories would be left naming nobody.</p>
                         <p>Leave them archived instead: they stay hidden from the active list.</p>
                     </div>
                 </div>
-                <footer class="dialog-footer">
-                    <button class="btn primary" type="button" commandfor="delete-user" command="close" autofocus>OK</button>
+                <footer dialog="footer">
+                    <button button="primary" type="button" commandfor="delete-user" command="close" autofocus>OK</button>
                 </footer>
             </form>
         </dialog>
     }
     else
     {
-        <dialog class="dialog sm" id="delete-user" aria-labelledby="delete-user-title" aria-describedby="delete-user-text">
+        <dialog dialog="confirm" id="delete-user" aria-labelledby="delete-user-title" aria-describedby="delete-user-text">
             <form method="post" action="@deleteAction" asp-antiforgery="true"
                   hx-post="@deleteAction" hx-target="#user" hx-swap="outerHTML"
                   hx-indicator="find button[type=submit]" hx-disable="find button[type=submit]">
                 <input type="hidden" name="version" value="@account.Version.Value" />
-                <header class="dialog-header"><h2 id="delete-user-title">Delete @name permanently?</h2></header>
-                <div class="dialog-body confirm">
-                    <span class="dialog-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"></use></svg></span>
-                    <div class="message" id="delete-user-text"><p>This removes @name and their history. It cannot be undone.</p></div>
+                <header dialog="header"><h2 id="delete-user-title">Delete @name permanently?</h2></header>
+                <div dialog="confirm-body">
+                    <span dialog="icon"><icon name="trash" /></span>
+                    <div dialog="message" id="delete-user-text"><p>This removes @name and their history. It cannot be undone.</p></div>
                 </div>
-                <footer class="dialog-footer">
-                    <button class="btn" type="button" commandfor="delete-user" command="close" autofocus>Cancel</button>
-                    <button class="btn danger" type="submit">Delete permanently</button>
+                <footer dialog="footer">
+                    <button button="secondary" type="button" commandfor="delete-user" command="close" autofocus>Cancel</button>
+                    <button button="danger" type="submit">Delete permanently</button>
                 </footer>
             </form>
         </dialog>
@@ -119,7 +119,7 @@
 }
 
 @* Each tab is a page with its own URL; the count after History is how many versions the user has. *@
-<nav class="tabs" aria-label="User">
-    <a asp-page="./Details" asp-route-id="@id" aria-current="@(Model.PageName == "./Details" ? "page" : null)">Details</a>
-    <a asp-page="./History" asp-route-id="@id" aria-current="@(Model.PageName == "./History" ? "page" : null)">History <span class="count">@account.Version.Value</span></a>
+<nav tabs aria-label="User">
+    <a tabs="tab" asp-page="./Details" asp-route-id="@id" aria-current="@(Model.PageName == "./Details" ? "page" : null)">Details</a>
+    <a tabs="tab" asp-page="./History" asp-route-id="@id" aria-current="@(Model.PageName == "./History" ? "page" : null)">History <span tabs="count">@account.Version.Value</span></a>
 </nav>

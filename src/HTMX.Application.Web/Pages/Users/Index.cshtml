@@ -5,13 +5,13 @@
     ViewData["Section"] = "Users";
 }
 
-<header class="page-header">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
         <ol><li><a asp-page="/Index">Home</a></li><li><span aria-current="page">Users</span></li></ol>
     </nav>
-    <div class="title-row">
+    <div page-header="title-row">
         <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Users</h1>
-        <a class="btn primary" asp-page="./Create"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>New user</a>
+        <a button="primary" asp-page="./Create"><icon name="plus" />New user</a>
     </div>
 </header>
 
