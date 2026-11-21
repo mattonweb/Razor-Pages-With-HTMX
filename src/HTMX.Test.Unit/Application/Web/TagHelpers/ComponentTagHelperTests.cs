@@ -49,6 +49,7 @@ public sealed class ComponentTagHelperTests
     [DataRow("grid", "number", "tabular-nums", DisplayName = "Grid, number")]
     [DataRow("grid", "archived", "[--grid-title:var(--text-muted)]", DisplayName = "Grid, archived row")]
     [DataRow("grid", "select", "pr-0", DisplayName = "Grid, selection column")]
+    [DataRow("hero", "art", "@max-card:size-[120px]", DisplayName = "Hero, illustration")]
     [DataRow("menu", "danger", "text-danger", DisplayName = "Menu, danger item")]
     [DataRow("page-header", "title-row", "justify-between", DisplayName = "Page header, title row")]
     [DataRow("pager", "size", "justify-self-end", DisplayName = "Pager, size")]
@@ -92,6 +93,7 @@ public sealed class ComponentTagHelperTests
     [DataRow("filter-box", DisplayName = "Filter box")]
     [DataRow("form-actions", DisplayName = "Form action bar")]
     [DataRow("grid", DisplayName = "Grid")]
+    [DataRow("hero", DisplayName = "Hero")]
     [DataRow("menu", DisplayName = "Menu")]
     [DataRow("page-header", DisplayName = "Page header")]
     [DataRow("pager", DisplayName = "Pager")]
@@ -235,6 +237,8 @@ public sealed class ComponentTagHelperTests
                 new FormActionsTagHelper(),
             "grid" =>
                 new GridTagHelper(),
+            "hero" =>
+                new HeroTagHelper(),
             "menu" =>
                 new MenuTagHelper(),
             "page-header" =>
