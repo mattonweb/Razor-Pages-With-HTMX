@@ -1,7 +1,7 @@
 /*
   The brand's element defaults: how an element looks before a class is added to it, as the brand's foundations give
-  them. They sit in the base layer after Tailwind's reset, so they replace its defaults, and any utility, or any rule
-  of the legacy stylesheets, wins over them.
+  them. They sit in the base layer after Tailwind's reset, so they replace its defaults, and any utility wins over
+  them.
 */
 
 body {
@@ -39,7 +39,8 @@ textarea { height: auto; min-height: 96px; padding: var(--space-2) var(--space-3
 :is(input, select, textarea):focus-visible { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 ::placeholder { color: var(--text-muted); }
 :is(input, select, textarea):disabled {
-  background: var(--neutral-subtle); border-color: var(--neutral-line); color: var(--text-disabled); cursor: not-allowed;
+  background: var(--neutral-subtle); border-color: var(--neutral-line); color: var(--text-disabled);
+  cursor: not-allowed;
 }
 :is(input, textarea)[readonly] { background: var(--bg); }
 
