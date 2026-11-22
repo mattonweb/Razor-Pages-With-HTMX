@@ -86,10 +86,6 @@ internal sealed class BrowserSession : IAsyncDisposable
         // A wait that finds nothing fails the test in five seconds, not Playwright's thirty.
         context.SetDefaultTimeout(5000);
 
-        // The application names no icon, so the browser asks for /favicon.ico on its own, and the 404 it gets would be
-        // the console's one error on every page. The browser gets no content instead, so that the console stays a
-        // check on what the pages themselves do.
-        await context.RouteAsync("**/favicon.ico", static route => route.FulfillAsync(NoIcon())).ConfigureAwait(false);
         if (scripting == Scripting.WithoutHtmx)
         {
             await context.RouteAsync("**/js/htmx.min.*.js", static route => route.FulfillAsync(EmptyScript()))
@@ -120,15 +116,6 @@ internal sealed class BrowserSession : IAsyncDisposable
     private static RouteFulfillOptions EmptyScript()
     {
         return new RouteFulfillOptions { Status = 200, ContentType = "text/javascript", Body = string.Empty };
-    }
-
-    /// <summary>
-    /// Makes the answer to the browser's own request for an icon: no content.
-    /// </summary>
-    /// <returns>The answer.</returns>
-    private static RouteFulfillOptions NoIcon()
-    {
-        return new RouteFulfillOptions { Status = 204 };
     }
 
     /// <summary>
