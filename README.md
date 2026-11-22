@@ -280,9 +280,9 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   answer that holds a script, swapped in without running it, a file sent over a slowed connection, whose progress
   bar shows part of it gone, the Load on scroll list growing as its last row comes into view, up to a hundred, and
   the Confirmation page's Delete asking in its dialog with invoker commands, and on its own page without them or with
-  script off, the menu button switching the side nav, and a toast leaving on Dismiss and once it has faded. They find
-  what they check by role, text, id or a `data-` attribute, never by a class, so restyling a page cannot break one;
-  the application's script finds what it works on the same way.
+  script off, the menu button switching the side nav, a toast leaving on Dismiss and once it has faded, and Edge
+  drawing the favicon from its SVG. They find what they check by role, text, id or a `data-` attribute, never by a
+  class, so restyling a page cannot break one; the application's script finds what it works on the same way.
 - **Look:** the HTMLX Pages brand, `.claude/skills/brand-htmlx-pages`. Its icon sprite was copied from the skill's
   `assets/` into `wwwroot`, and its tokens into `Styles/tokens.css`. Tailwind's theme in `Styles/app.css` is those
   tokens and nothing else, so `bg-accent` is the brand's accent and there is no `bg-red-500`, and each utility reads
@@ -294,7 +294,8 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   `<div card="body">` inside. Every view is written this way. The home page's robot, `wwwroot/images/robot.svg`, is
   "Artificial intelligence technology concept" from
   [FreeSVG](https://freesvg.org/artificial-intelligence-technology-concept), CC0 (public domain), with the blue square
-  behind it removed.
+  behind it removed. The favicon is the logo as an SVG, an `.ico` and a touch icon, copied from the skill's `assets/`
+  like the sprite.
 - **Tailwind CSS 4.3.5**, pinned, run as its standalone CLI, so nothing here runs on Node. Before each build the web
   project compiles `Styles/app.css`, with the class names it finds in the pages and tag helpers, into
   `wwwroot/css/app.css`, which git ignores: readable in Debug, minified in Release, and served fingerprinted like any
