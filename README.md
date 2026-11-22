@@ -157,13 +157,13 @@ out any class no page uses.
   page; without HTMX the page asks for the file again. The page caps a request at 10 MB: a larger one is refused before
   it is read, and the browser sees the connection lost. HTMX 4 sends with `fetch`, which reports no upload progress,
   so `app.js` sends this form itself, with `XMLHttpRequest`, through the `ctx.fetch` HTMX sends each request with,
-  and fills in a progress bar that is hidden until then; HTMX does the rest as before.
+  and fills in a progress bar, and the amount its label gives, hidden until then; HTMX does the rest as before.
 - **`/components/long-job`** — a pretend job that takes ten seconds, a step a second, counted from when it started.
   **Start the job** goes to the job's own address, `?job=10001`: by a redirect without HTMX, and with HTMX by the job's
   card and `HX-Push-Url`. While the job runs, the card polls that address every second (`hx-trigger="every 1s"`) and
-  shows the brand's busy bar; the card for a finished job is drawn without the trigger, which stops the polling, and
-  comes with a toast. Without HTMX the card's **Check again** link loads the page. The application keeps the newest
-  hundred jobs.
+  shows the brand's busy bar, and a progress bar of the steps done; the card for a finished job is drawn without the
+  trigger, which stops the polling, and comes with a toast. Without HTMX the card's **Check again** link loads the
+  page. The application keeps the newest hundred jobs.
 - **`/components/load-more`** — the active organizations by name, ten at first, and **Load more** for the next ten,
   up to a hundred. The address says how many rows show, `?shown=20`. Without HTMX, Load more is a link to that
   address, at the first new row (`#more-11`). With HTMX it asks for the ten after the last row, by key, adds them to
@@ -278,10 +278,10 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   scroll into view, a boosted link and Back, a filter typed again while the first answer is held back, Publish
   refused once the permission was withdrawn, the Visitors' room's Check again once the visitor has no pass, and an
   answer that holds a script, swapped in without running it, a file sent over a slowed connection, whose progress
-  bar shows part of it gone, the Load on scroll list growing as its last row comes into view, up to a hundred, and
-  the Confirmation page's Delete asking in its dialog with invoker commands, and on its own page without them or with
-  script off, the menu button switching the side nav, a toast leaving on Dismiss and once it has faded, and Edge
-  drawing the favicon from its SVG. They find what they check by role, text, id or a `data-` attribute, never by a
+  bar and its label show part of it gone, the Load on scroll list growing as its last row comes into view, up to a
+  hundred, and the Confirmation page's Delete asking in its dialog with invoker commands, and on its own page without
+  them or with script off, the menu button switching the side nav, a toast leaving on Dismiss and once it has faded,
+  and Edge drawing the favicon from its SVG. They find what they check by role, text, id or a `data-` attribute, never by a
   class, so restyling a page cannot break one; the application's script finds what it works on the same way.
 - **Look:** the HTMLX Pages brand, `.claude/skills/brand-htmlx-pages`. Its icon sprite was copied from the skill's
   `assets/` into `wwwroot`, and its tokens into `Styles/tokens.css`. Tailwind's theme in `Styles/app.css` is those
