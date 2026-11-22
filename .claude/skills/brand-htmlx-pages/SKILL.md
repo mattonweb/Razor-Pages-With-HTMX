@@ -1,7 +1,7 @@
 ---
 name: brand-htmlx-pages
-description: The HTMLX Pages brand for web applications that manage records — how its pages look and how its components behave, whatever framework or styling approach an application uses. Use whenever building, styling or reviewing the user interface of an application that adopts the brand. Covers the design tokens (color with light and dark values, type, space, shape, elevation, sizes, motion) taken from the DevExtreme UI Template Gallery and MudBlazor, the icon sprite and the favicon, the contrast rule, the conventions every page follows, and a specification of every component, with its parts, measurements, variants, states, accessibility, when to use it and reference images in light and dark — layout (app shell, avatar, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, rows, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, preview dialog, busy bar, progress bar, bulk bar, alert, toast). It holds no stylesheet and names no class; each application builds the components its own way.
-version: 1.4.0
+description: The HTMLX Pages brand for web applications that manage records — how its pages look and how its components behave, whatever framework or styling approach an application uses. Use whenever building, styling or reviewing the user interface of an application that adopts the brand. Covers the design tokens (color with light and dark values, type, space, shape, elevation, sizes, motion) taken from the DevExtreme UI Template Gallery and MudBlazor, the icon sprite and the favicon, the contrast rule, forced colors, the conventions every page follows, and a specification of every component, with its parts, measurements, variants, states, accessibility, when to use it and reference images in light and dark — layout (app shell, avatar, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, rows, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, preview dialog, busy bar, progress bar, bulk bar, alert, toast). It holds no stylesheet and names no class; each application builds the components its own way.
+version: 2.0.0
 visibility: public
 ---
 
@@ -82,6 +82,28 @@ script and passes it before anything uses it.
 Each color token is written once, as `light-dark(light, dark)`. The page follows the operating system;
 `data-theme="light"` or `"dark"` on the root element pins a mode.
 
+### Forced colors
+
+When the operating system forces its own colors, as a Windows contrast theme does, the browser draws the page in the
+theme's colors: text and lines in its text and link colors, every background in its window color, and no shadows.
+The page lets it, and keeps what a fill or a shadow showed with the theme's own system colors, never one of its own:
+- **Focus** keeps its ring, which is an outline (Focus), in `Highlight`. A form control's border no longer changes
+  color, so it shows the full ring.
+- **Current**: the current link in the side nav, the current segment of a segmented control and the current
+  version's badge are `Highlight` behind `HighlightText`. The current tab's bar is `Highlight`, and the other tabs
+  have no bar, rather than one in the text color.
+- **Busy and progress**: the busy bar's segment and the part of a progress bar that is done are `Highlight`, and a
+  progress bar's track has a 1px border. A busy button hides its label in `ButtonFace` and turns a `GrayText` ring
+  with a `Highlight` top.
+- **Disabled**: a disabled button's text and border are `GrayText`.
+- **Edges**: what is drawn by its fill alone (the avatar, a version badge, a tab's count, a toast) has a 1px border in
+  the theme's text color, and a chip's dot takes that color too.
+- **Icons** take the color of the text around them.
+
+The browser draws a plate in the window color behind text whose colors it forces, so a part filled with `Highlight`
+turns forcing off for itself (`forced-color-adjust: none`), names each of its colors as a system color, and drops
+any shadow, which forcing would have taken away.
+
 ### Type
 
 - **Families.** `--font` for everything, and `--font-mono` for identifiers, code, numbers shown as values and
@@ -125,10 +147,11 @@ spinner to 2s, the busy bar to 3s) rather than vanish, so the state stays visibl
 
 ### Focus
 
-Everything that takes focus shows `--focus-ring` (2px of `--surface`, then 2px of `--accent`) when it has keyboard
-focus, rounded to `--radius-sm`. A form control (a text input, select, textarea, checkbox or radio) shows its focus
-instead with an `--accent` border and a 1px `--accent` ring; a switch and a choice pill show the full ring (Inputs).
-Focus is never hidden without that replacement.
+Everything that takes focus shows the focus ring when it has keyboard focus: a 2px `--accent` outline, 2px outside
+it, rounded to `--radius-sm`. It is an outline, never a shadow, so that no shadow of a component's own replaces it and
+forced colors keep it (Forced colors). A form control (a text input, select, textarea, checkbox or radio) shows its
+focus instead with an `--accent` border and a 1px `--accent` outline against it; a switch and a choice pill show the
+full ring (Inputs). Focus is never hidden without that replacement.
 
 ### Icons
 
@@ -710,8 +733,7 @@ rounded at its end too.
   the task ends, what the task answers takes its place.
 - **Accessibility**: it has the progressbar role, named by its label, with its value and its maximum, so a screen
   reader reads how far it has got when asked. It is not a live region, which would speak at every step; what ends the
-  task says so, in a toast. In the operating system's forced colors the track keeps an outline and the part done
-  keeps a fill, in the system's colors.
+  task says so, in a toast. In forced colors the track keeps a border and the part done a fill (Forced colors).
 - Use it only when how far the task has got is known. A request whose end cannot be measured shows the busy bar, or
   its button's spinner.
 
