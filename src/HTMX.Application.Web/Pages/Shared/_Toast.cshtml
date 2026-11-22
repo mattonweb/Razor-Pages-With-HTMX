@@ -5,9 +5,9 @@
     toast's Undo when the response replaces this one. The toast leaves by itself after 8 seconds (animate-toast), its
     fade waiting while the pointer or the keyboard is on it; app.js removes it then, or when Dismiss is pressed, and
     finds it by data-toast rather than by the classes that style it. Undo and Dismiss take the ghost looks made for an
-    inverse surface.
+    inverse surface. In forced colors its face and shadow are gone, so it takes a border to keep its edge.
 *@
-<div class="pointer-events-auto flex min-h-11 animate-toast items-center gap-3 rounded-md bg-inverse py-2 pr-2 pl-4 text-on-inverse shadow-popup hover:[animation-play-state:running,paused] focus-within:[animation-play-state:running,paused]" data-toast>
+<div class="pointer-events-auto flex min-h-11 animate-toast items-center gap-3 rounded-md bg-inverse py-2 pr-2 pl-4 text-on-inverse shadow-popup forced-colors:border hover:[animation-play-state:running,paused] focus-within:[animation-play-state:running,paused]" data-toast>
     <span class="flex-1">@Model.Message</span>
     @if (Model.UndoAction is string undo)
     {

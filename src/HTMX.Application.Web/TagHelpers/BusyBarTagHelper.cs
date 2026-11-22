@@ -20,7 +20,7 @@ public sealed class BusyBarTagHelper : ComponentTagHelper
     private const string BusyBar =
         "invisible relative z-1 -mt-0.5 h-0.5 overflow-hidden busy:visible in-busy:visible before:absolute "
         + "before:inset-y-0 before:left-0 before:w-[30%] before:animate-busy before:bg-accent "
-        + "motion-reduce:before:[animation-duration:3s]";
+        + "motion-reduce:before:[animation-duration:3s] forced-colors:before:bg-[color:Highlight]";
 
     /// <inheritdoc/>
     protected override string AttributeName => Name;

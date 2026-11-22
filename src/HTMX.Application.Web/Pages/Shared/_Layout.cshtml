@@ -56,7 +56,7 @@
                 HTMLX Pages
             </a>
             <div class="ml-auto flex items-center gap-2">
-                <span class="inline-grid size-8 flex-none place-items-center rounded-full bg-brand-subtle text-xs font-strong uppercase text-brand-text" role="img" aria-label="Signed in as Demo User">DU</span>
+                <span class="inline-grid size-8 flex-none place-items-center rounded-full bg-brand-subtle text-xs font-strong uppercase text-brand-text forced-colors:border" role="img" aria-label="Signed in as Demo User">DU</span>
             </div>
         </header>
 
@@ -64,10 +64,12 @@
             Each page names its section in ViewData, and the section's link is marked as the current page. The foot of
             the nav holds the one link that leaves the application, to its source on GitHub, which opens a new tab. The
             four links look alike, so their classes are written once, here. In the rail a link's label leaves the screen
-            but stays for a screen reader, and its title gives a tooltip.
+            but stays for a screen reader, and its title gives a tooltip. In forced colors the current link's fill and
+            bar are gone, so it takes the theme's highlight, by name, and adjusts no colors, since the browser would
+            otherwise draw a plate in the window's color behind its text; its bar, which that brings back, goes.
         *@
         @{
-            string navLink = "group flex h-10 items-center gap-3 whitespace-nowrap px-[14px] text-fg hover:bg-surface-hover hover:no-underline aria-[current=page]:bg-accent-subtle aria-[current=page]:font-strong aria-[current=page]:text-accent aria-[current=page]:shadow-[inset_3px_0_0_var(--accent)]";
+            string navLink = "group flex h-10 items-center gap-3 whitespace-nowrap px-[14px] text-fg hover:bg-surface-hover hover:no-underline aria-[current=page]:bg-accent-subtle aria-[current=page]:font-strong aria-[current=page]:text-accent aria-[current=page]:shadow-[inset_3px_0_0_var(--accent)] forced-colors:aria-[current=page]:bg-[color:Highlight] forced-colors:aria-[current=page]:text-[color:HighlightText] forced-colors:aria-[current=page]:forced-color-adjust-none forced-colors:aria-[current=page]:shadow-none";
             string navIcon = "text-icon group-aria-[current=page]:text-accent";
         }
         <nav id="app-nav" class="sticky top-header flex h-[calc(100vh-var(--header-height))] flex-col gap-0.5 overflow-x-hidden overflow-y-auto border-r border-line bg-surface py-2" aria-label="Main">

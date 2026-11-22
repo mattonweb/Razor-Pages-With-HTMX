@@ -17,13 +17,19 @@ public sealed class VersionTagHelper : ComponentTagHelper
 {
     private const string Name = "version";
 
-    // What every badge shares: its size, shape and type.
+    // What every badge shares: its size, shape and type, and in forced colors, where its fill would take the window's
+    // color, a border to keep its shape.
     private const string Shared =
-        "inline-grid h-[22px] min-w-8 place-items-center rounded-sm px-1.5 font-mono text-xs font-strong";
+        "inline-grid h-[22px] min-w-8 place-items-center rounded-sm px-1.5 font-mono text-xs font-strong "
+        + "forced-colors:border";
 
     private const string Version = Shared + " bg-brand-subtle text-brand-text";
 
-    private const string Current = Shared + " bg-brand text-on-brand";
+    // The current version, filled, and in forced colors in the theme's highlight, by name. The browser would draw a
+    // plate in the window's color behind its text, hiding it, unless the badge adjusts no colors.
+    private const string Current =
+        Shared + " bg-brand text-on-brand forced-colors:bg-[color:Highlight] forced-colors:text-[color:HighlightText] "
+        + "forced-colors:forced-color-adjust-none";
 
     /// <inheritdoc/>
     protected override string AttributeName => Name;

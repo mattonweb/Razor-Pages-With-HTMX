@@ -19,13 +19,17 @@ public sealed class TabsTagHelper : ComponentTagHelper
 
     private const string Tabs = "mb-4 flex flex-wrap gap-1 border-b border-line";
 
+    // In forced colors a transparent bar takes the text color, under every tab: there the others have no bar, with its
+    // 2px as padding instead, and the current one's is the theme's highlight, by name.
     private const string Tab =
         "-mb-px inline-flex items-center gap-2 border-b-2 border-transparent px-3 py-2 font-strong text-fg-muted "
         + "hover:no-underline not-aria-[current=page]:hover:text-fg aria-[current=page]:border-accent "
-        + "aria-[current=page]:text-accent";
+        + "aria-[current=page]:text-accent forced-colors:not-aria-[current=page]:border-b-0 "
+        + "forced-colors:not-aria-[current=page]:pb-2.5 forced-colors:aria-[current=page]:border-[color:Highlight]";
 
     private const string Count =
-        "min-w-5 rounded-full bg-neutral-subtle px-1.5 text-center text-xs text-fg-muted tabular-nums";
+        "min-w-5 rounded-full bg-neutral-subtle px-1.5 text-center text-xs text-fg-muted tabular-nums "
+        + "forced-colors:border";
 
     /// <inheritdoc/>
     protected override string AttributeName => Name;

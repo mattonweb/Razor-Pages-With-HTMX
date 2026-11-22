@@ -25,7 +25,9 @@ a:hover { text-decoration: underline; }
 
 code, kbd { font-family: var(--font-mono); font-size: 0.93em; }
 
-:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-sm); }
+/* The focus ring is an outline, never a shadow: a component that has a shadow of its own, as the side nav's current
+   link and the current segment do, would replace a shadow ring, and forced colors take every shadow away. */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-sm); }
 
 /* Form controls: every text-like input, select and textarea looks the same with no class at all, so the
    output of the tag helpers (<input asp-for>, <select asp-for>, <textarea asp-for>) needs nothing added. */
@@ -36,7 +38,7 @@ input:not([type="checkbox"], [type="radio"], [type="hidden"]), select, textarea 
 }
 select { padding: 0 var(--space-2); }
 textarea { height: auto; min-height: 96px; padding: var(--space-2) var(--space-3); resize: vertical; }
-:is(input, select, textarea):focus-visible { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+:is(input, select, textarea):focus-visible { border-color: var(--accent); outline-width: 1px; outline-offset: 0; }
 ::placeholder { color: var(--text-muted); }
 :is(input, select, textarea):disabled {
   background: var(--neutral-subtle); border-color: var(--neutral-line); color: var(--text-disabled);
@@ -49,7 +51,7 @@ textarea { height: auto; min-height: 96px; padding: var(--space-2) var(--space-3
    after the focus rule above, which it replaces. */
 :is(input, select, textarea):is(.input-validation-error, [aria-invalid="true"]) { border-color: var(--danger); }
 :is(input, select, textarea):is(.input-validation-error, [aria-invalid="true"]):focus-visible {
-  box-shadow: 0 0 0 1px var(--danger);
+  outline-color: var(--danger);
 }
 input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; margin: 0; accent-color: var(--accent-fill); }
 
@@ -65,14 +67,6 @@ progress::-webkit-progress-bar { background: transparent; }
 progress::-webkit-progress-value { background: var(--accent); border-radius: var(--radius-full); }
 progress::-moz-progress-bar { background: var(--accent); border-radius: var(--radius-full); }
 
-/* Forced colors, as a Windows contrast theme sets them, paint every background in the window's color, the part done
-   included. The track takes an outline instead, and the part done the system's highlight, which it keeps. */
-@media (forced-colors: active) {
-  progress { border: 1px solid CanvasText; }
-  progress::-webkit-progress-value { background: Highlight; forced-color-adjust: none; }
-  progress::-moz-progress-bar { background: Highlight; forced-color-adjust: none; }
-}
-
 /* Two of the browser's defaults that Tailwind's reset takes away and the brand keeps: a modal dialog sits in the
    middle of the window, and a file field keeps the browser's own button until the brand draws one. */
 dialog { margin: auto; }
@@ -85,6 +79,28 @@ dialog { margin: auto; }
    applies as you go keeps its own Apply button for that case. */
 @media (scripting: none) {
   [data-action], [data-select-all] { display: none !important; }
+}
+
+/* Forced colors, as a Windows contrast theme sets them: the browser draws text and lines in the theme's colors, every
+   background in its window color, and no shadow. What a fill showed keeps it in the theme's own system colors, which
+   the browser leaves as they are (the brand's Forced colors); the components' own are beside their utilities, as
+   forced-colors: variants. */
+@media (forced-colors: active) {
+  /* The focus ring is the theme's highlight, as the browser draws it, named so that a part that adjusts no colors
+     shows the same. A form control's border no longer changes color with the keyboard on it, so it shows the full
+     ring. */
+  :focus-visible { outline-color: Highlight; }
+  :is(input, select, textarea):focus-visible { outline-width: 2px; outline-offset: 2px; }
+
+  /* An icon's own color is left as it is, so it takes the color of the text around it instead. Important, since the
+     utility that colors an icon is in a later layer. */
+  svg { color: inherit !important; }
+
+  /* The part of a progress bar that is done is a fill, which would take the window's color: it is the theme's
+     highlight, kept as it is, and the track has a border. */
+  progress { border: 1px solid CanvasText; }
+  progress::-webkit-progress-value { background: Highlight; forced-color-adjust: none; }
+  progress::-moz-progress-bar { background: Highlight; forced-color-adjust: none; }
 }
 
 /* Reduced motion: transitions stop. A busy indicator slows down rather than vanishing, so its state stays visible;

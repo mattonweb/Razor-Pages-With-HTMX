@@ -33,7 +33,10 @@ public sealed class ButtonTagHelper : TagHelper
 {
     private const string LookAttributeName = "button";
 
-    // What every look shares: the shape and the type, an icon inside, and the disabled and busy states.
+    // What every look shares: the shape and the type, an icon inside, and the disabled and busy states. In forced
+    // colors, which draw every text and line in the theme's colors, a disabled button is the theme's gray, and a busy
+    // one hides its label in the button's face and turns a gray ring with a highlighted top, all named as the theme's
+    // own colors, which the browser leaves as they are.
     private const string Shared =
         "inline-flex h-control cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-sm border "
         + "font-strong no-underline hover:no-underline [&_svg]:size-[18px] "
@@ -42,7 +45,11 @@ public sealed class ButtonTagHelper : TagHelper
         + "aria-disabled:bg-neutral-subtle aria-disabled:text-fg-disabled "
         + "busy:pointer-events-none busy:relative busy:text-transparent busy:after:absolute busy:after:size-4 "
         + "busy:after:animate-spin busy:after:rounded-[50%] busy:after:border-2 "
-        + "motion-reduce:busy:after:[animation-duration:2s]";
+        + "motion-reduce:busy:after:[animation-duration:2s] "
+        + "forced-colors:disabled:border-[color:GrayText] forced-colors:disabled:text-[color:GrayText] "
+        + "forced-colors:aria-disabled:border-[color:GrayText] forced-colors:aria-disabled:text-[color:GrayText] "
+        + "forced-colors:busy:text-[color:ButtonFace] forced-colors:busy:after:border-[color:GrayText] "
+        + "forced-colors:busy:after:border-t-[color:Highlight]";
 
     // The spinner on a light face: a ring in the line color with its top in the accent.
     private const string LightSpinner = "busy:after:border-line busy:after:border-t-accent";

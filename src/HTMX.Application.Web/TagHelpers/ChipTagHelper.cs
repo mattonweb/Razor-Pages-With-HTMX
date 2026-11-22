@@ -25,10 +25,11 @@ public sealed class ChipTagHelper : TagHelper
 {
     private const string ToneAttributeName = "chip";
 
-    // What every tone shares: the shape, the type, and the dot before the label, in the label's color.
+    // What every tone shares: the shape, the type, and the dot before the label, in the label's color, which in forced
+    // colors is a fill and would take the window's color, so it takes the theme's text color by name.
     private const string Shared =
         "inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-xs font-strong "
-        + "before:size-2 before:rounded-[50%] before:bg-current";
+        + "before:size-2 before:rounded-[50%] before:bg-current forced-colors:before:bg-[color:CanvasText]";
 
     // The tones: a line, a subtle fill and a text color each.
     private const string Neutral = "border-neutral-line bg-neutral-subtle text-neutral";
