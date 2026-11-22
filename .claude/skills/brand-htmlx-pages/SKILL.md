@@ -1,7 +1,7 @@
 ---
 name: brand-htmlx-pages
-description: The HTMLX Pages brand for web applications that manage records — how its pages look and how its components behave, whatever framework or styling approach an application uses. Use whenever building, styling or reviewing the user interface of an application that adopts the brand. Covers the design tokens (color with light and dark values, type, space, shape, elevation, sizes, motion) taken from the DevExtreme UI Template Gallery and MudBlazor, the icon sprite and the favicon, the contrast rule, the conventions every page follows, and a specification of every component, with its parts, measurements, variants, states, accessibility, when to use it and reference images in light and dark — layout (app shell, avatar, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, rows, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, preview dialog, busy bar, bulk bar, alert, toast). It holds no stylesheet and names no class; each application builds the components its own way.
-version: 1.3.0
+description: The HTMLX Pages brand for web applications that manage records — how its pages look and how its components behave, whatever framework or styling approach an application uses. Use whenever building, styling or reviewing the user interface of an application that adopts the brand. Covers the design tokens (color with light and dark values, type, space, shape, elevation, sizes, motion) taken from the DevExtreme UI Template Gallery and MudBlazor, the icon sprite and the favicon, the contrast rule, the conventions every page follows, and a specification of every component, with its parts, measurements, variants, states, accessibility, when to use it and reference images in light and dark — layout (app shell, avatar, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, rows, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, preview dialog, busy bar, progress bar, bulk bar, alert, toast). It holds no stylesheet and names no class; each application builds the components its own way.
+version: 1.4.0
 visibility: public
 ---
 
@@ -73,8 +73,9 @@ Pages use tokens only, never a literal color. The roles:
   `--danger-fill-hover`, the face of a danger button.
 - **Scrim**: `--scrim`, behind a modal dialog.
 
-Every text pair passes WCAG AA (4.5:1) in both modes, and icons and form-control borders pass 3:1. The contrast
-script checks them; a new color token gets its pairs added to the script and passes it before anything uses it.
+Every text pair passes WCAG AA (4.5:1) in both modes, and icons, form-control borders and the part of a progress bar
+that is done, on its track, pass 3:1. The contrast script checks them; a new color token gets its pairs added to the
+script and passes it before anything uses it.
 
 ### Light and dark
 
@@ -693,6 +694,26 @@ A 2px line along the bottom edge of a card's toolbar, over its border, that runs
 running: a segment 30% of the card's width in `--accent` crosses from left to right every 1.1s, and nothing shows when
 idle. The card says `aria-busy="true"` while it runs, the grid's rows fade to half strength, and the toolbar stays
 usable. A button that sent a request shows its own spinner instead.
+
+#### Progress bar
+
+Images: [light](references/images/feedback/progress-bar-light.png),
+[dark](references/images/feedback/progress-bar-dark.png).
+
+How far a task with a known end has got, such as a file being sent or a job's steps: a track 8px high at
+`--radius-full`, as wide as the field it sits in, in `--neutral-line`, with the part done in `--accent` from its left,
+rounded at its end too.
+- **As a field**: its label sits 4px above it, as a field's does, and says what is under way and how far it has got,
+  in words or figures ("Sending the file: 42%", "Working: 3 of 10 steps done"), so the bar is never the only way to
+  tell.
+- **It moves only as the task does**, with no motion of its own. Before anything is done it is the empty track; once
+  the task ends, what the task answers takes its place.
+- **Accessibility**: it has the progressbar role, named by its label, with its value and its maximum, so a screen
+  reader reads how far it has got when asked. It is not a live region, which would speak at every step; what ends the
+  task says so, in a toast. In the operating system's forced colors the track keeps an outline and the part done
+  keeps a fill, in the system's colors.
+- Use it only when how far the task has got is known. A request whose end cannot be measured shows the busy bar, or
+  its button's spinner.
 
 #### Bulk bar
 

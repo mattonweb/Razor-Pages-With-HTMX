@@ -1,7 +1,8 @@
 """Check the HTMLX Pages color tokens for WCAG contrast, in light and dark mode.
 
 Reads ../assets/tokens.css (or the path given as the first argument), resolves each light-dark() token,
-and checks every text and control pair the brand uses: 4.5:1 for text, 3:1 for icons and form-control borders.
+and checks every text and control pair the brand uses: 4.5:1 for text, 3:1 for icons, form-control borders and the
+part of a progress bar that is done, on its track.
 Exits 1 if any pair falls short.
 
     python .claude/skills/brand-htmlx-pages/scripts/check_contrast.py
@@ -22,6 +23,7 @@ PAIRS = [
     ("on-accent", "danger-fill", 4.5), ("on-accent", "danger-fill-hover", 4.5),
     ("brand-text", "brand-subtle", 4.5), ("brand-text", "surface", 4.5), ("on-brand", "brand", 4.5),
     ("border-input", "surface", 3.0),
+    ("accent", "neutral-line", 3.0),
     ("on-inverse", "inverse", 4.5), ("accent-on-inverse", "inverse", 4.5),
 ]
 PAIRS += [(tone, background, 4.5)
