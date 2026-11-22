@@ -1,7 +1,7 @@
 ---
 name: brand-htmlx-pages
-description: The HTMLX Pages brand for web applications that manage records — how its pages look and how its components behave, whatever framework or styling approach an application uses. Use whenever building, styling or reviewing the user interface of an application that adopts the brand. Covers the design tokens (color with light and dark values, type, space, shape, elevation, sizes, motion) taken from the DevExtreme UI Template Gallery and MudBlazor, the icon sprite, the contrast rule, the conventions every page follows, and a specification of every component, with its parts, measurements, variants, states, accessibility, when to use it and reference images in light and dark — layout (app shell, avatar, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, rows, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, preview dialog, busy bar, bulk bar, alert, toast). It holds no stylesheet and names no class; each application builds the components its own way.
-version: 1.1.0
+description: The HTMLX Pages brand for web applications that manage records — how its pages look and how its components behave, whatever framework or styling approach an application uses. Use whenever building, styling or reviewing the user interface of an application that adopts the brand. Covers the design tokens (color with light and dark values, type, space, shape, elevation, sizes, motion) taken from the DevExtreme UI Template Gallery and MudBlazor, the icon sprite and the favicon, the contrast rule, the conventions every page follows, and a specification of every component, with its parts, measurements, variants, states, accessibility, when to use it and reference images in light and dark — layout (app shell, avatar, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, rows, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, preview dialog, busy bar, bulk bar, alert, toast). It holds no stylesheet and names no class; each application builds the components its own way.
+version: 1.2.0
 visibility: public
 ---
 
@@ -23,10 +23,11 @@ Everything here was written for this brand.
 
 ## Adopting the brand
 
-- Copy `assets/tokens.css` and `assets/icons.svg` into the application, unchanged. The tokens file sets every token as
-  a CSS custom property on the root element. An application uses the properties directly, or maps them into its
-  styling framework's theme under that framework's names; the brand's names stay as they are. Nothing links a copy to
-  this folder: a later change here reaches an application only when it copies the file again.
+- Copy `assets/tokens.css`, `assets/icons.svg` and the three favicon files into the application, unchanged. The
+  tokens file sets every token as a CSS custom property on the root element. An application uses the properties
+  directly, or maps them into its styling framework's theme under that framework's names; the brand's names stay as
+  they are. Nothing links a copy to this folder: a later change here reaches an application only when it copies the
+  file again.
 - Build each component to its spec. A measurement that has a token is that token; one that has none is the value the
   spec gives.
 - Compare the result with the component's reference images, by eye. They were drawn at 1x in a 1280px window with
@@ -37,8 +38,9 @@ Everything here was written for this brand.
 ## Files
 
 - `assets/tokens.css`: every color, size and font as a custom property. The only place a literal color appears,
-  apart from the logo in the sprite and a hero's illustration.
+  apart from the logo, in the sprite and the favicon files, and a hero's illustration.
 - `assets/icons.svg`: the icon sprite, including the logo.
+- `assets/favicon.svg`, `assets/favicon.ico` and `assets/apple-touch-icon.png`: the favicon (Foundations).
 - `references/images/<family>/<name>-light.png` and `-dark.png`: the reference images, one for each component and for
   each state that only shows when opened (`menu-open`, `side-panel-open`, `dialog-open` and the confirm dialogs,
   `relation-picker-open`), plus the app shell full and as a rail. The families are `foundations`, `layout`,
@@ -140,6 +142,17 @@ Focus is never hidden without that replacement.
   `more`, `eye`, `edit`, `archive`, `restore`, `trash`, `copy`, `history`, `x`, `check`, `info`, `check-circle`,
   `alert`, `x-circle`, `inbox`, `sun`, `moon`. A missing icon is drawn into the sprite on the same grid as plain
   strokes, never fetched from an icon set.
+
+### Favicon
+
+- **The logo, alone.** `favicon.svg` is the sprite's `logo` as a file of its own: the violet square, its corners
+  rounded 6px on the 24px grid, and the white `</>`, in fixed colors, so it reads the same on a light tab and a dark
+  one. `favicon.ico` holds it at 16, 32 and 48px, and `apple-touch-icon.png` at 180px, the square with no rounded
+  corners and no transparency, since the device rounds it. Each is the SVG drawn at that size; the 16px one keeps the
+  logo's own stroke, since a thicker one fills the `</>` in.
+- **Every page names all three** in its head: the `.ico` first, then the SVG with `type="image/svg+xml"`, then the
+  touch icon. A browser that draws an SVG icon takes the SVG; one that does not takes the `.ico`. The `.ico` is also
+  served as `/favicon.ico` at the site's root, so a request for it by name never fails.
 
 ### Buttons
 
