@@ -281,12 +281,16 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   bar and its label show part of it gone, the Load on scroll list growing as its last row comes into view, up to a
   hundred, and the Confirmation page's Delete asking in its dialog with invoker commands, and on its own page without
   them or with script off, the menu button switching the side nav, a toast leaving on Dismiss and once it has faded,
-  and Edge drawing the favicon from its SVG. They find what they check by role, text, id or a `data-` attribute, never by a
-  class, so restyling a page cannot break one; the application's script finds what it works on the same way.
+  Edge drawing the favicon from its SVG, and the keyboard's focus drawn as an outline on each kind of control, in the
+  page's own colors and in the forced colors of a Windows contrast theme. They find what they check by role, text, id
+  or a `data-` attribute, never by a class, so restyling a page cannot break one; the application's script finds what
+  it works on the same way.
 - **Look:** the HTMLX Pages brand, `.claude/skills/brand-htmlx-pages`. Its icon sprite was copied from the skill's
   `assets/` into `wwwroot`, and its tokens into `Styles/tokens.css`. Tailwind's theme in `Styles/app.css` is those
   tokens and nothing else, so `bg-accent` is the brand's accent and there is no `bg-red-500`, and each utility reads
   the token itself, which is already right in light and dark. `Styles/base.css` holds the brand's element defaults.
+  In a Windows contrast theme the browser draws every page in the theme's colors, and what a fill or a shadow showed,
+  such as focus or the current link, is kept in the theme's own system colors, as the brand's Forced colors gives it.
   Each of the brand's components is drawn by a tag helper in `TagHelpers/`, which keeps its utilities in one place.
   An attribute names the component, or one of its parts, on the element the view writes, so the view keeps its own
   markup, ARIA and `hx-` attributes: `<a asp-page="./Edit" button="primary">`, `<icon name="edit" />`,
