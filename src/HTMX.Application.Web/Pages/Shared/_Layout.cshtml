@@ -8,6 +8,14 @@
     @* The one stylesheet, which Tailwind CSS compiles from Styles/app.css as the application builds. *@
     <link rel="stylesheet" href="~/css/app.css" />
     @*
+        The brand's favicon, copied from its skill. A browser that draws an SVG icon takes favicon.svg, sharp at any
+        size; one that does not takes favicon.ico. The touch icon is for a page saved to a phone's home screen.
+        favicon.ico is also at the root, where a browser asks for it when a page names no icon.
+    *@
+    <link rel="icon" href="~/favicon.ico" />
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="~/apple-touch-icon.png" />
+    @*
         HTMX 4.0.1, the one version this application is built and tested with; README.md records it. The scripts sit in
         the head because HTMX 4 answers the back button by swapping a fresh page body in: a script in the body would
         run again, and load a second HTMX. Each carries this response's nonce, which its Content Security Policy names,
