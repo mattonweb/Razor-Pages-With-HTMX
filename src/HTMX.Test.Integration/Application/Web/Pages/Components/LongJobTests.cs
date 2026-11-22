@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -18,6 +19,13 @@ public sealed class LongJobTests : IDisposable
 
     // The page's address, which its form also posts to.
     private const string Address = "/components/long-job";
+
+    // A running job's progress bar, as Razor writes it: its label, which says the steps done, then the bar, out of 10.
+    private static readonly Regex StepsBar = new Regex(
+        "<label for=\"job-progress\">Working: (?<said>\\d+) of 10 steps done</label>\\s*"
+        + "<progress id=\"job-progress\" max=\"10\" value=\"(?<value>\\d+)\"></progress>",
+        RegexOptions.CultureInvariant,
+        TimeSpan.FromSeconds(1));
 
     // The application, started on the first request with a database of its own and stopped when the test ends.
     private readonly ApplicationFactory _application = new ApplicationFactory();
@@ -52,6 +60,31 @@ public sealed class LongJobTests : IDisposable
             "hx-trigger=\"every 1s\"",
             poll.Body,
             "The card should poll while the job runs.");
+    }
+
+    /// <summary>
+    /// Integration test to verify that the card of a job still running draws the brand's progress bar out of the job's
+    /// steps, named by its label, which says in words the steps the bar shows.
+    /// </summary>
+    [TestMethod]
+    public async Task Get_ARunningJob_DrawsItsStepsAsAProgressBar()
+    {
+        // Arrange (Given)
+        HttpClient browser = this._application.CreateBrowser();
+        string token = await Requests.ReadAntiforgeryTokenAsync(browser, Address).ConfigureAwait(false);
+        IEnumerable<KeyValuePair<string, string>> form = Html.Form(token, []);
+        await Requests.PostAsync(browser, Address, HtmxRequest.Partial, form).ConfigureAwait(false);
+
+        // Act (When)
+        Answer poll = await Requests.GetAsync(browser, Address + "?job=10001", HtmxRequest.Partial)
+            .ConfigureAwait(false);
+
+        // Assert (Then)
+        Match bar = StepsBar.Match(poll.Body);
+        Assert.AreEqual(
+            (true, bar.Groups["value"].Value),
+            (bar.Success, bar.Groups["said"].Value),
+            "The card should draw a progress bar out of 10 steps, named by a label that says the steps it shows.");
     }
 
     /// <summary>

@@ -2,6 +2,7 @@ namespace HTMX.Test.Integration.Application.Web.Pages.Components;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -20,11 +21,14 @@ public sealed class FileFieldTests : IDisposable
     // The page's address, which its form also posts to.
     private const string Address = "/components/file-field";
 
-    // Keeps each value the progress bar shows, in the page, from a change to its value attribute, which the script
-    // sets through the bar's value.
+    // Keeps each value the progress bar shows, and the amount its label gives with it, in the page, from a change to
+    // the bar's value attribute, which the script sets through the bar's value just before it writes the amount.
     private const string RecordProgress =
-        "() => { window.progressSeen = []; const bar = document.querySelector('#file-progress'); "
-        + "new MutationObserver(() => window.progressSeen.push(bar.value)).observe(bar, { attributes: true }); }";
+        "() => { window.progressSeen = []; window.amountSeen = []; "
+        + "const bar = document.querySelector('#file-progress'); "
+        + "const amount = document.querySelector('[data-upload-amount]'); new MutationObserver(() => { "
+        + "window.progressSeen.push(bar.value); window.amountSeen.push(amount.textContent); "
+        + "}).observe(bar, { attributes: true }); }";
 
     // The application, started on the first request with a database of its own and stopped when the test ends.
     private readonly ApplicationFactory _application = new ApplicationFactory();
@@ -106,6 +110,10 @@ public sealed class FileFieldTests : IDisposable
             page.Body,
             "The progress bar's container should be drawn hidden.");
         Assert.Contains(
+            "<label for=\"file-progress\">Sending the file: <span data-upload-amount>0%</span></label>",
+            page.Body,
+            "The container should hold the bar's label, which names it and says the amount sent.");
+        Assert.Contains(
             "<progress id=\"file-progress\" max=\"1\" value=\"0\"></progress>",
             page.Body,
             "The container should hold the progress bar, at nothing sent.");
@@ -114,7 +122,8 @@ public sealed class FileFieldTests : IDisposable
     /// <summary>
     /// Browser test to verify, in Edge, that a file sent over a slow connection shows how much of it has gone: the
     /// application's script sends the form instead of HTMX's fetch, the progress bar moves through values between none
-    /// and all of it, and HTMX still swaps the answer in, with its toast. The console reports no error.
+    /// and all of it while its label gives the amount in figures, and HTMX still swaps the answer in, with its toast.
+    /// The console reports no error.
     /// </summary>
     [TestMethod]
     [TestCategory("Browser")]
@@ -138,17 +147,19 @@ public sealed class FileFieldTests : IDisposable
             await page.Locator("#file-form button[type=submit]").ClickAsync().ConfigureAwait(false);
             await toast.WaitForAsync().ConfigureAwait(false);
             double[] seen = await page.EvaluateAsync<double[]>("() => window.progressSeen").ConfigureAwait(false);
+            string[] amounts = await page.EvaluateAsync<string[]>("() => window.amountSeen").ConfigureAwait(false);
             string? said = await toast.TextContentAsync().ConfigureAwait(false);
             bool hidden = await page.Locator("[data-upload-progress]").IsHiddenAsync().ConfigureAwait(false);
 
             // Assert (Then)
             Assert.IsTrue(
-                Array.Exists(seen, static value => value > 0 && value < 1),
-                "The bar should have shown part of the file sent: " + string.Join(", ", seen));
+                Array.Exists(seen, static value => value > 0 && value < 1)
+                && Array.Exists(amounts, static amount => amount != "0%" && amount != "100%"),
+                "The bar and its label should have shown part of the file sent: " + string.Join(", ", amounts));
             Assert.AreEqual(
-                ("Received slow.png: a PNG image of 600 KB.", 1.0, true),
-                (said?.Trim(), seen.Length > 0 ? seen[seen.Length - 1] : 0, hidden),
-                "The whole file should have gone, the toast say so, and the new form's bar be hidden.");
+                ("Received slow.png: a PNG image of 600 KB.", 1.0, "100%", true),
+                (said?.Trim(), seen.LastOrDefault(), amounts.LastOrDefault(), hidden),
+                "The whole file should have gone, the label and the toast say so, and the new form's bar be hidden.");
             Assert.IsEmpty(
                 edge.ConsoleErrors,
                 "The console should report no error: " + string.Join(" | ", edge.ConsoleErrors));
