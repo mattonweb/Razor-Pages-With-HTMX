@@ -5,8 +5,8 @@
     The card's footer: how many rows show, of how many, and the way to the next ten. Without HTMX, Load more is a link
     to the address that shows ten more, at the first of them. With HTMX it asks for the ten after the last row and adds
     them to the table; hx-sync drops a second press while the first is on its way, which would add the same ten twice.
-    The list stops at a hundred rows, where the footer says where the rest are. The footer has an id, so the answer to
-    Load more can replace it.
+    The list stops at a hundred rows, where the footer says, in Load more's place, where the rest are. The footer has
+    an id, so the answer to Load more can replace it.
 *@
 @{
     int next = Model.Shown + GrowingListModel.Step;
@@ -25,9 +25,11 @@
     }
     else if (Model.More)
     {
-        <p pager="summary">
-            The list stops at @PageSize.Largest; <a asp-page="/Organizations/Index">the organizations list</a> pages through
-            them all.
-        </p>
+        <div pager="pages">
+            <p class="text-fg-muted">
+                The list stops at @PageSize.Largest; <a asp-page="/Organizations/Index">the organizations list</a> pages
+                through them all.
+            </p>
+        </div>
     }
 </footer>

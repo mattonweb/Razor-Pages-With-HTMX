@@ -2,11 +2,12 @@
 @using System.Globalization
 @using HTMX.Adapter.Customers.Contracts
 @*
-    The pager above the list: how many rows show, of how many, and Load more. Without HTMX, Load more is a link to the
-    address that shows ten more, at the first of them. With HTMX it asks for the ten after the last row, as the last row
-    does when it comes into view; both share the table body's queue (hx-sync), which drops a second request while the
-    first is on its way. Each load draws the pager again, and Load more keeps its id, so a keyboard on it stays there.
-    The list stops at a hundred rows, where the pager says where the rest are.
+    The pager at the head of the list's card: how many rows show, of how many, and Load more. Without HTMX, Load more
+    is a link to the address that shows ten more, at the first of them. With HTMX it asks for the ten after the last
+    row, as the last row does when it comes into view; both share the table body's queue (hx-sync), which drops a
+    second request while the first is on its way. Each load draws the pager again, and Load more keeps its id, so a
+    keyboard on it stays there. The list stops at a hundred rows, where the pager says, in Load more's place, where the
+    rest are.
 *@
 @{
     int next = Model.Shown + GrowingListModel.Step;
@@ -16,7 +17,7 @@
     string shown = Model.Shown.ToString("N0", CultureInfo.CurrentCulture);
     string matching = Model.Matching.ToString("N0", CultureInfo.CurrentCulture);
 }
-<div pager id="more-pager">
+<div pager="head" id="more-pager">
     <p pager="summary">Showing <strong>@shown</strong> of <strong>@matching</strong></p>
     @if (Model.More && room)
     {
@@ -25,9 +26,11 @@
     }
     else if (Model.More)
     {
-        <p pager="summary">
-            The list stops at @PageSize.Largest; <a asp-page="/Organizations/Index">the organizations list</a> pages
-            through them all.
-        </p>
+        <div pager="pages">
+            <p class="text-fg-muted">
+                The list stops at @PageSize.Largest; <a asp-page="/Organizations/Index">the organizations list</a>
+                pages through them all.
+            </p>
+        </div>
     }
 </div>
