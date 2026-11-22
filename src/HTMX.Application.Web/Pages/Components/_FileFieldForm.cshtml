@@ -4,8 +4,9 @@
     HTMX, and HTMX 4 then sends the form as it is, file included, instead of URL-encoding it. HTMX replaces the card
     (outerHTML) with what a post answers: the card again with 422 when the form is refused, or the empty card and a
     toast when the file was received. Send is busy while the request runs. HTMX 4 reports no upload progress, so the
-    application's script sends this form itself and fills in the progress bar below, which is hidden until it does;
-    without script, or without HTMX, it stays hidden, and the browser reports the upload itself.
+    application's script sends this form itself and fills in the progress bar below, and the amount in its label,
+    which are hidden until it does; without script, or without HTMX, they stay hidden, and the browser reports the
+    upload itself.
 
     A refused form drawn again cannot hold the file the user chose. When the file itself was fine, the answer to HTMX
     marks the file input hx-preserve, and HTMX keeps the input already on the page, with its file, in place of the new
@@ -41,7 +42,7 @@
             @* The field's look sets a display, which would show it in spite of hidden; the div around it sets none. *@
             <div data-upload-progress hidden>
                 <div field>
-                    <label for="file-progress">Sending the file</label>
+                    <label for="file-progress">Sending the file: <span data-upload-amount>0%</span></label>
                     <progress id="file-progress" max="1" value="0"></progress>
                 </div>
             </div>

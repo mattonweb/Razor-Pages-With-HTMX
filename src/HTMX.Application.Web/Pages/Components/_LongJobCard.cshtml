@@ -6,8 +6,9 @@
     While the job runs, the card itself polls: hx-get with the page's own address for this job, hx-trigger="every 1s",
     and hx-swap="outerHTML", so each answer is the card again, still polling. HTMX runs the trigger on a timer, and
     clears it when an answer replaces the card, so the answer for a finished job, drawn without those attributes,
-    stops the polling. aria-busy shows the brand's busy bar while the job runs. The progress text is not a live region,
-    which would speak every second; the toast that comes with the finished card says the job is done.
+    stops the polling. aria-busy shows the brand's busy bar while the job runs, and the brand's progress bar shows the
+    steps done, named by its label, which says them too. Neither is a live region, which would speak every second;
+    the toast that comes with the finished card says the job is done.
 
     A poll is not something the user did, so nothing in the card takes the keyboard; the Check again link keeps its id,
     which HTMX puts the focus back on after a swap. Without HTMX it loads the page, as the job stands then.
@@ -32,8 +33,11 @@
 
         @if (running)
         {
-            <p>Working: step @Model.StepsDone of @LongJobs.Steps.</p>
-            <p><a id="job-check" href="@self">Check again</a></p>
+            <div field>
+                <label for="job-progress">Working: @Model.StepsDone of @LongJobs.Steps steps done</label>
+                <progress id="job-progress" max="@LongJobs.Steps" value="@Model.StepsDone"></progress>
+            </div>
+            <p class="mt-3"><a id="job-check" href="@self">Check again</a></p>
         }
         else if (Model.StepsDone is not null)
         {

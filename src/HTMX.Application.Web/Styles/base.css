@@ -53,6 +53,26 @@ textarea { height: auto; min-height: 96px; padding: var(--space-2) var(--space-3
 }
 input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; margin: 0; accent-color: var(--accent-fill); }
 
+/* A progress bar: how far a task with a known end has got, as wide as the field it sits in. The element is the track,
+   and the part done is a pseudo-element: ::-webkit-progress-value in Edge, Chrome and Safari, ::-moz-progress-bar in
+   Firefox. Each goes in a rule of its own, since a browser drops a whole rule for one selector it does not know, and
+   appearance: none lets them be styled at all. */
+progress {
+  display: block; width: 100%; height: 8px; border: 0; border-radius: var(--radius-full); overflow: hidden;
+  appearance: none; background: var(--neutral-line);
+}
+progress::-webkit-progress-bar { background: transparent; }
+progress::-webkit-progress-value { background: var(--accent); border-radius: var(--radius-full); }
+progress::-moz-progress-bar { background: var(--accent); border-radius: var(--radius-full); }
+
+/* Forced colors, as a Windows contrast theme sets them, paint every background in the window's color, the part done
+   included. The track takes an outline instead, and the part done the system's highlight, which it keeps. */
+@media (forced-colors: active) {
+  progress { border: 1px solid CanvasText; }
+  progress::-webkit-progress-value { background: Highlight; forced-color-adjust: none; }
+  progress::-moz-progress-bar { background: Highlight; forced-color-adjust: none; }
+}
+
 /* Two of the browser's defaults that Tailwind's reset takes away and the brand keeps: a modal dialog sits in the
    middle of the window, and a file field keeps the browser's own button until the brand draws one. */
 dialog { margin: auto; }
