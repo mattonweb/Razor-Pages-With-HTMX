@@ -163,6 +163,50 @@ public sealed class LayoutTests : IDisposable
     }
 
     /// <summary>
+    /// Browser test to verify, in Edge, that the keyboard's focus shows as an outline on each kind of control, in the
+    /// page's own colors and in forced colors, as a Windows contrast theme sets them, which take every shadow away: the
+    /// side nav's current link and the current segment, which have shadows of their own, a button, and the filter box,
+    /// a form control, whose outline is 1px against its border in the page's colors and the full 2px in forced
+    /// colors. The console reports no error.
+    /// </summary>
+    /// <param name="forced">Whether the page is drawn in forced colors.</param>
+    /// <param name="control">The width of a form control's outline.</param>
+    /// <returns>A task that completes when the test has run.</returns>
+    [TestMethod]
+    [TestCategory("Browser")]
+    [DoNotParallelize]
+    [DataRow(false, "1px", DisplayName = "In the page's own colors")]
+    [DataRow(true, "2px", DisplayName = "In forced colors")]
+    public async Task Tab_OntoEachKindOfControl_DrawsAnOutline(bool forced, string control)
+    {
+        // Arrange (Given)
+        Uri application = this._application.StartServerForBrowser();
+        BrowserSession edge = await BrowserSession.OpenAsync(application, Scripting.On).ConfigureAwait(false);
+        await using (edge.ConfigureAwait(false))
+        {
+            IPage page = edge.Page;
+            ForcedColors colors = forced ? ForcedColors.Active : ForcedColors.None;
+            await page.EmulateMediaAsync(new PageEmulateMediaOptions { ForcedColors = colors }).ConfigureAwait(false);
+            await page.GotoAsync("/organizations").ConfigureAwait(false);
+
+            // Act (When)
+            string navLink = await OutlineWithFocusAsync(page, "#app-nav a[aria-current=page]").ConfigureAwait(false);
+            string segment = await OutlineWithFocusAsync(page, "main a[aria-current=page]").ConfigureAwait(false);
+            string button = await OutlineWithFocusAsync(page, "main button[popovertarget]").ConfigureAwait(false);
+            string filter = await OutlineWithFocusAsync(page, "main input[type=search]").ConfigureAwait(false);
+
+            // Assert (Then)
+            Assert.AreEqual(
+                ("solid 2px", "solid 2px", "solid 2px", "solid " + control),
+                (navLink, segment, button, filter),
+                "Each control should draw an outline with the keyboard on it.");
+            Assert.IsEmpty(
+                edge.ConsoleErrors,
+                "The console should report no error: " + string.Join(" | ", edge.ConsoleErrors));
+        }
+    }
+
+    /// <summary>
     /// Integration test to verify that a toast's Dismiss takes the toast out of the page at once. The console reports
     /// no error.
     /// </summary>
@@ -248,6 +292,25 @@ public sealed class LayoutTests : IDisposable
         string address = WebUtility.HtmlDecode(link.Groups[2].Value);
         Answer icon = await Requests.GetAsync(browser, address, HtmxRequest.None).ConfigureAwait(false);
         return (link.Groups[1].Value, icon.Status, icon.Headers["Content-Type"]);
+    }
+
+    /// <summary>
+    /// Puts the keyboard on the first control a selector finds, as Tab does: focuses it, then steps back and forward
+    /// again, so that it shows its focus indicator; then reads the outline it draws.
+    /// </summary>
+    /// <param name="page">The page.</param>
+    /// <param name="selector">Finds the control.</param>
+    /// <returns>The outline's style and width, or "not focused" when the keyboard did not land on the control.</returns>
+    private static async Task<string> OutlineWithFocusAsync(IPage page, string selector)
+    {
+        await page.Locator(selector).First.FocusAsync().ConfigureAwait(false);
+        await page.Keyboard.PressAsync("Shift+Tab").ConfigureAwait(false);
+        await page.Keyboard.PressAsync("Tab").ConfigureAwait(false);
+        return await page.EvaluateAsync<string>(
+            "selector => { const e = document.activeElement; const s = getComputedStyle(e); "
+            + "return e.matches(selector) && e.matches(':focus-visible') "
+            + "? `${s.outlineStyle} ${s.outlineWidth}` : 'not focused'; }",
+            selector).ConfigureAwait(false);
     }
 
     /// <summary>

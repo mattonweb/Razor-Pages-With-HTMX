@@ -87,6 +87,31 @@ public sealed class ButtonTagHelperTests
     }
 
     /// <summary>
+    /// Unit test to verify that a button keeps its states in forced colors, as a Windows contrast theme sets them, by
+    /// naming the theme's own colors: its gray when it is disabled, and when it is busy its label hidden in the
+    /// button's face under a ring whose top is the highlight.
+    /// </summary>
+    [TestMethod]
+    public void Process_AnyLook_KeepsItsStatesInForcedColors()
+    {
+        // Arrange (Given)
+        TagHelperOutput output = CreateOutput();
+
+        // Act (When)
+        Process("secondary", output);
+        string[] classes = ClassesOf(output);
+        bool disabled = classes.Contains("forced-colors:disabled:text-[color:GrayText]");
+        bool hidden = classes.Contains("forced-colors:busy:text-[color:ButtonFace]");
+        bool spinner = classes.Contains("forced-colors:busy:after:border-t-[color:Highlight]");
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (true, true, true),
+            (disabled, hidden, spinner),
+            "A button should be the theme's gray when disabled, and hide its label under a highlighted ring when busy.");
+    }
+
+    /// <summary>
     /// Unit test to verify that a look the tag helper does not know is refused rather than drawn as some other look.
     /// </summary>
     [TestMethod]

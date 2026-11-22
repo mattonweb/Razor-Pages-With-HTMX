@@ -43,6 +43,24 @@ public sealed class ChipTagHelperTests
     }
 
     /// <summary>
+    /// Unit test to verify that a chip keeps its dot in forced colors, as a Windows contrast theme sets them, where the
+    /// dot's fill would otherwise take the window's color: it names the theme's text color.
+    /// </summary>
+    [TestMethod]
+    public void Process_AnyTone_KeepsItsDotInForcedColors()
+    {
+        // Arrange (Given)
+        TagHelperOutput output = CreateOutput();
+
+        // Act (When)
+        Process("neutral", output);
+        bool dot = ClassesOf(output).Contains("forced-colors:before:bg-[color:CanvasText]");
+
+        // Assert (Then)
+        Assert.IsTrue(dot, "A chip's dot should take the theme's text color in forced colors.");
+    }
+
+    /// <summary>
     /// Unit test to verify that a tone the tag helper does not know is refused rather than drawn as some other tone.
     /// </summary>
     [TestMethod]

@@ -35,6 +35,7 @@ public sealed class ComponentTagHelperTests
     [DataRow("alert", "content", "flex-[1_1_280px]", DisplayName = "Alert, content")]
     [DataRow("breadcrumbs", null, "[&_li+li]:before:content-['/']", DisplayName = "Breadcrumbs")]
     [DataRow("busy-bar", null, "in-busy:visible", DisplayName = "Busy bar")]
+    [DataRow("busy-bar", null, "forced-colors:before:bg-[color:Highlight]", DisplayName = "Busy bar, in forced colors")]
     [DataRow("card", "header", "border-b", DisplayName = "Card, header")]
     [DataRow("dialog", "confirm", "w-[min(420px,calc(100vw_-_2_*_var(--space-4)))]", DisplayName = "Dialog, confirm")]
     [DataRow("dialog", "icon-warning", "bg-warning-subtle", DisplayName = "Dialog, warning icon")]
@@ -59,9 +60,26 @@ public sealed class ComponentTagHelperTests
     [DataRow("related", "archived", "text-fg-muted", DisplayName = "Related-record link, archived")]
     [DataRow("relation", null, "[&>button]:[border-width:0_0_0_1px]", DisplayName = "Relation field's box")]
     [DataRow("segmented", "segment", "aria-[current=page]:bg-surface", DisplayName = "Segmented control, segment")]
+    [DataRow(
+        "segmented",
+        "segment",
+        "forced-colors:aria-[current=page]:forced-color-adjust-none",
+        DisplayName = "Segmented control, segment in forced colors")]
     [DataRow("tabs", "tab", "aria-[current=page]:text-accent", DisplayName = "Tabs, tab")]
+    [DataRow(
+        "tabs",
+        "tab",
+        "forced-colors:aria-[current=page]:border-[color:Highlight]",
+        DisplayName = "Tabs, tab in forced colors")]
+    [DataRow("tabs", "count", "forced-colors:border", DisplayName = "Tabs, count in forced colors")]
     [DataRow("toolbar", null, "[&>nav]:ml-auto", DisplayName = "Toolbar")]
     [DataRow("version", "current", "bg-brand", DisplayName = "Version badge, current")]
+    [DataRow("version", null, "forced-colors:border", DisplayName = "Version badge, in forced colors")]
+    [DataRow(
+        "version",
+        "current",
+        "forced-colors:forced-color-adjust-none",
+        DisplayName = "Version badge, current in forced colors")]
     public void Process_PartNamed_AddsThePartsUtilities(string name, string? part, string utility)
     {
         // Arrange (Given)
