@@ -1,7 +1,7 @@
 ---
 name: brand-htmlx-pages
 description: The HTMLX Pages brand for web applications that manage records — how its pages look and how its components behave, whatever framework or styling approach an application uses. Use whenever building, styling or reviewing the user interface of an application that adopts the brand. Covers the design tokens (color with light and dark values, type, space, shape, elevation, sizes, motion) taken from the DevExtreme UI Template Gallery and MudBlazor, the icon sprite and the favicon, the contrast rule, the conventions every page follows, and a specification of every component, with its parts, measurements, variants, states, accessibility, when to use it and reference images in light and dark — layout (app shell, avatar, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, rows, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, preview dialog, busy bar, bulk bar, alert, toast). It holds no stylesheet and names no class; each application builds the components its own way.
-version: 1.2.0
+version: 1.3.0
 visibility: public
 ---
 
@@ -382,7 +382,9 @@ label.
 
 #### Pager
 
-Images: [light](references/images/navigation/pager-light.png), [dark](references/images/navigation/pager-dark.png).
+Images: [light](references/images/navigation/pager-light.png), [dark](references/images/navigation/pager-dark.png);
+for a list that grows, [light](references/images/navigation/pager-growing-light.png),
+[dark](references/images/navigation/pager-growing-dark.png).
 
 The foot of a list's card: a top `--border`, 12px by 16px of padding, `--text-sm`, in three columns 12px apart.
 - **Left**, the range shown, in `--text-muted`: "Showing 1–10 of 128".
@@ -392,6 +394,14 @@ The foot of a list's card: a top `--border`, 12px by 16px of padding, `--text-sm
   8px apart, as a form that applies as it changes, with an Apply button for when it cannot (Conventions).
 - On a card narrower than 560px the range and Rows per page share the first line and Previous and Next take the
   second, centered.
+- **A list that grows**, by Load more rather than by pages, has two parts: on the left how many rows show, of how
+  many ("Showing 20 of 946"), and in the middle Load more, a secondary button, with nothing on the right. On a card
+  narrower than 560px Load more stays on the first line, at the right. A list that stops short of every record says
+  so in Load more's place once it gets there, in `--text-muted`, with a link to where the rest can be seen; on a
+  narrow card that takes the second line, centered.
+- **At the head.** A list that grows as its last row comes into view has its pager at the head of its card instead,
+  between the card's header and the list, with its `--border` below it rather than above, and the card ends with the
+  list. Anything under such a list would move away with each load, out of reach until the list stopped growing.
 
 ### Data display
 
