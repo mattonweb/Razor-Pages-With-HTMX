@@ -316,8 +316,8 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   layers set which rules win, in this order: Tailwind's theme; the base, which is Tailwind's reset, the brand's
   tokens and its element defaults; components, which stays empty, since the views use utilities and the tag helpers
   write them; and the utilities, which win.
-- **HTMX 4.0.1**, pinned: `wwwroot/js/htmx.min.js`, downloaded from <https://unpkg.com/htmx.org@4.0.1/dist/htmx.min.js>.
-  Its SHA-256 is `a0abb04f2f45a1f89d1d4844023245537e5e6014c87b144553e0607b4cc32130`, the integrity unpkg publishes for
+- **HTMX 4.0.2**, pinned: `wwwroot/js/htmx.min.js`, downloaded from <https://unpkg.com/htmx.org@4.0.2/dist/htmx.min.js>.
+  Its SHA-256 is `fd25ba3fe5e44768756f23862a6daa4f928192199a121e825e882e719bc8aabd`, the integrity unpkg publishes for
   that file, so the copy here is the one released; `Get-FileHash` checks it again. Every page still works without
   HTMX, as plain Razor Pages of links and forms that GET. With it, a list's links and
   forms swap only the list's card: HTMX 4 sends `HX-Request-Type: partial` when it will swap part of the page, and the
@@ -331,7 +331,7 @@ The seed is written without logging its SQL, so the console shows only the SQL e
 - **Every link is boosted.** The layout's `<body>` says `hx-boost:inherited="true"`, so every link to another page of
   the application, and every form without an `hx-post` of its own, loads the page in place: HTMX fetches it, swaps its
   body in, takes its title and pushes its address. Every page's heading takes the keyboard when HTMX loaded the page,
-  Back and Forward included, the home page and the not-found pages too. HTMX 4.0.1 sends Back's request without
+  Back and Forward included, the home page and the not-found pages too. HTMX 4.0.2 sends Back's request without
   `HX-Request`, so `HtmxHeaders.IsHtmxRequest` also reads `HX-History-Restore-Request`. A link to another site, one
   that opens a new tab, `mailto:` and the skip link work as they always did.
 - **Paging is key-based** (also called keyset or seek paging), the pattern that stays fast however deep a list goes.
