@@ -46,10 +46,12 @@ public sealed class ComponentTagHelperTests
     [DataRow("field", "summary", "[&.validation-summary-valid]:hidden", DisplayName = "Field, summary")]
     [DataRow("fields", null, "gap-x-6", DisplayName = "Fields")]
     [DataRow("filter-box", null, "[&>input]:pl-9", DisplayName = "Filter box")]
+    [DataRow("filter-box", null, "min-w-0", DisplayName = "Filter box, narrower than its input and Apply")]
     [DataRow("form-actions", "end", "ml-auto", DisplayName = "Form action bar, end")]
     [DataRow("grid", "number", "tabular-nums", DisplayName = "Grid, number")]
     [DataRow("grid", "archived", "[--grid-title:var(--text-muted)]", DisplayName = "Grid, archived row")]
     [DataRow("grid", "select", "pr-0", DisplayName = "Grid, selection column")]
+    [DataRow("grid", "scroll", "relative", DisplayName = "Grid, scroll box, which places its hidden labels")]
     [DataRow("hero", "art", "@max-card:size-[120px]", DisplayName = "Hero, illustration")]
     [DataRow("menu", "danger", "text-danger", DisplayName = "Menu, danger item")]
     [DataRow("page-header", "title-row", "justify-between", DisplayName = "Page header, title row")]
@@ -65,6 +67,8 @@ public sealed class ComponentTagHelperTests
         "segment",
         "forced-colors:aria-[current=page]:forced-color-adjust-none",
         DisplayName = "Segmented control, segment in forced colors")]
+    [DataRow("segmented", null, "flex-wrap", DisplayName = "Segmented control, wrapping on a narrow space")]
+    [DataRow("segmented", "segment", "grow", DisplayName = "Segmented control, segment sharing its line")]
     [DataRow("tabs", "tab", "aria-[current=page]:text-accent", DisplayName = "Tabs, tab")]
     [DataRow(
         "tabs",

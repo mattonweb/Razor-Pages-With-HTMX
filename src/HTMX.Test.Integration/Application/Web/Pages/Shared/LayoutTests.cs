@@ -24,6 +24,10 @@ public sealed class LayoutTests : IDisposable
     // A page that raises a toast with no Undo: saving a row of the Stock table says so in one.
     private const string StockTable = "/components/stock-table";
 
+    // How much wider than the window the page is: more than nothing, and the window scrolls sideways.
+    private const string WiderThanTheWindow =
+        "() => document.documentElement.scrollWidth - document.documentElement.clientWidth";
+
     // A link in a page's head that names an icon, as Razor writes it: its rel, then its address.
     private static readonly Regex IconLink = new Regex(
         "<link rel=\"(icon|apple-touch-icon)\" href=\"([^\"]+)\"",
@@ -163,6 +167,55 @@ public sealed class LayoutTests : IDisposable
     }
 
     /// <summary>
+    /// Browser test to verify, in Edge, that in a window too narrow for the full nav and the page side by side, 320px
+    /// wide, the menu button opens the full nav across the window's width, with the page hidden under it and nothing
+    /// to scroll sideways; and that Escape, pressed with the keyboard in the nav, closes it as the button does, gives
+    /// the keyboard to the button and shows the page again. The console reports no error.
+    /// </summary>
+    /// <returns>A task that completes when the test has run.</returns>
+    [TestMethod]
+    [TestCategory("Browser")]
+    [DoNotParallelize]
+    public async Task MainMenu_InANarrowWindow_FillsTheWindowUntilEscape()
+    {
+        // Arrange (Given)
+        Uri application = this._application.StartServerForBrowser();
+        BrowserSession edge = await BrowserSession.OpenAsync(application, Scripting.On).ConfigureAwait(false);
+        await using (edge.ConfigureAwait(false))
+        {
+            IPage page = edge.Page;
+            await page.SetViewportSizeAsync(320, 600).ConfigureAwait(false);
+            await page.GotoAsync("/organizations").ConfigureAwait(false);
+            ILocator button = page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Main menu" });
+            ILocator nav = page.GetByRole(AriaRole.Navigation, new PageGetByRoleOptions { Name = "Main" });
+            ILocator main = page.Locator("#main");
+            ILocator users = nav.GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Users" });
+
+            // Act (When)
+            await button.ClickAsync().ConfigureAwait(false);
+            double openWidth = await WidthAsync(nav).ConfigureAwait(false);
+            bool shownOpen = await main.IsVisibleAsync().ConfigureAwait(false);
+            int wider = await page.EvaluateAsync<int>(WiderThanTheWindow).ConfigureAwait(false);
+            await users.FocusAsync().ConfigureAwait(false);
+            await page.Keyboard.PressAsync("Escape").ConfigureAwait(false);
+            double closedWidth = await WidthAsync(nav).ConfigureAwait(false);
+            bool shownClosed = await main.IsVisibleAsync().ConfigureAwait(false);
+            bool buttonHasKeyboard = await button.EvaluateAsync<bool>("b => b === document.activeElement")
+                .ConfigureAwait(false);
+            string? said = await button.GetAttributeAsync("aria-expanded").ConfigureAwait(false);
+
+            // Assert (Then)
+            Assert.AreEqual(
+                (320d, false, 0, 48d, true, true, "false"),
+                (openWidth, shownOpen, wider, closedWidth, shownClosed, buttonHasKeyboard, said),
+                "The nav should fill the window over the hidden page, and Escape give the page and the keyboard back.");
+            Assert.IsEmpty(
+                edge.ConsoleErrors,
+                "The console should report no error: " + string.Join(" | ", edge.ConsoleErrors));
+        }
+    }
+
+    /// <summary>
     /// Browser test to verify, in Edge, that the keyboard's focus shows as an outline on each kind of control, in the
     /// page's own colors and in forced colors, as a Windows contrast theme sets them, which take every shadow away: the
     /// side nav's current link and the current segment, which have shadows of their own, a button, and the filter box,
@@ -200,6 +253,57 @@ public sealed class LayoutTests : IDisposable
                 ("solid 2px", "solid 2px", "solid 2px", "solid " + control),
                 (navLink, segment, button, filter),
                 "Each control should draw an outline with the keyboard on it.");
+            Assert.IsEmpty(
+                edge.ConsoleErrors,
+                "The console should report no error: " + string.Join(" | ", edge.ConsoleErrors));
+        }
+    }
+
+    /// <summary>
+    /// Browser test to verify, in Edge, that a page fits a window 320px wide, a narrow phone's and a 1280px window's
+    /// at 400% zoom, without scrolling sideways: a segmented control too wide for its card wraps, a filter box gives
+    /// its input's room to the Apply button it shows without HTMX, and a grid or a diff too wide for its card scrolls
+    /// inside its own frame, with the labels hidden for assistive technology inside it too. The console reports no
+    /// error.
+    /// </summary>
+    /// <param name="path">The page.</param>
+    /// <param name="scripting">How much script the page runs, by name.</param>
+    /// <returns>A task that completes when the test has run.</returns>
+    [TestMethod]
+    [TestCategory("Browser")]
+    [DoNotParallelize]
+    [DataRow("/organizations", nameof(Scripting.On), DisplayName = "Organizations, whose segmented control wraps")]
+    [DataRow(
+        "/organizations",
+        nameof(Scripting.WithoutHtmx),
+        DisplayName = "Organizations without HTMX, whose filter box shows Apply")]
+    [DataRow("/users", nameof(Scripting.On), DisplayName = "Users, whose segmented control wraps")]
+    [DataRow(
+        "/organizations/10003/history",
+        nameof(Scripting.On),
+        DisplayName = "An organization's history, whose diff scrolls")]
+    [DataRow(StockTable, nameof(Scripting.On), DisplayName = "Stock table, whose rows' buttons have hidden labels")]
+    [DataRow(
+        "/components/not-allowed",
+        nameof(Scripting.On),
+        DisplayName = "Not allowed, whose rows' buttons have hidden labels")]
+    public async Task Load_InAWindow320PixelsWide_DoesNotScrollSideways(string path, string scripting)
+    {
+        // Arrange (Given)
+        Uri application = this._application.StartServerForBrowser();
+        BrowserSession edge = await BrowserSession.OpenAsync(application, Enum.Parse<Scripting>(scripting))
+            .ConfigureAwait(false);
+        await using (edge.ConfigureAwait(false))
+        {
+            IPage page = edge.Page;
+            await page.SetViewportSizeAsync(320, 600).ConfigureAwait(false);
+
+            // Act (When)
+            await page.GotoAsync(path).ConfigureAwait(false);
+            int wider = await page.EvaluateAsync<int>(WiderThanTheWindow).ConfigureAwait(false);
+
+            // Assert (Then)
+            Assert.AreEqual(0, wider, "The page should be no wider than the window.");
             Assert.IsEmpty(
                 edge.ConsoleErrors,
                 "The console should report no error: " + string.Join(" | ", edge.ConsoleErrors));
