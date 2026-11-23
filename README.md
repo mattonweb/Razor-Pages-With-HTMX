@@ -261,18 +261,18 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   (`commandfor`), which every current browser has had only since December 2025; on an older one, a button that opens a
   dialog does nothing. The Confirmation page shows how a page reaches older browsers too, through a link to a page
   that asks the dialog's question.
-- **Persistence: Entity Framework Core 10.0.14 over SQLite, in memory.** The database, named `Customers` and owned by
+- **Persistence: Entity Framework Core 10.0.15 over SQLite, in memory.** The database, named `Customers` and owned by
   `HTMX.Adapter.Customers`, is created when the application starts and filled from seed data written in C#; it
   disappears when the application stops. Nothing is written to
   disk, so a clone needs no setup, and every run starts from the same known data. Restarting the application resets
   the demo.
-- **Tests:** MSTest 4.5.2. The integration tests start the whole application in memory with `WebApplicationFactory`
+- **Tests:** MSTest 4.5.3. The integration tests start the whole application in memory with `WebApplicationFactory`
   (Microsoft.AspNetCore.Mvc.Testing 10.0.13, the version of the ASP.NET Core it runs on) and send requests as the
   browser and HTMX would: each kind of request's answer, the antiforgery check, the Content Security Policy, and what
   an archive and a create answer. Each test's application has a database of its own, named through the
   `Customers:DatabaseName` setting that `Program` reads; nothing sets it when the application runs, so its database
   is `Customers`. The browser tests (category `Browser`) start the application on Kestrel at a port of its own and
-  drive the installed Microsoft Edge, headless, with Playwright (Microsoft.Playwright 1.64.1), so no browser is
+  drive the installed Microsoft Edge, headless, with Playwright (Microsoft.Playwright 1.65.1), so no browser is
   downloaded. Each checks the console for errors and runs on its own, and some run again without HTMX's script or
   with script off: the keyboard after Remove on Order lines, Enter in a Stock table row, notices marked seen as they
   scroll into view, a boosted link and Back, a filter typed again while the first answer is held back, Publish
