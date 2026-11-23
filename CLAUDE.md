@@ -170,7 +170,7 @@ never a new one. A data source or an external system that earns its own
 project is an `HTMX.Adapter.<Name>` exposing only `Configuration/`, `Contracts/` and
 `ServiceCollectionExtensions`; a workflow across capabilities is an
 `HTMX.Orchestrator.<Name>`; page models stay presentation. A change that would break a dependency rule or make an
-internal type public is declined with the reason. No architecture test exists yet.
+internal type public is declined with the reason.
 
 The house `.editorconfig` (`src/.editorconfig`) and `.gitattributes` are verbatim copies of Signalbox's root files,
 applied 2026-11-07. A copy that differs from Signalbox is drift: it is fixed in Signalbox first, never here.
