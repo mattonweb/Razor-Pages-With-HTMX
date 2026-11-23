@@ -1,7 +1,7 @@
 namespace HTMX.Test.Integration;
 
 /// <summary>
-/// The kinds of request a test sends, each with the headers HTMX 4.0.1 sends for it.
+/// The kinds of request a test sends, each with the headers HTMX 4.0.2 sends for it.
 /// </summary>
 internal enum HtmxRequest
 {

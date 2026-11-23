@@ -14,7 +14,7 @@ public sealed class HtmxHeadersTests
     #region Public Methods
 
     /// <summary>
-    /// Unit test to verify that a request counts as HTMX's when it says HX-Request, and when it is HTMX 4.0.1's
+    /// Unit test to verify that a request counts as HTMX's when it says HX-Request, and when it is HTMX 4.0.2's
     /// request for Back or Forward, which says HX-History-Restore-Request without HX-Request.
     /// </summary>
     /// <param name="htmxRequest">The HX-Request header's value, or <see langword="null"/> for none.</param>
@@ -24,7 +24,7 @@ public sealed class HtmxHeadersTests
     [TestMethod]
     [DataRow(null, null, false, DisplayName = "The browser on its own")]
     [DataRow("true", null, true, DisplayName = "A request HTMX sent")]
-    [DataRow(null, "true", true, DisplayName = "Back or Forward, as HTMX 4.0.1 sends it")]
+    [DataRow(null, "true", true, DisplayName = "Back or Forward, as HTMX 4.0.2 sends it")]
     public void IsHtmxRequest_EachKindOfRequest_TellsHtmxFromTheBrowser(
         string? htmxRequest,
         string? historyRestore,

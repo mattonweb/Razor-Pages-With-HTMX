@@ -31,7 +31,7 @@ public sealed class IndexTests : IDisposable
 
     /// <summary>
     /// Integration test to verify that HTMX swapping the card gets the card alone and anything else gets the whole
-    /// page; that a page HTMX loaded, by a boosted link or by Back without HX-Request as HTMX 4.0.1 sends it, takes
+    /// page; that a page HTMX loaded, by a boosted link or by Back without HX-Request as HTMX 4.0.2 sends it, takes
     /// the keyboard to its heading; and that every answer says it varies by the header that chose it.
     /// </summary>
     /// <param name="kind">What sends the request, by its name in <see cref="HtmxRequest"/>.</param>
@@ -41,7 +41,7 @@ public sealed class IndexTests : IDisposable
     [DataRow(nameof(HtmxRequest.None), true, false, DisplayName = "The browser on its own")]
     [DataRow(nameof(HtmxRequest.Partial), false, false, DisplayName = "HTMX swapping the card")]
     [DataRow(nameof(HtmxRequest.Boosted), true, true, DisplayName = "A boosted link")]
-    [DataRow(nameof(HtmxRequest.HistoryRestore), true, true, DisplayName = "Back, as HTMX 4.0.1 sends it")]
+    [DataRow(nameof(HtmxRequest.HistoryRestore), true, true, DisplayName = "Back, as HTMX 4.0.2 sends it")]
     public async Task Get_EachKindOfRequest_AnswersTheCardOrThePage(string kind, bool wholePage, bool headingFocused)
     {
         // Arrange (Given)

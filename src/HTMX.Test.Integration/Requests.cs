@@ -151,7 +151,7 @@ internal static class Requests
     }
 
     /// <summary>
-    /// Adds the headers HTMX 4.0.1 sends for a kind of request. Its request for Back and Forward has no HX-Request.
+    /// Adds the headers HTMX 4.0.2 sends for a kind of request. Its request for Back and Forward has no HX-Request.
     /// </summary>
     /// <param name="request">The request.</param>
     /// <param name="kind">What sends it.</param>

@@ -16,7 +16,7 @@ internal enum HtmxRequest
     Partial,
 
     /// <summary>
-    /// HTMX restoring a page for the back button, as HTMX 4.0.1 sends it: HX-Request-Type is full and
+    /// HTMX restoring a page for the back button, as HTMX 4.0.2 sends it: HX-Request-Type is full and
     /// HX-History-Restore-Request is sent, but HX-Request is not.
     /// </summary>
     HistoryRestore,
