@@ -1,7 +1,7 @@
 ---
 name: brand-htmlx-pages
 description: The HTMLX Pages brand for web applications that manage records — how its pages look and how its components behave, whatever framework or styling approach an application uses. Use whenever building, styling or reviewing the user interface of an application that adopts the brand. Covers the design tokens (color with light and dark values, type, space, shape, elevation, sizes, motion) taken from the DevExtreme UI Template Gallery and MudBlazor, the icon sprite and the favicon, the contrast rule, forced colors, the conventions every page follows, and a specification of every component, with its parts, measurements, variants, states, accessibility, when to use it and reference images in light and dark — layout (app shell, avatar, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, rows, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, preview dialog, busy bar, progress bar, bulk bar, alert, toast). It holds no stylesheet and names no class; each application builds the components its own way.
-version: 2.0.0
+version: 2.1.0
 visibility: public
 ---
 
@@ -232,10 +232,11 @@ what opens something, and `disabled` or `aria-disabled` on what cannot be used.
 **Text width.** Paragraph text fills its container: no maximum width and no measure on a paragraph or any other block
 of text. A control may stop short (the filter box stops at 360px); text does not.
 
-**No sideways scroll.** Nothing in the main area makes the window scroll sideways, at any window width. What is too
-wide for its space scrolls inside its own frame, as the grid and the diff do, or wraps, as the toolbar and a row of
-actions do. Text kept for assistive technology alone, such as the hidden header of a grid's actions column, sits
-inside that frame too, so that it never stands past the window's edge.
+**No sideways scroll.** Nothing in the main area makes the window scroll sideways, at any window width down to
+320px, a narrow phone's and a 1280px window's at 400% zoom. What is too wide for its space scrolls inside its own
+frame, as the grid and the diff do, or wraps, as the toolbar, the segmented control and a row of actions do. Text kept
+for assistive technology alone, such as the hidden header of a grid's actions column or the record a row's button
+names for a screen reader, sits inside that frame too, so that it never stands past the window's edge.
 
 **Without script.** Every component is designed to work as plain HTML: navigation is links, filters and Rows per
 page are forms that send with GET, and actions are buttons in forms that post. An application whose pages work
@@ -276,6 +277,10 @@ main content beside it.
   the window's height and scrolls on its own. Full from 900px and a rail below that; the menu button switches
   between the two and says whether the nav is expanded, and an application may pin either. The menu button needs
   script, so without it the nav stays at its default.
+- **Full nav below 900px**: opened from the rail, the full nav fills the window's width under the header, without
+  its right border, rather than leave the main area too narrow for its content. The main area keeps its place under
+  it, hidden, and the window does not scroll, until the nav closes: by the menu button; by Escape, which gives the
+  keyboard to the menu button when it was in the nav; or by a link, whose page opens with the rail.
 - **Main**: 24px of padding at the top and 32px at the sides and bottom; 16px all round below 900px.
 
 #### Avatar
@@ -402,6 +407,8 @@ label.
 - **A segment**: 28px high, 12px of padding at each side, rounded 3px, `--text-muted` strong; `--text` under the
   pointer. An optional count follows 8px after the label, in `--text-xs` regular figures of equal width.
 - **Current**, `aria-current="page"`: a `--surface` face, `--text` and `--shadow-card`.
+- **Narrow**: on a space too narrow for the track, as a list's card is on a phone, the segments wrap onto more lines,
+  2px apart, and those on each line share its width, their label and count centered. Every view stays in sight.
 - In a toolbar it sits at the right end.
 
 #### Pager
