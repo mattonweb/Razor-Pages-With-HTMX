@@ -277,8 +277,9 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   with script off: the keyboard after Remove on Order lines, Enter in a Stock table row, notices marked seen as they
   scroll into view, a boosted link and Back, a filter typed again while the first answer is held back, Publish
   refused once the permission was withdrawn, the Visitors' room's Check again once the visitor has no pass, and an
-  answer that holds a script, swapped in without running it, a file sent over a slowed connection, whose progress
-  bar and its label show part of it gone, the Load on scroll list growing as its last row comes into view, up to a
+  answer that holds a script, swapped in without running it, a boosted link whose answer holds a script from a file,
+  as Visual Studio writes, loading its page without the file, a file sent over a slowed connection, whose progress bar
+  and its label show part of it gone, the Load on scroll list growing as its last row comes into view, up to a
   hundred, and the Confirmation page's Delete asking in its dialog with invoker commands, and on its own page without
   them or with script off, the menu button switching the side nav, and in a window 320px wide filling the window with
   it until Escape, a toast leaving on Dismiss and once it has faded, Edge drawing the favicon from its SVG, the
@@ -354,10 +355,13 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   carry the answer's nonce, new for each answer, which the layout writes on its three; stylesheets and images only
   from the application's own files; requests and form posts only to the application; no frames; and nothing inline or
   compiled from a string. It also asks for Trusted Types, so HTML is made from a string only through the policy
-  `wwwroot/js/htmx-trusted-types.js` gives HTMX, which passes each answer on and gives a script in one no text. HTMX
-  needs nothing relaxed for it, because no page uses `hx-on`, a trigger filter or a `js:` value. In Development the
-  policy also runs hot reload's script, which `dotnet watch` adds without a nonce, by its path, and lets its WebSocket
-  reach `dotnet watch` or Visual Studio on another port of `localhost`.
+  `wwwroot/js/htmx-trusted-types.js` gives HTMX, which passes each answer on and gives a script in one no text; the
+  same file's default policy gives a script from a file no address, since HTMX copies a script's `src` as a string,
+  and Visual Studio writes such scripts into every answer. HTMX needs nothing relaxed for it, because no page uses
+  `hx-on`, a trigger filter or a `js:` value. In Development the policy also runs hot reload's script, which
+  `dotnet watch` adds without a nonce, by its path, and lets its WebSocket reach `dotnet watch` or Visual Studio on
+  another port of `localhost`. Visual Studio's Browser Link is refused, so leave it off: hot reload does what it
+  would.
 - **Who is signed in.** There is no sign-in page: `DemoAuthenticationHandler` signs every request in as Demo User
   (10001), and a page reads who made a change from its `User`, as it would behind a real sign-in.
 
