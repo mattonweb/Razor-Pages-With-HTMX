@@ -1,8 +1,8 @@
 // The script the application keeps. The menu button switches the side nav between its full width and an icon rail,
-// a toast goes when Dismiss is pressed or when it has faded out, a dialog opened from a menu gives the keyboard back
-// to the menu's button, a dialog's button takes the place of the link that stands in for it where the browser can
-// use it, a request HTMX sends that fails says so in a toast, and a form that sends a file shows how much of it has
-// gone. Every listener is on the document
+// and Escape closes the full nav where it fills a narrow window, a toast goes when Dismiss is pressed or when it has
+// faded out, a dialog opened from a menu gives the keyboard back to the menu's button, a dialog's button takes the
+// place of the link that stands in for it where the browser can use it, a request HTMX sends that fails says so in a
+// toast, and a form that sends a file shows how much of it has gone. Every listener is on the document
 // rather than on an element, because when the back button restores a page, HTMX swaps in a new body and with it new
 // elements.
 (() => {
@@ -29,6 +29,22 @@
   });
   document.addEventListener("DOMContentLoaded", describeButton);
   document.addEventListener("htmx:after:swap", describeButton);
+
+  // Below 900px the full nav fills the window and hides the page, so Escape closes it as the menu button does, and
+  // gives the keyboard to the button when it was in the nav. A link needs nothing here: its page comes with a new nav.
+  const narrow = window.matchMedia("(width < 900px)");
+  document.addEventListener("keydown", (event) => {
+    const button = document.querySelector(toggleSelector);
+    if (event.key !== "Escape" || !button || !narrow.matches || !navIsFull()) {
+      return;
+    }
+
+    const inNav = document.getElementById("app-nav").contains(document.activeElement);
+    button.click();
+    if (inNav) {
+      button.focus();
+    }
+  });
 
   // The stylesheet fades a toast out after 8 seconds, and pauses while the pointer or the keyboard is on it; once it
   // has faded, or Dismiss is pressed, the toast is removed, so that nothing invisible stays in the page. A toast is

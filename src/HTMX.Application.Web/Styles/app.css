@@ -143,13 +143,19 @@
             and aria-busy="true" shows the same state without HTMX.
     rail:   the side nav is an icon rail: the menu button chose it, or the window is narrower than 900px and the
             button did not choose the full nav. It applies to the shell that carries data-nav and everything in it.
-    htmx:   HTMX runs on the page: script is on, and the application's script did not find HTMX missing. A form that
+    menu:   the side nav fills the window under the header, hiding the page: the window is narrower than 900px and
+            the menu button chose the full nav. It applies to the shell, everything in it, and the root, whose scroll
+            it stops.
+    htmx:  HTMX runs on the page: script is on, and the application's script did not find HTMX missing. A form that
             HTMX sends as you go hides its Apply button with htmx:hidden.
 */
 @custom-variant busy (&:is(.htmx-request, [aria-busy="true"]));
 @custom-variant rail {
   &:where([data-nav="rail"], [data-nav="rail"] *) { @slot; }
   @media (width < 900px) { &:where(:root:not(:has([data-nav="full"])) *) { @slot; } }
+}
+@custom-variant menu {
+  @media (width < 900px) { &:where([data-nav="full"], [data-nav="full"] *, :root:has([data-nav="full"])) { @slot; } }
 }
 @custom-variant htmx {
   @media (scripting: enabled) { &:where(:root:not([data-htmx="absent"]) *) { @slot; } }

@@ -16,14 +16,17 @@ public sealed class SegmentedTagHelper : ComponentTagHelper
 {
     private const string Name = "segmented";
 
-    private const string Track = "inline-flex gap-0.5 rounded-sm bg-neutral-subtle p-0.5";
+    // On a space too narrow for it, the segments wrap onto more lines rather than make the window scroll sideways, and
+    // the segments on each line share its width, their label and count centered. Where the control fits, it is as
+    // wide as its segments, so they have no width to share.
+    private const string Track = "inline-flex flex-wrap gap-0.5 rounded-sm bg-neutral-subtle p-0.5";
 
     // The current segment's face and shadow are gone in forced colors, so it takes the theme's highlight, by name. The
     // browser would draw a plate in the window's color behind its text, hiding it, unless the segment adjusts no
     // colors, which would bring its shadow back, so that goes.
     private const string Segment =
-        "inline-flex h-7 items-center gap-2 rounded-[3px] px-3 font-strong text-fg-muted hover:text-fg "
-        + "hover:no-underline aria-[current=page]:bg-surface aria-[current=page]:text-fg "
+        "inline-flex h-7 grow items-center justify-center gap-2 rounded-[3px] px-3 font-strong text-fg-muted "
+        + "hover:text-fg hover:no-underline aria-[current=page]:bg-surface aria-[current=page]:text-fg "
         + "aria-[current=page]:shadow-card forced-colors:aria-[current=page]:bg-[color:Highlight] "
         + "forced-colors:aria-[current=page]:text-[color:HighlightText] "
         + "forced-colors:aria-[current=page]:forced-color-adjust-none forced-colors:aria-[current=page]:shadow-none";

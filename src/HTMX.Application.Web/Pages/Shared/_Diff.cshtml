@@ -7,7 +7,7 @@
     // Every cell, a heading or a value: 8px by 12px of padding, a line below, aligned top, breaking anywhere.
     string cell = "border-b border-line px-3 py-2 text-left align-top wrap-anywhere";
 }
-<div class="overflow-x-auto rounded-md border border-line">
+<div class="relative overflow-x-auto rounded-md border border-line">
     <table class="w-full min-w-[440px] table-fixed border-collapse text-sm">
         <caption class="sr-only">@Model.Caption</caption>
         <thead class="text-fg-muted"><tr><th scope="col" class="@cell w-[120px] font-strong">Field</th><th scope="col" class="@cell font-strong">@Model.BeforeHeading</th><th scope="col" class="@cell font-strong">@Model.AfterHeading</th></tr></thead>

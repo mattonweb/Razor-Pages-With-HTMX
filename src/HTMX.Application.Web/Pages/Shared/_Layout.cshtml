@@ -1,6 +1,6 @@
 ﻿@using HTMX.Application.Web.Security
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="menu:overflow-hidden">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -44,9 +44,12 @@
     @*
         The application shell: the header across the top, the side nav, and the page's main content beside it. The nav
         is full from 900px and an icon rail below that; the menu button switches it, and the application's script
-        records the choice in data-nav, which the rail: variant reads. --nav holds the nav's width for the grid.
+        records the choice in data-nav, which the rail: variant reads. --nav holds the nav's width for the grid. Below
+        900px the full nav fills the window under the header (the menu: variant), over the page, which keeps its place
+        and its scroll but is hidden while the window stands still, until the menu button or Escape closes the nav or a
+        link loads its page, with the nav a rail again.
     *@
-    <div id="app-shell" class="grid min-h-screen grid-cols-[var(--nav)_minmax(0,1fr)] grid-rows-[var(--header-height)_1fr] [--nav:var(--nav-width)] rail:[--nav:var(--nav-rail-width)]">
+    <div id="app-shell" class="grid min-h-screen grid-cols-[var(--nav)_minmax(0,1fr)] grid-rows-[var(--header-height)_1fr] [--nav:var(--nav-width)] rail:[--nav:var(--nav-rail-width)] menu:[--nav:var(--nav-rail-width)]">
         <header class="sticky top-0 z-10 col-span-2 flex items-center gap-2 border-b border-line bg-surface px-2">
             <button button="icon" type="button" data-action="toggle-nav" aria-label="Main menu" aria-controls="app-nav">
                 <icon name="menu" />
@@ -72,7 +75,7 @@
             string navLink = "group flex h-10 items-center gap-3 whitespace-nowrap px-[14px] text-fg hover:bg-surface-hover hover:no-underline aria-[current=page]:bg-accent-subtle aria-[current=page]:font-strong aria-[current=page]:text-accent aria-[current=page]:shadow-[inset_3px_0_0_var(--accent)] forced-colors:aria-[current=page]:bg-[color:Highlight] forced-colors:aria-[current=page]:text-[color:HighlightText] forced-colors:aria-[current=page]:forced-color-adjust-none forced-colors:aria-[current=page]:shadow-none";
             string navIcon = "text-icon group-aria-[current=page]:text-accent";
         }
-        <nav id="app-nav" class="sticky top-header flex h-[calc(100vh-var(--header-height))] flex-col gap-0.5 overflow-x-hidden overflow-y-auto border-r border-line bg-surface py-2" aria-label="Main">
+        <nav id="app-nav" class="sticky top-header flex h-[calc(100vh-var(--header-height))] flex-col gap-0.5 overflow-x-hidden overflow-y-auto border-r border-line bg-surface py-2 menu:fixed menu:inset-x-0 menu:border-r-0" aria-label="Main">
             <a class="@navLink" asp-page="/Organizations/Index" title="Organizations"
                aria-current="@(ViewData["Section"] as string == "Organizations" ? "page" : null)">
                 <icon name="building" class="@navIcon" /><span class="rail:sr-only">Organizations</span>
@@ -93,7 +96,7 @@
             </div>
         </nav>
 
-        <main id="main" class="px-8 pt-6 pb-8 max-md:p-4">
+        <main id="main" class="col-start-2 px-8 pt-6 pb-8 max-md:p-4 menu:invisible">
             @RenderBody()
         </main>
     </div>

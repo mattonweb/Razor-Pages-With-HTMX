@@ -32,9 +32,10 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 /// title link's color is a custom property, <c>--grid-title</c>, which an archived row sets for its cells.
 /// </para>
 /// <para>
-/// The table's head is positioned, so that a visually hidden label in a header cell, such as the actions column's,
-/// which is positioned absolutely, stays inside the scroll box: placed by the card instead, it stood past the table's
-/// right edge and made the window scroll sideways on a narrow screen.
+/// The scroll box is positioned, so that a visually hidden label anywhere in the table, such as the actions column's
+/// header or the name of the record a row's button acts on, which is positioned absolutely, is placed by the scroll
+/// box and stays inside it: placed by the card instead, it stood past the table's right edge and made the window
+/// scroll sideways on a narrow screen.
 /// </para>
 /// </remarks>
 [HtmlTargetElement("*", Attributes = Name)]
@@ -43,7 +44,7 @@ public sealed class GridTagHelper : ComponentTagHelper
     private const string Name = "grid";
 
     private const string Grid =
-        "w-full border-collapse [--grid-title:var(--accent)] [&>thead]:relative "
+        "w-full border-collapse [--grid-title:var(--accent)] "
         + "[:where(&_th)]:h-10 [:where(&_th)]:border-b [:where(&_th)]:border-line [:where(&_th)]:px-4 "
         + "[:where(&_th)]:text-left [:where(&_th)]:text-sm [:where(&_th)]:font-strong [:where(&_th)]:whitespace-nowrap "
         + "[:where(&_th)]:text-fg-muted "
@@ -54,7 +55,7 @@ public sealed class GridTagHelper : ComponentTagHelper
         + "in-busy:[&>tbody]:opacity-50 in-busy:[&>tbody]:transition-opacity in-busy:[&>tbody]:duration-200 "
         + "in-busy:[&>tbody]:ease-[ease]";
 
-    private const string Scroll = "overflow-x-auto";
+    private const string Scroll = "relative overflow-x-auto";
 
     private const string Select = "w-[1%] pr-0";
 
