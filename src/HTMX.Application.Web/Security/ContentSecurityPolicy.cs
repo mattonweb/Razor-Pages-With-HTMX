@@ -52,9 +52,11 @@ public static class ContentSecurityPolicy
     // No <base> element may change the address that relative links and form actions resolve against.
     private const string BaseAddress = "base-uri 'none'";
 
-    // A string becomes HTML or script only through the Trusted Types policy named htmx, the one policy a page may
-    // create, which the application's script gives HTMX; a string written into the page any other way is refused.
-    private const string TrustedTypes = "require-trusted-types-for 'script'; trusted-types htmx";
+    // A string becomes HTML or script only through the Trusted Types policy named htmx, which the application's script
+    // gives HTMX; a string written into the page any other way is refused. The page may create one more, the policy
+    // named default, which the browser asks for a script address written as a string, as HTMX copies a script's src:
+    // the application's makes each an empty address, so such a script never runs and the swap goes through.
+    private const string TrustedTypes = "require-trusted-types-for 'script'; trusted-types htmx default";
 
     // HTMX's requests only to the application.
     private const string Connections = "connect-src 'self'";
