@@ -26,7 +26,7 @@
     The form posts the address to come back to, which the sign-in's redirect put in the query string, as a hidden
     field. It is boosted, as every form is: with HTMX the answer is 204 and HX-Location naming that page, and without
     it, a redirect there. Its two buttons post the same form, and the one pressed sends its own name and value as
-    well: Pass=true for a sign-in with a pass. The browser does so, and HTMX too (4.0.1 source, #collectFormData).
+    well: Pass=true for a sign-in with a pass. The browser does so, and HTMX too (4.0.2 source, #collectFormData).
 *@
 <section card aria-labelledby="visitor-heading">
     <header card="header"><h2 id="visitor-heading">Sign in</h2></header>

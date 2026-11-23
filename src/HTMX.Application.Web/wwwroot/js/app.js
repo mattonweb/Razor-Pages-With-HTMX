@@ -155,7 +155,7 @@
 
   // A form that sends a file says how much of it has gone, which HTMX 4 cannot: it sends with fetch, which reports
   // nothing of an upload. HTMX sends each request through ctx.fetch, the browser's fetch unless a listener of
-  // htmx:before:request has put another there (4.0.1 source, #issueRequest). For a form that holds an element marked
+  // htmx:before:request has put another there (4.0.2 source, #issueRequest). For a form that holds an element marked
   // data-upload-progress, around a <progress> and the amount its label gives, marked data-upload-amount, the request
   // goes by XMLHttpRequest instead, whose upload reports its progress, and the script fills in both as it does. HTMX
   // gets a Response, as fetch would give it: rejected with a TypeError when the connection fails, and with an

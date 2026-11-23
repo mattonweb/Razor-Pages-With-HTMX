@@ -14,7 +14,7 @@ public static class HtmxHeaders
     // HTMX sends this, set to "true", on every request it makes; a browser loading a page on its own does not.
     private const string Request = "HX-Request";
 
-    // HTMX sends this, set to "true", when Back or Forward needs a page it pushed into the history. HTMX 4.0.1 sends it
+    // HTMX sends this, set to "true", when Back or Forward needs a page it pushed into the history. HTMX 4.0.2 sends it
     // without HX-Request: the request it builds for Back replaces the one that holds the usual headers.
     private const string HistoryRestoreRequest = "HX-History-Restore-Request";
 

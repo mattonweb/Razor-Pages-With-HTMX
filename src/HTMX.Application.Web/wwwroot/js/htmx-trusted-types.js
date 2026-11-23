@@ -1,6 +1,6 @@
 // Gives HTMX the Trusted Types policy the Content Security Policy asks for. The policy says require-trusted-types-for
 // 'script', so a string becomes HTML or script only through a policy, and trusted-types htmx default, so the page may
-// create two policies, these. HTMX parses every answer through the htmx policy's createHTML (4.0.1 source,
+// create two policies, these. HTMX parses every answer through the htmx policy's createHTML (4.0.2 source,
 // #parseHTML), which passes it on: an answer is the application's own, whose text Razor encoded. HTMX gives each script
 // in an answer its text through createScript (#processScripts), which gives it none, so a script in an answer never
 // runs, even under a policy that would trust a script HTMX creates. A browser without Trusted Types enforces neither
