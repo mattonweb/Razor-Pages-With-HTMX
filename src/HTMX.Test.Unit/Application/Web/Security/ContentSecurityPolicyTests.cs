@@ -24,7 +24,7 @@ public sealed class ContentSecurityPolicyTests
     private const string ScriptsBeforeNonce = "default-src 'none'; script-src 'nonce-";
     private const string AfterScripts =
         "; style-src 'self'; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; "
-        + "require-trusted-types-for 'script'; trusted-types htmx; connect-src 'self'";
+        + "require-trusted-types-for 'script'; trusted-types htmx default; connect-src 'self'";
 
     // What Development adds: the hot reload script, by its path, and its WebSocket.
     private const string HotReloadScript =

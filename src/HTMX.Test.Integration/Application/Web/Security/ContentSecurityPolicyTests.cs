@@ -25,7 +25,10 @@ public sealed class ContentSecurityPolicyTests : IDisposable
         "' http://localhost:*/_framework/aspnetcore-browser-refresh.js"
         + " https://localhost:*/_framework/aspnetcore-browser-refresh.js; style-src 'self'; img-src 'self'; "
         + "form-action 'self'; frame-ancestors 'none'; base-uri 'none'; require-trusted-types-for 'script'; "
-        + "trusted-types htmx; connect-src 'self' ws://localhost:* wss://localhost:*";
+        + "trusted-types htmx default; connect-src 'self' ws://localhost:* wss://localhost:*";
+
+    // The file a planted script names, which the application doesn't have.
+    private const string PlantedFile = "/planted-browser-link.js";
 
     // The nonce in a policy, and in a script tag Razor wrote.
     private static readonly Regex PolicyNonce = new Regex(
@@ -143,6 +146,50 @@ public sealed class ContentSecurityPolicyTests : IDisposable
     }
 
     /// <summary>
+    /// Browser test to verify, in Edge, that a boosted link whose answer holds a script from a file, as Visual Studio
+    /// writes into every page it runs, still loads its page: HTMX copies the script's address with a string, which
+    /// Trusted Types refuse unless a default policy turns it into one, and the application's turns it into none, so
+    /// the swap goes through and the file is never asked for. The console reports no error.
+    /// </summary>
+    /// <returns>A task that completes when the test has run.</returns>
+    [TestMethod]
+    [TestCategory("Browser")]
+    [DoNotParallelize]
+    public async Task BoostedLink_AnAnswerWithAScriptFile_LoadsThePageWithoutTheFile()
+    {
+        // Arrange (Given)
+        Uri application = this._application.StartServerForBrowser();
+        BrowserSession edge = await BrowserSession.OpenAsync(application, Scripting.On).ConfigureAwait(false);
+        await using (edge.ConfigureAwait(false))
+        {
+            IPage page = edge.Page;
+            await page.GotoAsync("/").ConfigureAwait(false);
+            await page.RouteAsync("**/users", PlantScriptFileAsync).ConfigureAwait(false);
+            bool asked = false;
+            page.Request += (_, request) => asked |= request.Url.EndsWith(PlantedFile, StringComparison.Ordinal);
+            ILocator nav = page.GetByRole(AriaRole.Navigation, new PageGetByRoleOptions { Name = "Main" });
+            LocatorWaitForOptions attached = new LocatorWaitForOptions { State = WaitForSelectorState.Attached };
+
+            // Act (When)
+            await nav.GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Users" }).ClickAsync()
+                .ConfigureAwait(false);
+            await page.Locator("#planted").WaitForAsync(attached).ConfigureAwait(false);
+            string? heading = await page.Locator("main h1").TextContentAsync().ConfigureAwait(false);
+            string? address = await page.Locator("#planted").GetAttributeAsync("src").ConfigureAwait(false);
+            int toasts = await edge.Toast.CountAsync().ConfigureAwait(false);
+
+            // Assert (Then)
+            Assert.AreEqual(
+                ("Users", string.Empty, false, 0),
+                (heading?.Trim(), address, asked, toasts),
+                "The page should load with the script swapped in without its file, which is never asked for.");
+            Assert.IsEmpty(
+                edge.ConsoleErrors,
+                "The console should report no error: " + string.Join(" | ", edge.ConsoleErrors));
+        }
+    }
+
+    /// <summary>
     /// Stops the application and deletes its database.
     /// </summary>
     public void Dispose()
@@ -153,6 +200,24 @@ public sealed class ContentSecurityPolicyTests : IDisposable
     #endregion Public Methods
 
     #region Private Methods
+
+    /// <summary>
+    /// Answers a request with the application's own answer and a script from a file before the end of its body, as
+    /// Visual Studio adds its Browser Link and hot reload scripts to every page it runs.
+    /// </summary>
+    /// <param name="route">The request, held.</param>
+    /// <returns>A task that completes when the request has its answer.</returns>
+    private static async Task PlantScriptFileAsync(IRoute route)
+    {
+        IAPIResponse answer = await route.FetchAsync().ConfigureAwait(false);
+        string body = await answer.TextAsync().ConfigureAwait(false);
+        string planted = $"<script id=\"planted\" src=\"{PlantedFile}\" async></script></body>";
+        await route.FulfillAsync(new RouteFulfillOptions
+        {
+            Response = answer,
+            Body = body.Replace("</body>", planted, StringComparison.Ordinal),
+        }).ConfigureAwait(false);
+    }
 
     /// <summary>
     /// Makes the answer to Load more that a test plants: a row whose cell holds a script, as markup that got into an
