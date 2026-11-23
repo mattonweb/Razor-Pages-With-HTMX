@@ -1,7 +1,7 @@
 ---
 name: code-htmx-pages
 description: How ASP.NET Core Razor Pages and HTMX 4 work together. Use whenever adding hx- attributes to a Razor page or partial view, writing a page handler that answers HTMX requests, choosing whether a handler returns a partial or the whole page, wiring history, forms, validation or antiforgery for HTMX, testing a page model against HTMX's headers, or reviewing any of those. Covers the principles the patterns share (every page works without HTMX, the address holds the view, one partial draws both answers, the smallest target, where the keyboard goes, HTMX adds no way in), the HTMX 4 changes that break HTMX 2 habits, loading HTMX and moving to a new version, one handler answering with a partial or the whole page by HX-Request-Type, list views kept in the query string with one request queue so the newest answer wins and an Apply button for when HTMX is not there, Back and Forward, testing, with unit tests, integration tests that run the whole application, and browser tests that drive Edge with Playwright three ways, forms that post and what a save answers with HTMX and without it, one answer that updates the page and a toast, and an Undo pressed after the page has moved on, actions on a row that draw the list again as it was, a field that works without HTMX and is enhanced as the page loads, an action that cannot be undone, asked for first in a dialog that works without HTMX, an action that takes its row out of a list and where the keyboard goes then and after its Undo, a field checked as you type that keeps what the user is typing and leaves the keyboard where it is, an answer the page did not plan for, or none, which changes nothing on the page and says so in a toast, a Content Security Policy with a nonce for each response and Trusted Types, which HTMX needs nothing relaxed in, and the HTMX features it rules out, every link boosted with the keyboard on each new page's heading, Back included, rows added to and removed from a form, whose Add and Remove post the form to draw the field again, rows that hold several fields, numbered afresh by each Add and Remove with ModelState cleared, a request with no form around it, from a field tied to a form in another table cell by the form attribute or with the antiforgery token in a header from hx-headers on a container in the page, a request whose sign-in has expired, sent to sign in with HX-Redirect and back to the page HX-Current-URL names, an action the user may no longer take, refused with 403, the target drawn as the user may now use it and a toast, a page the user may not see, sent to the access-denied page with HX-Redirect by the cookie sign-in's event, a form with a file, which keeps the chosen file across a refused save with hx-preserve and shows how much has gone, sent by the application's script through ctx.fetch, a job whose card polls its progress until it has finished, a list that grows by Load more with the address saying how many rows show, and one that grows as its last row comes into view, moving no keyboard, saying what came in a status line, with nothing under it, an element that reloads itself when an answer's HX-Trigger says something changed, and an action behind a dialog that a browser without invoker commands reaches through a confirmation page, its link swapped for the dialog's button where the browser can use it. Written against HTMX 4.0.1 and ASP.NET Core 10. Draft.
-version: 0.38.1
+version: 0.39.0
 visibility: public
 ---
 
@@ -929,7 +929,7 @@ can neither run a script nor send what the page holds to another site
 
   ```text
   default-src 'none'; script-src 'nonce-{nonce}'; style-src 'self'; img-src 'self'; form-action 'self';
-  frame-ancestors 'none'; base-uri 'none'; require-trusted-types-for 'script'; trusted-types htmx;
+  frame-ancestors 'none'; base-uri 'none'; require-trusted-types-for 'script'; trusted-types htmx default;
   connect-src 'self'
   ```
 
@@ -953,12 +953,14 @@ can neither run a script nor send what the page holds to another site
   reported; under the nonce alone the policy refused it (`script-src-elem`).
 - **Trusted Types send every string of HTML through HTMX's policy.** `require-trusted-types-for 'script'` makes the
   browser refuse a string written where it becomes HTML or script, such as `innerHTML` or a parser, unless a Trusted
-  Types policy made it, and `trusted-types htmx` lets the page make one policy, by that name
+  Types policy made it, and `trusted-types htmx default` lets the page make two policies, by those names
   ([Trusted Types](https://developer.mozilla.org/docs/Web/API/Trusted_Types_API)). HTMX 4 parses every answer
   through a policy's `createHTML` (4.0.1 source, `#parseHTML`) and gives each script in an answer its text through
   its `createScript` (`#processScripts`); with no policy given, it hands the string on as it is, which the browser
-  refuses, so every swap fails. An extension gives HTMX the policy, from a file the layout loads after HTMX and
-  before anything is swapped:
+  refuses, so every swap fails. It copies each script's other attributes as strings, with `setAttribute`, and a
+  script's `src` is a script address, which the browser hands to the policy named `default`, or refuses, failing the
+  whole swap. An extension gives HTMX its policy, and makes the default one, from a file the layout loads after HTMX
+  and before anything is swapped:
 
   ```js
   if (window.trustedTypes && window.htmx) {
@@ -966,17 +968,22 @@ can neither run a script nor send what the page holds to another site
       createHTML: (html) => html,
       createScript: () => "",
     });
+    trustedTypes.createPolicy("default", { createScriptURL: () => "" });
     htmx.registerExtension("trusted-types", { init: (api) => api.initSecurity(policy) });
   }
   ```
 
   `createHTML` passes the answer on: it is the application's own, whose text Razor encoded, and the policy is what
-  makes HTMX the only way in for HTML. `createScript` gives a script no text, so a script in an answer never runs,
-  under any policy. It does not throw: HTMX parses an answer before it raises `htmx:before:swap` (4.0.1 source,
-  `swap`), so a throw would fail an error page that holds a script before section 14's listener could stop it. A
-  browser without Trusted Types enforces neither the directives nor the policy. Tried: with the extension's file
-  answered empty, every browser test that uses HTMX failed, no swap taking place; with it, every one passed with no
-  violation.
+  makes HTMX the only way in for HTML. `createScript` gives a script no text, and the default policy gives a script
+  from a file an empty address, which the browser never asks for, so a script in an answer never runs, under any
+  policy. The default policy makes script addresses and nothing else, so a string that would become HTML or script
+  text still has no way in but HTMX's. Neither throws: HTMX parses an answer before it raises `htmx:before:swap`
+  (4.0.1 source, `swap`), so a throw would fail an error page that holds a script before section 14's listener
+  could stop it. A browser without Trusted Types enforces neither the directives nor the policies. Tried: with the
+  extension's file answered empty, every browser test that uses HTMX failed, no swap taking place; with it, every
+  one passed with no violation. Without the default policy, a boosted link whose answer held a script from a file
+  failed its swap (`TrustedScriptURL`) and showed section 14's toast; with it, the page loaded, the script came in
+  with an empty `src` and its file was never asked for.
 - **Nothing in the markup is code.** No `<script>` without `src`, no `onclick` or other handler attribute, no
   `<style>` element and no `style` attribute: a look goes in a class in a stylesheet, and behavior in the
   application's script, listening on `document` (section 2). A `<template>` that the script copies out (section 14)
@@ -990,7 +997,8 @@ can neither run a script nor send what the page holds to another site
   constructor threw, and an `hx-on` handler never ran. Code that the browser's developer tools run is not held to
   the policy, so a test of it starts the code from the page.
 - **A script in an answer never runs.** HTMX creates each `<script>` in swapped content again, so that it runs (4.0.1
-  source, `#processScripts`): Trusted Types' policy gives it no text, and the nonce refuses it anyway. Leave
+  source, `#processScripts`): Trusted Types' policies give it no text and no address, and the nonce refuses it
+  anyway. Leave
   `htmx.config.inlineScriptNonce` unset: HTMX gives that nonce to every script in every answer, so it would run any
   script that got into one. A script that part of a page needs goes in the layout's `<head>` (section 2).
 - **One middleware sends the header with every answer.** It runs before the rest of the pipeline, so a static file's
@@ -1022,10 +1030,13 @@ can neither run a script nor send what the page holds to another site
   `connect-src` adds `ws://localhost:*` and `wss://localhost:*`. Every other rule holds there, so a violation shows
   in the browser's console while the page is being built, not after it ships. Tried with `dotnet watch`: the script
   loaded, a changed stylesheet reached the page before a boosted link and after it, and a Razor change reloaded the
-  page, with no violation. The script draws its own notice of changes applied with `innerHTML`, which Trusted Types
-  refuse; a Razor change reloads the page instead, so it did not show. Not tried from Visual Studio, whose Browser
-  Link, when it is on, also writes a `<script src="…" async>` of its own into each page, with no nonce (read in
-  Visual Studio 18's Browser Link runtime), which the policy would refuse.
+  page, with no violation; again with the default policy (Trusted Types, above). The script draws its own notice of
+  changes applied with `innerHTML`, which Trusted Types refuse; a Razor change reloads the page instead, so it did
+  not show. `dotnet watch` writes its script into a page the browser asks for itself, not into an answer HTMX
+  fetches. Visual Studio writes scripts into those answers too: run from Visual Studio 18 without the default policy,
+  every boosted link failed its swap, with Browser Link on (`TrustedScriptURL`) and with it off. Browser Link, when
+  it is on, writes a `<script src="/_vs/browserLink" async>` of its own into each page, with no nonce, which the
+  policy refuses; leave it off, since hot reload does what it would.
 - **An existing application tries the policy first.** `Content-Security-Policy-Report-Only`, with the same value,
   enforces nothing and reports each violation, which lists what to fix before the real header is sent
   ([Report-Only](https://developer.mozilla.org/docs/Web/HTTP/Reference/Headers/Content-Security-Policy-Report-Only)).
