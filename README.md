@@ -284,9 +284,10 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   them or with script off, the menu button switching the side nav, and in a window 320px wide filling the window with
   it until Escape, a toast leaving on Dismiss and once it has faded, Edge drawing the favicon from its SVG, the
   keyboard's focus drawn as an outline on each kind of control, in the page's own colors and in the forced colors of a
-  Windows contrast theme, and pages that grew too wide fitting a window 320px wide without scrolling sideways. They
-  find what they check by role, text, id or a `data-` attribute, never by a class, so restyling a page cannot break
-  one; the application's script finds what it works on the same way.
+  Windows contrast theme, a link in a paragraph underlined and a grid's title not, and pages that grew too wide
+  fitting a window 320px wide without scrolling sideways. They find what they check by role, text, id or a `data-`
+  attribute, never by a class, so restyling a page cannot break one; the application's script finds what it works on
+  the same way.
 - **Look:** the HTMLX Pages brand, `.claude/skills/brand-htmlx-pages`. Its icon sprite was copied from the skill's
   `assets/` into `wwwroot`, and its tokens into `Styles/tokens.css`. Tailwind's theme in `Styles/app.css` is those
   tokens and nothing else, so `bg-accent` is the brand's accent and there is no `bg-red-500`, and each utility reads
