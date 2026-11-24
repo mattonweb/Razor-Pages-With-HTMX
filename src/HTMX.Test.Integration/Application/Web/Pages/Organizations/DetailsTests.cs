@@ -3,17 +3,31 @@ namespace HTMX.Test.Integration.Application.Web.Pages.Organizations;
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Contains integration tests for an organization's pages, at /organizations/{id} and its tabs, run through the whole
-/// application: what an identifier that names no organization answers to each kind of request.
+/// application: what an identifier that names no organization answers to each kind of request, and how the page and
+/// its history are laid out for assistive technology.
 /// </summary>
 [TestClass]
 public sealed class DetailsTests : IDisposable
 {
     #region Private Fields
+
+    // A diff's frame that the keyboard reaches, named by the caption of the change it holds.
+    private static readonly Regex FocusableDiffFrame = new Regex(
+        "tabindex=\"0\" role=\"region\"\\s+aria-label=\"Changes in version \\d+\"",
+        RegexOptions.CultureInvariant,
+        TimeSpan.FromSeconds(1));
+
+    // A diff's table, by its caption.
+    private static readonly Regex DiffTable = new Regex(
+        "<caption[^>]*>Changes in version \\d+</caption>",
+        RegexOptions.CultureInvariant,
+        TimeSpan.FromSeconds(1));
 
     // The application, started on the first request with a database of its own and stopped when the test ends.
     private readonly ApplicationFactory _application = new ApplicationFactory();
@@ -49,6 +63,51 @@ public sealed class DetailsTests : IDisposable
             "Organization not found",
             answer.Body,
             "The page should say that no organization has the identifier.");
+    }
+
+    /// <summary>
+    /// Integration test to verify that the page for an identifier that names no organization says so in an h2, one
+    /// level under the page's h1, as a screen reader's list of headings expects.
+    /// </summary>
+    [TestMethod]
+    public async Task Get_UnknownOrganization_SaysSoOneLevelUnderThePageHeading()
+    {
+        // Arrange (Given)
+        HttpClient browser = this._application.CreateBrowser();
+
+        // Act (When)
+        Answer answer = await Requests.GetAsync(browser, "/organizations/99999", HtmxRequest.None)
+            .ConfigureAwait(false);
+
+        // Assert (Then)
+        Assert.Contains(
+            "<h2>No organization has the identifier 99999</h2>",
+            answer.Body,
+            "The empty state's heading should be an h2 under the page's h1.");
+    }
+
+    /// <summary>
+    /// Integration test to verify that each change on an organization's history is in a frame the keyboard reaches,
+    /// named by the change's caption, since the frame scrolls sideways on a narrow screen and nothing in it takes the
+    /// keyboard.
+    /// </summary>
+    [TestMethod]
+    public async Task Get_History_PutsEachChangeInAFrameTheKeyboardReaches()
+    {
+        // Arrange (Given)
+        HttpClient browser = this._application.CreateBrowser();
+
+        // Act (When)
+        Answer answer = await Requests.GetAsync(browser, "/organizations/10003/history", HtmxRequest.None)
+            .ConfigureAwait(false);
+        int frames = FocusableDiffFrame.Matches(answer.Body).Count;
+        int diffs = DiffTable.Matches(answer.Body).Count;
+
+        // Assert (Then)
+        Assert.AreEqual(
+            (true, diffs),
+            (diffs > 0, frames),
+            "Every change on the history should be in a frame that takes the keyboard and has a name.");
     }
 
     /// <summary>

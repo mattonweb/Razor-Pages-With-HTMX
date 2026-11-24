@@ -40,6 +40,7 @@ public sealed class ComponentTagHelperTests
     [DataRow("dialog", "confirm", "w-[min(420px,calc(100vw_-_2_*_var(--space-4)))]", DisplayName = "Dialog, confirm")]
     [DataRow("dialog", "icon-warning", "bg-warning-subtle", DisplayName = "Dialog, warning icon")]
     [DataRow("empty-state", null, "[&>svg]:size-10", DisplayName = "Empty state")]
+    [DataRow("empty-state", null, "[&>:is(h2,h3)]:text-lg", DisplayName = "Empty state, its heading at any level")]
     [DataRow("field", null, "[&>legend]:mb-1", DisplayName = "Field, its legend")]
     [DataRow("field", "message", "empty:hidden", DisplayName = "Field, message")]
     [DataRow("field-rows", null, "[&>li]:flex", DisplayName = "Rows")]
@@ -60,6 +61,7 @@ public sealed class ComponentTagHelperTests
     [DataRow("pager", "pages", "@max-card:mt-3", DisplayName = "Pager, pages")]
     [DataRow("pager", "size", "justify-self-end", DisplayName = "Pager, size")]
     [DataRow("related", "archived", "text-fg-muted", DisplayName = "Related-record link, archived")]
+    [DataRow("related", null, "no-underline", DisplayName = "Related-record link, not underlined in a sentence")]
     [DataRow("relation", null, "[&>button]:[border-width:0_0_0_1px]", DisplayName = "Relation field's box")]
     [DataRow("segmented", "segment", "aria-[current=page]:bg-surface", DisplayName = "Segmented control, segment")]
     [DataRow(

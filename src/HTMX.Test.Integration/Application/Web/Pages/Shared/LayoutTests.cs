@@ -260,6 +260,43 @@ public sealed class LayoutTests : IDisposable
     }
 
     /// <summary>
+    /// Browser test to verify, in Edge, that a link among the words of a paragraph is underlined, since its color alone
+    /// does not set it apart from the text around it, and that a link standing on its own, a grid's title, is not, nor
+    /// a related record's link in a sentence, which its icon sets apart. The console reports no error.
+    /// </summary>
+    /// <returns>A task that completes when the test has run.</returns>
+    [TestMethod]
+    [TestCategory("Browser")]
+    [DoNotParallelize]
+    public async Task Load_ALinkInAParagraph_IsUnderlined()
+    {
+        // Arrange (Given)
+        Uri application = this._application.StartServerForBrowser();
+        BrowserSession edge = await BrowserSession.OpenAsync(application, Scripting.On).ConfigureAwait(false);
+        await using (edge.ConfigureAwait(false))
+        {
+            IPage page = edge.Page;
+
+            // Act (When)
+            await page.GotoAsync("/components/not-allowed").ConfigureAwait(false);
+            string inText = await DecorationAsync(page.Locator("main p a").First).ConfigureAwait(false);
+            await page.GotoAsync("/organizations").ConfigureAwait(false);
+            string alone = await DecorationAsync(page.Locator("main td a").First).ConfigureAwait(false);
+            await page.GotoAsync("/organizations/10003").ConfigureAwait(false);
+            string related = await DecorationAsync(page.Locator("main header p a").First).ConfigureAwait(false);
+
+            // Assert (Then)
+            Assert.AreEqual(
+                ("underline", "none", "none"),
+                (inText, alone, related),
+                "A link in a paragraph should be underlined, and neither a grid's title nor a related record's link.");
+            Assert.IsEmpty(
+                edge.ConsoleErrors,
+                "The console should report no error: " + string.Join(" | ", edge.ConsoleErrors));
+        }
+    }
+
+    /// <summary>
     /// Browser test to verify, in Edge, that a page fits a window 320px wide, a narrow phone's and a 1280px window's
     /// at 400% zoom, without scrolling sideways: a segmented control too wide for its card wraps, a filter box gives
     /// its input's room to the Apply button it shows without HTMX, and a grid or a diff too wide for its card scrolls
@@ -430,6 +467,16 @@ public sealed class LayoutTests : IDisposable
         await field.FillAsync("15").ConfigureAwait(false);
         await field.PressAsync("Enter").ConfigureAwait(false);
         await edge.Toast.WaitForAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Reads the lines an element's text is drawn with.
+    /// </summary>
+    /// <param name="element">The element.</param>
+    /// <returns>Its text-decoration-line, such as underline, or none.</returns>
+    private static Task<string> DecorationAsync(ILocator element)
+    {
+        return element.EvaluateAsync<string>("e => getComputedStyle(e).textDecorationLine");
     }
 
     /// <summary>
