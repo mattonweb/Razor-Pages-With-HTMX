@@ -1,7 +1,7 @@
 ---
 name: brand-htmlx-pages
 description: The HTMLX Pages brand for web applications that manage records — how its pages look and how its components behave, whatever framework or styling approach an application uses. Use whenever building, styling or reviewing the user interface of an application that adopts the brand. Covers the design tokens (color with light and dark values, type, space, shape, elevation, sizes, motion) taken from the DevExtreme UI Template Gallery and MudBlazor, the icon sprite and the favicon, the contrast rule, forced colors, the conventions every page follows, and a specification of every component, with its parts, measurements, variants, states, accessibility, when to use it and reference images in light and dark — layout (app shell, avatar, page header, card, hero, toolbar, tabs), navigation (side nav, breadcrumbs, menu, segmented control, pager), data display (grid, chip, empty state, fields, related-record link, side panel, version badge, timeline, diff), inputs (field and validation, switch, choices, rows, relation field, filter box, form action bar) and feedback (dialog, confirm dialog, preview dialog, busy bar, progress bar, bulk bar, alert, toast). It holds no stylesheet and names no class; each application builds the components its own way.
-version: 2.1.0
+version: 2.2.0
 visibility: public
 ---
 
@@ -216,11 +216,13 @@ Images: [light](references/images/foundations/button-light.png), [dark](referenc
 
 ### Page
 
-The page is `--bg`, with `--text` in `--font` at `--text-md` and `--leading`. Links are `--accent` with no
-underline, underlined under the pointer; a link drawn as something else (a button, a nav link, a menu item, a tab, a
-segment, the product name, a sort header) is never underlined. A skip link to the main content comes first in the
-page, out of sight until it has focus; then it shows 8px from the top left corner, on `--surface` at `--radius-sm`,
-with 8px by 12px of padding.
+The page is `--bg`, with `--text` in `--font` at `--text-md` and `--leading`. Links are `--accent`. A link among the
+words of a paragraph is always underlined, since its color alone does not set it apart from the text around it: the
+accent and the muted text are 1.15:1 apart, and some readers cannot tell the two apart at all. A link that stands on
+its own, such as a grid's title or a related record's, has no underline until it is under the pointer; a link drawn as
+something else (a button, a nav link, a menu item, a tab, a segment, the product name, a sort header) is never
+underlined. A skip link to the main content comes first in the page, out of sight until it has focus; then it shows
+8px from the top left corner, on `--surface` at `--radius-sm`, with 8px by 12px of padding.
 
 ## Conventions
 
@@ -236,7 +238,9 @@ of text. A control may stop short (the filter box stops at 360px); text does not
 320px, a narrow phone's and a 1280px window's at 400% zoom. What is too wide for its space scrolls inside its own
 frame, as the grid and the diff do, or wraps, as the toolbar, the segmented control and a row of actions do. Text kept
 for assistive technology alone, such as the hidden header of a grid's actions column or the record a row's button
-names for a screen reader, sits inside that frame too, so that it never stands past the window's edge.
+names for a screen reader, sits inside that frame too, so that it never stands past the window's edge. A frame that
+holds nothing the keyboard can reach, such as the diff's, takes the keyboard itself, named by what it holds, so that
+the arrow keys can scroll it.
 
 **Without script.** Every component is designed to work as plain HTML: navigation is links, filters and Rows per
 page are forms that send with GET, and actions are buttons in forms that post. An application whose pages work
@@ -483,7 +487,8 @@ Images: [light](references/images/data-display/empty-state-light.png),
 
 What a list shows when it has nothing to show, centered, its parts 8px apart, with 32px of padding above and below
 and 16px at the sides: one 40px icon in `--text-disabled`, one heading, one sentence in `--text-muted` saying why, and
-at most one action, 8px further down, such as clearing a filter that matched nothing.
+at most one action, 8px further down, such as clearing a filter that matched nothing. The heading is `--text-lg`
+strong at whatever level the page's outline needs: one under the heading above it, the page's or the card's.
 
 #### Fields
 
@@ -504,7 +509,8 @@ Images: [light](references/images/data-display/related-record-link-light.png),
 
 Another record, always as a link led 4px before by its type's 16px icon: `user` for a person, `users` for a group,
 `building` for an organization. A link to an archived record stays a link, in `--text-muted`, followed 8px later by a
-neutral "Archived" chip, in a field or a grid cell alike.
+neutral "Archived" chip, in a field or a grid cell alike. Its icon sets it apart from the words around it, so even in
+a sentence, such as who made the last change, it is underlined only under the pointer (Page).
 
 #### Side panel
 
@@ -563,6 +569,8 @@ changed, framed by a 1px `--border` at `--radius-md` that scrolls sideways when 
 - **The old value** is marked as a deletion: `--danger-subtle` behind `--text`, struck through in `--danger`. **The
   new value** is marked as an insertion: `--success-subtle` behind `--text`, not underlined.
 - A missing value reads "Not set". The column headers carry the meaning; the colors only reinforce it.
+- **Its frame takes the keyboard**, named by the table's caption, since nothing in the table does (No sideways
+  scroll).
 
 ### Inputs
 

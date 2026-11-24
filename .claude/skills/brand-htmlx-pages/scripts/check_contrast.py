@@ -19,6 +19,7 @@ PAIRS = [
     ("text-muted", "surface", 4.5), ("text-muted", "bg", 4.5), ("text-muted", "surface-hover", 4.5),
     ("icon", "surface", 3.0),
     ("accent", "surface", 4.5), ("accent", "bg", 4.5), ("accent", "accent-subtle", 4.5),
+    ("accent", "surface-hover", 4.5),
     ("on-accent", "accent-fill", 4.5), ("on-accent", "accent-fill-hover", 4.5), ("on-accent", "accent-fill-active", 4.5),
     ("on-accent", "danger-fill", 4.5), ("on-accent", "danger-fill-hover", 4.5),
     ("brand-text", "brand-subtle", 4.5), ("brand-text", "surface", 4.5), ("on-brand", "brand", 4.5),
