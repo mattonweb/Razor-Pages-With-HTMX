@@ -18,7 +18,9 @@ public sealed class RelatedTagHelper : ComponentTagHelper
 {
     private const string Name = "related";
 
-    private const string Related = "inline-flex items-center gap-1";
+    // Its icon sets it apart from the words around it, so it takes no underline from a paragraph it stands in, only
+    // under the pointer, as a link that stands on its own does.
+    private const string Related = "inline-flex items-center gap-1 no-underline hover:underline";
 
     private const string Archived = Related + " text-fg-muted";
 

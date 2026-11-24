@@ -36,7 +36,7 @@
   --icon:           light-dark(#424242, #d6d6d6);   /* MudBlazor TextPrimary */
   --bg:             light-dark(#f5f5f5, #1f1f1f);   /* MudBlazor BackgroundGray; Gallery dark page */
   --surface:        light-dark(#ffffff, #292929);   /* cards, header, nav; Gallery dark surface */
-  --surface-hover:  light-dark(#f5f5f5, #333333);
+  --surface-hover:  light-dark(#f5f5f5, #323232);   /* dark one step under #333333, so the accent keeps 4.5:1 */
   --border:         light-dark(#e0e0e0, #3d3d3d);   /* both sources: Gallery border, MudBlazor TableLines */
   --border-input:   light-dark(#8a8a8a, #757575);   /* MudBlazor LinesInputs, darkened to 3:1 for form controls */
 

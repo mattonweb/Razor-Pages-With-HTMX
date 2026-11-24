@@ -58,14 +58,14 @@
             @if (current.Filter is FilterText filter)
             {
                 <icon name="filter" />
-                <h3 tabindex="-1" autofocus="@Model.EmptyFocused">No @which match “@filter.Value”</h3>
+                <h2 tabindex="-1" autofocus="@Model.EmptyFocused">No @which match “@filter.Value”</h2>
                 <p>Check the spelling, or filter by another word.</p>
                 <a button="secondary" asp-page="./Index" asp-all-route-data="Model.RouteValues(withoutFilter: true)">Clear filter</a>
             }
             else
             {
                 <icon name="building" />
-                <h3 tabindex="-1" autofocus="@Model.EmptyFocused">No @which</h3>
+                <h2 tabindex="-1" autofocus="@Model.EmptyFocused">No @which</h2>
                 @switch (current.Status)
                 {
                     case RecordStatus.Archived:

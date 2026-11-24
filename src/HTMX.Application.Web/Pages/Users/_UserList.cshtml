@@ -46,7 +46,7 @@
     {
         <div empty-state>
             <icon name="filter" />
-            <h3>No users match “@current.Filter?.Value”</h3>
+            <h2>No users match “@current.Filter?.Value”</h2>
             <p>Check the spelling, or filter by another word. The filter looks in names, usernames and email addresses.</p>
             <a button="secondary" asp-page="./Index" asp-all-route-data="Model.RouteValues(withoutFilter: true)">Clear filter</a>
         </div>

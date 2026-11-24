@@ -9,7 +9,9 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 /// button. They take their look from it, so the view writes them as plain HTML.
 /// </summary>
 /// <remarks>
-/// Tailwind finds the class names it generates by reading this file, so each is written out whole.
+/// Tailwind finds the class names it generates by reading this file, so each is written out whole. The heading is
+/// the level the page's outline needs, an h2 under the page's heading and an h3 under a card's, and the same size
+/// whichever it is.
 /// </remarks>
 [HtmlTargetElement("*", Attributes = Name)]
 public sealed class EmptyStateTagHelper : ComponentTagHelper
@@ -17,8 +19,8 @@ public sealed class EmptyStateTagHelper : ComponentTagHelper
     private const string Name = "empty-state";
 
     private const string EmptyState =
-        "grid justify-items-center gap-2 px-4 py-8 text-center [&>a]:mt-2 [&>p]:text-fg-muted [&>svg]:size-10 "
-        + "[&>svg]:stroke-[1.5] [&>svg]:text-fg-disabled";
+        "grid justify-items-center gap-2 px-4 py-8 text-center [&>:is(h2,h3)]:text-lg [&>a]:mt-2 [&>p]:text-fg-muted "
+        + "[&>svg]:size-10 [&>svg]:stroke-[1.5] [&>svg]:text-fg-disabled";
 
     /// <inheritdoc/>
     protected override string AttributeName => Name;

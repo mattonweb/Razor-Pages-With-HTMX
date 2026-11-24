@@ -23,6 +23,11 @@ p  { margin: 0; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
+/* A link among the words of a paragraph is always underlined: its color alone sets it apart from the text around it
+   too little to see, or not at all for someone who cannot tell the colors apart. A link that stands on its own, such
+   as a grid's title or a nav link, is not; one drawn as a button takes no underline from its own utilities. */
+p a { text-decoration: underline; }
+
 code, kbd { font-family: var(--font-mono); font-size: 0.93em; }
 
 /* The focus ring is an outline, never a shadow: a component that has a shadow of its own, as the side nav's current

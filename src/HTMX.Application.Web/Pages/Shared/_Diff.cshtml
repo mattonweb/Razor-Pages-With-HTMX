@@ -1,13 +1,16 @@
 @model HTMX.Application.Web.Pages.Diff
 @*
     The brand's diff: Field, then the value before and after, as <del> and <ins>, for only the fields that changed. A
-    missing value reads "Not set". The column headings carry the meaning; the colors only reinforce it.
+    missing value reads "Not set". The column headings carry the meaning; the colors only reinforce it. On a narrow
+    screen the table scrolls sideways in its frame, and nothing in it takes the keyboard, so the frame does, named by
+    the caption, so that the keyboard's arrows can scroll it.
 *@
 @{
     // Every cell, a heading or a value: 8px by 12px of padding, a line below, aligned top, breaking anywhere.
     string cell = "border-b border-line px-3 py-2 text-left align-top wrap-anywhere";
 }
-<div class="relative overflow-x-auto rounded-md border border-line">
+<div class="relative overflow-x-auto rounded-md border border-line" tabindex="0" role="region"
+     aria-label="@Model.Caption">
     <table class="w-full min-w-[440px] table-fixed border-collapse text-sm">
         <caption class="sr-only">@Model.Caption</caption>
         <thead class="text-fg-muted"><tr><th scope="col" class="@cell w-[120px] font-strong">Field</th><th scope="col" class="@cell font-strong">@Model.BeforeHeading</th><th scope="col" class="@cell font-strong">@Model.AfterHeading</th></tr></thead>
