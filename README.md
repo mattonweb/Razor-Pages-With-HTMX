@@ -148,8 +148,8 @@ out any class no page uses.
   with `HX-Location` after a save). A username takes letters, digits, dots, hyphens and underscores. A username or an
   email address another user has, however it is capitalized, is refused with 422 under its own field. An archived user
   can't be edited, so their page offers no Edit and their edit page says why.
-- **`/components`** — the Components section, in the side nav: pages that each show one pattern on its own, apart
-  from the records, with HTMX and without it.
+- **`/components`** — the Components section, in the side nav: pages that each show one pattern or component on its
+  own, apart from the records, with HTMX and without it.
 - **`/components/file-field`** — a form that sends a title and a file, a PNG or JPEG image or a PDF document of 1 MB
   or less, and says what it received in a toast; it keeps nothing. The form says `enctype="multipart/form-data"`, so
   HTMX sends it as it is. The handler tells the file's kind by its first bytes, not its name. A form refused for its
@@ -222,6 +222,10 @@ out any class no page uses.
   button in the link's place when the browser has invoker commands. The dialog's form deletes with HTMX and leaves
   the keyboard on the next row's Delete; the page's form goes back to the list with its toast. **Put them all back**
   starts again.
+- **`/components/button`** — every look of the button (secondary, primary, ghost, danger, icon, and the ghost and
+  icon looks for an inverse surface such as a toast) and its states (disabled, a link with nowhere to go, busy, and a
+  link drawn as a button), with the attribute or markup that gives each. Its folder, `Pages/Components/Button/`, also
+  holds `ButtonTagHelper.cs`, which draws every button in the application, so the component is one folder.
 
 ## Sample data
 
@@ -296,7 +300,9 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   such as focus or the current link, is kept in the theme's own system colors, as the brand's Forced colors gives it.
   Every page fits a window 320px wide, a phone's or a 1280px window's at 400% zoom, without scrolling sideways, and
   below 900px the full side nav fills the window, over the page, until the menu button, Escape or a link closes it.
-  Each of the brand's components is drawn by a tag helper in `TagHelpers/`, which keeps its utilities in one place.
+  Each of the brand's components is drawn by a tag helper, which keeps its utilities in one place: in `TagHelpers/`,
+  or, for a component with a page of its own in the Components section, in that page's folder, as the button's
+  `ButtonTagHelper.cs` is in `Pages/Components/Button/`.
   An attribute names the component, or one of its parts, on the element the view writes, so the view keeps its own
   markup, ARIA and `hx-` attributes: `<a asp-page="./Edit" button="primary">`, `<icon name="edit" />`,
   `<span chip="success">Active</span>`, and `<section card>` with `<header card="header">` and
