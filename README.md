@@ -231,6 +231,9 @@ out any class no page uses.
   draws in its own colors; and how to add an icon. Its folder, `Pages/Components/Icon/`, also holds
   `IconTagHelper.cs`, which draws every icon in the application, and `IconGroups.cs`, the list the page draws, which
   an integration test holds to the sprite.
+- **`/components/chip`** — every tone of the chip, the status label with a dot (neutral, success, info, warning,
+  danger and brand), with the attribute that names each and the words the application uses where it has them. Its
+  folder, `Pages/Components/Chip/`, also holds `ChipTagHelper.cs`, which draws every chip in the application.
 
 ## Sample data
 
@@ -307,7 +310,8 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   below 900px the full side nav fills the window, over the page, until the menu button, Escape or a link closes it.
   Each of the brand's components is drawn by a tag helper, which keeps its utilities in one place: in `TagHelpers/`,
   or, for a component with a page of its own in the Components section, in that page's folder, as the button's
-  `ButtonTagHelper.cs` is in `Pages/Components/Button/` and the icon's `IconTagHelper.cs` in `Pages/Components/Icon/`.
+  `ButtonTagHelper.cs` is in `Pages/Components/Button/`, the icon's in `Pages/Components/Icon/` and the chip's in
+  `Pages/Components/Chip/`.
   An attribute names the component, or one of its parts, on the element the view writes, so the view keeps its own
   markup, ARIA and `hx-` attributes: `<a asp-page="./Edit" button="primary">`, `<icon name="edit" />`,
   `<span chip="success">Active</span>`, and `<section card>` with `<header card="header">` and
