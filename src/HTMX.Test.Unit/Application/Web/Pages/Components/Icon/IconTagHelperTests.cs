@@ -1,10 +1,10 @@
-namespace HTMX.Test.Unit.Application.Web.TagHelpers;
+namespace HTMX.Test.Unit.Application.Web.Pages.Components.Icon;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using HTMX.Application.Web.TagHelpers;
+using HTMX.Application.Web.Pages.Components.Icon;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
