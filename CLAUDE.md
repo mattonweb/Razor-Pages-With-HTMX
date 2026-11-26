@@ -2,6 +2,11 @@
 
 ## Recent changes (attended edits to this file — read, then carry on)
 
+- **2026-11-25 (attended session with Matt): a component's tag helper lives beside its page.**
+  `Pages/Components/Button/` holds the Button page and `ButtonTagHelper.cs`, which draws every button in the
+  application, so that someone who clones the repository finds a component in one folder. Button is the first; the
+  other tag helpers stay in `TagHelpers/` until each gets a page of its own there, and then its page and its tag
+  helper move in together.
 - **2026-11-20 (attended session with Matt): every view is drawn with Tailwind.** The organizations', contacts',
   users' and components' pages, and the home page, use the component tag helpers, so `Styles/legacy/` and its
   cascade layer are gone. Entries below that name them predate this.
