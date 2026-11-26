@@ -3,8 +3,6 @@ namespace HTMX.Test.Unit.Application.Web.TagHelpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
 using HTMX.Application.Web.TagHelpers;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Razor.TagHelpers;
@@ -12,9 +10,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Contains unit tests for verifying the behavior of the <see cref="ComponentTagHelper"/> class and the components
-/// drawn with it: that an attribute with no value draws the component itself and a value one of its parts, that each
-/// component gives a part its own utilities, that a part a component does not have is refused, that the view's class
-/// is kept and the attribute taken away, and that an attribute Razor left out draws nothing.
+/// drawn with it that are still in <c>TagHelpers</c>: that an attribute with no value draws the component itself and a
+/// value one of its parts, that each component gives a part its own utilities, that a part a component does not have is
+/// refused, and that an attribute Razor left out draws nothing. A component with a page of its own is tested in its
+/// page's folder, the card's among them.
 /// </summary>
 [TestClass]
 public sealed class ComponentTagHelperTests
@@ -36,7 +35,6 @@ public sealed class ComponentTagHelperTests
     [DataRow("breadcrumbs", null, "[&_li+li]:before:content-['/']", DisplayName = "Breadcrumbs")]
     [DataRow("busy-bar", null, "in-busy:visible", DisplayName = "Busy bar")]
     [DataRow("busy-bar", null, "forced-colors:before:bg-[color:Highlight]", DisplayName = "Busy bar, in forced colors")]
-    [DataRow("card", "header", "border-b", DisplayName = "Card, header")]
     [DataRow("dialog", "confirm", "w-[min(420px,calc(100vw_-_2_*_var(--space-4)))]", DisplayName = "Dialog, confirm")]
     [DataRow("dialog", "icon-warning", "bg-warning-subtle", DisplayName = "Dialog, warning icon")]
     [DataRow("empty-state", null, "[&>svg]:size-10", DisplayName = "Empty state")]
@@ -94,8 +92,8 @@ public sealed class ComponentTagHelperTests
             : new TagHelperAttribute(name, new HtmlString(part));
 
         // Act (When)
-        TagHelperOutput output = Process(CreateHelper(name), attribute);
-        bool added = ClassesOf(output).Contains(utility);
+        TagHelperOutput output = ComponentRuns.Process(CreateHelper(name), attribute);
+        bool added = ComponentRuns.ClassesOf(output).Contains(utility);
 
         // Assert (Then)
         Assert.IsTrue(
@@ -111,7 +109,6 @@ public sealed class ComponentTagHelperTests
     [DataRow("alert", DisplayName = "Alert")]
     [DataRow("breadcrumbs", DisplayName = "Breadcrumbs")]
     [DataRow("busy-bar", DisplayName = "Busy bar")]
-    [DataRow("card", DisplayName = "Card")]
     [DataRow("dialog", DisplayName = "Dialog")]
     [DataRow("empty-state", DisplayName = "Empty state")]
     [DataRow("field", DisplayName = "Field")]
@@ -140,7 +137,7 @@ public sealed class ComponentTagHelperTests
         // Act (When)
         try
         {
-            Process(helper, attribute);
+            ComponentRuns.Process(helper, attribute);
         }
         catch (InvalidOperationException)
         {
@@ -154,32 +151,6 @@ public sealed class ComponentTagHelperTests
     }
 
     /// <summary>
-    /// Unit test to verify that a card with no value draws the card itself, keeps the class the view gave it, and
-    /// leaves its attribute out of the page.
-    /// </summary>
-    [TestMethod]
-    public void Process_NoValue_DrawsTheComponentAndKeepsTheViewsClass()
-    {
-        // Arrange (Given)
-        TagHelperAttribute attribute = new TagHelperAttribute("card");
-        TagHelperAttribute viewClass = new TagHelperAttribute("class", "mt-4");
-
-        // Act (When)
-        TagHelperOutput output = Process(new CardTagHelper(), attribute, viewClass);
-        string[] classes = ClassesOf(output);
-        bool card = classes.Contains("shadow-card");
-        bool kept = classes.Contains("mt-4");
-        bool header = classes.Contains("border-b");
-        bool attributeLeft = output.Attributes.ContainsName("card");
-
-        // Assert (Then)
-        Assert.AreEqual(
-            (true, true, false, false),
-            (card, kept, header, attributeLeft),
-            "The card should have its own utilities and the view's class, and lose its attribute.");
-    }
-
-    /// <summary>
     /// Unit test to verify that an attribute with an empty value, as a view writes for a version that is not the
     /// current one, draws the component itself.
     /// </summary>
@@ -190,8 +161,8 @@ public sealed class ComponentTagHelperTests
         TagHelperAttribute attribute = new TagHelperAttribute("version", string.Empty);
 
         // Act (When)
-        TagHelperOutput output = Process(new VersionTagHelper(), attribute);
-        string[] classes = ClassesOf(output);
+        TagHelperOutput output = ComponentRuns.Process(new VersionTagHelper(), attribute);
+        string[] classes = ComponentRuns.ClassesOf(output);
         bool version = classes.Contains("bg-brand-subtle");
         bool current = classes.Contains("bg-brand");
 
@@ -214,11 +185,11 @@ public sealed class ComponentTagHelperTests
             new TagHelperAttributeList(),
             new Dictionary<object, object>(),
             "grid");
-        TagHelperOutput output = CreateOutput(new TagHelperAttributeList());
+        TagHelperOutput output = ComponentRuns.CreateOutput(new TagHelperAttributeList());
 
         // Act (When)
         new GridTagHelper().Process(context, output);
-        int classes = ClassesOf(output).Length;
+        int classes = ComponentRuns.ClassesOf(output).Length;
 
         // Assert (Then)
         Assert.AreEqual(
@@ -246,8 +217,6 @@ public sealed class ComponentTagHelperTests
                 new BreadcrumbsTagHelper(),
             "busy-bar" =>
                 new BusyBarTagHelper(),
-            "card" =>
-                new CardTagHelper(),
             "dialog" =>
                 new DialogTagHelper(),
             "empty-state" =>
@@ -287,54 +256,6 @@ public sealed class ComponentTagHelperTests
             _ =>
                 throw new ArgumentOutOfRangeException(nameof(name), name, "No component has that attribute."),
         };
-    }
-
-    /// <summary>
-    /// Runs a tag helper on an element, as Razor would.
-    /// </summary>
-    /// <param name="helper">The tag helper.</param>
-    /// <param name="attribute">The component's attribute, as the view wrote it.</param>
-    /// <param name="others">The element's other attributes.</param>
-    /// <returns>The element as it will be written.</returns>
-    private static TagHelperOutput Process(
-        ComponentTagHelper helper,
-        TagHelperAttribute attribute,
-        params TagHelperAttribute[] others)
-    {
-        TagHelperAttributeList attributes = new TagHelperAttributeList(others) { attribute };
-        TagHelperContext context = new TagHelperContext(
-            attributes,
-            new Dictionary<object, object>(),
-            attribute.Name);
-        TagHelperOutput output = CreateOutput(new TagHelperAttributeList(attributes));
-        helper.Process(context, output);
-        return output;
-    }
-
-    /// <summary>
-    /// Makes an element as Razor hands it to a tag helper.
-    /// </summary>
-    /// <param name="attributes">The attributes the view wrote.</param>
-    /// <returns>The element.</returns>
-    private static TagHelperOutput CreateOutput(TagHelperAttributeList attributes)
-    {
-        return new TagHelperOutput(
-            "div",
-            attributes,
-            static (_, _) => Task.FromResult<TagHelperContent>(new DefaultTagHelperContent()));
-    }
-
-    /// <summary>
-    /// Reads the classes an element was given, as the browser reads them: the tag helper writes each one HTML-encoded,
-    /// so a utility such as <c>[&amp;>svg]:size-10</c> arrives with its ampersand encoded.
-    /// </summary>
-    /// <param name="output">The element.</param>
-    /// <returns>Its classes, one to an entry.</returns>
-    private static string[] ClassesOf(TagHelperOutput output)
-    {
-        TagHelperAttributeList attributes = output.Attributes;
-        string value = WebUtility.HtmlDecode(attributes["class"]?.Value?.ToString()) ?? string.Empty;
-        return value.Split(' ', StringSplitOptions.RemoveEmptyEntries);
     }
 
     #endregion Private Methods
