@@ -234,6 +234,10 @@ out any class no page uses.
 - **`/components/chip`** — every tone of the chip, the status label with a dot (neutral, success, info, warning,
   danger and brand), with the attribute that names each and the words the application uses where it has them. Its
   folder, `Pages/Components/Chip/`, also holds `ChipTagHelper.cs`, which draws every chip in the application.
+- **`/components/card`** — the card and its parts, the header and the body, on a page whose every section is a card:
+  one with a header, one whose header holds an action, and one with no header. Its folder, `Pages/Components/Card/`,
+  also holds `CardTagHelper.cs`, the first of the components drawn on the shared `ComponentTagHelper` to move out of
+  `TagHelpers/`, where that base class stays.
 
 ## Sample data
 
@@ -310,8 +314,8 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   below 900px the full side nav fills the window, over the page, until the menu button, Escape or a link closes it.
   Each of the brand's components is drawn by a tag helper, which keeps its utilities in one place: in `TagHelpers/`,
   or, for a component with a page of its own in the Components section, in that page's folder, as the button's
-  `ButtonTagHelper.cs` is in `Pages/Components/Button/`, the icon's in `Pages/Components/Icon/` and the chip's in
-  `Pages/Components/Chip/`.
+  `ButtonTagHelper.cs` is in `Pages/Components/Button/`, the icon's in `Pages/Components/Icon/`, the chip's in
+  `Pages/Components/Chip/` and the card's in `Pages/Components/Card/`.
   An attribute names the component, or one of its parts, on the element the view writes, so the view keeps its own
   markup, ARIA and `hx-` attributes: `<a asp-page="./Edit" button="primary">`, `<icon name="edit" />`,
   `<span chip="success">Active</span>`, and `<section card>` with `<header card="header">` and
