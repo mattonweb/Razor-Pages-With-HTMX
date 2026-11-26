@@ -1,0 +1,102 @@
+@page "/components/card"
+@model HTMX.Application.Web.Pages.Components.Card.IndexModel
+@{
+    ViewData["Title"] = "Card";
+    ViewData["Section"] = "Components";
+}
+@*
+    The Card component is this folder: CardTagHelper.cs holds the utilities of the card and each of its parts, and a
+    view names them in the card attribute on the elements it writes, so changing them there changes every card in the
+    application. Every section of this page is a card, and each says which of the card's parts it shows, as the brand
+    gives them (brand-htmlx-pages, Card).
+*@
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="/Components/Index">Components</a></li><li><span aria-current="page">Card</span></li></ol>
+    </nav>
+    <div page-header="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Card</h1>
+    </div>
+    <p class="text-fg-muted">
+        The surface every list, form and panel in the application sits on, drawn by one tag helper, which sits beside
+        this page. Every section of this page is a card.
+    </p>
+</header>
+
+<section card aria-labelledby="parts-heading">
+    <header card="header"><h2 id="parts-heading">Parts</h2></header>
+    <div grid="scroll">
+        <table grid>
+            <caption class="sr-only">The card's parts, with the attribute that names each and what each holds</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Part</th>
+                    <th scope="col">Attribute</th>
+                    <th scope="col">What it is</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="whitespace-nowrap">The card</td>
+                    <td class="whitespace-nowrap"><code>card</code></td>
+                    <td>
+                        The surface, with a border, rounded corners and a shadow. It is a size container, so a component
+                        inside it adapts to the card's width, at 560px, rather than to the window's.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="whitespace-nowrap">Header</td>
+                    <td class="whitespace-nowrap"><code>card="header"</code></td>
+                    <td>
+                        Optional: the card's title, an h2, and at most one action at its right, with a line below.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="whitespace-nowrap">Body</td>
+                    <td class="whitespace-nowrap"><code>card="body"</code></td>
+                    <td>
+                        16px of padding around what the card holds. A table or a list that runs to the card's edges,
+                        like this one, sits in the card without a body.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section card aria-labelledby="action-heading">
+    <header card="header">
+        <h2 id="action-heading">A header with an action</h2>
+        <a button="secondary" asp-page="/Components/Index">All components</a>
+    </header>
+    <div card="body">
+        <p>
+            This card's header holds its title and one action, a link back to the Components list, at its right. Its
+            body holds this paragraph.
+        </p>
+    </div>
+</section>
+
+<div card>
+    <div card="body">
+        <p>
+            This card has no header, only a body: a card that needs no title, such as a not-found message, is a
+            <code>&lt;div&gt;</code> rather than a <code>&lt;section&gt;</code>, since it is not a part of the page a
+            reader would look for by name.
+        </p>
+    </div>
+</div>
+
+<section card aria-labelledby="accessibility-heading">
+    <header card="header"><h2 id="accessibility-heading">Accessibility</h2></header>
+    <div card="body">
+        <ul class="m-0 grid list-disc gap-2 pl-5">
+            <li>
+                A card with a title is a <code>&lt;section&gt;</code> named by that title through
+                <code>aria-labelledby</code>, so a screen reader can list it and go straight to it.
+            </li>
+            <li>Its title is an h2, so the page's cards make its outline under the page's h1.</li>
+            <li>In forced colors its shadow goes and its border stays, so the card keeps its edge.</li>
+        </ul>
+    </div>
+</section>
