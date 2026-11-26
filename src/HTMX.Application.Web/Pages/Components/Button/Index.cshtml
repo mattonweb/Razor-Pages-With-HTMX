@@ -1,0 +1,147 @@
+@page "/components/button"
+@model HTMX.Application.Web.Pages.Components.Button.IndexModel
+@{
+    ViewData["Title"] = "Button";
+    ViewData["Section"] = "Components";
+}
+@*
+    The Button component is this folder: ButtonTagHelper.cs holds every look's Tailwind utilities, and a view names the
+    look in the element's button attribute, so changing a look there changes every button in the application. This
+    page shows each look and state as the brand gives them (brand-htmlx-pages, Buttons). The samples are buttons of
+    type button outside any form, so pressing one does nothing; the link is the one sample that goes somewhere.
+*@
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="/Components/Index">Components</a></li><li><span aria-current="page">Button</span></li></ol>
+    </nav>
+    <div page-header="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Button</h1>
+    </div>
+    <p class="text-fg-muted">
+        Every button in the application is drawn by one tag helper, which sits beside this page. The samples do nothing
+        when pressed.
+    </p>
+</header>
+
+<section card aria-labelledby="looks-heading">
+    <header card="header"><h2 id="looks-heading">Looks</h2></header>
+    <div grid="scroll">
+        <table grid>
+            <caption class="sr-only">The button's looks, with the attribute that names each and when to use it</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Sample</th>
+                    <th scope="col">Attribute</th>
+                    <th scope="col">Use it for</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><button button="secondary" type="button">Cancel</button></td>
+                    <td class="whitespace-nowrap"><code>button="secondary"</code></td>
+                    <td>Most actions. It is the default look.</td>
+                </tr>
+                <tr>
+                    <td><button button="primary" type="button">Save</button></td>
+                    <td class="whitespace-nowrap"><code>button="primary"</code></td>
+                    <td>The view's main action, and only one per view.</td>
+                </tr>
+                <tr>
+                    <td><button button="ghost" type="button"><icon name="plus" />Add</button></td>
+                    <td class="whitespace-nowrap"><code>button="ghost"</code></td>
+                    <td>Actions on a row, in a toolbar or a header, and Add and Remove in a form.</td>
+                </tr>
+                <tr>
+                    <td><button button="danger" type="button"><icon name="trash" />Delete permanently</button></td>
+                    <td class="whitespace-nowrap"><code>button="danger"</code></td>
+                    <td>Only an action that cannot be undone. An action that can be undone is never danger.</td>
+                </tr>
+                <tr>
+                    <td><button button="icon" type="button" aria-label="Edit"><icon name="edit" /></button></td>
+                    <td class="whitespace-nowrap"><code>button="icon"</code></td>
+                    <td>An icon alone, in a square, named by its <code>aria-label</code>.</td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="inline-flex rounded-md bg-inverse p-1 forced-colors:border">
+                            <button button="ghost-inverse" type="button">Undo</button>
+                        </span>
+                    </td>
+                    <td class="whitespace-nowrap"><code>button="ghost-inverse"</code></td>
+                    <td>The ghost look on an inverse surface, such as Undo in a toast.</td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="inline-flex rounded-md bg-inverse p-1 forced-colors:border">
+                            <button button="icon-inverse" type="button" aria-label="Dismiss"><icon name="x" /></button>
+                        </span>
+                    </td>
+                    <td class="whitespace-nowrap"><code>button="icon-inverse"</code></td>
+                    <td>The icon look on an inverse surface, such as a toast's Dismiss.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section card aria-labelledby="states-heading">
+    <header card="header"><h2 id="states-heading">States</h2></header>
+    <div grid="scroll">
+        <table grid>
+            <caption class="sr-only">The button's states, with the markup that gives each and what it does</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Sample</th>
+                    <th scope="col">Markup</th>
+                    <th scope="col">What it does</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><button button="secondary" type="button" disabled>Save</button></td>
+                    <td class="whitespace-nowrap"><code>disabled</code></td>
+                    <td>Turns gray, with a not-allowed cursor, and does not change under the pointer, whatever its look.</td>
+                </tr>
+                <tr>
+                    <td><span button="secondary" aria-disabled="true"><icon name="chevron-left" />Previous</span></td>
+                    <td class="whitespace-nowrap"><code>&lt;span&gt;</code> with <code>aria-disabled="true"</code></td>
+                    <td>
+                        Stands in for a link with nowhere to go, such as Previous on the first page, which is no link at
+                        all.
+                    </td>
+                </tr>
+                <tr>
+                    <td><button button="primary" type="button" aria-busy="true">Save</button></td>
+                    <td class="whitespace-nowrap"><code>aria-busy="true"</code></td>
+                    <td>
+                        Waits for an answer: it keeps its width, hides its label, shows a spinner and ignores clicks.
+                        HTMX marks a button waiting for its request <code>htmx-request</code>, which draws the same.
+                    </td>
+                </tr>
+                <tr>
+                    <td><a button="secondary" asp-page="/Components/Index">Components</a></td>
+                    <td class="whitespace-nowrap"><code>&lt;a href&gt;</code></td>
+                    <td>Goes somewhere rather than doing something: a link that looks like a button.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section card aria-labelledby="accessibility-heading">
+    <header card="header"><h2 id="accessibility-heading">Accessibility</h2></header>
+    <div card="body">
+        <ul class="m-0 grid list-disc gap-2 pl-5">
+            <li>
+                A button that holds an icon alone is named by its <code>aria-label</code>. An icon beside a label is
+                hidden from assistive technology, since the label already says it.
+            </li>
+            <li>
+                A disabled button says <code>disabled</code>, a link with nowhere to go says
+                <code>aria-disabled="true"</code>, and a busy button says <code>aria-busy="true"</code>, so each state is
+                announced as well as shown.
+            </li>
+            <li>Every look shows the focus ring when it has keyboard focus, and keeps it in forced colors.</li>
+        </ul>
+    </div>
+</section>

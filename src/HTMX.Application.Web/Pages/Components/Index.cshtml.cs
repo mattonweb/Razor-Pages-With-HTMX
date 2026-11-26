@@ -3,8 +3,8 @@ namespace HTMX.Application.Web.Pages.Components;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 /// <summary>
-/// The Components section's first page, at /components: a list of pages that each show one pattern on its own, apart
-/// from the records, working with HTMX and without it.
+/// The Components section's first page, at /components: a list of pages that each show one pattern or component on
+/// its own, apart from the records, working with HTMX and without it.
 /// </summary>
 public sealed class IndexModel : PageModel
 {

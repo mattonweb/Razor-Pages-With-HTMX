@@ -6,7 +6,8 @@
 }
 @*
     The Components section: one page for each pattern that needs a page of its own to show, apart from the records,
-    with HTMX and without it. Each page names what it shows in the table, and its own comments say how.
+    with HTMX and without it, and one for each component that has a folder of its own, which holds the component's
+    tag helper beside its page. Each page names what it shows in the table, and its own comments say how.
 *@
 <header page-header>
     <nav breadcrumbs aria-label="Breadcrumb">
@@ -15,7 +16,7 @@
     <div page-header="title-row">
         <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Components</h1>
     </div>
-    <p class="text-fg-muted">Pages that each show one pattern, working with HTMX and without it.</p>
+    <p class="text-fg-muted">Pages that each show one pattern or component, working with HTMX and without it.</p>
 </header>
 
 <section card aria-labelledby="components-heading">
@@ -112,6 +113,13 @@
                     <td>
                         A Delete that asks first in a dialog where the browser has invoker commands, and on a page of
                         its own in any other browser, or with script off.
+                    </td>
+                </tr>
+                <tr>
+                    <td grid="title"><a asp-page="./Button/Index">Button</a></td>
+                    <td>
+                        Every look and state of the button, drawn by the one tag helper that draws every button in the
+                        application, which sits in the page's own folder.
                     </td>
                 </tr>
             </tbody>

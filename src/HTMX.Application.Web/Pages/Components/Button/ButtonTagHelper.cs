@@ -1,4 +1,4 @@
-namespace HTMX.Application.Web.TagHelpers;
+namespace HTMX.Application.Web.Pages.Components.Button;
 
 using System;
 using System.Text.Encodings.Web;
@@ -9,9 +9,10 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 /// Draws a button as the brand gives it, from the look its <c>button</c> attribute names: <c>secondary</c>, the
 /// default; <c>primary</c>; <c>danger</c>; <c>ghost</c>; or <c>icon</c>, a square ghost button that holds an icon alone
 /// and carries an <c>aria-label</c>. On an inverse surface, such as a toast, <c>ghost-inverse</c> and
-/// <c>icon-inverse</c> are the ghost and icon looks in its colors. It draws a <c>&lt;button&gt;</c>, a link that looks like a button, or a
-/// <c>&lt;span&gt;</c> that stands in for a link with nowhere to go. The look's Tailwind utilities are written here
-/// once rather than on every button, and any class the view gives the element is kept beside them.
+/// <c>icon-inverse</c> are the ghost and icon looks in its colors. It draws a <c>&lt;button&gt;</c>, a link that looks
+/// like a button, or a <c>&lt;span&gt;</c> that stands in for a link with nowhere to go. The look's Tailwind utilities
+/// are written here once rather than on every button, and any class the view gives the element is kept beside them.
+/// It sits beside the Button page, which shows every look and state, so that the component is one folder.
 /// </summary>
 /// <remarks>
 /// <para>
