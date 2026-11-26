@@ -1,4 +1,4 @@
-namespace HTMX.Application.Web.TagHelpers;
+namespace HTMX.Application.Web.Pages.Components.Chip;
 
 using System;
 using System.Text.Encodings.Web;
@@ -9,7 +9,8 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 /// Draws a chip as the brand gives it, a status label with a dot and never a button, from the tone its <c>chip</c>
 /// attribute names: <c>neutral</c>, the default; <c>success</c>; <c>danger</c>; <c>warning</c>; <c>info</c>; or
 /// <c>brand</c>. The tone's Tailwind utilities are written here once rather than on every chip, and any class the view
-/// gives the element is kept beside them.
+/// gives the element is kept beside them. It sits beside the Chip page, which shows every tone, so that the
+/// component is one folder.
 /// </summary>
 /// <remarks>
 /// <para>

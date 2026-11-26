@@ -1,0 +1,88 @@
+@page "/components/chip"
+@model HTMX.Application.Web.Pages.Components.Chip.IndexModel
+@{
+    ViewData["Title"] = "Chip";
+    ViewData["Section"] = "Components";
+}
+@*
+    The Chip component is this folder: ChipTagHelper.cs holds every tone's Tailwind utilities, and a view names the
+    tone in the span's chip attribute, so changing a tone there changes every chip in the application. This page shows
+    each tone as the brand gives them (brand-htmlx-pages, Chip), with the words the application uses where it has them.
+*@
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="/Components/Index">Components</a></li><li><span aria-current="page">Chip</span></li></ol>
+    </nav>
+    <div page-header="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Chip</h1>
+    </div>
+    <p class="text-fg-muted">
+        Every chip in the application, a status label with a dot, is drawn by one tag helper, which sits beside this
+        page.
+    </p>
+</header>
+
+<section card aria-labelledby="tones-heading">
+    <header card="header"><h2 id="tones-heading">Tones</h2></header>
+    <div grid="scroll">
+        <table grid>
+            <caption class="sr-only">The chip's tones, with the attribute that names each and when to use it</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Sample</th>
+                    <th scope="col">Attribute</th>
+                    <th scope="col">Use it for</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span chip="neutral">Archived</span></td>
+                    <td class="whitespace-nowrap"><code>chip="neutral"</code></td>
+                    <td>A state that asks for nothing, such as an archived record or a draft. It is the default tone.</td>
+                </tr>
+                <tr>
+                    <td><span chip="success">Active</span></td>
+                    <td class="whitespace-nowrap"><code>chip="success"</code></td>
+                    <td>A state that is as it should be, such as an active record or a published article.</td>
+                </tr>
+                <tr>
+                    <td><span chip="info">New</span></td>
+                    <td class="whitespace-nowrap"><code>chip="info"</code></td>
+                    <td>A state worth a look that is neither good nor bad, such as a notice not yet seen.</td>
+                </tr>
+                <tr>
+                    <td><span chip="warning">Expiring</span></td>
+                    <td class="whitespace-nowrap"><code>chip="warning"</code></td>
+                    <td>A state that will need attention soon. The application has none yet.</td>
+                </tr>
+                <tr>
+                    <td><span chip="danger">Failed</span></td>
+                    <td class="whitespace-nowrap"><code>chip="danger"</code></td>
+                    <td>A state that has gone wrong. The application has none yet.</td>
+                </tr>
+                <tr>
+                    <td><span chip="brand">Preview</span></td>
+                    <td class="whitespace-nowrap"><code>chip="brand"</code></td>
+                    <td>A label in the brand's own color rather than a state's. The application has none yet.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section card aria-labelledby="accessibility-heading">
+    <header card="header"><h2 id="accessibility-heading">Accessibility</h2></header>
+    <div card="body">
+        <ul class="m-0 grid list-disc gap-2 pl-5">
+            <li>
+                A chip is text in a <code>&lt;span&gt;</code>, never a button: it takes no focus and does nothing when
+                pressed.
+            </li>
+            <li>
+                Its color and dot only repeat its words, so the label says the state on its own, for a screen reader and
+                for anyone who cannot tell the colors apart.
+            </li>
+            <li>In forced colors its fill goes, its border stays, and its dot takes the theme's text color.</li>
+        </ul>
+    </div>
+</section>
