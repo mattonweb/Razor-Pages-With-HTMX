@@ -226,6 +226,11 @@ out any class no page uses.
   icon looks for an inverse surface such as a toast) and its states (disabled, a link with nowhere to go, busy, and a
   link drawn as a button), with the attribute or markup that gives each. Its folder, `Pages/Components/Button/`, also
   holds `ButtonTagHelper.cs`, which draws every button in the application, so the component is one folder.
+- **`/components/icon`** — every icon in the sprite, by the groups `wwwroot/icons.svg` puts them in, with its name;
+  each size (20px, 16px with `size="sm"`, 18px in a button, 40px in an empty state); the logo, which the app shell
+  draws in its own colors; and how to add an icon. Its folder, `Pages/Components/Icon/`, also holds
+  `IconTagHelper.cs`, which draws every icon in the application, and `IconGroups.cs`, the list the page draws, which
+  an integration test holds to the sprite.
 
 ## Sample data
 
@@ -302,7 +307,7 @@ The seed is written without logging its SQL, so the console shows only the SQL e
   below 900px the full side nav fills the window, over the page, until the menu button, Escape or a link closes it.
   Each of the brand's components is drawn by a tag helper, which keeps its utilities in one place: in `TagHelpers/`,
   or, for a component with a page of its own in the Components section, in that page's folder, as the button's
-  `ButtonTagHelper.cs` is in `Pages/Components/Button/`.
+  `ButtonTagHelper.cs` is in `Pages/Components/Button/` and the icon's `IconTagHelper.cs` in `Pages/Components/Icon/`.
   An attribute names the component, or one of its parts, on the element the view writes, so the view keeps its own
   markup, ARIA and `hx-` attributes: `<a asp-page="./Edit" button="primary">`, `<icon name="edit" />`,
   `<span chip="success">Active</span>`, and `<section card>` with `<header card="header">` and
