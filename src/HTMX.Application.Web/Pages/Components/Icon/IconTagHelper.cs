@@ -1,4 +1,4 @@
-namespace HTMX.Application.Web.TagHelpers;
+namespace HTMX.Application.Web.Pages.Components.Icon;
 
 using System;
 using System.Text.Encodings.Web;
@@ -10,7 +10,8 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 /// that uses the sprite's <c>search</c> symbol, hidden from assistive technology, since an icon only repeats the text
 /// beside it or the label of the button it is in. It is drawn as the brand gives icons, 20px or, with
 /// <c>size="sm"</c>, 16px, as a line in the color of the text around it; inside a button it is 18px, which the
-/// button sets. Any class the view gives it is kept beside its own.
+/// button sets. Any class the view gives it is kept beside its own. It sits beside the Icon page, which shows
+/// every icon in the sprite and each size, so that the component is one folder.
 /// </summary>
 /// <remarks>
 /// <para>

@@ -1,0 +1,129 @@
+@page "/components/icon"
+@model HTMX.Application.Web.Pages.Components.Icon.IndexModel
+@using HTMX.Application.Web.Pages.Components.Icon
+@{
+    ViewData["Title"] = "Icon";
+    ViewData["Section"] = "Components";
+}
+@*
+    The Icon component is this folder: IconTagHelper.cs turns <icon name="search" /> into an svg that uses the sprite's
+    symbol, so changing how an icon is drawn there changes every icon in the application. IconGroups.cs lists the
+    sprite's icons as wwwroot/icons.svg groups them, and this page draws each one by its name, then each size, as the
+    brand gives icons (brand-htmlx-pages, Icons).
+*@
+<header page-header>
+    <nav breadcrumbs aria-label="Breadcrumb">
+        <ol><li><a asp-page="/Index">Home</a></li><li><a asp-page="/Components/Index">Components</a></li><li><span aria-current="page">Icon</span></li></ol>
+    </nav>
+    <div page-header="title-row">
+        <h1 tabindex="-1" autofocus="@Model.HeadingFocused">Icon</h1>
+    </div>
+    <p class="text-fg-muted">
+        Every icon in the application is drawn from the brand's sprite by one tag helper, which sits beside this page.
+    </p>
+</header>
+
+<section card aria-labelledby="icons-heading">
+    <header card="header"><h2 id="icons-heading">Icons</h2></header>
+    <div card="body" class="grid gap-4">
+        @foreach (IconGroup group in IconGroups.All)
+        {
+            <h3>@group.Title</h3>
+            <ul class="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2 p-0">
+                @foreach (string name in group.Names)
+                {
+                    <li class="flex items-center gap-3 rounded-sm border border-line px-3 py-2">
+                        <icon name="@name" /><code>@name</code>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</section>
+
+<section card aria-labelledby="sizes-heading">
+    <header card="header"><h2 id="sizes-heading">Sizes</h2></header>
+    <div grid="scroll">
+        <table grid>
+            <caption class="sr-only">The icon's sizes, with the markup that gives each and where each is used</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Sample</th>
+                    <th scope="col">Markup</th>
+                    <th scope="col">Size</th>
+                    <th scope="col">Use it for</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><icon name="building" /></td>
+                    <td class="whitespace-nowrap"><code>&lt;icon name="building" /&gt;</code></td>
+                    <td>20px</td>
+                    <td>An icon on its own, such as one of the side nav's links.</td>
+                </tr>
+                <tr>
+                    <td><icon name="chevron-right" size="sm" /></td>
+                    <td class="whitespace-nowrap"><code>size="sm"</code></td>
+                    <td>16px</td>
+                    <td>Sort arrows, chevrons and related-record links.</td>
+                </tr>
+                <tr>
+                    <td><button button="ghost" type="button"><icon name="plus" />Add</button></td>
+                    <td class="whitespace-nowrap">In a <code>&lt;button&gt;</code></td>
+                    <td>18px</td>
+                    <td>An icon in a button, a menu item or the filter box, which sets its size.</td>
+                </tr>
+                <tr>
+                    <td><div empty-state><icon name="inbox" /></div></td>
+                    <td class="whitespace-nowrap">In an <code>empty-state</code></td>
+                    <td>40px</td>
+                    <td>An empty state's icon, which the empty state draws larger and in a lighter line.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section card aria-labelledby="logo-heading">
+    <header card="header"><h2 id="logo-heading">The logo</h2></header>
+    <div card="body" class="flex items-center gap-3">
+        <svg class="size-7 flex-none" aria-hidden="true"><use href="/icons.svg#logo"></use></svg>
+        <p>
+            The sprite's one symbol with colors of its own. The app shell draws it beside the product name as a plain
+            <code>&lt;svg&gt;</code> rather than with the tag helper, whose line in the text's color would outline its
+            square.
+        </p>
+    </div>
+</section>
+
+<section card aria-labelledby="accessibility-heading">
+    <header card="header"><h2 id="accessibility-heading">Accessibility</h2></header>
+    <div card="body">
+        <ul class="m-0 grid list-disc gap-2 pl-5">
+            <li>
+                Every icon says <code>aria-hidden="true"</code>, since it only repeats the text beside it or the label of
+                the button it is in.
+            </li>
+            <li>
+                @* A paragraph, so that its link is underlined like any link among words. *@
+                <p>
+                    An icon alone sits in a button named by its <code>aria-label</code>, as the
+                    <a asp-page="/Components/Button/Index">Button</a> page's icon look shows.
+                </p>
+            </li>
+            <li>An icon is a line in the color of the text around it, so it follows light, dark and a contrast theme.</li>
+        </ul>
+    </div>
+</section>
+
+<section card aria-labelledby="adding-heading">
+    <header card="header"><h2 id="adding-heading">Adding an icon</h2></header>
+    <div card="body">
+        <p>
+            Draw it into <code>wwwroot/icons.svg</code> as a <code>&lt;symbol&gt;</code> on the same 24px grid, in plain
+            strokes that set no stroke or fill of their own, rather than copying one from an icon set. Then add its name
+            to its group in <code>IconGroups.cs</code>, beside this page: a test fails until this page shows every
+            symbol the sprite holds.
+        </p>
+    </div>
+</section>
